@@ -1,4 +1,6 @@
 
+pub mod dims;
+
 #[cfg(test)]
 mod tests {
     #[test]
