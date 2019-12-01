@@ -118,6 +118,12 @@ impl Padding2d for SimplePadding2d {
     fn y_mut(&mut self) -> &mut Padding { &mut self.y }
 }
 
+impl<P: Padding2d> From<&P> for SimplePadding2d {
+    fn from(padding: &P) -> Self {
+        Self { x: padding.x(), y: padding.y() }
+    }
+}
+
 /// A struct representing span of a single dimension.
 ///
 /// The authoritative representation of a Dim is based on a "pivot" which is
@@ -441,4 +447,10 @@ impl<'a> Rect for SimpleRect {
     fn y(&self) -> Dim { self.y }
     fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) { (f)( &mut self.x ) }
     fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) { (f)( &mut self.y ) }
+}
+
+impl<R: Rect> From<&R> for SimpleRect {
+    fn from(rect: &R) -> Self {
+        Self { x: rect.x(), y: rect.y() }
+    }
 }
