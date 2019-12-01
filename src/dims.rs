@@ -126,7 +126,8 @@ impl Padding2d for SimplePadding2d {
 /// 
 /// # Examples
 /// ```rust
-/// let assert_feq = |a, b| {
+/// use suzy::dims::Dim;
+/// let assert_feq = |a: f32, b: f32| {
 ///     assert!(
 ///         a.is_finite(), "assert_feq: argument `a` was NaN or infinite");
 ///     assert!(
@@ -147,7 +148,8 @@ impl Padding2d for SimplePadding2d {
 /// ```
 ///
 /// ```rust
-/// # let assert_feq = |a, b| {
+/// use suzy::dims::Dim;
+/// # let assert_feq = |a: f32, b: f32| {
 /// #     assert!(
 /// #         a.is_finite(), "assert_feq: argument `a` was NaN or infinite");
 /// #     assert!(
