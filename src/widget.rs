@@ -1,10 +1,11 @@
 use std::cell::{Ref, RefMut};
+
 use drying_paint::{Watched, Watcher, WatcherMeta, WatcherInit};
 
-use crate::interaction::{InteractionReceiver, Touch};
 use crate::dims::{Rect, Dim};
+use crate::graphics::{Canvas, CanvasRenderer};
+use crate::interaction::{InteractionReceiver, Touch};
 
-type Canvas = ();
 
 pub struct WidgetRect {
     x: Watched<Dim>,
