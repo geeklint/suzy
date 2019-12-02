@@ -60,6 +60,7 @@ pub trait WidgetData: Sized + InteractionReceiver {
 struct WidgetInternal<T: WidgetData> {
     rect: WidgetRect,
     canvas: Canvas,
+    canvas_after: Canvas,
     data: T,
 }
 
@@ -78,6 +79,15 @@ impl<T: WidgetData> Widget<T> {
     fn internal(&self) -> Ref<WidgetInternal<T>> { self.watcher.data() }
     fn internal_mut(&mut self) -> RefMut<WidgetInternal<T>> {
         self.watcher.data_mut()
+    }
+
+    fn draw(&self, renderer: &mut CanvasRenderer) {
+        let wid_int = self.internal();
+        renderer.draw(&wid_int.canvas);
+        for child in wid_int.data.children().into_iter() {
+            child.anon.draw(renderer);
+        }
+        renderer.draw(&wid_int.canvas_after);
     }
     
     pub fn proxy(&self) -> WidgetProxy {
@@ -121,12 +131,12 @@ impl<T: WidgetData> InteractionReceiver for Widget<T> {
 
 
 trait AnonWidget: InteractionReceiver {
-    fn canvas(&self) -> Ref<Canvas>;
+    fn draw(&self, renderer: &mut CanvasRenderer);
 }
 
 impl<T: WidgetData> AnonWidget for Widget<T> {
-    fn canvas(&self) -> Ref<Canvas> {
-        Ref::map(self.internal(), |i| &i.canvas)
+    fn draw(&self, renderer: &mut CanvasRenderer) {
+        Widget::draw(self, renderer);
     }
 }
 
