@@ -1,9 +1,10 @@
 extern crate drying_paint;
 
-pub mod graphics;
 pub mod dims;
-pub mod widget;
+pub mod graphics;
 pub mod interaction;
+pub mod platform;
+pub mod widget;
 
 #[cfg(test)]
 mod tests {
