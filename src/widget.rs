@@ -26,24 +26,42 @@ pub struct WidgetInit<'a, T: WidgetData> {
 
 impl<T: WidgetData + 'static> WidgetInit<'_, T> {
     pub fn watch<F>(&mut self, func: F)
-        where F: Fn(&mut T) + 'static
-    {
-        self.watcher.watch(move |wid_int| (func)(&mut wid_int.data));
-    }
-
-    pub fn watch_rect<F>(&mut self, func: F)
-        where F: Fn(&mut T, &mut WidgetRect) + 'static
+        where F: Fn(&mut T, &WidgetRect) + 'static
     {
         self.watcher.watch(move |wid_int| {
-            (func)(&mut wid_int.data, &mut wid_int.rect);
+            (func)(&mut wid_int.data, &wid_int.rect);
         });
     }
 
-    pub fn watch_draw<F>(&mut self, func: F)
-        where F: Fn(&mut T, &mut Canvas) + 'static
+    pub fn draw<F>(self, func: F)
+        where F: Fn(&mut T, &WidgetRect, &mut Canvas) + 'static
     {
         self.watcher.watch(move |wid_int| {
-            (func)(&mut wid_int.data, &mut wid_int.canvas);
+            (func)(&mut wid_int.data, &wid_int.rect, &mut wid_int.canvas);
+        });
+    }
+
+    pub fn draw_after<F>(self, func: F)
+        where F: Fn(&mut T, &WidgetRect, &mut Canvas) + 'static
+    {
+        self.watcher.watch(move |wid_int| {
+            (func)(
+                &mut wid_int.data, &wid_int.rect, &mut wid_int.canvas_after);
+        });
+    }
+
+    pub fn draw_before_and_after<F, G>(
+        self, before: F, after: G)
+        where F: Fn(&mut T, &WidgetRect, &mut Canvas) + 'static,
+            G: Fn(&mut T, &WidgetRect, &mut Canvas) + 'static
+    {
+        self.watcher.watch(move |wid_int| {
+            (before)(
+                &mut wid_int.data, &wid_int.rect, &mut wid_int.canvas);
+        });
+        self.watcher.watch(move |wid_int| {
+            (after)(
+                &mut wid_int.data, &wid_int.rect, &mut wid_int.canvas_after);
         });
     }
 }
