@@ -49,7 +49,10 @@ impl<T: WidgetData + 'static> WidgetInit<'_, T> {
 
 pub trait WidgetData: Sized + InteractionReceiver {
     fn init(init: &mut WidgetInit<Self>);
-    fn children<'a>(&'a mut self) -> Box<[WidgetProxy<'a>]>;
+
+    fn children<'a>(&'a self) -> Vec<WidgetProxy<'a>>;
+
+    fn children_mut<'a>(&'a mut self) -> Vec<WidgetProxyMut<'a>>;
 }
 
 struct WidgetInternal<T: WidgetData> {
@@ -74,8 +77,12 @@ impl<T: WidgetData> Widget<T> {
         self.watcher.data_mut()
     }
     
-    pub fn proxy(&mut self) -> WidgetProxy {
-        WidgetProxy { anon: self as &mut AnonWidget }
+    pub fn proxy(&self) -> WidgetProxy {
+        WidgetProxy { anon: self }
+    }
+
+    pub fn proxy_mut(&mut self) -> WidgetProxyMut {
+        WidgetProxyMut { anon: self }
     }
 }
 
@@ -94,18 +101,18 @@ impl<'a, T: WidgetData> Rect for Widget<T> {
 
 impl<T: WidgetData> InteractionReceiver for Widget<T> {
     fn on_touch_down(&mut self, touch: Touch) -> bool {
-        InteractionReceiver::on_touch_down(
-            &mut self.internal_mut().data, touch)
+        let mut wid_int = self.internal_mut();
+        InteractionReceiver::on_touch_down(&mut wid_int.data, touch)
     }
 
     fn on_touch_move(&mut self, touch: Touch) -> bool {
-        InteractionReceiver::on_touch_move(
-            &mut self.internal_mut().data, touch)
+        let mut wid_int = self.internal_mut();
+        InteractionReceiver::on_touch_move(&mut wid_int.data, touch)
     }
 
     fn on_touch_up(&mut self, touch: Touch) -> bool {
-        InteractionReceiver::on_touch_up(
-            &mut self.internal_mut().data, touch)
+        let mut wid_int = self.internal_mut();
+        InteractionReceiver::on_touch_down(&mut wid_int.data, touch)
     }
 }
 
@@ -121,5 +128,9 @@ impl<T: WidgetData> AnonWidget for Widget<T> {
 }
 
 pub struct WidgetProxy<'a> {
+    anon: &'a dyn AnonWidget,
+}
+
+pub struct WidgetProxyMut<'a> {
     anon: &'a mut dyn AnonWidget,
 }
