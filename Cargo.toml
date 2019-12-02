@@ -4,7 +4,12 @@ version = "0.1.0"
 authors = ["Violet <violet@geeklint.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = []
+tui = []
 
 [dependencies]
 drying_paint = "0.1.0"
+
+[build-dependencies]
+bindgen = "0.52.0"
