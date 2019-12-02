@@ -133,16 +133,31 @@ impl<'a, T: WidgetData> Rect for Widget<T> {
 impl<T: WidgetData> InteractionReceiver for Widget<T> {
     fn on_touch_down(&mut self, touch: Touch) -> bool {
         let mut wid_int = self.internal_mut();
+        for child in wid_int.data.children_mut().into_iter() {
+            if InteractionReceiver::on_touch_down(child.anon, touch) {
+                return true;
+            }
+        }
         InteractionReceiver::on_touch_down(&mut wid_int.data, touch)
     }
 
     fn on_touch_move(&mut self, touch: Touch) -> bool {
         let mut wid_int = self.internal_mut();
+        for child in wid_int.data.children_mut().into_iter() {
+            if InteractionReceiver::on_touch_move(child.anon, touch) {
+                return true;
+            }
+        }
         InteractionReceiver::on_touch_move(&mut wid_int.data, touch)
     }
 
     fn on_touch_up(&mut self, touch: Touch) -> bool {
         let mut wid_int = self.internal_mut();
+        for child in wid_int.data.children_mut().into_iter() {
+            if InteractionReceiver::on_touch_down(child.anon, touch) {
+                return true;
+            }
+        }
         InteractionReceiver::on_touch_down(&mut wid_int.data, touch)
     }
 }
