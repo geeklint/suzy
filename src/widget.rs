@@ -7,6 +7,7 @@ use crate::graphics::{Canvas, CanvasRenderer};
 use crate::interaction::{InteractionReceiver, Touch};
 
 
+#[derive(Default)]
 pub struct WidgetRect {
     x: Watched<Dim>,
     y: Watched<Dim>,
@@ -55,6 +56,7 @@ pub trait WidgetData: Sized + InteractionReceiver {
     fn children_mut<'a>(&'a mut self) -> Vec<WidgetProxyMut<'a>>;
 }
 
+#[derive(Default)]
 struct WidgetInternal<T: WidgetData> {
     rect: WidgetRect,
     canvas: Canvas,
@@ -67,6 +69,7 @@ impl<T: WidgetData> WatcherInit for WidgetInternal<T> {
     }
 }
 
+#[derive(Default)]
 pub struct Widget<T: WidgetData> {
     watcher: Watcher<WidgetInternal<T>>,
 }
@@ -127,6 +130,7 @@ impl<T: WidgetData> AnonWidget for Widget<T> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct WidgetProxy<'a> {
     anon: &'a dyn AnonWidget,
 }
