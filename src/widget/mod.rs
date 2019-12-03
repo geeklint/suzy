@@ -4,8 +4,8 @@ use drying_paint::{Watcher, WatcherMeta, WatcherInit};
 
 use crate::dims::{Rect, Dim};
 use crate::graphics::{Canvas, CanvasRenderer};
-use crate::interaction::{InteractionReceiver, Touch};
 
+pub mod children;
 mod data;
 mod init;
 mod rect;
@@ -42,9 +42,7 @@ impl<T: WidgetData> Widget<T> {
     fn draw(&self, renderer: &mut CanvasRenderer) {
         let wid_int = self.internal();
         renderer.draw(&wid_int.canvas);
-        for child in wid_int.data.children().into_iter() {
-            child.anon.draw(renderer);
-        }
+        wid_int.data.children().draw(renderer);
         renderer.draw(&wid_int.canvas_after);
     }
     
@@ -61,7 +59,7 @@ impl<T: WidgetData> Widget<T> {
     }
 }
 
-impl<'a, T: WidgetData> Rect for Widget<T> {
+impl<T: WidgetData> Rect for Widget<T> {
     fn x(&self) -> Dim { self.internal().rect.x() }
     fn y(&self) -> Dim { self.internal().rect.y() }
 
@@ -74,6 +72,7 @@ impl<'a, T: WidgetData> Rect for Widget<T> {
     }
 }
 
+/*
 impl<T: WidgetData> InteractionReceiver for Widget<T> {
     fn on_touch_down(&mut self, touch: Touch) -> bool {
         let mut wid_int = self.internal_mut();
@@ -105,9 +104,10 @@ impl<T: WidgetData> InteractionReceiver for Widget<T> {
         InteractionReceiver::on_touch_down(&mut wid_int.data, touch)
     }
 }
+*/
 
 
-trait AnonWidget: InteractionReceiver {
+trait AnonWidget {
     fn draw(&self, renderer: &mut CanvasRenderer);
 }
 
