@@ -127,3 +127,19 @@ pub struct WidgetProxy<'a> {
 pub struct WidgetProxyMut<'a> {
     anon: &'a mut dyn AnonWidget,
 }
+
+pub struct OwnedWidgetProxy {
+    anon: Box<dyn AnonWidget>,
+}
+
+impl<'a> From<&'a OwnedWidgetProxy> for WidgetProxy<'a> {
+    fn from(owned: &OwnedWidgetProxy) -> WidgetProxy {
+        WidgetProxy { anon: &*owned.anon }
+    }
+}
+
+impl<'a> From<&'a mut OwnedWidgetProxy> for WidgetProxyMut<'a> {
+    fn from(owned: &mut OwnedWidgetProxy) -> WidgetProxyMut {
+        WidgetProxyMut { anon: &mut *owned.anon }
+    }
+}
