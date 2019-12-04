@@ -25,42 +25,6 @@ where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
     Varied(Vec<WidgetProxyMut<'a>>),
 }
 
-impl<'a> WidgetChildren<'a, (),(),(),()> {
-    pub fn zero() -> Self {
-        WidgetChildren::Zero
-    }
-    pub fn other(list: Vec<WidgetProxy<'a>>) -> Self {
-        WidgetChildren::Other(list)
-    }
-}
-impl<'a, A> WidgetChildren<'a, A,(),(),()>
-where A: WidgetData
-{   pub fn one(a: &'a Widget<A>) -> Self {
-        WidgetChildren::One(a)
-    }
-}
-impl<'a, A, B> WidgetChildren<'a, A,B,(),()>
-where A: WidgetData, B: WidgetData
-{   pub fn two(a: &'a Widget<A>, b: &'a Widget<B>) -> Self {
-        WidgetChildren::Two(a, b)
-    }
-}
-impl<'a, A, B, C> WidgetChildren<'a, A,B,C,()>
-where A: WidgetData, B: WidgetData, C: WidgetData
-{   pub fn three(a: &'a Widget<A>, b: &'a Widget<B>, c: &'a Widget<C>) -> Self {
-        WidgetChildren::Three(a, b, c)
-    }
-}
-impl<'a, A, B, C, D> WidgetChildren<'a, A,B,C,D>
-where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
-{   pub fn four(
-        a: &'a Widget<A>, b: &'a Widget<B>,
-        c: &'a Widget<C>, d: &'a Widget<D>) -> Self
-    {
-        WidgetChildren::Four(a, b, c, d)
-    }
-}
-
 impl<'a, A,B,C,D> WidgetChildren<'a, A,B,C,D>
 where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
 {
