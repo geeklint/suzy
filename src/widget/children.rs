@@ -10,7 +10,7 @@ where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
     Two(&'a Widget<A>,&'a Widget<B>),
     Three(&'a Widget<A>,&'a Widget<B>,&'a Widget<C>),
     Four(&'a Widget<A>,&'a Widget<B>,&'a Widget<C>,&'a Widget<D>),
-    Other(Vec<WidgetProxy<'a>>),
+    Varied(Vec<WidgetProxy<'a>>),
 }
 
 
@@ -22,7 +22,7 @@ where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
     Two(&'a mut Widget<A>,&'a mut Widget<B>),
     Three(&'a mut Widget<A>,&'a mut Widget<B>,&'a mut Widget<C>),
     Four(&'a mut Widget<A>,&'a mut Widget<B>,&'a mut Widget<C>,&'a mut Widget<D>),
-    Other(Vec<WidgetProxyMut<'a>>),
+    Varied(Vec<WidgetProxyMut<'a>>),
 }
 
 impl<'a> WidgetChildren<'a, (),(),(),()> {
@@ -81,7 +81,7 @@ where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
                 c.draw(renderer);
                 d.draw(renderer);
             },
-            Other(list) => {
+            Varied(list) => {
                 for proxy in list.into_iter() {
                     proxy.anon.draw(renderer);
                 }

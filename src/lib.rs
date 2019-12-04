@@ -130,14 +130,14 @@ macro_rules! children {
             -> $crate::widget::children::WidgetChildren<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
         {   let list = vec![ $(self.$x.proxy(),)* ];
-            $crate::widget::children::WidgetChildren::other(list)
+            $crate::widget::children::WidgetChildren::Varied(list)
         }
 
         fn children_mut(&mut self)
             -> $crate::widget::children::WidgetChildrenMut<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
         {   let list = vec! [$(self.$x.proxy_mut(),)* ];
-            $crate::widget::children::WidgetChildrenMut::other(list)
+            $crate::widget::children::WidgetChildrenMut::Varied(list)
         }
     };
 }
@@ -148,7 +148,7 @@ mod tests {
     struct NoChildren {
     }
     impl super::widget::WidgetData for NoChildren {
-        fn init(init: &mut super::widget::WidgetInit<Self>) {}
+        fn init(_init: &mut super::widget::WidgetInit<Self>) {}
         super::children!();
     }
     struct ManyChildren {
@@ -160,7 +160,7 @@ mod tests {
         f: super::widget::Widget<NoChildren>,
     }
     impl super::widget::WidgetData for ManyChildren {
-        fn init(init: &mut super::widget::WidgetInit<Self>) {}
+        fn init(_init: &mut super::widget::WidgetInit<Self>) {}
         super::children!(
             a => NoChildren,
             b => NoChildren,
