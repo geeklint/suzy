@@ -132,6 +132,12 @@ pub struct OwnedWidgetProxy {
     anon: Box<dyn AnonWidget>,
 }
 
+impl<T: WidgetData + 'static> From<Widget<T>> for OwnedWidgetProxy {
+    fn from(concrete: Widget<T>) -> OwnedWidgetProxy {
+        OwnedWidgetProxy { anon: Box::new(concrete) }
+    }
+}
+
 impl<'a> From<&'a OwnedWidgetProxy> for WidgetProxy<'a> {
     fn from(owned: &OwnedWidgetProxy) -> WidgetProxy {
         WidgetProxy { anon: &*owned.anon }

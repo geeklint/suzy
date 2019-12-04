@@ -33,6 +33,25 @@ pub mod widget;
 ///     suzy::children!(left => NoChildren, right => NoChildren);
 /// }
 /// ```
+///
+/// ```rust,no_run
+/// # struct NoChildren {
+/// # }
+/// # impl suzy::widget::WidgetData for NoChildren {
+/// #     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
+/// #     suzy::children!();
+/// # }
+/// struct UniformChildren {
+///     a: suzy::widget::Widget<NoChildren>,
+///     b: suzy::widget::Widget<NoChildren>,
+///     c: suzy::widget::Widget<NoChildren>,
+///     d: suzy::widget::Widget<NoChildren>,
+/// }
+///
+/// impl suzy::widget::WidgetData for UniformChildren {
+///     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
+///     suzy::children!(a, b, c, d; NoChildren);
+/// }
 #[macro_export]
 macro_rules! children {
     ( $($x:ident => $t:ty),+ ) => { $crate::children!($($x => $t,)*); };
@@ -121,6 +140,34 @@ macro_rules! children {
         { $crate::widget::children::WidgetChildrenMut::Four(
             &mut self.$a, &mut self.$b, &mut self.$c, &mut self.$d) }
     };
+    ($a:ident, $b:ident ; $t:ty) => {
+        $crate::children!($a => $t, $b => $t,);
+    };
+    ($a:ident, $b:ident, $c:ident ; $t:ty) => {
+        $crate::children!($a => $t, $b => $t, $c => $t,);
+    };
+    ($a:ident, $b:ident, $c:ident, $d:ident ; $t:ty) => {
+        $crate::children!($a => $t, $b => $t, $c => $t, $d => $t,);
+    };
+    ( $($x:ident),* ; $t:ty ) => {
+        type ChildA = $t;
+        type ChildB = ();
+        type ChildC = ();
+        type ChildD = ();
+        fn children(&self)
+            -> $crate::widget::children::WidgetChildren<
+                Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
+        {   let list = vec![ $(&self.$x,)* ];
+            $crate::widget::children::WidgetChildren::Uniform(list)
+        }
+
+        fn children_mut(&mut self)
+            -> $crate::widget::children::WidgetChildrenMut<
+                Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
+        {   let list = vec! [$(&mut self.$x,)* ];
+            $crate::widget::children::WidgetChildrenMut::Uniform(list)
+        }
+    };
     ( $($x:ident => $xt:ty,)* ) => {
         type ChildA = ();
         type ChildB = ();
@@ -161,14 +208,7 @@ mod tests {
     }
     impl super::widget::WidgetData for ManyChildren {
         fn init(_init: &mut super::widget::WidgetInit<Self>) {}
-        super::children!(
-            a => NoChildren,
-            b => NoChildren,
-            c => NoChildren,
-            d => NoChildren,
-            e => NoChildren,
-            f => NoChildren,
-        );
+        super::children!(a,b,c,d,e,f; NoChildren);
     }
 
     #[test]
