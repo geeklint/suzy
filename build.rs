@@ -6,7 +6,7 @@ use std::path::PathBuf;
 fn tui() {
     // Tell cargo to tell rustc to link the system ncurses
     // shared library.
-    println!("cargo:rustc-link-lib=ncurses");
+    println!("cargo:rustc-link-lib=ncursesw");
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=include/tui.h");

@@ -16,3 +16,11 @@ impl<'a> Rect for WidgetRect {
     fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) { (f)( &mut self.y ) }
 }
 
+impl<T: Rect> From<&T> for WidgetRect {
+    fn from(rect: &T) -> Self {
+        Self {
+            x: Watched::new(rect.x()),
+            y: Watched::new(rect.y()),
+        }
+    }
+}

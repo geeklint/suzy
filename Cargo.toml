@@ -6,10 +6,12 @@ edition = "2018"
 
 [features]
 default = []
-tui = []
+tui = ["libc", "gag"]
 
 [dependencies]
 drying_paint = "0.1.0"
+libc = { version = "0.2.66", optional = true }
+gag = { version = "0.1.10", optional = true }
 
 [build-dependencies]
 bindgen = "0.52.0"

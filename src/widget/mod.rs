@@ -59,6 +59,22 @@ impl<T: WidgetData> Widget<T> {
     }
 }
 
+impl<T> Widget<T>
+where T: WidgetData + Default
+{
+    pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
+        let rect = rect.into();
+        Widget {
+            watcher: Watcher::create(WidgetInternal {
+                rect,
+                canvas: Default::default(),
+                canvas_after: Default::default(),
+                data: Default::default(),
+            }),
+        }
+    }
+}
+
 impl<T: WidgetData> Rect for Widget<T> {
     fn x(&self) -> Dim { self.internal().rect.x() }
     fn y(&self) -> Dim { self.internal().rect.y() }

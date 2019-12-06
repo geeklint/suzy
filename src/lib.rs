@@ -1,3 +1,8 @@
+#[cfg(feature = "tui")]
+extern crate libc;
+#[cfg(feature = "tui")]
+extern crate gag;
+
 extern crate drying_paint;
 
 pub mod dims;
