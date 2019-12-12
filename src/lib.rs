@@ -1,3 +1,5 @@
+#[cfg(feature = "lazy_static")]
+extern crate lazy_static;
 #[cfg(feature = "tui")]
 extern crate libc;
 #[cfg(feature = "tui")]
