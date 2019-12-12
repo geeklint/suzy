@@ -5,7 +5,8 @@ use drying_paint::Watched;
 
 use crate::widget::{Widget, WidgetData};
 use crate::platform;
-use crate::dims::{SimpleRect, Rect};
+use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
+use platform::WindowEvent;
 
 thread_local! {
     static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
@@ -65,31 +66,47 @@ fn get_cell_size(width: f32, height: f32) -> f32 {
     }
 }
 
-
-pub struct App<Root>
-where Root: widget::WidgetData + Default
+pub fn run<Root>()
+where Root: WidgetData + Default
 {
-}
+    let window = platform::Window::new().unwrap();
+    let mut watch_ctx = drying_paint::WatchContext::new();
 
-impl<Root: widget::WidgetData> App<Root> {
-    pub fn run() {
-        let window = platform::Window::new().unwrap();
-        let watch_ctx = drying_paint::WatchContext::new();
-
-        let mut root = None;
-        {
-            let (width, height) = window.get_size() as (f32, f32);
-            let width = Dim::with_length(width);
-            let height = Dim::with_length(height);
-            let rect = SimpleRect::new(width, height);
-            
-            watch_ctx.with(|| {
-                root = Some(Widget<Root>::default_with_rect(&rect));
-            });
-        }
-        let root = root.unwrap();
+    let mut root = None;
+    let (width, height) = window.get_size();
+    let xdim = Dim::with_length(width);
+    let ydim = Dim::with_length(height);
+    let rect = SimpleRect::new(xdim, ydim);
+    
+    watch_ctx.with(|| {
+        root = Some(Widget::<Root>::default_with_rect(&rect));
+    });
+    APP_STACK.with(|cell| {
+        cell.borrow_mut().push(AppValues {
+            frame_start: Watched::new(time::Instant::now()),
+            cell_size: Watched::new(get_cell_size(width, height)),
+            px_per_dp: Watched::new(1.0),
+        });
+    });
+    let mut root = root.unwrap();
+    watch_ctx.with(|| {
         for event in window.events() {
+            match event {
+                WindowEvent::Resize(x, y) => {
+                    APP_STACK.with(|cell| {
+                        *cell.borrow_mut().last_mut().unwrap().cell_size = {
+                            get_cell_size(x, y)
+                        };
+                    });
+                    let xdim = Dim::with_length(width);
+                    let ydim = Dim::with_length(height);
+                    let rect = SimpleRect::new(xdim, ydim);
+                    root.set_fill(&rect, &SimplePadding2d::zero());
+                },
+                WindowEvent::KeyDown(key) => {
 
+                },
+            }
         }
-    }
+    });
 }
