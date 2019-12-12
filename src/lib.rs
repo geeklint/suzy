@@ -7,6 +7,7 @@ extern crate gag;
 
 extern crate drying_paint;
 
+pub mod app;
 pub mod dims;
 pub mod graphics;
 pub mod interaction;

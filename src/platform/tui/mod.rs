@@ -90,14 +90,14 @@ impl Window {
         Ok(Window { term, stdscr, in_, out, stdout_gag, stderr_gag, curs })
     }
 
-    pub fn get_size(&self) -> (u32, u32) {
+    pub fn get_size(&self) -> (f32, f32) {
         let rows;
         let cols;
         unsafe {
             rows = ffi::getmaxy(self.stdscr);
             cols = ffi::getmaxx(self.stdscr);
         }
-        (cols as u32, rows as u32)
+        ((cols as f32) * 16.0, (rows as f32) * 16.0)
     }
 
     pub fn events(&self) -> Events {

@@ -1,22 +1,4 @@
-use std::sync::atomic::{AtomicU32, Ordering};
-
-struct Units {
-    px: AtomicU32,
-    cell: AtomicU32,
-}
-
-static UNITS: Units = Units {
-    px: AtomicU32::new(1065353216),  // transmuted '1f32'
-    cell: AtomicU32::new(1098907648),  // transmuted '16f32'
-};
-
-pub(crate) fn set_px_per_dp(value: f32) {
-    UNITS.px.store(value.to_bits(), Ordering::Relaxed);
-}
-
-pub(crate) fn set_px_per_cell(value: f32) {
-    UNITS.cell.store(value.to_bits(), Ordering::Relaxed);
-}
+use crate::app::try_with_current;
 
 #[inline]
 pub fn to_dp(value: f32) -> f32 { value }
@@ -43,17 +25,21 @@ pub fn to_cm(value: f32) -> f32 { to_mm(value) / 10.0 }
 pub fn cm(cm: f32) -> f32 { mm(cm * 10.0) }
 
 pub fn to_px(value: f32) -> f32 {
-    value * f32::from_bits(UNITS.px.load(Ordering::Relaxed))
+    value * try_with_current(|values| *values.px_per_dp).unwrap_or(1.0)
 }
 
 pub fn px(px: f32) -> f32 {
-    px / f32::from_bits(UNITS.px.load(Ordering::Relaxed))
+    px / try_with_current(|values| *values.px_per_dp).unwrap_or(1.0)
 }
 
 pub fn to_cell(value: f32) -> i32 {
-    (value / f32::from_bits(UNITS.cell.load(Ordering::Relaxed))).round() as i32
+    let cell_size = try_with_current(
+        |values| *values.cell_size).unwrap_or(16.0);
+    (value / cell_size).round() as i32
 }
 
 pub fn cell(cell: i32) -> f32 {
-    (cell as f32) * f32::from_bits(UNITS.cell.load(Ordering::Relaxed))
+    let cell_size = try_with_current(
+        |values| *values.cell_size).unwrap_or(16.0);
+    (cell as f32) * cell_size
 }
