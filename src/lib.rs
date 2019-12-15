@@ -62,6 +62,7 @@ pub mod widget;
 ///     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
 ///     suzy::children!(a, b, c, d; NoChildren);
 /// }
+/// ```
 #[macro_export]
 macro_rules! children {
     ( $($x:ident => $t:ty),+ ) => { $crate::children!($($x => $t,)*); };
@@ -88,12 +89,18 @@ macro_rules! children {
         fn children(&self)
             -> $crate::widget::children::WidgetChildren<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        { $crate::widget::children::WidgetChildren::One(&self.$a) }
+        {   $crate::widget::children::WidgetChildren::One(
+                $crate::widget::NewWidget::as_widget(&self.$a),
+            )
+        }
 
         fn children_mut(&mut self)
             -> $crate::widget::children::WidgetChildrenMut<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        { $crate::widget::children::WidgetChildrenMut::One(&mut self.$a) }
+        {   $crate::widget::children::WidgetChildrenMut::One(
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$a),
+            )
+        }
     };
     ($a:ident => $at:ty, $b:ident => $bt:ty,) => {
         type ChildA = $at;
@@ -103,13 +110,20 @@ macro_rules! children {
         fn children(&self)
             -> $crate::widget::children::WidgetChildren<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        { $crate::widget::children::WidgetChildren::Two(&self.$a, &self.$b) }
+        {   $crate::widget::children::WidgetChildren::Two(
+                $crate::widget::NewWidget::as_widget(&self.$a),
+                $crate::widget::NewWidget::as_widget(&self.$b),
+            )
+        }
 
         fn children_mut(&mut self)
             -> $crate::widget::children::WidgetChildrenMut<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        { $crate::widget::children::WidgetChildrenMut::Two(
-            &mut self.$a, &mut self.$b) }
+        {   $crate::widget::children::WidgetChildrenMut::Two(
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$a),
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$b),
+            )
+        }
     };
     ($a:ident => $at:ty, $b:ident => $bt:ty, $c:ident => $ct:ty,) => {
         type ChildA = $at;
@@ -119,15 +133,22 @@ macro_rules! children {
         fn children(&self)
             -> $crate::widget::children::WidgetChildren<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        {   children_expr!(&self.$a, &self.$b, &self.$c) }
-        { $crate::widget::children::WidgetChildren::Three(
-            &self.$a, &self.$b, &self.$c) }
+        {   $crate::widget::children::WidgetChildren::Three(
+                $crate::widget::NewWidget::as_widget(&self.$a),
+                $crate::widget::NewWidget::as_widget(&self.$b),
+                $crate::widget::NewWidget::as_widget(&self.$c),
+            )
+        }
 
         fn children_mut(&mut self)
             -> $crate::widget::children::WidgetChildrenMut<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        { $crate::widget::children::WidgetChildrenMut::Three(
-            &mut self.$a, &mut self.$b, &mut self.$c) }
+        {   $crate::widget::children::WidgetChildrenMut::Three(
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$a),
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$b),
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$c),
+            )
+        }
     };
     (   $a:ident => $at:ty,
         $b:ident => $bt:ty,
@@ -141,14 +162,24 @@ macro_rules! children {
         fn children(&self)
             -> $crate::widget::children::WidgetChildren<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        { $crate::widget::children::WidgetChildren::Four(
-            &self.$a, &self.$b, &self.$c, &self.$d) }
+        {   $crate::widget::children::WidgetChildren::Four(
+                $crate::widget::NewWidget::as_widget(&self.$a),
+                $crate::widget::NewWidget::as_widget(&self.$b),
+                $crate::widget::NewWidget::as_widget(&self.$c),
+                $crate::widget::NewWidget::as_widget(&self.$d),
+            )
+        }
 
         fn children_mut(&mut self)
             -> $crate::widget::children::WidgetChildrenMut<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        { $crate::widget::children::WidgetChildrenMut::Four(
-            &mut self.$a, &mut self.$b, &mut self.$c, &mut self.$d) }
+        {   $crate::widget::children::WidgetChildrenMut::Four(
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$a),
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$b),
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$c),
+                $crate::widget::NewWidget::as_widget_mut(&mut self.$d),
+            )
+        }
     };
     ($a:ident, $b:ident ; $t:ty) => {
         $crate::children!($a => $t, $b => $t,);
@@ -167,14 +198,18 @@ macro_rules! children {
         fn children(&self)
             -> $crate::widget::children::WidgetChildren<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        {   let list = vec![ $(&self.$x,)* ];
+        {   let list = vec![
+                $( $crate::widget::NewWidget::as_widget(&self.$x),)*
+            ];
             $crate::widget::children::WidgetChildren::Uniform(list)
         }
 
         fn children_mut(&mut self)
             -> $crate::widget::children::WidgetChildrenMut<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        {   let list = vec! [$(&mut self.$x,)* ];
+        {   let list = vec![
+                $( $crate::widget::NewWidget::as_widget_mut(&mut self.$x),)*
+            ];
             $crate::widget::children::WidgetChildrenMut::Uniform(list)
         }
     };
@@ -186,14 +221,20 @@ macro_rules! children {
         fn children(&self)
             -> $crate::widget::children::WidgetChildren<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        {   let list = vec![ $(self.$x.proxy(),)* ];
+        {   let list = vec![
+                $( $crate::widget::NewWidget::as_widget(&self.$x).proxy(),)*
+            ];
             $crate::widget::children::WidgetChildren::Varied(list)
         }
 
         fn children_mut(&mut self)
             -> $crate::widget::children::WidgetChildrenMut<
                 Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-        {   let list = vec! [$(self.$x.proxy_mut(),)* ];
+        {   let list = vec![
+                $( $crate::widget::NewWidget::as_widget_mut(&mut self.$x)
+                    .proxy_mut(),
+                )*
+            ];
             $crate::widget::children::WidgetChildrenMut::Varied(list)
         }
     };

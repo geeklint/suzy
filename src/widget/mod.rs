@@ -88,6 +88,19 @@ impl<T: WidgetData> Rect for Widget<T> {
     }
 }
 
+pub trait NewWidget {
+    type Data: WidgetData;
+
+    fn as_widget(&self) -> &Widget<Self::Data>;
+    fn as_widget_mut(&mut self) -> &mut Widget<Self::Data>;
+}
+
+impl<T: WidgetData> NewWidget for Widget<T> {
+    type Data = T;
+    fn as_widget(&self) -> &Widget<Self::Data> { self }
+    fn as_widget_mut(&mut self) -> &mut Widget<Self::Data> { self }
+}
+
 /*
 impl<T: WidgetData> InteractionReceiver for Widget<T> {
     fn on_touch_down(&mut self, touch: Touch) -> bool {

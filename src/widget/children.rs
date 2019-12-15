@@ -50,8 +50,13 @@ where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
         use WidgetChildren::*;
         match self {
             Zero => (),
-            One(a) => a.draw(renderer),
-            Two(a,b) => { a.draw(renderer); b.draw(renderer) },
+            One(a) => {
+                a.draw(renderer);
+            },
+            Two(a,b) => {
+                a.draw(renderer);
+                b.draw(renderer);
+            },
             Three(a,b,c) => {
                 a.draw(renderer);
                 b.draw(renderer);
