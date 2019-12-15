@@ -12,6 +12,7 @@ thread_local! {
     static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
 }
 
+#[derive(Clone)]
 pub(crate) struct AppValues {
     pub frame_start: Watched<time::Instant>,
     pub cell_size: Watched<f32>,
@@ -66,47 +67,74 @@ fn get_cell_size(width: f32, height: f32) -> f32 {
     }
 }
 
-pub fn run<Root>()
+pub struct App<Root>
+where Root: WidgetData
+{
+    watch_ctx: drying_paint::WatchContext,
+    window: platform::Window,
+    root: Widget<Root>,
+    values: AppValues,
+}
+
+impl<Root> App<Root> where Root: WidgetData {
+    pub fn tick(&mut self) {
+        let mut values = self.values.clone();
+        std::mem::swap(&mut values, &mut self.values);
+        self.watch_ctx.with(|| {
+            *values.frame_start = time::Instant::now();
+            APP_STACK.with(|cell| cell.borrow_mut().push(values));
+            for event in self.window.events() {
+                match event {
+                    WindowEvent::Resize(x, y) => {
+                        APP_STACK.with(|cell| {
+                            *cell.borrow_mut().last_mut().unwrap().cell_size = {
+                                get_cell_size(x, y)
+                            };
+                        });
+                        let xdim = Dim::with_length(x);
+                        let ydim = Dim::with_length(y);
+                        let rect = SimpleRect::new(xdim, ydim);
+                        self.root.set_fill(&rect, &SimplePadding2d::zero());
+                    },
+                    WindowEvent::KeyDown(key) => {
+
+                    },
+                }
+            }
+            drying_paint::WatchContext::update_current();
+            // do draw here
+        });
+        self.values = {
+            APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap()
+        };
+    }
+}
+
+
+impl<Root> App<Root>
 where Root: WidgetData + Default
 {
-    let window = platform::Window::new().unwrap();
-    let mut watch_ctx = drying_paint::WatchContext::new();
+    pub fn new() -> Self {
+        let window = platform::Window::new().unwrap();
+        let mut watch_ctx = drying_paint::WatchContext::new();
 
-    let mut root = None;
-    let (width, height) = window.get_size();
-    let xdim = Dim::with_length(width);
-    let ydim = Dim::with_length(height);
-    let rect = SimpleRect::new(xdim, ydim);
-    
-    watch_ctx.with(|| {
-        root = Some(Widget::<Root>::default_with_rect(&rect));
-    });
-    APP_STACK.with(|cell| {
-        cell.borrow_mut().push(AppValues {
-            frame_start: Watched::new(time::Instant::now()),
-            cell_size: Watched::new(get_cell_size(width, height)),
-            px_per_dp: Watched::new(1.0),
+        let mut root = None;
+        let (width, height) = window.get_size();
+        let xdim = Dim::with_length(width);
+        let ydim = Dim::with_length(height);
+        let rect = SimpleRect::new(xdim, ydim);
+        
+        APP_STACK.with(|cell| {
+            cell.borrow_mut().push(AppValues {
+                frame_start: Watched::new(time::Instant::now()),
+                cell_size: Watched::new(get_cell_size(width, height)),
+                px_per_dp: Watched::new(1.0),
+            });
         });
-    });
-    let mut root = root.unwrap();
-    watch_ctx.with(|| {
-        for event in window.events() {
-            match event {
-                WindowEvent::Resize(x, y) => {
-                    APP_STACK.with(|cell| {
-                        *cell.borrow_mut().last_mut().unwrap().cell_size = {
-                            get_cell_size(x, y)
-                        };
-                    });
-                    let xdim = Dim::with_length(width);
-                    let ydim = Dim::with_length(height);
-                    let rect = SimpleRect::new(xdim, ydim);
-                    root.set_fill(&rect, &SimplePadding2d::zero());
-                },
-                WindowEvent::KeyDown(key) => {
-
-                },
-            }
-        }
-    });
+        let root = watch_ctx.with(|| {
+            Widget::<Root>::default_with_rect(&rect)
+        });
+        let values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
+        Self { watch_ctx, window, root, values }
+    }
 }
