@@ -12,9 +12,10 @@ pub mod dims;
 pub mod graphics;
 pub mod interaction;
 pub mod math;
-pub mod window;
 pub mod units;
 pub mod widget;
+pub mod window;
+pub(crate) mod platform;
 
 /// ```rust,no_run
 /// struct NoChildren {

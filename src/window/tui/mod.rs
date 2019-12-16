@@ -4,8 +4,7 @@ use std::ffi::CStr;
 use std::convert::TryInto;
 use std::os::unix::io::{AsRawFd, IntoRawFd};
 
-mod ffi;
-
+use crate::platform::tui as ffi;
 
 pub struct Window {
     term: *mut ffi::screen,

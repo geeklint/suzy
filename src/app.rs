@@ -4,9 +4,9 @@ use std::time;
 use drying_paint::Watched;
 
 use crate::widget::{Widget, WidgetData};
-use crate::platform;
+use crate::window;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
-use platform::WindowEvent;
+use window::WindowEvent;
 
 thread_local! {
     static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
@@ -71,7 +71,7 @@ pub struct App<Root>
 where Root: WidgetData
 {
     watch_ctx: drying_paint::WatchContext,
-    window: platform::Window,
+    window: window::Window,
     root: Widget<Root>,
     values: AppValues,
 }
@@ -118,7 +118,7 @@ impl<Root> App<Root>
 where Root: WidgetData + Default
 {
     pub fn new() -> Self {
-        let window = platform::Window::new().unwrap();
+        let window = window::Window::new().unwrap();
         let mut watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.get_size();
