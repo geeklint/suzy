@@ -12,7 +12,7 @@ pub mod dims;
 pub mod graphics;
 pub mod interaction;
 pub mod math;
-pub mod platform;
+pub mod window;
 pub mod units;
 pub mod widget;
 
