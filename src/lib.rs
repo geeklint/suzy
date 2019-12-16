@@ -1,9 +1,11 @@
 #[cfg(feature = "lazy_static")]
 extern crate lazy_static;
-#[cfg(feature = "tui")]
+#[cfg(feature = "libc")]
 extern crate libc;
-#[cfg(feature = "tui")]
+#[cfg(feature = "gag")]
 extern crate gag;
+#[cfg(feature = "widestring")]
+extern crate widestring;
 
 extern crate drying_paint;
 

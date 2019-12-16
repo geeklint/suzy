@@ -1,33 +1,56 @@
 use std::convert::TryFrom;
 
-pub struct WrongMeasure;
+use widestring::WideCString;
 
-pub struct SingleCellChar {
-    symbol: String,
+use crate::platform::tui as ffi;
+
+pub struct MeasuredString {
+    string: WideCString,
+    len: usize,
 }
 
-impl TryFrom<String> for SingleCellChar {
-    type Error = WrongMeasure;
+impl MeasuredString {
+    pub fn len(&self) -> usize { self.len }
+}
 
-    fn try_from(symbol: String) -> Result<SingleCellChar, WrongMeasure> {
-        if symbol.len() == 1 {
-            let ch = symbol.chars().next().unwrap();
-            if ch == ' ' || ch.is_ascii_graphic() {
-                Ok(SingleCellChar { symbol })
-            } else {
-                Err(WrongMeasure)
-            }
+impl MeasuredString {
+    // TODO: fill in real error
+    fn from_str(s: impl AsRef<str>) -> Result<MeasuredString, ()> {
+        let string = if let Ok(string) = WideCString::from_str(s) {
+            string
         } else {
-            Err(WrongMeasure)
+            return Err(())
+        };
+        let ptr = string.as_ptr() as *const libc::wchar_t;
+        if unsafe { ffi::mvaddwstr(0, 0, ptr) } == ffi::ERR {
+            return Err(())
         }
+        let row = unsafe { ffi::getcury(ffi::stdscr) };
+        let col = unsafe { ffi::getcurx(ffi::stdscr) };
+        if row != 0 {
+            return Err(());
+        }
+        Ok(MeasuredString { string, len: col as usize })
     }
 }
 
-impl TryFrom<&str> for SingleCellChar {
-    type Error = WrongMeasure;
+pub struct WrongMeasure;
 
-    fn try_from(symbol: &str) -> Result<SingleCellChar, WrongMeasure> {
-        Self::try_from(symbol.to_owned())
+pub struct SingleCellChar {
+    symbol: WideCString,
+}
+
+impl SingleCellChar {
+    fn from_str(s: impl AsRef<str>) -> Result<SingleCellChar, WrongMeasure> {
+        if let Ok(ms) = MeasuredString::from_str(s) {
+            if ms.len() == 1 {
+                Ok(SingleCellChar { symbol: ms.string })
+            } else {
+                Err(WrongMeasure {})
+            }
+        } else {
+            Err(WrongMeasure {})
+        }
     }
 }
 
