@@ -174,7 +174,7 @@ impl Iterator for Events<'_> {
             let height = (rows as f32) * 16.0;
             Some(super::WindowEvent::Resize(width, height))
         } else {
-            None
+            Some(super::WindowEvent::KeyDown(event))
         }
     }
 }
