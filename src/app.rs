@@ -77,6 +77,10 @@ where Root: WidgetData
 }
 
 impl<Root> App<Root> where Root: WidgetData {
+    pub fn sync(&mut self) {
+        self.window.flip();
+    }
+
     pub fn tick(&mut self) {
         let mut values = self.values.clone();
         std::mem::swap(&mut values, &mut self.values);
