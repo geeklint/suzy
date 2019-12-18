@@ -125,9 +125,16 @@ impl Window {
     }
 
     pub fn flip(&mut self) {
-        unsafe {
+        let ch = unsafe {
             ffi::refresh();
+            ffi::nodelay(self.stdscr, false);
+            ffi::halfdelay(1);
+            ffi::getch()
+        };
+        if ch != ffi::ERR {
+            unsafe { ffi::ungetch(ch); }
         }
+        unsafe { ffi::nodelay(self.stdscr, true); }
     }
 }
 
