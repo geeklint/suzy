@@ -74,11 +74,19 @@ where Root: WidgetData
     window: window::Window,
     root: Widget<Root>,
     values: AppValues,
+    quit: bool,
 }
 
 impl<Root> App<Root> where Root: WidgetData {
     pub fn sync(&mut self) {
         self.window.flip();
+    }
+
+    pub fn run(&mut self) {
+        while !self.quit {
+            self.tick();
+            self.sync();
+        }
     }
 
     pub fn tick(&mut self) {
@@ -87,6 +95,7 @@ impl<Root> App<Root> where Root: WidgetData {
         let watch_ctx = &mut self.watch_ctx;
         let window = &mut self.window;
         let root = &mut self.root;
+        let quit = &mut self.quit;
         watch_ctx.with(|| {
             *values.frame_start = time::Instant::now();
             APP_STACK.with(|cell| cell.borrow_mut().push(values));
@@ -104,7 +113,9 @@ impl<Root> App<Root> where Root: WidgetData {
                         root.set_fill(&rect, &SimplePadding2d::zero());
                     },
                     WindowEvent::KeyDown(key) => {
-
+                        if key == 0x1b {
+                            *quit = true;
+                        }
                     },
                 }
             }
@@ -141,6 +152,6 @@ where Root: WidgetData + Default
             Widget::<Root>::default_with_rect(&rect)
         });
         let values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
-        Self { watch_ctx, window, root, values }
+        Self { watch_ctx, window, root, values, quit: false }
     }
 }
