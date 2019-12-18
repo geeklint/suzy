@@ -1,10 +1,16 @@
 use std::fs;
 use std::io;
-use std::ffi::CStr;
+use std::ffi::{CString, CStr};
 use std::convert::TryInto;
 use std::os::unix::io::{AsRawFd, IntoRawFd};
 
 use crate::platform::tui as ffi;
+
+macro_rules! assert_nerr {
+    ($res:expr) => {
+        assert!($res != ffi::ERR, "Curses Library Error");
+    };
+}
 
 pub struct Window {
     term: *mut ffi::screen,
@@ -58,35 +64,50 @@ impl Window {
             out = in_;
             (stdout_gag, stderr_gag)
         };
+        assert!(unsafe { libc::isatty(in_) } != 0);
+        assert!(unsafe { libc::isatty(out) } != 0);
         let in_ = unsafe {
             libc::fdopen(
                 in_,
                 CStr::from_bytes_with_nul_unchecked(b"r\0").as_ptr())
         };
+        if in_.is_null() {
+            panic!("Could not turn in_ into FILE *");
+        }
         let out = unsafe {
             libc::fdopen(
                 out,
                 CStr::from_bytes_with_nul_unchecked(b"w\0").as_ptr())
         };
+        if out.is_null() {
+            panic!("Could not turn out into FILE *");
+        }
         let term = unsafe {
             ffi::newterm(
                 std::ptr::null(),
                 out as *mut ffi::FILE,
-                in_ as *mut ffi::FILE)
+                in_ as *mut ffi::FILE,
+            )
         };
+        if term.is_null() {
+            panic!("Curses newterm returned null");
+        }
         let stdscr = unsafe {
             ffi::set_term(term);
             ffi::initscr()
         };
-        let curs;
-        unsafe {
-            ffi::noecho();
-            ffi::cbreak();
-            ffi::keypad(stdscr, true);
-            ffi::halfdelay(1);
-            curs = ffi::curs_set(0);
+        if stdscr.is_null() {
+            panic!("Curses initscr returned null");
         }
-        Ok(Window { term, stdscr, in_, out, stdout_gag, stderr_gag, curs })
+        let curs = unsafe {
+            assert_nerr!(ffi::noecho());
+            assert_nerr!(ffi::cbreak());
+            assert_nerr!(ffi::keypad(stdscr, true));
+            assert_nerr!(ffi::nodelay(stdscr, true));
+            ffi::curs_set(0)
+        };
+        unsafe { ffi::clear(); }
+        Ok(Window { term, stdscr, curs, in_, out, stdout_gag, stderr_gag })
     }
 
     pub fn get_size(&self) -> (f32, f32) {
