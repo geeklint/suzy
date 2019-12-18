@@ -61,7 +61,7 @@ impl Window {
                 None
             };
             in_ = tty.into_raw_fd();
-            out = in_;
+            out = unsafe { libc::dup(in_) };
             (stdout_gag, stderr_gag)
         };
         assert!(unsafe { libc::isatty(in_) } != 0);
