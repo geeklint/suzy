@@ -94,7 +94,7 @@ impl Window {
         }
         let stdscr = unsafe {
             ffi::set_term(term);
-            ffi::initscr()
+            ffi::stdscr
         };
         if stdscr.is_null() {
             panic!("Curses initscr returned null");
