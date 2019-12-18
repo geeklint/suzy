@@ -400,13 +400,13 @@ pub trait Rect {
     /// Calculate the width and horizontal position of this rect based on
     /// another rect and some padding
     fn set_fill_width<R: Rect>(&mut self, other: &R, padding: Padding) {
-        self.x().set_fill(other.x(), padding);
+        self.x_mut(|x| x.set_fill(other.x(), padding));
     }
 
     /// Calculate the height and vertical position of this rect based on
     /// another rect and some padding
     fn set_fill_height<R: Rect>(&mut self, other: &R, padding: Padding) {
-        self.y().set_fill(other.y(), padding);
+        self.y_mut(|y| y.set_fill(other.y(), padding));
     }
 
     /// Calculate the size and position of this rect based on another rect
@@ -414,8 +414,8 @@ pub trait Rect {
     fn set_fill<R, P>(&mut self, other: &R, padding: &P)
         where R: Rect, P: Padding2d
     {
-        self.x().set_fill(other.x(), padding.x());
-        self.y().set_fill(other.y(), padding.y());
+        self.x_mut(|x| x.set_fill(other.x(), padding.x()));
+        self.y_mut(|y| y.set_fill(other.y(), padding.y()));
     }
 
     /// Check if another rect is completely contained within this one
