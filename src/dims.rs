@@ -392,6 +392,10 @@ pub trait Rect {
     /// Get the area of the rectangle
     fn area(&self) -> f32 { self.x().length * self.y().length }
 
+    /// Get the aspect ratio of this rectangle (width / height)
+    /// Note: this may be a non-normal number
+    fn aspect(&self) -> f32 { self.x().length / self.y().length }
+
     /// Check if a point is inside the rectangle
     fn contains(&self, point: (f32, f32)) -> bool {
         self.x().contains(point.0) && self.y().contains(point.1)
@@ -416,6 +420,36 @@ pub trait Rect {
     {
         self.x_mut(|x| x.set_fill(other.x(), padding.x()));
         self.y_mut(|y| y.set_fill(other.y(), padding.y()));
+    }
+
+    /// Shink one of the lengths of this rect so that the rect's aspect ratio
+    /// becomes the one provided
+    fn set_fit_aspect(&mut self, aspect: f32) {
+        let self_aspect = self.aspect();
+        if self_aspect == aspect {
+            // do nothing
+        } else if self_aspect < aspect {  // we are relatively taller
+            let new = self.x().length / aspect;
+            self.y_mut(|y| y.length = new);
+        } else {  // we're relatively wider
+            let new = self.y().length * aspect;
+            self.x_mut(|x| x.length = new);
+        }
+    }
+
+    /// Expand one of the lengths of this rect so that the rect's aspect ratio
+    /// becomes the one provided
+    fn set_fill_aspect(&mut self, aspect: f32) {
+        let self_aspect = self.aspect();
+        if self_aspect == aspect {
+            // do nothing
+        } else if self_aspect < aspect {  // we are relatively taller
+            let new = self.y().length * aspect;
+            self.x_mut(|x| x.length = new);
+        } else {  // we're relatively wider
+            let new = self.x().length / aspect;
+            self.y_mut(|y| y.length = new);
+        }
     }
 
     /// Check if another rect is completely contained within this one
