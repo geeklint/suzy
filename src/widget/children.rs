@@ -46,36 +46,36 @@ for WidgetChildrenMut<'a, T,(),(),()>
 impl<'a, A,B,C,D> WidgetChildren<'a, A,B,C,D>
 where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
 {
-    pub(super) fn draw(self, renderer: &mut graphics::CanvasRenderer) {
+    pub(super) fn draw(self) {
         use WidgetChildren::*;
         match self {
             Zero => (),
             One(a) => {
-                a.draw(renderer);
+                a.draw();
             },
             Two(a,b) => {
-                a.draw(renderer);
-                b.draw(renderer);
+                a.draw();
+                b.draw();
             },
             Three(a,b,c) => {
-                a.draw(renderer);
-                b.draw(renderer);
-                c.draw(renderer);
+                a.draw();
+                b.draw();
+                c.draw();
             },
             Four(a,b,c,d) => {
-                a.draw(renderer);
-                b.draw(renderer);
-                c.draw(renderer);
-                d.draw(renderer);
+                a.draw();
+                b.draw();
+                c.draw();
+                d.draw();
             },
             Uniform(list) => {
                 for widget in list.into_iter() {
-                    widget.draw(renderer);
+                    widget.draw();
                 }
             },
             Varied(list) => {
                 for proxy in list.into_iter() {
-                    proxy.anon.draw(renderer);
+                    proxy.anon.draw();
                 }
             },
         }

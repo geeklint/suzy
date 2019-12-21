@@ -124,6 +124,10 @@ impl Window {
         Events { window: self }
     }
 
+    pub fn clear(&self) {
+        unsafe { ffi::erase(); }
+    }
+
     pub fn flip(&mut self) {
         let ch = unsafe {
             ffi::refresh();

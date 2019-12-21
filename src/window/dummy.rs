@@ -15,6 +15,10 @@ impl Window {
         Events { window: self }
     }
 
+    pub fn clear(&self) {
+        unimplemented!()
+    }
+
     pub fn flip(&mut self) {
         unimplemented!()
     }

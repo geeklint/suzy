@@ -32,14 +32,14 @@ pub fn px(px: f32) -> f32 {
     px / try_with_current(|values| *values.px_per_dp).unwrap_or(1.0)
 }
 
-pub fn to_cell(value: f32) -> i32 {
+pub fn to_cells(value: f32) -> i32 {
     let cell_size = try_with_current(
         |values| *values.cell_size).unwrap_or(16.0);
     (value / cell_size).round() as i32
 }
 
-pub fn cell(cell: i32) -> f32 {
+pub fn cells(cells: i32) -> f32 {
     let cell_size = try_with_current(
         |values| *values.cell_size).unwrap_or(16.0);
-    (cell as f32) * cell_size
+    (cells as f32) * cell_size
 }

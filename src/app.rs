@@ -17,10 +17,12 @@ pub(crate) struct AppValues {
     pub frame_start: Watched<time::Instant>,
     pub cell_size: Watched<f32>,
     pub px_per_dp: Watched<f32>,
+    pub window_size: (f32, f32),
 }
 
 pub(crate) fn try_with_current<F, R>(func: F) -> Option<R>
-where F: FnOnce(&AppValues) -> R
+where
+    F: FnOnce(&AppValues) -> R
 {
     APP_STACK.with(|cell| {
         if let Some(top) = cell.borrow().last() {
@@ -28,6 +30,17 @@ where F: FnOnce(&AppValues) -> R
         } else {
             None
         }
+    })
+}
+
+pub(crate) fn expect_current<F, R>(func: F) -> R
+where
+    F: FnOnce(&AppValues) -> R
+{
+    APP_STACK.with(|cell| {
+        let stack = cell.borrow();
+        let top = stack.last().expect("App context is not valid");
+        (func)(top)
     })
 }
 
@@ -78,6 +91,12 @@ where Root: WidgetData
 }
 
 impl<Root> App<Root> where Root: WidgetData {
+    pub fn time() -> time::Instant {
+        try_with_current(|values| {
+            *values.frame_start
+        }).unwrap_or_else(time::Instant::now)
+    }
+
     pub fn sync(&mut self) {
         self.window.flip();
     }
@@ -103,9 +122,11 @@ impl<Root> App<Root> where Root: WidgetData {
                 match event {
                     WindowEvent::Resize(x, y) => {
                         APP_STACK.with(|cell| {
-                            *cell.borrow_mut().last_mut().unwrap().cell_size = {
-                                get_cell_size(x, y)
-                            };
+                            let mut handle = cell.borrow_mut();
+                            let values = handle.last_mut().unwrap();
+                            *values.cell_size = get_cell_size(x, y);
+                            values.window_size.0 = x;
+                            values.window_size.1 = y;
                         });
                         let xdim = Dim::with_length(x);
                         let ydim = Dim::with_length(y);
@@ -120,8 +141,9 @@ impl<Root> App<Root> where Root: WidgetData {
                 }
             }
             drying_paint::WatchContext::update_current();
-            // do draw here
         });
+        window.clear();
+        root.draw();
         self.values = {
             APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap()
         };
@@ -146,6 +168,7 @@ where Root: WidgetData + Default
                 frame_start: Watched::new(time::Instant::now()),
                 cell_size: Watched::new(get_cell_size(width, height)),
                 px_per_dp: Watched::new(1.0),
+                window_size: (width, height),
             });
         });
         let root = watch_ctx.with(|| {

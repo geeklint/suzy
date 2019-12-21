@@ -3,7 +3,7 @@ use std::cell::{Ref, RefMut};
 use drying_paint::{Watcher, WatcherMeta, WatcherInit};
 
 use crate::dims::{Rect, Dim};
-use crate::graphics::{Canvas, CanvasRenderer};
+use crate::graphics::Graphic;
 
 pub mod children;
 mod data;
@@ -22,8 +22,6 @@ pub struct Widget<T: WidgetData> {
 #[derive(Default)]
 struct WidgetInternal<T: WidgetData> {
     rect: WidgetRect,
-    canvas: Canvas,
-    canvas_after: Canvas,
     data: T,
 }
 
@@ -39,11 +37,12 @@ impl<T: WidgetData> Widget<T> {
         self.watcher.data_mut()
     }
 
-    fn draw(&self, renderer: &mut CanvasRenderer) {
+    pub(crate) fn draw(&self) {
         let wid_int = self.internal();
-        renderer.draw(&wid_int.canvas);
-        wid_int.data.children().draw(renderer);
-        renderer.draw(&wid_int.canvas_after);
+        let data = &wid_int.data;
+        data.graphic().draw();
+        data.children().draw();
+        data.graphic_after().draw();
     }
     
     /// Get an anonymous reference to this widget. This is required by
@@ -67,8 +66,6 @@ where T: WidgetData + Default
         Widget {
             watcher: Watcher::create(WidgetInternal {
                 rect,
-                canvas: Default::default(),
-                canvas_after: Default::default(),
                 data: Default::default(),
             }),
         }
@@ -137,12 +134,12 @@ impl<T: WidgetData> InteractionReceiver for Widget<T> {
 
 
 trait AnonWidget {
-    fn draw(&self, renderer: &mut CanvasRenderer);
+    fn draw(&self);
 }
 
 impl<T: WidgetData> AnonWidget for Widget<T> {
-    fn draw(&self, renderer: &mut CanvasRenderer) {
-        Widget::draw(self, renderer);
+    fn draw(&self) {
+        Widget::draw(self);
     }
 }
 

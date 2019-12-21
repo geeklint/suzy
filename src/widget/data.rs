@@ -1,3 +1,4 @@
+use crate::graphics;
 
 use super::children;
 use super::{WidgetInit};
@@ -27,6 +28,12 @@ pub trait WidgetData: Sized {
         -> children::WidgetChildrenMut<
             Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
     ;
+
+    type Graphic: graphics::Graphic + ?Sized;
+    type GraphicAfter: graphics::Graphic + ?Sized;
+
+    fn graphic(&self) -> &Self::Graphic;
+    fn graphic_after(&self) -> &Self::GraphicAfter;
 }
 
 impl WidgetData for () {
@@ -44,4 +51,10 @@ impl WidgetData for () {
     fn children_mut(&mut self) -> children::WidgetChildrenMut<(),(),(),()> {
         children::WidgetChildrenMut::Zero
     }
+
+    type Graphic = ();
+    type GraphicAfter = ();
+
+    fn graphic(&self) -> &() { &() }
+    fn graphic_after(&self) -> &() { &() }
 }
