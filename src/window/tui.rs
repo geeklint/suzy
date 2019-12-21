@@ -120,6 +120,8 @@ impl Window {
         ((cols as f32) * 16.0, (rows as f32) * 16.0)
     }
 
+    pub fn get_pixels_per_dp(&self) -> f32 { 1.0 }
+
     pub fn events(&self) -> Events {
         Events { window: self }
     }
