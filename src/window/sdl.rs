@@ -1,126 +1,118 @@
 
 use std::io;
-use std::mem::MaybeUninit;
-use std::os::raw::{c_int, c_float};
 
-use crate::platform::sdl as ffi;
+use sdl2::event::{Event, WindowEvent};
+use sdl2::video::WindowBuildError;
+
+fn s2io(msg: String) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, msg)
+}
 
 pub struct Window {
-    window: *mut ffi::SDL_Window,
-    context: ffi::SDL_GLContext,
+    sdl: sdl2::Sdl,
+    video: sdl2::VideoSubsystem,
+    window: sdl2::video::Window,
+    context: sdl2::video::GLContext,
 }
 
 impl Window {
     pub fn new() -> Result<Self, io::Error> {
-        if unsafe { ffi::SDL_Init(ffi::SDL_INIT_EVERYTHING) } < 0 {
-            return Err(io::Error::new(io::ErrorKind::Other, "SDL_Init failed"));
-        }
-        unsafe {
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_RED_SIZE, 5);
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_GREEN_SIZE, 5);
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_BLUE_SIZE, 5);
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_DOUBLEBUFFER, 1);
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_MULTISAMPLEBUFFERS, 1);
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_MULTISAMPLESAMPLES, 4);
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-            ffi::SDL_GL_SetAttribute(ffi::SDL_GLattr_SDL_GL_CONTEXT_MINOR_VERSION, 3);
-        }
-
-        let title = std::ffi::CString::new("Suzy Window").unwrap();
-
-        let window = unsafe {
-            ffi::SDL_CreateWindow(
-                title.as_ptr(),
-                100,
-                100,
-                1024, 480,
-                ffi::SDL_WindowFlags_SDL_WINDOW_OPENGL | ffi::SDL_WindowFlags_SDL_WINDOW_ALLOW_HIGHDPI,
-            )
-        };
-        assert!(!window.is_null(), "Failed to create SDL Window");
-        unsafe {
-            ffi::SDL_GL_SetSwapInterval(1);
-        }
-        let context = unsafe { ffi::SDL_GL_CreateContext(window) };
-        assert!(!context.is_null(), "Failed to create OpenGL Context");
-        Ok(Window { window, context })
+        let sdl = sdl2::init().map_err(s2io)?;
+        let video = sdl.video().map_err(s2io)?;
+        let video2 = video.clone();
+        gl::load_with(move |s| {
+            video2.gl_get_proc_address(s) as *const std::ffi::c_void
+        });
+        let gl_attr = video.gl_attr();
+        gl_attr.set_red_size(5);
+        gl_attr.set_green_size(5);
+        gl_attr.set_blue_size(5);
+        gl_attr.set_double_buffer(true);
+        gl_attr.set_multisample_buffers(1);
+        gl_attr.set_multisample_samples(4);
+        gl_attr.set_context_version(3, 3);
+        let mut win_builder = video.window("Suzy Window", 1024, 480);
+        win_builder.opengl().allow_highdpi().resizable();
+        let window = match win_builder.build() {
+            Ok(window) => Ok(window),
+            Err(WindowBuildError::SdlError(msg)) => Err(s2io(msg)),
+            _ => panic!("Unexpected window builder error!"),
+        }?;
+        video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
+        let context = window.gl_create_context().map_err(s2io)?;
+        Ok(Window { sdl, video, window, context })
     }
 
     pub fn get_size(&self) -> (f32, f32) {
         let ppd = self.get_pixels_per_dp();
-        let width = 0;
-        let height = 0;
-        unsafe {
-            ffi::SDL_GL_GetDrawableSize(
-                self.window,
-                &mut width as *mut c_int,
-                &mut height as *mut c_int,
-            );
-        }
+        let (width, height) = self.window.drawable_size();
         ((width as f32) / ppd, (height as f32) / ppd)
     }
 
     pub fn get_pixels_per_dp(&self) -> f32 {
-        let display = unsafe { ffi::SDL_GetWindowDisplayIndex(self.window) };
-        if display < 0 {
-            panic!("failed to get display index");
+        let display = self.window.display_index()
+            .expect("Failed to get window display index");
+        match self.video.display_dpi(display) {
+            Ok((ddpi, hdpi, vdpi)) => {
+                let dpi = ((hdpi + vdpi) / 2.0) as f32;
+                dpi / 160.0
+            }
+            Err(msg) => {
+                panic!("Failed to get dpi from display {}: {}",
+                    display, msg
+                )
+            }
         }
-        let nan = std::f32::NAN as c_float;
-        let ddpi = nan;
-        let hdpi = nan;
-        let vdpi = nan;
-        let error = unsafe {
-            ffi::SDL_GetDisplayDPI(
-                display,
-                &mut ddpi as *mut c_float,
-                &mut hdpi as *mut c_float,
-                &mut vdpi as *mut c_float,
-            )
-        };
-        if error != 0 {
-            panic!("failed to get dpi information from display {}", display);
-        }
-        let dpi = ((hdpi + vdpi) / 2.0) as f32;
-        dpi / 160.0
     }
 
     pub fn events(&self) -> Events {
-        Events { window: self }
+        Events {
+            window: self,
+            events: self.sdl.event_pump().unwrap(),
+        }
     }
 
     pub fn clear(&self) {
 		unsafe {
-            ffi::glClear(ffi::GL_COLOR_BUFFER_BIT | ffi::GL_DEPTH_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
     }
 
     pub fn flip(&mut self) {
-		unsafe { ffi::SDL_GL_SwapWindow(self.window); }
+		self.window.gl_swap_window();
     }
 }
 
 pub struct Events<'a> {
     window: &'a Window,
+    events: sdl2::EventPump,
+}
+
+impl Events<'_> {
+    fn win_event(&self, win_event: WindowEvent) -> Option<super::WindowEvent> {
+        Some(match win_event {
+            WindowEvent::SizeChanged(_, _) => {
+                let (width, height) = self.window.get_size();
+                super::WindowEvent::Resize(width, height)
+            }
+            _ => return None,
+        })
+    }
 }
 
 impl Iterator for Events<'_> {
     type Item = super::WindowEvent;
     fn next(&mut self) -> Option<super::WindowEvent> {
-        let event = MaybeUninit::uninit();
-        while unsafe { ffi::SDL_PollEvent(event.as_mut_ptr()) } != 0 {
-            let event = &*event.as_ptr();
-            match event.type_ {
-                ffi::SDL_EventType_SDL_WINDOWEVENT => {
-                    match event.window.event as u32 {
-                        ffi::SDL_WindowEventID_SDL_WINDOWEVENT_SIZE_CHANGED => {
-                            let (width, height) = self.window.get_size();
-                            return Some(super::WindowEvent::Resize(width, height));
-                        }
-                        _ => continue,
+        while let Some(event) = self.events.poll_event() {
+            return Some(match event {
+                Event::Window { win_event, .. } => {
+                    match self.win_event(win_event) {
+                        Some(ev) => ev,
+                        None => continue,
                     }
                 }
                 _ => continue,
-            }
+            })
         }
         None
     }
