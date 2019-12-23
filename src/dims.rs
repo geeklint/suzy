@@ -430,10 +430,10 @@ pub trait Rect {
             // do nothing
         } else if self_aspect < aspect {  // we are relatively taller
             let new = self.x().length / aspect;
-            self.y_mut(|y| y.length = new);
+            self.set_height(new);
         } else {  // we're relatively wider
             let new = self.y().length * aspect;
-            self.x_mut(|x| x.length = new);
+            self.set_width(new);
         }
     }
 
@@ -445,10 +445,10 @@ pub trait Rect {
             // do nothing
         } else if self_aspect < aspect {  // we are relatively taller
             let new = self.y().length * aspect;
-            self.x_mut(|x| x.length = new);
+            self.set_width(new);
         } else {  // we're relatively wider
             let new = self.x().length / aspect;
-            self.y_mut(|y| y.length = new);
+            self.set_height(new)
         }
     }
 
@@ -486,5 +486,47 @@ impl<'a> Rect for SimpleRect {
 impl<R: Rect> From<&R> for SimpleRect {
     fn from(rect: &R) -> Self {
         Self { x: rect.x(), y: rect.y() }
+    }
+}
+
+/// A rectangular region which will ignore changes to size
+#[derive(Copy, Clone)]
+pub struct FixedSizeRect {
+    x: Dim,
+    y: Dim,
+}
+
+impl FixedSizeRect {
+    pub fn new(x: Dim, y: Dim) -> Self {
+        Self { x, y }
+    }
+
+    pub fn default_pos(width: f32, height: f32) -> Self {
+        let x = Dim::with_length(width);
+        let y = Dim::with_length(height);
+        Self { x, y }
+    }
+}
+
+impl<'a> Rect for FixedSizeRect {
+    fn x(&self) -> Dim { self.x }
+    fn y(&self) -> Dim { self.y }
+
+    fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
+        let width = self.x.length;
+        (f)(&mut self.x);
+        self.x.length = width;
+    }
+
+    fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
+        let height = self.y.height;
+        (f)(&mut self.y);
+        self.y.height = height;
+    }
+}
+
+impl From<SimpleRect> for FixedSizeRect {
+    fn from(rect: SimpleRect) -> Self {
+        Self { x: rect.x, y: rect.y }
     }
 }
