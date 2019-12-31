@@ -1,8 +1,12 @@
 
 use std::io;
 
+use gl::types::*;
+
 use sdl2::event::{Event, WindowEvent};
 use sdl2::video::WindowBuildError;
+
+use crate::platform::opengl::{Shader, ProgramCompileError};
 
 fn s2io(msg: String) -> io::Error {
     io::Error::new(io::ErrorKind::Other, msg)
@@ -13,6 +17,8 @@ pub struct Window {
     video: sdl2::VideoSubsystem,
     window: sdl2::video::Window,
     context: sdl2::video::GLContext,
+    vao: GLuint,
+    std_shader: Shader,
 }
 
 impl Window {
@@ -40,10 +46,32 @@ impl Window {
         gl::load_with(move |s| {
             video2.gl_get_proc_address(s) as *const std::ffi::c_void
         });
-        Ok(Window { sdl, video, window, context })
+        let mut vao = 0;
+        unsafe {
+            gl::GenVertexArrays(1, &mut vao as *mut _);
+            gl::BindVertexArray(vao);
+            gl::EnableVertexAttribArray(0);
+            gl::EnableVertexAttribArray(1);
+        }
+        let std_shader = Shader::standard().map_err(|err| {
+            let msg = match err {
+                ProgramCompileError::Vertex(msg) => msg,
+                ProgramCompileError::Fragment(msg) => msg,
+                ProgramCompileError::Link(msg) => msg,
+            };
+            s2io(msg.to_string_lossy().into_owned())
+        })?;
+        Ok(Window { sdl, video, window, context, vao, std_shader })
     }
 
     pub fn before_draw(&mut self) {
+        unsafe {
+            gl::BindVertexArray(self.vao);
+            self.std_shader.set_current();
+            let (width, height) = self.get_size();
+            self.std_shader.set_uniform_float("VUniforms.screen_width", width);
+            self.std_shader.set_uniform_float("VUniforms.screen_height", height);
+        }
     }
 
     pub fn get_size(&self) -> (f32, f32) {
