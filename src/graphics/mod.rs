@@ -1,3 +1,4 @@
+use crate::math::Color;
 
 pub mod image;
 
