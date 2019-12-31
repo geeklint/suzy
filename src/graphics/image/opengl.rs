@@ -21,7 +21,7 @@ impl Texture {
         data: *const c_void,
     ) -> Self {
         Self::create_custom(
-            gl::GL_RGBA,
+            gl::RGBA,
             width, height,
             format, type_,
             data
@@ -36,7 +36,7 @@ impl Texture {
         data: *const c_void,
     ) -> Self {
         Self::create_custom(
-            gl::GL_RGB,
+            gl::RGB,
             width, height,
             format, type_,
             data
@@ -51,7 +51,7 @@ impl Texture {
         data: *const c_void,
     ) -> Self {
         Self::create_custom(
-            gl::GL_RED,
+            gl::RED,
             width, height,
             format, type_,
             data
@@ -59,20 +59,20 @@ impl Texture {
     }
 
     pub unsafe fn create_custom(
-        internalformat: GLint,
+        internalformat: GLenum,
         width: GLsizei,
         height: GLsizei,
         format: GLenum,
         type_: GLenum,
         data: *const c_void,
     ) -> Self {
-        let id = 0;
-        gl::GenTextures(1, &id as *mut _);
-        gl::BindTexture(gl::GL_TEXTURE_2D, id);
+        let mut id = 0;
+        gl::GenTextures(1, &mut id as *mut _);
+        gl::BindTexture(gl::TEXTURE_2D, id);
         gl::TexImage2D(
-            gl::GL_TEXTURE_2D,
+            gl::TEXTURE_2D,
             0,
-            internalformat,
+            internalformat as GLint,
             width, height,
             0,
             format, type_,
