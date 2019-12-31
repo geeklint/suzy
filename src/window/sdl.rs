@@ -20,9 +20,6 @@ impl Window {
         let sdl = sdl2::init().map_err(s2io)?;
         let video = sdl.video().map_err(s2io)?;
         let video2 = video.clone();
-        gl::load_with(move |s| {
-            video2.gl_get_proc_address(s) as *const std::ffi::c_void
-        });
         let gl_attr = video.gl_attr();
         gl_attr.set_red_size(5);
         gl_attr.set_green_size(5);
@@ -40,6 +37,9 @@ impl Window {
         }?;
         video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context().map_err(s2io)?;
+        gl::load_with(move |s| {
+            video2.gl_get_proc_address(s) as *const std::ffi::c_void
+        });
         Ok(Window { sdl, video, window, context })
     }
 
