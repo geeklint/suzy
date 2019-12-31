@@ -43,6 +43,9 @@ impl Window {
         Ok(Window { sdl, video, window, context })
     }
 
+    pub fn before_draw(&mut self) {
+    }
+
     pub fn get_size(&self) -> (f32, f32) {
         let ppd = self.get_pixels_per_dp();
         let (width, height) = self.window.drawable_size();
