@@ -519,9 +519,9 @@ impl<'a> Rect for FixedSizeRect {
     }
 
     fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
-        let height = self.y.height;
+        let height = self.y.length;
         (f)(&mut self.y);
-        self.y.height = height;
+        self.y.length = height;
     }
 }
 
