@@ -147,9 +147,23 @@ impl SlicedImage {
             tbo: buffers[1],
             ebo: buffers[2],
         };
+        image.init_vertices();
         image.calc_uvs();
         image.gen_indices();
         image
+    }
+
+    fn init_vertices(&self) {
+        let vertices: [GLfloat; 32] = [0.0; 32];
+        unsafe {
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                std::mem::size_of_val(&vertices) as GLsizeiptr,
+                vertices.as_ptr() as *const c_void,
+                gl::DYNAMIC_DRAW,
+            );
+        }
     }
 
     fn gen_indices(&self) {
@@ -227,11 +241,11 @@ impl SlicedImage {
         ];
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
-            gl::BufferData(
+            gl::BufferSubData(
                 gl::ARRAY_BUFFER,
+                0,
                 std::mem::size_of_val(&vertices) as GLsizeiptr,
                 vertices.as_ptr() as *const c_void,
-                gl::DYNAMIC_DRAW,
             );
         }
         self.dirty.set(false);

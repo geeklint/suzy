@@ -17,4 +17,5 @@ pub use dummy::*;
 pub enum WindowEvent {
     Resize(f32, f32),
     KeyDown(i32),
+    Quit,
 }

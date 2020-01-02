@@ -120,6 +120,9 @@ impl<Root> App<Root> where Root: WidgetData {
             APP_STACK.with(|cell| cell.borrow_mut().push(values));
             for event in window.events() {
                 match event {
+                    WindowEvent::Quit => {
+                        *quit = true;
+                    }
                     WindowEvent::Resize(x, y) => {
                         APP_STACK.with(|cell| {
                             let mut handle = cell.borrow_mut();

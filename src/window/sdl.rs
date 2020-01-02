@@ -21,6 +21,25 @@ pub struct Window {
     std_shader: Shader,
 }
 
+extern "system" fn message_callback(
+    source: GLenum,
+    gltype: GLenum,
+    id: GLuint,
+    severity: GLenum,
+    length: GLsizei,
+    message: *const GLchar,
+    user_param: *mut std::ffi::c_void,
+) {
+    let data = unsafe {
+        std::slice::from_raw_parts(message as *const u8, length as usize)
+    };
+    if let Ok(string) = std::str::from_utf8(data) {
+        println!("{}", string);
+    } else {
+        println!("OpenGL message not falid utf8");
+    }
+}
+
 impl Window {
     pub fn new() -> Result<Self, io::Error> {
         let sdl = sdl2::init().map_err(s2io)?;
@@ -34,7 +53,7 @@ impl Window {
         gl_attr.set_multisample_buffers(1);
         gl_attr.set_multisample_samples(4);
         gl_attr.set_context_version(3, 3);
-        let mut win_builder = video.window("Suzy Window", 1024, 480);
+        let mut win_builder = video.window("Suzy Window", 480, 480);
         win_builder.opengl().allow_highdpi().resizable();
         let window = match win_builder.build() {
             Ok(window) => Ok(window),
@@ -46,6 +65,13 @@ impl Window {
         gl::load_with(move |s| {
             video2.gl_get_proc_address(s) as *const std::ffi::c_void
         });
+        unsafe {
+            gl::Enable(gl::DEBUG_OUTPUT);
+            gl::DebugMessageCallback(
+                Some(message_callback),
+                std::ptr::null(),
+            );
+        }
         let mut vao = 0;
         unsafe {
             gl::GenVertexArrays(1, &mut vao as *mut _);
@@ -69,8 +95,8 @@ impl Window {
             gl::BindVertexArray(self.vao);
             self.std_shader.set_current();
             let (width, height) = self.get_size();
-            self.std_shader.set_uniform_float("VUniforms.screen_width", width);
-            self.std_shader.set_uniform_float("VUniforms.screen_height", height);
+            self.std_shader.set_uniform_float("SCREEN_WIDTH", width);
+            self.std_shader.set_uniform_float("SCREEN_HEIGHT", height);
         }
     }
 
@@ -110,7 +136,8 @@ impl Window {
     }
 
     pub fn flip(&mut self) {
-		self.window.gl_swap_window();
+        unsafe { gl::Flush() };
+        self.window.gl_swap_window();
     }
 }
 
@@ -122,9 +149,15 @@ pub struct Events<'a> {
 impl Events<'_> {
     fn win_event(&self, win_event: WindowEvent) -> Option<super::WindowEvent> {
         Some(match win_event {
-            WindowEvent::SizeChanged(_, _) => {
+            WindowEvent::SizeChanged(width, height) => {
+                unsafe {
+                    gl::Viewport(0, 0, width, height);
+                }
                 let (width, height) = self.window.get_size();
                 super::WindowEvent::Resize(width, height)
+            }
+            WindowEvent::Close => {
+                super::WindowEvent::Quit
             }
             _ => return None,
         })
