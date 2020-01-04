@@ -34,7 +34,11 @@ impl DrawParams {
 
     pub fn use_texture(&mut self, texture: &Texture) {
         let mut shader = self.shader.borrow_mut();
-        shader.set_uniform_opaque("TEX_ID", texture.id);
+        unsafe {
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, texture.id);
+        }
+        shader.set_uniform_opaque("TEX_ID", 0);
         shader.set_uniform_vec2(
             "TEX_OFFSET",
             (texture.offset[0], texture.offset[1]),
