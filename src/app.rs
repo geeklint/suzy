@@ -146,8 +146,8 @@ impl<Root> App<Root> where Root: WidgetData {
             drying_paint::WatchContext::update_current();
         });
         window.clear();
-        window.before_draw();
-        root.draw();
+        let mut ctx = window.before_draw();
+        root.draw(&mut ctx);
         self.values = {
             APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap()
         };

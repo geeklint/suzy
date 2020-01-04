@@ -3,7 +3,7 @@ use std::cell::{Ref, RefMut};
 use drying_paint::{Watcher, WatcherMeta, WatcherInit};
 
 use crate::dims::{Rect, Dim};
-use crate::graphics::Graphic;
+use crate::graphics::{Graphic, DrawContext};
 
 pub mod children;
 mod data;
@@ -37,12 +37,12 @@ impl<T: WidgetData> Widget<T> {
         self.watcher.data_mut()
     }
 
-    pub(crate) fn draw(&self) {
+    pub(crate) fn draw(&self, ctx: &mut DrawContext) {
         let wid_int = self.internal();
         let data = &wid_int.data;
-        data.graphic().draw();
-        data.children().draw();
-        data.graphic_after().draw();
+        data.graphic().draw(ctx);
+        data.children().draw(ctx);
+        data.graphic_after().draw(ctx);
     }
     
     /// Get an anonymous reference to this widget. This is required by
@@ -134,12 +134,12 @@ impl<T: WidgetData> InteractionReceiver for Widget<T> {
 
 
 trait AnonWidget {
-    fn draw(&self);
+    fn draw(&self, ctx: &mut DrawContext);
 }
 
 impl<T: WidgetData> AnonWidget for Widget<T> {
-    fn draw(&self) {
-        Widget::draw(self);
+    fn draw(&self, ctx: &mut DrawContext) {
+        Widget::draw(self, ctx);
     }
 }
 

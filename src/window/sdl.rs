@@ -1,4 +1,6 @@
 
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::io;
 
 use gl::types::*;
@@ -7,6 +9,7 @@ use sdl2::event::{Event, WindowEvent};
 use sdl2::video::WindowBuildError;
 
 use crate::platform::opengl::{Shader, ProgramCompileError};
+use crate::graphics::{DrawContext, DrawParams};
 
 fn s2io(msg: String) -> io::Error {
     io::Error::new(io::ErrorKind::Other, msg)
@@ -18,7 +21,7 @@ pub struct Window {
     window: sdl2::video::Window,
     context: sdl2::video::GLContext,
     vao: GLuint,
-    std_shader: Shader,
+    std_shader: Rc<RefCell<Shader>>,
 }
 
 extern "system" fn message_callback(
@@ -87,17 +90,20 @@ impl Window {
             };
             s2io(msg.to_string_lossy().into_owned())
         })?;
+        let std_shader = Rc::new(RefCell::new(std_shader));
         Ok(Window { sdl, video, window, context, vao, std_shader })
     }
 
-    pub fn before_draw(&mut self) {
+    pub fn before_draw(&mut self) -> DrawContext {
         unsafe {
             gl::BindVertexArray(self.vao);
-            self.std_shader.set_current();
+            let mut std_shader = self.std_shader.borrow_mut();
+            std_shader.set_current();
             let (width, height) = self.get_size();
-            self.std_shader.set_uniform_float("SCREEN_WIDTH", width);
-            self.std_shader.set_uniform_float("SCREEN_HEIGHT", height);
+            std_shader.set_uniform_vec2("SCREEN_SIZE", (width, height));
         }
+        let starting = DrawParams::new(self.std_shader.clone());
+        DrawContext::new(starting)
     }
 
     pub fn get_size(&self) -> (f32, f32) {

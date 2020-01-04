@@ -1,36 +1,104 @@
 use std::ffi::c_void;
+use std::rc::Rc;
 
 use gl::types::*;
 
-use crate::graphics::Graphic;
+use crate::graphics::{Graphic, DrawContext};
 use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
+use crate::math::Color;
 
-pub struct Texture {
+#[derive(Debug)]
+struct TextureData {
     id: GLuint,
-    width: f32,
-    height: f32,
+}
+
+impl TextureData {
+    unsafe fn create(format: GLenum, width: GLsizei, height: GLsizei)
+        -> Rc<Self>
+    {
+        let mut id = 0;
+        gl::GenTextures(1, &mut id as *mut _);
+        gl::BindTexture(gl::TEXTURE_2D, id);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            format as GLint,
+            width, height,
+            0,
+            gl::RGBA, gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        Rc::new(Self { id })
+    }
+
+    unsafe fn sub_image(
+        &self,
+        xoffset: GLint,
+        yoffset: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type_: GLenum,
+        pixels: *const c_void,
+    ) {
+        gl::BindTexture(gl::TEXTURE_2D, self.id);
+        gl::TexSubImage2D(
+            gl::TEXTURE_2D,
+            0,
+            xoffset, yoffset,
+            width, height,
+            format, type_,
+            pixels,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as GLint
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as GLint
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as GLint
+        );
+        gl::GenerateMipmap(gl::TEXTURE_2D);
+    }
+}
+
+impl Drop for TextureData {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteTextures(1, &self.id as *const _);
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Texture {
+    _obj: Rc<TextureData>,
+    pub(crate) id: GLuint,
+    pub(crate) size: [f32; 2],
+    pub(crate) offset: [f32; 2],
+    pub(crate) scale: [f32; 2],
 }
 
 impl Texture {
-    pub fn width(&self) -> f32 { self.width }
-    pub fn height(&self) -> f32 { self.height }
-
-    pub fn from_gl(id: GLuint, width: f32, height: f32) -> Self {
-        Self { id, width, height }
-    }
+    pub fn width(&self) -> f32 { self.size[0] }
+    pub fn height(&self) -> f32 { self.size[1] }
 
     pub unsafe fn create(
         width: GLsizei,
         height: GLsizei,
         format: GLenum,
         type_: GLenum,
-        data: *const c_void,
+        pixels: *const c_void,
     ) -> Self {
         Self::create_custom(
-            gl::RGBA,
+            gl::RGBA8,
             width, height,
             format, type_,
-            data
+            pixels
         )
     }
 
@@ -39,13 +107,13 @@ impl Texture {
         height: GLsizei,
         format: GLenum,
         type_: GLenum,
-        data: *const c_void,
+        pixels: *const c_void,
     ) -> Self {
         Self::create_custom(
-            gl::RGB,
+            gl::RGB8,
             width, height,
             format, type_,
-            data
+            pixels
         )
     }
 
@@ -54,13 +122,13 @@ impl Texture {
         height: GLsizei,
         format: GLenum,
         type_: GLenum,
-        data: *const c_void,
+        pixels: *const c_void,
     ) -> Self {
         Self::create_custom(
-            gl::RED,
+            gl::R8,
             width, height,
             format, type_,
-            data
+            pixels
         )
     }
 
@@ -70,25 +138,53 @@ impl Texture {
         height: GLsizei,
         format: GLenum,
         type_: GLenum,
-        data: *const c_void,
+        pixels: *const c_void,
     ) -> Self {
-        let mut id = 0;
-        gl::GenTextures(1, &mut id as *mut _);
-        gl::BindTexture(gl::TEXTURE_2D, id);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            internalformat as GLint,
-            width, height,
-            0,
-            format, type_,
-            data,
-        );
-        Self::from_gl(id, width as f32, height as f32)
+        let width_pot = (width as u32).next_power_of_two() as GLsizei;
+        let height_pot = (height as u32).next_power_of_two() as GLsizei;
+        let obj;
+        unsafe {
+            obj = TextureData::create(
+                internalformat,
+                width_pot, height_pot,
+            );
+            obj.sub_image(
+                0, 0, 
+                width, height,
+                format, type_,
+                pixels,
+            );
+        }
+        let scale = [
+            (width as f32) / (width_pot as f32),
+            (height as f32) / (height_pot as f32),
+        ];
+        Self {
+            id: obj.id,
+            _obj: obj,
+            size: [width as f32, height as f32],
+            offset: [0.0, 0.0],
+            scale,
+        }
+    }
+
+    pub unsafe fn small(color: Color) -> Self {
+        let (r, g, b, a) = color.rgba();
+        let data: [GLfloat; 16] = [
+            r, g, b, a,
+            r, g, b, a,
+            r, g, b, a,
+            r, g, b, a,
+        ];
+        Self::create(
+            2, 2,
+            gl::RGBA, gl::FLOAT,
+            data.as_ptr() as *const c_void,
+        )
     }
 
     pub unsafe fn tiny() -> Self {
-        let data: [GLfloat; 4] = [0.0; 4];
+        let data: [GLfloat; 4] = [1.0; 4];
         Self::create_gray(
             2, 2,
             gl::RED, gl::FLOAT,
@@ -268,10 +364,11 @@ impl Rect for SlicedImage {
 }
 
 impl Graphic for SlicedImage {
-    fn draw(&self) {
+    fn draw(&self, ctx: &mut DrawContext) {
         if self.dirty.get() {
             self.update();
         }
+        DrawContext::push(ctx).use_texture(&self.texture);
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
             gl::VertexAttribPointer(
@@ -299,5 +396,6 @@ impl Graphic for SlicedImage {
                 std::ptr::null(),
             );
         }
+        DrawContext::pop(ctx);
     }
 }

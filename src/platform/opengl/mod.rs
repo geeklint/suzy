@@ -25,7 +25,7 @@ macro_rules! info_log {
                     array.as_mut_ptr() as *mut GLchar,
                 );
             }
-            array.truncate(actual_len as usize);
+            array.truncate((actual_len + 1) as usize);
             CStr::from_bytes_with_nul(&array).unwrap().to_owned()
         }
     };
@@ -127,7 +127,7 @@ impl Shader {
         unsafe { gl::UseProgram(self.program_id) };
     }
 
-    pub fn set_uniform_float(&mut self, name: &str, value: GLfloat) {
+    fn get_uniform_loc(&mut self, name: &str) -> GLint {
         let prog_id = self.program_id;
         let uid = *self.uniforms.entry(name.into()).or_insert_with(|| {
             let name = CString::new(name)
@@ -139,9 +139,38 @@ impl Shader {
                 )
             }
         });
-        assert_ne!(uid, -1);
+        assert_ne!(uid, -1, "Failed to get uniform {}", name);
+        uid
+    }
+
+    pub fn set_uniform_opaque(&mut self, name: &str, value: GLuint) {
         unsafe {
-            gl::Uniform1f(uid, value);
+            gl::Uniform1i(self.get_uniform_loc(name), value as GLint);
+        }
+    }
+
+    pub fn set_uniform_float(&mut self, name: &str, value: GLfloat) {
+        unsafe {
+            gl::Uniform1f(self.get_uniform_loc(name), value);
+        }
+    }
+
+    pub fn set_uniform_vec2(&mut self, name: &str, value: (GLfloat, GLfloat)) {
+        unsafe {
+            gl::Uniform2f(self.get_uniform_loc(name), value.0, value.1);
+        }
+    }
+
+    pub fn set_uniform_vec4(
+        &mut self,
+        name: &str,
+        value: (GLfloat, GLfloat, GLfloat, GLfloat),
+    ) {
+        unsafe {
+            gl::Uniform4f(
+                self.get_uniform_loc(name),
+                value.0, value.1, value.2, value.3,
+            );
         }
     }
 }

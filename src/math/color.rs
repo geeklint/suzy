@@ -12,11 +12,11 @@ pub struct Color {
 const MAX8: f32 = std::u8::MAX as f32;
 
 impl Color {
-    pub const fn rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
+    pub const fn create_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
         Color { r, g, b, a }
     }
 
-    pub fn rgba8(r: u8, g: u8, b: u8, a: u8) -> Self {
+    pub fn create_rgba8(r: u8, g: u8, b: u8, a: u8) -> Self {
         Color {
             r: (r as f32) / MAX8,
             g: (g as f32) / MAX8,
@@ -25,12 +25,23 @@ impl Color {
         }
     }
 
-    pub const fn rgb(r: f32, g: f32, b: f32) -> Self {
-        Self::rgba(r, g, b, 1.0)
+    pub const fn create_rgb(r: f32, g: f32, b: f32) -> Self {
+        Self::create_rgba(r, g, b, 1.0)
     }
 
-    pub fn rgb8(r: u8, g: u8, b: u8) -> Self {
-        Self::rgba8(r, g, b, u8::max_value())
+    pub fn create_rgb8(r: u8, g: u8, b: u8) -> Self {
+        Self::create_rgba8(r, g, b, u8::max_value())
+    }
+
+    pub fn rgba(&self) -> (f32, f32, f32, f32) {
+        (self.r, self.g, self.b, self.a)
+    }
+
+    pub fn tint(&mut self, other: Self) {
+        self.r *= other.r;
+        self.g *= other.g;
+        self.b *= other.b;
+        self.a *= other.a;
     }
 }
 
@@ -61,7 +72,7 @@ impl Lerp for &Color {
 impl From<u32> for Color {
     fn from(code: u32) -> Self {
         let array = code.to_be_bytes();
-        Color::rgba8(array[1], array[2], array[3], array[0])
+        Color::create_rgba8(array[1], array[2], array[3], array[0])
     }
 }
 

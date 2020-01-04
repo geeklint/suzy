@@ -1,11 +1,15 @@
 #version 330 core
 
+uniform vec4 TINT_COLOR;
+
+uniform sampler2D TEX_ID;
+
 in VertexData {
     vec2 uv;
 } i;
 
-out vec3 out_color;
+out vec4 out_color;
 
 void main() {
-    out_color = vec3(1,0,1);
+    out_color = TINT_COLOR * texture(TEX_ID, i.uv);
 }
