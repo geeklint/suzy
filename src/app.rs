@@ -1,12 +1,14 @@
 use std::cell::RefCell;
 use std::time;
+use std::convert::TryInto;
 
 use drying_paint::Watched;
 
+use crate::platform::DefaultWindow;
 use crate::widget::{Widget, WidgetData};
 use crate::window;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
-use window::WindowEvent;
+use window::{WindowEvent, WindowSettings};
 
 thread_local! {
     static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
@@ -80,17 +82,48 @@ fn get_cell_size(width: f32, height: f32) -> f32 {
     }
 }
 
-pub struct App<Root>
-where Root: WidgetData
+#[derive(Default)]
+pub struct AppBuilder {
+    win: window::WindowBuilder,
+}
+
+impl window::WindowSettings for AppBuilder {
+    fn size(&self) -> (f32, f32) { self.win.size() }
+    
+    fn set_size(&mut self, size: (f32, f32)) {
+        self.win.set_size(size);
+    }
+
+    fn title(&self) -> &str { self.win.title() }
+
+    fn set_title(&mut self, title: String) {
+        self.win.set_title(title);
+    }
+
+    fn fullscreen(&self) -> bool { self.win.fullscreen() }
+
+    fn set_fullscreen(&mut self, fullscreen: bool) {
+        self.win.set_fullscreen(fullscreen);
+    }
+}
+
+pub struct App<Root, W>
+where
+    Root: WidgetData,
+    for<'a> W: window::Window<'a>,
 {
     watch_ctx: drying_paint::WatchContext,
-    window: window::Window,
+    window: W,
     root: Widget<Root>,
     values: AppValues,
     quit: bool,
 }
 
-impl<Root> App<Root> where Root: WidgetData {
+impl<Root, W> App<Root, W>
+where
+    Root: WidgetData,
+    for<'a> W: window::Window<'a>,
+{
     pub fn time() -> time::Instant {
         try_with_current(|values| {
             *values.frame_start
@@ -154,15 +187,15 @@ impl<Root> App<Root> where Root: WidgetData {
     }
 }
 
-
-impl<Root> App<Root>
+impl<Root> App<Root, DefaultWindow>
 where Root: WidgetData + Default
 {
     pub fn new() -> Self {
-        let window = window::Window::new().unwrap();
+        let builder = AppBuilder::default();
+        let window: DefaultWindow = builder.win.try_into().unwrap();
         let mut watch_ctx = drying_paint::WatchContext::new();
 
-        let (width, height) = window.get_size();
+        let (width, height) = window.size();
         let xdim = Dim::with_length(width);
         let ydim = Dim::with_length(height);
         let rect = SimpleRect::new(xdim, ydim);

@@ -1,7 +1,5 @@
 use crate::math::Color;
-
-mod drawparams;
-pub mod image;
+use crate::platform::DrawParams;
 
 pub trait Graphic {
     fn draw(&self, ctx: &mut DrawContext);
@@ -26,8 +24,6 @@ impl Graphic for [Box<dyn Graphic>] {
         }
     }
 }
-
-pub use drawparams::DrawParams;
 
 pub struct DrawContext {
     current: DrawParams,
