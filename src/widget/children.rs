@@ -1,9 +1,13 @@
 use crate::graphics;
 
-use super::{Widget, WidgetProxy, WidgetProxyMut, WidgetData};
+use super::{Widget, WidgetProxy, WidgetProxyMut, WidgetContent};
 
 pub enum WidgetChildren<'a, A,B,C,D>
-where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
+where
+    A: WidgetContent,
+    B: WidgetContent,
+    C: WidgetContent,
+    D: WidgetContent,
 {
     Zero,
     One(&'a Widget<A>),
@@ -16,7 +20,11 @@ where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
 
 
 pub enum WidgetChildrenMut<'a, A,B,C,D>
-where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
+where
+    A: WidgetContent,
+    B: WidgetContent,
+    C: WidgetContent,
+    D: WidgetContent,
 {
     Zero,
     One(&'a mut Widget<A>),
@@ -27,7 +35,7 @@ where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
     Varied(Vec<WidgetProxyMut<'a>>),
 }
 
-impl<'a, T: WidgetData> From<&'a [Widget<T>]>
+impl<'a, T: WidgetContent> From<&'a [Widget<T>]>
 for WidgetChildren<'a, T,(),(),()>
 {
     fn from(widgets: &'a [Widget<T>]) -> Self {
@@ -35,7 +43,7 @@ for WidgetChildren<'a, T,(),(),()>
     }
 }
 
-impl<'a, T: WidgetData> From<&'a mut [Widget<T>]>
+impl<'a, T: WidgetContent> From<&'a mut [Widget<T>]>
 for WidgetChildrenMut<'a, T,(),(),()>
 {
     fn from(widgets: &'a mut [Widget<T>]) -> Self {
@@ -44,7 +52,11 @@ for WidgetChildrenMut<'a, T,(),(),()>
 }
 
 impl<'a, A,B,C,D> WidgetChildren<'a, A,B,C,D>
-where A: WidgetData, B: WidgetData, C: WidgetData, D: WidgetData
+where
+    A: WidgetContent,
+    B: WidgetContent,
+    C: WidgetContent,
+    D: WidgetContent,
 {
     pub(super) fn draw(self, ctx: &mut graphics::DrawContext) {
         use WidgetChildren::*;

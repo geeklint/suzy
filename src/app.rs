@@ -5,7 +5,7 @@ use std::convert::TryInto;
 use drying_paint::Watched;
 
 use crate::platform::DefaultWindow;
-use crate::widget::{Widget, WidgetData};
+use crate::widget::{Widget, WidgetContent};
 use crate::window;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
 use window::{WindowEvent, WindowSettings};
@@ -109,7 +109,7 @@ impl window::WindowSettings for AppBuilder {
 
 pub struct App<Root, W>
 where
-    Root: WidgetData,
+    Root: WidgetContent,
     for<'a> W: window::Window<'a>,
 {
     watch_ctx: drying_paint::WatchContext,
@@ -121,7 +121,7 @@ where
 
 impl<Root, W> App<Root, W>
 where
-    Root: WidgetData,
+    Root: WidgetContent,
     for<'a> W: window::Window<'a>,
 {
     pub fn time() -> time::Instant {
@@ -188,7 +188,7 @@ where
 }
 
 impl<Root> App<Root, DefaultWindow>
-where Root: WidgetData + Default
+where Root: WidgetContent + Default
 {
     pub fn new() -> Self {
         let builder = AppBuilder::default();

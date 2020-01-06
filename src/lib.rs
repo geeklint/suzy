@@ -27,7 +27,7 @@ pub(crate) mod platform;
 /// struct NoChildren {
 /// }
 ///
-/// impl suzy::widget::WidgetData for NoChildren {
+/// impl suzy::widget::WidgetContent for NoChildren {
 ///     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
 ///     suzy::children!();
 ///     type Graphic = ();
@@ -40,7 +40,7 @@ pub(crate) mod platform;
 /// ```rust,no_run
 /// # struct NoChildren {
 /// # }
-/// # impl suzy::widget::WidgetData for NoChildren {
+/// # impl suzy::widget::WidgetContent for NoChildren {
 /// #     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
 /// #     suzy::children!();
 /// #     type Graphic = ();
@@ -53,7 +53,7 @@ pub(crate) mod platform;
 ///     right: suzy::widget::Widget<NoChildren>,
 /// }
 ///
-/// impl suzy::widget::WidgetData for TwoChildren {
+/// impl suzy::widget::WidgetContent for TwoChildren {
 ///     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
 ///     suzy::children!(left => NoChildren, right => NoChildren);
 ///     type Graphic = ();
@@ -66,7 +66,7 @@ pub(crate) mod platform;
 /// ```rust,no_run
 /// # struct NoChildren {
 /// # }
-/// # impl suzy::widget::WidgetData for NoChildren {
+/// # impl suzy::widget::WidgetContent for NoChildren {
 /// #     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
 /// #     suzy::children!();
 /// #     type Graphic = ();
@@ -81,7 +81,7 @@ pub(crate) mod platform;
 ///     d: suzy::widget::Widget<NoChildren>,
 /// }
 ///
-/// impl suzy::widget::WidgetData for UniformChildren {
+/// impl suzy::widget::WidgetContent for UniformChildren {
 ///     fn init(init: &mut suzy::widget::WidgetInit<Self>) {}
 ///     suzy::children!(a, b, c, d; NoChildren);
 ///     type Graphic = ();
@@ -272,7 +272,7 @@ macro_rules! children {
 mod tests {
     struct NoChildren {
     }
-    impl super::widget::WidgetData for NoChildren {
+    impl super::widget::WidgetContent for NoChildren {
         fn init(_init: &mut super::widget::WidgetInit<Self>) {}
         super::children!();
         type Graphic = ();
@@ -288,7 +288,7 @@ mod tests {
         e: super::widget::Widget<NoChildren>,
         f: super::widget::Widget<NoChildren>,
     }
-    impl super::widget::WidgetData for ManyChildren {
+    impl super::widget::WidgetContent for ManyChildren {
         fn init(_init: &mut super::widget::WidgetInit<Self>) {}
         super::children!(a,b,c,d,e,f; NoChildren);
         type Graphic = ();

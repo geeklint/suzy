@@ -5,15 +5,15 @@ use super::{WidgetInit};
 
 /// This trait should be implemented for the types you provide as data for
 /// Widget implementations.
-pub trait WidgetData: Sized {
+pub trait WidgetContent: Sized {
     /// This method provides a convient place to register functions which
     /// watch values and update parts of your widget when they change
     fn init(init: &mut WidgetInit<Self>);
 
-    type ChildA: WidgetData;
-    type ChildB: WidgetData;
-    type ChildC: WidgetData;
-    type ChildD: WidgetData;
+    type ChildA: WidgetContent;
+    type ChildB: WidgetContent;
+    type ChildC: WidgetContent;
+    type ChildD: WidgetContent;
 
     /// Custom widgets must define a way to iterate over their children
     /// if they want those children to be visible
@@ -36,7 +36,7 @@ pub trait WidgetData: Sized {
     fn graphic_after(&self) -> &Self::GraphicAfter;
 }
 
-impl WidgetData for () {
+impl WidgetContent for () {
     fn init(_init: &mut WidgetInit<Self>) {}
 
     type ChildA = ();
