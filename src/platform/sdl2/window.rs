@@ -4,6 +4,7 @@ use sdl2::event::Event;
 use sdl2::event::WindowEvent as sdl_WindowEvent;
 use sdl2::video::WindowBuildError;
 
+use crate::graphics::DrawContext;
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
@@ -217,6 +218,10 @@ impl<'a> window::Window<'a> for Window {
             window: self,
             new_pixel_info: None,
         }
+    }
+
+    fn prepare_draw(&mut self) -> DrawContext {
+        self.gl_win.prepare_draw(self.size())
     }
 }
 

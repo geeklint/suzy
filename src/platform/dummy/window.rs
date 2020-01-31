@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
+use crate::graphics::DrawContext;
 
 pub struct Window {}
 
@@ -33,6 +34,8 @@ impl<'a> window::Window<'a> for Window {
 
     type Events = Events<'a>;
     fn events(&'a mut self) -> Self::Events { stub!() }
+
+    fn prepare_draw(&mut self) -> DrawContext { stub!() }
 }
 
 pub struct Events<'a> {

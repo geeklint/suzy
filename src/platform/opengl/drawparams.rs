@@ -2,50 +2,42 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use crate::platform::opengl::Shader;
-use super::Texture;
 use crate::math::consts::WHITE;
 use crate::math::Color;
 
+use super::Texture;
+use super::graphics::layout::StandardLayout;
+
 #[derive(Clone)]
 pub struct DrawParams {
-    shader: Rc<RefCell<Shader>>,
+    layout: StandardLayout,
     tint_color: Color,
+    texture: Texture,
 }
 
 impl DrawParams {
-    pub(crate) fn new(shader: Rc<RefCell<Shader>>) -> Self {
-        shader.borrow_mut().set_uniform_vec4(
-            "TINT_COLOR",
-            WHITE.rgba(),
-        );
+    pub(crate) fn new(layout: StandardLayout) -> Self {
         Self {
-            shader,
+            layout,
             tint_color: WHITE,
+            texture: Default::default(),
+        }
+    }
+
+    pub fn apply_change(current: &Self, new: &mut Self) {
+        if new.tint_color != current.tint_color {
+            new.layout.set_tint_color(new.tint_color);
+        }
+        if new.texture != current.texture {
+            new.layout.set_texture(&new.texture);
         }
     }
 
     pub fn tint(&mut self, tint: Color) {
         self.tint_color.tint(tint);
-        self.shader.borrow_mut().set_uniform_vec4(
-            "TINT_COLOR",
-            self.tint_color.rgba(),
-        );
     }
 
-    pub fn use_texture(&mut self, texture: &Texture) {
-        let mut shader = self.shader.borrow_mut();
-        unsafe {
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, texture.id);
-        }
-        shader.set_uniform_opaque("TEX_ID", 0);
-        shader.set_uniform_vec2(
-            "TEX_OFFSET",
-            (texture.offset[0], texture.offset[1]),
-        );
-        shader.set_uniform_vec2(
-            "TEX_SCALE",
-            (texture.scale[0], texture.scale[1]),
-        );
+    pub fn use_texture(&mut self, texture: Texture) {
+        self.texture = texture;
     }
 }

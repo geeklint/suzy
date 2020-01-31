@@ -169,6 +169,13 @@ where
                         let rect = SimpleRect::new(xdim, ydim);
                         root.set_fill(&rect, &SimplePadding2d::zero());
                     },
+                    WindowEvent::DpScaleChange(ppd) => {
+                        APP_STACK.with(|cell| {
+                            let mut handle = cell.borrow_mut();
+                            let values = handle.last_mut().unwrap();
+                            *values.px_per_dp = ppd;
+                        });
+                    },
                     WindowEvent::KeyDown(key) => {
                         if key == 0x1b {
                             *quit = true;
@@ -179,7 +186,7 @@ where
             drying_paint::WatchContext::update_current();
         });
         window.clear();
-        let mut ctx = window.before_draw();
+        let mut ctx = window.prepare_draw();
         root.draw(&mut ctx);
         self.values = {
             APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap()

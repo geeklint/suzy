@@ -1,16 +1,11 @@
 
 mod drawparams;
-mod image;
+pub mod graphics;
 mod shader;
 mod window;
 
 pub use drawparams::{
     DrawParams,
-};
-
-pub use image::{
-    Texture,
-    SlicedImage,
 };
 
 pub use shader::{
@@ -20,4 +15,9 @@ pub use shader::{
 
 pub use window::{
     Window,
+};
+
+pub use graphics::{
+    primitive::Texture,
+    image,
 };

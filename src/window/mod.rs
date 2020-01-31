@@ -1,5 +1,7 @@
 use std::convert::TryFrom;
 
+use crate::graphics::DrawContext;
+
 pub enum WindowEvent {
     Resize(f32, f32),
     DpScaleChange(f32),
@@ -80,9 +82,7 @@ pub trait Window<'a> : WindowSettings + TryFrom<WindowBuilder> {
     /// usually cause the back buffer to be displayed.
     fn flip(&mut self);
 
-    type DrawParams: 'a;
-
-    fn prepare_draw(&mut self) -> Self::DrawParams;
+    fn prepare_draw(&mut self) -> DrawContext;
 
     /// An iterator for window events
     type Events: Iterator<Item = WindowEvent> + 'a;

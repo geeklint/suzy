@@ -13,6 +13,7 @@ extern crate widestring;
 
 extern crate drying_paint;
 
+pub mod adapter;
 pub mod app;
 pub mod dims;
 pub mod graphics;

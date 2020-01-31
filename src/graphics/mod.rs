@@ -1,5 +1,6 @@
 use crate::math::Color;
 use crate::platform::DrawParams;
+pub use crate::platform::graphics::image;
 
 pub trait Graphic {
     fn draw(&self, ctx: &mut DrawContext);
@@ -25,34 +26,40 @@ impl Graphic for [Box<dyn Graphic>] {
     }
 }
 
+/*
+pub trait DrawParams {
+    fn apply_change(current: &Self, new: &mut Self);
+}
+*/
+
 pub struct DrawContext {
     current: DrawParams,
     history: Vec<DrawParams>,
 }
 
-impl std::ops::Deref for DrawContext {
-    type Target = DrawParams;
-    fn deref(&self) -> &DrawParams { &self.current }
-}
-
 impl DrawContext {
-    pub(crate) fn new(starting: DrawParams) -> Self {
+    pub fn new(starting: DrawParams) -> Self {
         Self {
             current: starting,
             history: Vec::new(),
         }
     }
 
-    pub fn push(ctx: &mut Self) -> &mut DrawParams {
-        let mut params = ctx.current.clone();
-        std::mem::swap(&mut ctx.current, &mut params);
-        ctx.history.push(params);
-        &mut ctx.current
+    pub fn push(ctx: &mut Self, new: DrawParams) {
+        ctx.history.push(new);
+        std::mem::swap(&mut ctx.current, ctx.history.last_mut().unwrap());
+        DrawParams::apply_change(ctx.history.last().unwrap(), &mut ctx.current);
     }
 
     pub fn pop(ctx: &mut Self) {
-        ctx.current = ctx.history.pop().expect(
+        let mut last = ctx.history.pop().expect(
             "DrawContext::pop called more times than push!"
         );
+        std::mem::swap(&mut ctx.current, &mut last);
+        DrawParams::apply_change(&last, &mut ctx.current);
+    }
+
+    pub fn clone_current(&self) -> DrawParams {
+        self.current.clone()
     }
 }

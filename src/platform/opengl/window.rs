@@ -3,7 +3,11 @@ use std::cell::RefCell;
 
 use gl::types::*;
 
+use crate::graphics::DrawContext;
+
 use super::Shader;
+use super::DrawParams;
+use super::graphics::layout::StandardLayout;
 
 extern "system" fn message_callback(
     source: GLenum,
@@ -28,8 +32,7 @@ extern "system" fn message_callback(
 /// struct. It can be embedded in another window implementation which
 /// provides an opengl context.
 pub struct Window {
-    vao: GLuint,
-    std_shader: Rc<RefCell<Shader>>,
+    layout: StandardLayout,
 }
 
 impl Window {
@@ -43,15 +46,9 @@ impl Window {
                 std::ptr::null(),
             );
         }
-        let mut vao = 0;
-        unsafe {
-            gl::GenVertexArrays(1, &mut vao as *mut _);
-            gl::BindVertexArray(vao);
-            gl::EnableVertexAttribArray(0);
-            gl::EnableVertexAttribArray(1);
+        Window {
+            layout: StandardLayout::new(),
         }
-        let std_shader = Rc::new(RefCell::new(Shader::standard()));
-        Window { vao, std_shader }
     }
 
     /// Set the viewport. Wrapping windows will probably want to do this
@@ -67,7 +64,13 @@ impl Window {
         }
     }
 
-    pub fn prepare_draw(&mut self) -> super::drawparams::DrawParams;
+    pub fn prepare_draw(&mut self, screen_size: (f32, f32)) -> DrawContext {
+        self.layout.make_current();
+        self.layout.set_screen_size(screen_size);
+        self.layout.set_tint_color(crate::math::consts::WHITE);
+        let params = DrawParams::new(self.layout.clone());
+        DrawContext::new(params)
+    }
 
     /// Issue opengl call to clear the screen.
     pub fn clear(&mut self) {
