@@ -21,11 +21,7 @@ extern "system" fn message_callback(
     let data = unsafe {
         std::slice::from_raw_parts(message as *const u8, length as usize)
     };
-    if let Ok(string) = std::str::from_utf8(data) {
-        println!("{}", string);
-    } else {
-        println!("OpenGL message not valid utf8");
-    }
+    println!("{}", String::from_utf8_lossy(data));
 }
 
 /// opengl::Window provides a subset of the methods to implement the Window
