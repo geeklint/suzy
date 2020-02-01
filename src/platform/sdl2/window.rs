@@ -9,6 +9,8 @@ use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
 
+use super::texture_loader::load_texture;
+
 #[derive(Copy, Clone, PartialEq)]
 struct PixelInfo {
     display_index: i32,
@@ -68,6 +70,7 @@ pub struct Window {
     context: sdl2::video::GLContext,
     window: sdl2::video::Window,
     video: sdl2::VideoSubsystem,
+    image: sdl2::image::Sdl2ImageContext,
     sdl: sdl2::Sdl,
 }
 
@@ -78,6 +81,7 @@ impl TryFrom<WindowBuilder> for Window {
         // initialize systems
         let sdl = sdl2::init()?;
         let video = sdl.video()?;
+        let image = sdl2::image::init(sdl2::image::InitFlag::all())?;
         // setup window parameters
         let gl_attr = video.gl_attr();
         gl_attr.set_red_size(5);
@@ -132,12 +136,13 @@ impl TryFrom<WindowBuilder> for Window {
             }
         };
         // setup opengl stuff
+        opengl::Texture::set_loader(Some(load_texture));
         video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context()?;
         gl::load_with(|s| video.gl_get_proc_address(s) as *const _);
         let gl_win = opengl::Window::new();
         Ok(Window {
-            sdl, video, window, context,
+            sdl, video, image, window, context,
             gl_win,
             pixel_info,
             title: builder.into_title(),

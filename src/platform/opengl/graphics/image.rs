@@ -7,7 +7,9 @@ use crate::graphics::{self, DrawContext};
 use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
 use crate::math::Color;
 use super::graphic::Graphic;
-pub use super::primitive::Texture;
+pub use super::primitive::{
+    Texture, TextureLoader, TextureLoadResult, TextureBuilder
+};
 
 #[derive(Clone)]
 pub struct SlicedImage {

@@ -1,7 +1,9 @@
-use std::rc::Rc;
+use std::cell::Cell;
 use std::ffi::c_void;
 use std::mem;
 use std::ops::RangeBounds;
+use std::path::Path;
+use std::rc::Rc;
 
 use gl::types::*;
 
@@ -136,10 +138,6 @@ impl TextureBuilder {
         Self::create_custom(gl::RGB8, width, height)
     }
 
-    pub fn create_gray(width: GLsizei, height: GLsizei) -> Self {
-        Self::create_custom(gl::R8, width, height)
-    }
-
     pub fn create_custom(format: GLenum, width: GLsizei, height: GLsizei)
         -> Self
     {
@@ -229,6 +227,14 @@ impl Default for TextureBuilder {
     }
 }
 
+pub type TextureLoadResult = Result<Texture, Box<dyn std::error::Error>>;
+pub type TextureLoader = Option<fn(&Path) -> TextureLoadResult>;
+
+thread_local! {
+    static DEFAULT_TEXTURE: Texture = TextureBuilder::default().build();
+    static TEXTURE_LOADER: Cell<TextureLoader> = Cell::new(None);
+}
+
 #[derive(Debug, Clone)]
 pub struct Texture {
     _obj: Rc<TextureData>,
@@ -249,6 +255,19 @@ impl Texture {
     {
         todo!()
     }
+
+    pub fn set_loader(loader: TextureLoader) {
+        TEXTURE_LOADER.with(|cell| cell.set(loader));
+    }
+
+    pub fn load<P: AsRef<Path>>(path: &P) -> TextureLoadResult {
+        let loader = TEXTURE_LOADER.with(|cell| cell.get());
+        if let Some(load_fn) = loader {
+            (load_fn)(path.as_ref())
+        } else {
+            Err(Box::new(TextureLoaderUnassigned))
+        }
+    }
 }
 
 impl PartialEq for Texture {
@@ -259,12 +278,26 @@ impl PartialEq for Texture {
     }
 }
 
-thread_local! {
-    static DEFAULT_TEXTURE: Texture = TextureBuilder::default().build();
-}
-
 impl Default for Texture {
     fn default() -> Self {
         DEFAULT_TEXTURE.with(|tex| tex.clone())
     }
 }
+
+#[derive(Debug)]
+pub struct TextureLoaderUnassigned;
+
+impl std::error::Error for TextureLoaderUnassigned {}
+
+impl std::fmt::Display for TextureLoaderUnassigned {
+    fn fmt(&self, f: &mut std::fmt::Formatter)
+        -> Result<(), std::fmt::Error>
+    {
+        let msg = concat!(
+            "Texture Loader was never assigned a value using",
+            " Texture::set_loader, or was subsequently assigned None"
+        );
+        std::fmt::Display::fmt(msg, f)
+    }
+}
+
