@@ -144,8 +144,8 @@ impl TextureBuilder {
         let width_pot = (width as u32).next_power_of_two() as GLsizei;
         let height_pot = (height as u32).next_power_of_two() as GLsizei;
         let scale = [
-            (width as f32) / (width_pot as f32),
-            (height as f32) / (height_pot as f32),
+            (width_pot as f32) / (width as f32),
+            (height_pot as f32) / (height as f32),
         ];
         let id = TextureData::new();
         unsafe {
@@ -160,7 +160,7 @@ impl TextureBuilder {
                 std::ptr::null(),
             );
         }
-        Self { id, width, height, scale }
+        Self { id, width: width_pot, height: height_pot, scale }
     }
 
     pub fn sub_image(
@@ -260,7 +260,7 @@ impl Texture {
         TEXTURE_LOADER.with(|cell| cell.set(loader));
     }
 
-    pub fn load<P: AsRef<Path>>(path: &P) -> TextureLoadResult {
+    pub fn load<P: AsRef<Path>>(path: P) -> TextureLoadResult {
         let loader = TEXTURE_LOADER.with(|cell| cell.get());
         if let Some(load_fn) = loader {
             (load_fn)(path.as_ref())

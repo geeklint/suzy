@@ -30,16 +30,16 @@ pub fn load_texture(path: &Path) -> TextureLoadResult {
     let surf = Surface::from_file(path)
         .map_err(|msg| Box::new(SdlImageLoadError(msg)))?;
     let (fmt, type_, surf, opaque) = match surf.pixel_format_enum() {
-        PixelFormatEnum::RGB24 => (gl::RGB, gl::UNSIGNED_BYTE, surf, true),
-        PixelFormatEnum::BGR24 => (gl::BGR, gl::UNSIGNED_BYTE, surf, true),
-        PixelFormatEnum::RGBA8888 => {
+        PixelFormatEnum::RGB24 => (gl::BGR, gl::UNSIGNED_BYTE, surf, true),
+        PixelFormatEnum::BGR24 => (gl::RGB, gl::UNSIGNED_BYTE, surf, true),
+        PixelFormatEnum::ABGR8888 => {
             (gl::RGBA, gl::UNSIGNED_BYTE, surf, false)
         },
-        PixelFormatEnum::BGRA8888 => {
+        PixelFormatEnum::ARGB8888 => {
             (gl::BGRA, gl::UNSIGNED_BYTE, surf, false)
         },
         _ => {
-            let conv = surf.convert_format(PixelFormatEnum::BGRA8888)
+            let conv = surf.convert_format(PixelFormatEnum::ARGB8888)
                 .map_err(|msg| Box::new(SdlImageLoadError(msg)))?;
             (gl::BGRA, gl::UNSIGNED_BYTE, conv, false)
         },
@@ -53,12 +53,18 @@ pub fn load_texture(path: &Path) -> TextureLoadResult {
         TextureBuilder::create(width, height)
     };
     surf.with_lock(|pixels| {
-        builder.sub_image(
-            0, 0,
-            width, height,
-            fmt, type_, 
-            pixels.as_ptr() as *const _,
-        );
+        let row_len = pixels.len() / (height as usize);
+        for row_index in 0..height {
+            let start = (row_index as usize) * row_len;
+            let end = start + row_len;
+            let row = &pixels[start..end];
+            builder.sub_image(
+                0, (height - row_index),
+                width, 1,
+                fmt, type_,
+                row.as_ptr() as *const _,
+            );
+        }
     });
     Ok(builder.build())
 }
