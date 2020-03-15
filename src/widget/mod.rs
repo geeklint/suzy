@@ -1,6 +1,6 @@
 use std::cell::{Ref, RefMut};
 
-use drying_paint::{Watcher, WatcherMeta, WatcherInit};
+use drying_paint::{Watcher, WatcherMeta, WatcherInit, WatcherId};
 
 use crate::dims::{Rect, Dim};
 use crate::graphics::{Graphic, DrawContext};
@@ -31,6 +31,14 @@ impl<T: WidgetContent> WatcherInit for WidgetInternal<T> {
     }
 }
 
+impl<T: WidgetContent + 'static> Widget<T> {
+    pub fn id(&self) -> WidgetId {
+        WidgetId {
+            id: self.watcher.id(),
+        }
+    }
+}
+
 impl<T: WidgetContent> Widget<T> {
     fn internal(&self) -> Ref<WidgetInternal<T>> { self.watcher.data() }
     fn internal_mut(&mut self) -> RefMut<WidgetInternal<T>> {
@@ -44,7 +52,7 @@ impl<T: WidgetContent> Widget<T> {
         data.children().draw(ctx);
         data.graphic_after().draw(ctx);
     }
-    
+
     /// Get an anonymous reference to this widget. This is required by
     /// WidgetContent::children(), for example.
     pub fn proxy(&self) -> WidgetProxy {
@@ -83,6 +91,11 @@ impl<T: WidgetContent> Rect for Widget<T> {
     fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
         self.internal_mut().rect.y_mut(f)
     }
+}
+
+#[derive(PartialEq, Eq)]
+pub struct WidgetId {
+    id: WatcherId,
 }
 
 pub trait NewWidget {
