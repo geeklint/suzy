@@ -5,7 +5,8 @@ use std::convert::TryInto;
 use drying_paint::Watched;
 
 use crate::platform::DefaultWindow;
-use crate::widget::{Widget, WidgetContent};
+use crate::pointer::{PointerEvent, PointerId};
+use crate::widget::{Widget, WidgetContent, WidgetId};
 use crate::window;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
 use window::{WindowEvent, WindowSettings};
@@ -117,6 +118,7 @@ where
     root: Widget<Root>,
     values: AppValues,
     quit: bool,
+    grab_map: std::collections::HashMap<PointerId, WidgetId>,
 }
 
 impl<Root, W> App<Root, W>
@@ -148,6 +150,7 @@ where
         let window = &mut self.window;
         let root = &mut self.root;
         let quit = &mut self.quit;
+        let grab_map = &mut self.grab_map;
         watch_ctx.with(|| {
             *values.frame_start = time::Instant::now();
             APP_STACK.with(|cell| cell.borrow_mut().push(values));
@@ -180,6 +183,10 @@ where
                         if key == 0x1b {
                             *quit = true;
                         }
+                    },
+                    WindowEvent::Pointer(pointer) => {
+                        let mut event = PointerEvent::new(pointer, grab_map);
+                        root.pointer_event(&mut event);
                     },
                 }
             }
@@ -219,6 +226,13 @@ where Root: WidgetContent + Default
             Widget::<Root>::default_with_rect(&rect)
         });
         let values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
-        Self { watch_ctx, window, root, values, quit: false }
+        Self {
+            watch_ctx,
+            window,
+            root,
+            values,
+            quit: false,
+            grab_map: std::collections::HashMap::new(),
+        }
     }
 }

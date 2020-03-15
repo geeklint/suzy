@@ -1,4 +1,5 @@
 use crate::graphics;
+use crate::pointer::PointerEvent;
 
 use super::{Widget, WidgetProxy, WidgetProxyMut, WidgetContent};
 
@@ -89,6 +90,45 @@ where
                 for proxy in list.into_iter() {
                     proxy.anon.draw(ctx);
                 }
+            },
+        }
+    }
+}
+
+impl<'a, A,B,C,D> WidgetChildrenMut<'a, A,B,C,D>
+where
+    A: WidgetContent,
+    B: WidgetContent,
+    C: WidgetContent,
+    D: WidgetContent,
+{
+    pub(super) fn pointer_event(self, event: &mut PointerEvent) -> bool {
+        use WidgetChildrenMut::*;
+        match self {
+            Zero => false,
+            One(a) => {
+                a.pointer_event(event)
+            },
+            Two(a,b) => {
+                a.pointer_event(event)
+                || b.pointer_event(event)
+            },
+            Three(a,b,c) => {
+                a.pointer_event(event)
+                || b.pointer_event(event)
+                || c.pointer_event(event)
+            },
+            Four(a,b,c,d) => {
+                a.pointer_event(event)
+                || b.pointer_event(event)
+                || c.pointer_event(event)
+                || d.pointer_event(event)
+            },
+            Uniform(list) => {
+                list.into_iter().any(|widget| widget.pointer_event(event))
+            },
+            Varied(list) => {
+                list.into_iter().any(|proxy| proxy.anon.pointer_event(event))
             },
         }
     }

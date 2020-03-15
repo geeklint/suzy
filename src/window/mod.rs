@@ -1,12 +1,14 @@
 use std::convert::TryFrom;
 
 use crate::graphics::DrawContext;
+use crate::pointer::PointerEventData;
 
 pub enum WindowEvent {
     Resize(f32, f32),
     DpScaleChange(f32),
     KeyDown(i32),
     Quit,
+    Pointer(PointerEventData),
 }
 
 pub trait WindowSettings {

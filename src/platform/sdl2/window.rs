@@ -284,6 +284,58 @@ impl Iterator for Events<'_> {
                         None => continue,
                     }
                 }
+                Event::MouseButtonDown { mouse_btn, x, y, .. } => {
+                    use sdl2::mouse::MouseButton::*;
+                    use crate::pointer::*;
+                    let (x, y) = (x as f32, y as f32);
+                    let x = x * self.window.pixel_info.dp_per_screen_unit;
+                    let y = y * self.window.pixel_info.dp_per_screen_unit;
+                    let action = match mouse_btn {
+                        Left => PointerAction::Down,
+                        X1 => PointerAction::AltDown(AltMouseButton::X1),
+                        X2 => PointerAction::AltDown(AltMouseButton::X2),
+                        Middle => PointerAction::AltDown(
+                            AltMouseButton::Middle
+                        ),
+                        Right => PointerAction::AltDown(
+                            AltMouseButton::Right
+                        ),
+                        Unknown => continue,
+                    };
+                    WindowEvent::Pointer(
+                        PointerEventData::new(
+                            PointerId::Mouse,
+                            action,
+                            x, y,
+                        )
+                    )
+                }
+                Event::MouseButtonUp { mouse_btn, x, y, .. } => {
+                    use sdl2::mouse::MouseButton::*;
+                    use crate::pointer::*;
+                    let (x, y) = (x as f32, y as f32);
+                    let x = x * self.window.pixel_info.dp_per_screen_unit;
+                    let y = y * self.window.pixel_info.dp_per_screen_unit;
+                    let action = match mouse_btn {
+                        Left => PointerAction::Up,
+                        X1 => PointerAction::AltUp(AltMouseButton::X1),
+                        X2 => PointerAction::AltUp(AltMouseButton::X2),
+                        Middle => PointerAction::AltUp(
+                            AltMouseButton::Middle
+                        ),
+                        Right => PointerAction::AltUp(
+                            AltMouseButton::Right
+                        ),
+                        Unknown => continue,
+                    };
+                    WindowEvent::Pointer(
+                        PointerEventData::new(
+                            PointerId::Mouse,
+                            action,
+                            x, y,
+                        )
+                    )
+                }
                 _ => continue,
             })
         }

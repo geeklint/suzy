@@ -1,7 +1,8 @@
 use crate::graphics;
+use crate::pointer::PointerEvent;
 
 use super::children;
-use super::{WidgetInit};
+use super::{Widget, WidgetInit};
 
 /// This trait should be implemented for the types you provide as data for
 /// Widget implementations.
@@ -34,6 +35,12 @@ pub trait WidgetContent: Sized {
 
     fn graphic(&self) -> &Self::Graphic;
     fn graphic_after(&self) -> &Self::GraphicAfter;
+
+    fn pointer_event(widget: &mut Widget<Self>, event: &mut PointerEvent)
+        -> bool
+    {
+        false
+    }
 }
 
 impl WidgetContent for () {

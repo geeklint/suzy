@@ -1,9 +1,11 @@
 use std::cell::{Ref, RefMut};
 
 use drying_paint::{Watcher, WatcherMeta, WatcherInit, WatcherId};
+pub use drying_paint::Watched;
 
 use crate::dims::{Rect, Dim};
 use crate::graphics::{Graphic, DrawContext};
+use crate::pointer::PointerEvent;
 
 pub mod children;
 mod content;
@@ -45,12 +47,25 @@ impl<T: WidgetContent> Widget<T> {
         self.watcher.data_mut()
     }
 
+    pub fn data(&self) -> Ref<T> { Ref::map(self.internal(), |w| &w.data) }
+    pub fn data_mut(&mut self) -> RefMut<T> {
+        RefMut::map(self.internal_mut(), |w| &mut w.data)
+    }
+
     pub(crate) fn draw(&self, ctx: &mut DrawContext) {
         let wid_int = self.internal();
         let data = &wid_int.data;
         data.graphic().draw(ctx);
         data.children().draw(ctx);
         data.graphic_after().draw(ctx);
+    }
+
+    pub(crate) fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
+        let handled_by_child = {
+            let data = &mut self.internal_mut().data;
+            data.children_mut().pointer_event(event)
+        };
+        handled_by_child || T::pointer_event(self, event)
     }
 
     /// Get an anonymous reference to this widget. This is required by
@@ -98,6 +113,12 @@ pub struct WidgetId {
     id: WatcherId,
 }
 
+impl<T: WidgetContent + 'static> From<&Widget<T>> for WidgetId {
+    fn from(widget: &Widget<T>) -> Self {
+        widget.id()
+    }
+}
+
 pub trait NewWidget {
     type Content: WidgetContent;
 
@@ -111,48 +132,18 @@ impl<T: WidgetContent> NewWidget for Widget<T> {
     fn as_widget_mut(&mut self) -> &mut Widget<Self::Content> { self }
 }
 
-/*
-impl<T: WidgetContent> InteractionReceiver for Widget<T> {
-    fn on_touch_down(&mut self, touch: Touch) -> bool {
-        let mut wid_int = self.internal_mut();
-        for child in wid_int.data.children_mut().into_iter() {
-            if InteractionReceiver::on_touch_down(child.anon, touch) {
-                return true;
-            }
-        }
-        InteractionReceiver::on_touch_down(&mut wid_int.data, touch)
-    }
-
-    fn on_touch_move(&mut self, touch: Touch) -> bool {
-        let mut wid_int = self.internal_mut();
-        for child in wid_int.data.children_mut().into_iter() {
-            if InteractionReceiver::on_touch_move(child.anon, touch) {
-                return true;
-            }
-        }
-        InteractionReceiver::on_touch_move(&mut wid_int.data, touch)
-    }
-
-    fn on_touch_up(&mut self, touch: Touch) -> bool {
-        let mut wid_int = self.internal_mut();
-        for child in wid_int.data.children_mut().into_iter() {
-            if InteractionReceiver::on_touch_down(child.anon, touch) {
-                return true;
-            }
-        }
-        InteractionReceiver::on_touch_down(&mut wid_int.data, touch)
-    }
-}
-*/
-
-
 trait AnonWidget {
     fn draw(&self, ctx: &mut DrawContext);
+    fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
 }
 
 impl<T: WidgetContent> AnonWidget for Widget<T> {
     fn draw(&self, ctx: &mut DrawContext) {
         Widget::draw(self, ctx);
+    }
+
+    fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
+        Widget::pointer_event(self, event)
     }
 }
 
