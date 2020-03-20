@@ -299,8 +299,10 @@ pub trait Rect {
     fn x(&self) -> Dim;
     fn y(&self) -> Dim;
 
-    fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F);
-    fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F);
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R;
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R;
     
     /// Get the left edge of the rectangle
     fn left(&self) -> f32 { self.x().start() }
@@ -479,8 +481,18 @@ impl SimpleRect {
 impl<'a> Rect for SimpleRect {
     fn x(&self) -> Dim { self.x }
     fn y(&self) -> Dim { self.y }
-    fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) { (f)( &mut self.x ) }
-    fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) { (f)( &mut self.y ) }
+
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        (f)( &mut self.x )
+    }
+
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        (f)( &mut self.y )
+    }
 }
 
 impl<R: Rect> From<&R> for SimpleRect {
@@ -512,16 +524,22 @@ impl<'a> Rect for FixedSizeRect {
     fn x(&self) -> Dim { self.x }
     fn y(&self) -> Dim { self.y }
 
-    fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
         let width = self.x.length;
-        (f)(&mut self.x);
+        let res = (f)(&mut self.x);
         self.x.length = width;
+        res
     }
 
-    fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
         let height = self.y.length;
-        (f)(&mut self.y);
+        let res = (f)(&mut self.y);
         self.y.length = height;
+        res
     }
 }
 

@@ -99,11 +99,15 @@ impl<T: WidgetContent> Rect for Widget<T> {
     fn x(&self) -> Dim { self.internal().rect.x() }
     fn y(&self) -> Dim { self.internal().rect.y() }
 
-    fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
         self.internal_mut().rect.x_mut(f)
     }
 
-    fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
         self.internal_mut().rect.y_mut(f)
     }
 }

@@ -12,8 +12,18 @@ pub struct WidgetRect {
 impl<'a> Rect for WidgetRect {
     fn x(&self) -> Dim { *self.x }
     fn y(&self) -> Dim { *self.y }
-    fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) { (f)( &mut self.x ) }
-    fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) { (f)( &mut self.y ) }
+
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        (f)( &mut self.x )
+    }
+
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        (f)( &mut self.y )
+    }
 }
 
 impl<T: Rect> From<&T> for WidgetRect {

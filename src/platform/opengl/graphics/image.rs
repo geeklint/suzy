@@ -122,14 +122,20 @@ impl Rect for SlicedImage {
     fn x(&self) -> Dim { self.rect.x() }
     fn y(&self) -> Dim { self.rect.y() }
 
-    fn x_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
-        self.rect.x_mut(f);
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        let res = self.rect.x_mut(f);
         self.update();
+        res
     }
 
-    fn y_mut<F: FnOnce(&mut Dim)>(&mut self, f: F) {
-        self.rect.y_mut(f);
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        let res = self.rect.y_mut(f);
         self.update();
+        res
     }
 }
 
