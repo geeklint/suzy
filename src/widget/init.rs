@@ -19,3 +19,9 @@ impl<T: WidgetContent + 'static> WidgetInit<'_, T> {
         });
     }
 }
+
+impl<T: WidgetContent> WatcherInit for WidgetInternal<T> {
+    fn init(watcher: &mut WatcherMeta<Self>) {
+        WidgetContent::init(&mut WidgetInit { watcher });
+    }
+}

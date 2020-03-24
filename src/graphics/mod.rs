@@ -25,12 +25,6 @@ impl Graphic for [Box<dyn Graphic>] {
     }
 }
 
-/*
-pub trait DrawParams {
-    fn apply_change(current: &Self, new: &mut Self);
-}
-*/
-
 pub struct DrawContext {
     current: DrawParams,
     history: Vec<DrawParams>,

@@ -76,11 +76,11 @@ impl From<u32> for Color {
     }
 }
 
-pub struct ParseColorError {
-}
+#[derive(Copy, Clone, Debug, Default)]
+pub struct ParseColorError;
 
 impl From<std::num::ParseIntError> for ParseColorError {
-    fn from(_orig: std::num::ParseIntError) -> Self { Self { } }
+    fn from(_orig: std::num::ParseIntError) -> Self { Self }
 }
 
 #[cfg(feature = "lookup_consts")]

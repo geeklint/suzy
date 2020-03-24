@@ -27,12 +27,6 @@ struct WidgetInternal<T: WidgetContent> {
     data: T,
 }
 
-impl<T: WidgetContent> WatcherInit for WidgetInternal<T> {
-    fn init(watcher: &mut WatcherMeta<Self>) {
-        WidgetContent::init(&mut WidgetInit { watcher });
-    }
-}
-
 impl<T: WidgetContent + 'static> Widget<T> {
     pub fn id(&self) -> WidgetId {
         WidgetId {
@@ -85,10 +79,9 @@ impl<T> Widget<T>
 where T: WidgetContent + Default
 {
     pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
-        let rect = rect.into();
         Widget {
             watcher: Watcher::create(WidgetInternal {
-                rect,
+                rect: WidgetRect::from(rect),
                 data: Default::default(),
             }),
         }
@@ -112,7 +105,7 @@ impl<T: WidgetContent> Rect for Widget<T> {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct WidgetId {
     id: WatcherId,
 }
