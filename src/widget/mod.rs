@@ -1,6 +1,6 @@
 use std::cell::{Ref, RefMut};
 
-use drying_paint::{Watcher, WatcherMeta, WatcherInit, WatcherId};
+use drying_paint::{Watcher, WatcherId};
 pub use drying_paint::Watched;
 
 use crate::dims::{Rect, Dim};
