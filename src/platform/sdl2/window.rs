@@ -40,7 +40,7 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
 
     fn try_from(window: &sdl2::video::Window) -> Result<Self, Self::Error> {
         let display_index = window.display_index()?;
-        let (ddpi, hdpi, vdpi) = {
+        let (_ddpi, hdpi, vdpi) = {
             window.subsystem().display_dpi(display_index)?
         };
         let dpi = ((hdpi + vdpi) / 2.0) as f32;
@@ -67,10 +67,10 @@ pub struct Window {
     title: String,
     pixel_info: PixelInfo,
     gl_win: opengl::Window,
-    context: sdl2::video::GLContext,
+    _context: sdl2::video::GLContext,
     window: sdl2::video::Window,
-    video: sdl2::VideoSubsystem,
-    image: sdl2::image::Sdl2ImageContext,
+    _video: sdl2::VideoSubsystem,
+    _image: sdl2::image::Sdl2ImageContext,
     sdl: sdl2::Sdl,
 }
 
@@ -93,7 +93,7 @@ impl TryFrom<WindowBuilder> for Window {
         gl_attr.set_context_version(3, 3);
         let (width, height) = builder.size();
         let guess_px_per_dp = {
-            let (ddpi, hdpi, vdpi) = {
+            let (_ddpi, hdpi, vdpi) = {
                 video.display_dpi(0)?
             };
             let dpi = ((hdpi + vdpi) / 2.0) as f32;
@@ -137,12 +137,16 @@ impl TryFrom<WindowBuilder> for Window {
         };
         // setup opengl stuff
         opengl::Texture::set_loader(Some(load_texture));
-        video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
+        let _ = video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context()?;
         gl::load_with(|s| video.gl_get_proc_address(s) as *const _);
         let gl_win = opengl::Window::new();
         Ok(Window {
-            sdl, video, image, window, context,
+            sdl,
+            _video: video,
+            _image: image,
+            window: window,
+            _context: context,
             gl_win,
             pixel_info,
             title: builder.into_title(),

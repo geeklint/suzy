@@ -6,7 +6,7 @@ pub trait Graphic {
 }
 
 impl Graphic for () {
-    fn draw(&self, ctx: &mut DrawContext) {}
+    fn draw(&self, _ctx: &mut DrawContext) {}
 }
 
 impl<T: Graphic> Graphic for [T] {

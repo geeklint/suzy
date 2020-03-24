@@ -80,7 +80,7 @@ pub struct ParseColorError {
 }
 
 impl From<std::num::ParseIntError> for ParseColorError {
-    fn from(orig: std::num::ParseIntError) -> Self { Self { } }
+    fn from(_orig: std::num::ParseIntError) -> Self { Self { } }
 }
 
 #[cfg(feature = "lookup_consts")]

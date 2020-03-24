@@ -105,7 +105,7 @@ impl<T> Clone for Buffer<T> {
                 _data: std::marker::PhantomData,
             }
         } else {
-            let mut clone = Self::new(self.target, true, self.len);
+            let clone = Self::new(self.target, true, self.len);
             unsafe {
                 gl::BindBuffer(gl::COPY_READ_BUFFER, self.id);
                 gl::BindBuffer(gl::COPY_WRITE_BUFFER, clone.id);
@@ -253,6 +253,7 @@ impl Texture {
         T: RangeBounds<f32>,
         U: RangeBounds<f32>,
     {
+        let _unused = (x, y);
         todo!()
     }
 

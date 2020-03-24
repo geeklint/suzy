@@ -39,6 +39,7 @@ pub trait WidgetContent: Sized {
     fn pointer_event(widget: &mut Widget<Self>, event: &mut PointerEvent)
         -> bool
     {
+        let _unused = (widget, event);
         false
     }
 }

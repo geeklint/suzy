@@ -121,7 +121,7 @@ impl PointerEvent<'_> {
                     false
                 }
             }
-            Vacant(entry) => false
+            Vacant(_entry) => false
         }
     }
 }

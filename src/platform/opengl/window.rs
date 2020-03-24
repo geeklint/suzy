@@ -6,13 +6,13 @@ use super::DrawParams;
 use super::graphics::layout::StandardLayout;
 
 extern "system" fn message_callback(
-    source: GLenum,
-    gltype: GLenum,
-    id: GLuint,
-    severity: GLenum,
+    _source: GLenum,
+    _gltype: GLenum,
+    _id: GLuint,
+    _severity: GLenum,
     length: GLsizei,
     message: *const GLchar,
-    user_param: *mut std::ffi::c_void,
+    _user_param: *mut std::ffi::c_void,
 ) {
     let data = unsafe {
         std::slice::from_raw_parts(message as *const u8, length as usize)

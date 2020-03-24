@@ -58,8 +58,9 @@ pub fn load_texture(path: &Path) -> TextureLoadResult {
             let start = (row_index as usize) * row_len;
             let end = start + row_len;
             let row = &pixels[start..end];
+            let yoffset = height - row_index;
             builder.sub_image(
-                0, (height - row_index),
+                0, yoffset,
                 width, 1,
                 fmt, type_,
                 row.as_ptr() as *const _,

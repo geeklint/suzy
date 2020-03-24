@@ -13,18 +13,18 @@ macro_rules! stub {
 impl TryFrom<WindowBuilder> for Window {
     type Error = String;
 
-    fn try_from(builder: WindowBuilder) -> Result<Self, Self::Error> {
+    fn try_from(_builder: WindowBuilder) -> Result<Self, Self::Error> {
         stub!();
     }
 }
 
 impl WindowSettings for Window {
     fn size(&self) -> (f32, f32) { stub!() }
-    fn set_size(&mut self, size: (f32, f32)) { stub!() }
+    fn set_size(&mut self, _size: (f32, f32)) { stub!() }
     fn title(&self) -> &str { stub!() }
-    fn set_title(&mut self, title: String) { stub!() }
+    fn set_title(&mut self, _title: String) { stub!() }
     fn fullscreen(&self) -> bool { stub!() }
-    fn set_fullscreen(&mut self, fullscreen: bool) { stub!() }
+    fn set_fullscreen(&mut self, _fullscreen: bool) { stub!() }
 }
 
 impl<'a> window::Window<'a> for Window {
@@ -39,7 +39,7 @@ impl<'a> window::Window<'a> for Window {
 }
 
 pub struct Events<'a> {
-    window: &'a mut Window,
+    _window: &'a mut Window,
 }
 
 impl Iterator for Events<'_> {
