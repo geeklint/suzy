@@ -1,4 +1,4 @@
-use drying_paint::{WatcherMeta};
+use drying_paint::{WatcherMeta, WatcherInit};
 
 use super::{WidgetContent, WidgetRect, WidgetInternal};
 

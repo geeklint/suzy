@@ -8,7 +8,7 @@ use sdl2::image::LoadSurface;
 use sdl2::pixels::PixelFormatEnum;
 
 use crate::platform::opengl::image::{
-    Texture, TextureLoader, TextureLoadResult, TextureBuilder
+    TextureLoadResult, TextureBuilder
 };
 
 #[derive(Debug)]

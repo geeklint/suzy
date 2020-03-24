@@ -1,11 +1,7 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-
 use gl::types::*;
 
 use crate::graphics::DrawContext;
 
-use super::Shader;
 use super::DrawParams;
 use super::graphics::layout::StandardLayout;
 

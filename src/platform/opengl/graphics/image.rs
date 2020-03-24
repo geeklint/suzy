@@ -1,11 +1,7 @@
-use std::ffi::c_void;
-use std::rc::Rc;
-
 use gl::types::*;
 
 use crate::graphics::{self, DrawContext};
 use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
-use crate::math::Color;
 use super::graphic::Graphic;
 pub use super::primitive::{
     Texture, TextureLoader, TextureLoadResult, TextureBuilder

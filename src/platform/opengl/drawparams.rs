@@ -1,7 +1,4 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 
-use crate::platform::opengl::Shader;
 use crate::math::consts::WHITE;
 use crate::math::Color;
 

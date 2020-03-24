@@ -1,4 +1,3 @@
-use crate::math::Color;
 use crate::platform::DrawParams;
 pub use crate::platform::graphics::image;
 
