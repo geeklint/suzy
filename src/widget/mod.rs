@@ -11,11 +11,13 @@ mod anon;
 pub mod children;
 mod content;
 mod init;
+mod newwidget;
 mod rect;
 
 pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
 pub use content::WidgetContent;
 pub use init::WidgetInit;
+pub use newwidget::NewWidget;
 pub use rect::WidgetRect;
 
 /// A basic structure to wrap some data and turn it into a widget.
@@ -117,17 +119,4 @@ impl<T: WidgetContent + 'static> From<&Widget<T>> for WidgetId {
     fn from(widget: &Widget<T>) -> Self {
         widget.id()
     }
-}
-
-pub trait NewWidget {
-    type Content: WidgetContent;
-
-    fn as_widget(&self) -> &Widget<Self::Content>;
-    fn as_widget_mut(&mut self) -> &mut Widget<Self::Content>;
-}
-
-impl<T: WidgetContent> NewWidget for Widget<T> {
-    type Content = T;
-    fn as_widget(&self) -> &Widget<Self::Content> { self }
-    fn as_widget_mut(&mut self) -> &mut Widget<Self::Content> { self }
 }
