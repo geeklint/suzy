@@ -7,10 +7,13 @@ use crate::dims::{Rect, Dim};
 use crate::graphics::{Graphic, DrawContext};
 use crate::pointer::PointerEvent;
 
+mod anon;
 pub mod children;
 mod content;
 mod init;
 mod rect;
+
+pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
 pub use content::WidgetContent;
 pub use init::WidgetInit;
 pub use rect::WidgetRect;
@@ -32,6 +35,18 @@ impl<T: WidgetContent + 'static> Widget<T> {
         WidgetId {
             id: self.watcher.id(),
         }
+    }
+
+    /// Get an anonymous reference to this widget. This is required by
+    /// WidgetContent::children(), for example.
+    pub fn proxy(&self) -> WidgetProxy {
+        WidgetProxy { anon: self }
+    }
+
+    /// Get an mutable anonymous reference to this widget. This is required
+    /// by WidgetContent::children_mut(), for example.
+    pub fn proxy_mut(&mut self) -> WidgetProxyMut {
+        WidgetProxyMut { anon: self }
     }
 }
 
@@ -60,18 +75,6 @@ impl<T: WidgetContent> Widget<T> {
             data.children_mut().pointer_event(event)
         };
         handled_by_child || T::pointer_event(self, event)
-    }
-
-    /// Get an anonymous reference to this widget. This is required by
-    /// WidgetContent::children(), for example.
-    pub fn proxy(&self) -> WidgetProxy {
-        WidgetProxy { anon: self }
-    }
-
-    /// Get an mutable anonymous reference to this widget. This is required
-    /// by WidgetContent::children_mut(), for example.
-    pub fn proxy_mut(&mut self) -> WidgetProxyMut {
-        WidgetProxyMut { anon: self }
     }
 }
 
@@ -127,52 +130,4 @@ impl<T: WidgetContent> NewWidget for Widget<T> {
     type Content = T;
     fn as_widget(&self) -> &Widget<Self::Content> { self }
     fn as_widget_mut(&mut self) -> &mut Widget<Self::Content> { self }
-}
-
-trait AnonWidget {
-    fn draw(&self, ctx: &mut DrawContext);
-    fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
-}
-
-impl<T: WidgetContent> AnonWidget for Widget<T> {
-    fn draw(&self, ctx: &mut DrawContext) {
-        Widget::draw(self, ctx);
-    }
-
-    fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
-        Widget::pointer_event(self, event)
-    }
-}
-
-/// A proxy to a widget with an unspecified underlying data type.
-#[derive(Copy, Clone)]
-pub struct WidgetProxy<'a> {
-    anon: &'a dyn AnonWidget,
-}
-
-/// A mutable proxy to a widget with an unspecified underlying data type.
-pub struct WidgetProxyMut<'a> {
-    anon: &'a mut dyn AnonWidget,
-}
-
-pub struct OwnedWidgetProxy {
-    anon: Box<dyn AnonWidget>,
-}
-
-impl<T: WidgetContent + 'static> From<Widget<T>> for OwnedWidgetProxy {
-    fn from(concrete: Widget<T>) -> OwnedWidgetProxy {
-        OwnedWidgetProxy { anon: Box::new(concrete) }
-    }
-}
-
-impl<'a> From<&'a OwnedWidgetProxy> for WidgetProxy<'a> {
-    fn from(owned: &OwnedWidgetProxy) -> WidgetProxy {
-        WidgetProxy { anon: &*owned.anon }
-    }
-}
-
-impl<'a> From<&'a mut OwnedWidgetProxy> for WidgetProxyMut<'a> {
-    fn from(owned: &mut OwnedWidgetProxy) -> WidgetProxyMut {
-        WidgetProxyMut { anon: &mut *owned.anon }
-    }
 }
