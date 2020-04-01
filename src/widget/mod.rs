@@ -14,12 +14,13 @@ mod init;
 mod newwidget;
 mod rect;
 
+use rect::WidgetRect;
+
 pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
 pub use children::{WidgetChildren, WidgetChildrenMut};
 pub use content::WidgetContent;
 pub use init::WidgetInit;
 pub use newwidget::NewWidget;
-pub use rect::WidgetRect;
 
 /// A basic structure to wrap some data and turn it into a widget.
 #[derive(Default)]
@@ -104,13 +105,13 @@ impl<T: WidgetContent> Rect for Widget<T> {
     fn x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.internal_mut().rect.external_view().x_mut(f)
+        self.internal_mut().rect.external_x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.internal_mut().rect.external_view().y_mut(f)
+        self.internal_mut().rect.external_y_mut(f)
     }
 }
 

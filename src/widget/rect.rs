@@ -79,51 +79,30 @@ impl WidgetRect {
     pub fn x(&self) -> Dim { self.x.get() }
     pub fn y(&self) -> Dim { self.y.get() }
 
-    pub fn external_view(&mut self) -> WidgetRectExternalView {
-        WidgetRectExternalView(self)
-    }
-
-    pub fn internal_view(&mut self) -> WidgetRectExternalView {
-        WidgetRectExternalView(self)
-    }
-}
-
-pub struct WidgetRectExternalView<'a>(&'a mut WidgetRect);
-
-impl Rect for WidgetRectExternalView<'_> {
-    fn x(&self) -> Dim { self.0.x.get() }
-    fn y(&self) -> Dim { self.0.y.get() }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
+    pub fn external_x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.0.x.mut_external(f)
+        self.x.mut_external(f)
     }
 
-    fn y_mut<F, R>(&mut self, f: F) -> R
+    pub fn external_y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.0.y.mut_external(f)
+        self.y.mut_external(f)
     }
-}
 
-pub struct WidgetRectInternalView<'a>(&'a mut WidgetRect);
-
-impl Rect for WidgetRectInternalView<'_> {
-    fn x(&self) -> Dim { self.0.x.get() }
-    fn y(&self) -> Dim { self.0.y.get() }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
+    pub fn internal_x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.0.x.mut_internal(f)
+        self.x.mut_internal(f)
     }
 
-    fn y_mut<F, R>(&mut self, f: F) -> R
+    pub fn internal_y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.0.y.mut_internal(f)
+        self.y.mut_internal(f)
     }
+
 }
 
 impl<T: Rect> From<&T> for WidgetRect {

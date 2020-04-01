@@ -1,6 +1,9 @@
 use drying_paint::{WatcherMeta, WatcherInit};
 
-use super::{WidgetContent, WidgetRect, WidgetInternal};
+use super::{
+    WidgetContent,
+    WidgetInternal,
+};
 
 /// This will get passed to a widget's initializer. It provides functions to
 /// watch values for changes and run code when those values change
