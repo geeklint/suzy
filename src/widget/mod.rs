@@ -30,7 +30,7 @@ pub struct Widget<T: WidgetContent> {
 #[derive(Default)]
 struct WidgetInternal<T: WidgetContent> {
     rect: WidgetRect,
-    data: T,
+    content: T,
 }
 
 impl<T: WidgetContent + 'static> Widget<T> {
@@ -59,23 +59,26 @@ impl<T: WidgetContent> Widget<T> {
         self.watcher.data_mut()
     }
 
-    pub fn data(&self) -> Ref<T> { Ref::map(self.internal(), |w| &w.data) }
-    pub fn data_mut(&mut self) -> RefMut<T> {
-        RefMut::map(self.internal_mut(), |w| &mut w.data)
+    pub fn content(&self) -> Ref<T> {
+        Ref::map(self.internal(), |w| &w.content)
+    }
+
+    pub fn content_mut(&mut self) -> RefMut<T> {
+        RefMut::map(self.internal_mut(), |w| &mut w.content)
     }
 
     pub(crate) fn draw(&self, ctx: &mut DrawContext) {
         let wid_int = self.internal();
-        let data = &wid_int.data;
-        data.graphic().draw(ctx);
-        data.children().draw(ctx);
-        data.graphic_after().draw(ctx);
+        let content = &wid_int.content;
+        content.graphic().draw(ctx);
+        content.children().draw(ctx);
+        content.graphic_after().draw(ctx);
     }
 
     pub(crate) fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
         let handled_by_child = {
-            let data = &mut self.internal_mut().data;
-            data.children_mut().pointer_event(event)
+            let content = &mut self.internal_mut().content;
+            content.children_mut().pointer_event(event)
         };
         handled_by_child || T::pointer_event(self, event)
     }
@@ -88,7 +91,7 @@ where T: WidgetContent + Default
         Widget {
             watcher: Watcher::create(WidgetInternal {
                 rect: WidgetRect::from(rect),
-                data: Default::default(),
+                content: Default::default(),
             }),
         }
     }
