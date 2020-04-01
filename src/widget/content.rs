@@ -19,14 +19,13 @@ pub trait WidgetContent: Sized {
     /// Custom widgets must define a way to iterate over their children
     /// if they want those children to be visible
     fn children(&self)
-        -> children::WidgetChildren<
-            Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
+        -> WidgetChildren<Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
     ;
 
     /// Custom widgets must define a way to iterate over their children
     /// if they want those children to be visible
     fn children_mut(&mut self)
-        -> children::WidgetChildrenMut<
+        -> WidgetChildrenMut<
             Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
     ;
 
@@ -36,10 +35,11 @@ pub trait WidgetContent: Sized {
     fn graphic(&self) -> &Self::Graphic;
     fn graphic_after(&self) -> &Self::GraphicAfter;
 
-    fn pointer_event(widget: &mut Widget<Self>, event: &mut PointerEvent)
-        -> bool
-    {
-        let _unused = (widget, event);
+    fn pointer_event(
+        this: &mut WidgetView<'_, Self>,
+        event: &mut PointerEvent,
+    ) -> bool {
+        let _unused = (this, event);
         false
     }
 }
@@ -52,12 +52,12 @@ impl WidgetContent for () {
     type ChildC = ();
     type ChildD = ();
 
-    fn children(&self) -> children::WidgetChildren<(),(),(),()> {
-        children::WidgetChildren::Zero
+    fn children(&self) -> WidgetChildren<(),(),(),()> {
+        WidgetChildren::Zero
     }
 
-    fn children_mut(&mut self) -> children::WidgetChildrenMut<(),(),(),()> {
-        children::WidgetChildrenMut::Zero
+    fn children_mut(&mut self) -> WidgetChildrenMut<(),(),(),()> {
+        WidgetChildrenMut::Zero
     }
 
     type Graphic = ();

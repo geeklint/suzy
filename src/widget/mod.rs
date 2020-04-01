@@ -8,13 +8,14 @@ use crate::graphics::{Graphic, DrawContext};
 use crate::pointer::PointerEvent;
 
 mod anon;
-pub mod children;
+mod children;
 mod content;
 mod init;
 mod newwidget;
 mod rect;
 
 pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
+pub use children::{WidgetChildren, WidgetChildrenMut};
 pub use content::WidgetContent;
 pub use init::WidgetInit;
 pub use newwidget::NewWidget;
