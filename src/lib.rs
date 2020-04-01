@@ -1,17 +1,3 @@
-#[cfg(feature = "gag")]
-extern crate gag;
-#[cfg(feature = "lazy_static")]
-extern crate lazy_static;
-#[cfg(feature = "libc")]
-extern crate libc;
-#[cfg(feature = "gl")]
-extern crate gl;
-#[cfg(feature = "sdl2")]
-extern crate sdl2;
-#[cfg(feature = "widestring")]
-extern crate widestring;
-
-extern crate drying_paint;
 
 pub mod adapter;
 pub mod app;
