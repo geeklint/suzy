@@ -6,7 +6,7 @@ use super::{Widget, WidgetInit};
 
 /// This trait should be implemented for the types you provide as data for
 /// Widget implementations.
-pub trait WidgetContent: Sized {
+pub trait WidgetContent: Sized + 'static {
     /// This method provides a convient place to register functions which
     /// watch values and update parts of your widget when they change
     fn init(init: &mut WidgetInit<Self>);

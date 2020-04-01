@@ -11,7 +11,7 @@ pub struct WidgetInit<'a, T: WidgetContent> {
     pub(super) watcher: &'a mut WatcherMeta<WidgetInternal<T>>,
 }
 
-impl<T: WidgetContent + 'static> WidgetInit<'_, T> {
+impl<T: WidgetContent> WidgetInit<'_, T> {
     /// Register a simple watch which will get re-run whenever a value it
     /// references changes.
     pub fn watch<F>(&mut self, func: F)

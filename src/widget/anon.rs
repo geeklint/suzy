@@ -11,7 +11,7 @@ pub(crate) trait AnonWidget {
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
 }
 
-impl<T: WidgetContent + 'static> AnonWidget for Widget<T> {
+impl<T: WidgetContent> AnonWidget for Widget<T> {
     fn id(&self) -> WidgetId {
         Widget::id(self)
     }
@@ -40,7 +40,7 @@ pub struct OwnedWidgetProxy {
     pub(crate) anon: Box<dyn AnonWidget>,
 }
 
-impl<T: WidgetContent + 'static> From<Widget<T>> for OwnedWidgetProxy {
+impl<T: WidgetContent> From<Widget<T>> for OwnedWidgetProxy {
     fn from(concrete: Widget<T>) -> OwnedWidgetProxy {
         OwnedWidgetProxy { anon: Box::new(concrete) }
     }

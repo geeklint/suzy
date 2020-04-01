@@ -34,7 +34,7 @@ struct WidgetInternal<T: WidgetContent> {
     content: T,
 }
 
-impl<T: WidgetContent + 'static> Widget<T> {
+impl<T: WidgetContent> Widget<T> {
     pub fn id(&self) -> WidgetId {
         WidgetId {
             id: self.watcher.id(),
@@ -52,9 +52,7 @@ impl<T: WidgetContent + 'static> Widget<T> {
     pub fn proxy_mut(&mut self) -> WidgetProxyMut {
         WidgetProxyMut { anon: self }
     }
-}
 
-impl<T: WidgetContent> Widget<T> {
     fn internal(&self) -> Ref<WidgetInternal<T>> { self.watcher.data() }
     fn internal_mut(&mut self) -> RefMut<WidgetInternal<T>> {
         self.watcher.data_mut()
@@ -120,7 +118,7 @@ pub struct WidgetId {
     id: WatcherId,
 }
 
-impl<T: WidgetContent + 'static> From<&Widget<T>> for WidgetId {
+impl<T: WidgetContent> From<&Widget<T>> for WidgetId {
     fn from(widget: &Widget<T>) -> Self {
         widget.id()
     }
