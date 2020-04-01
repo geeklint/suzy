@@ -1,0 +1,15 @@
+[package]
+name = "suzy_fontasset_builder"
+version = "0.1.0"
+authors = ["Violet <violet@geeklint.com>"]
+edition = "2018"
+
+[dependencies]
+rayon = "1.3.0"
+sha2 = "0.8.1"
+hex = "0.4.2"
+
+[dependencies.sdl2]
+version = "0.33.0"
+default-features = false
+features = ["ttf"]
