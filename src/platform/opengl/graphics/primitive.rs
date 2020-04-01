@@ -80,16 +80,33 @@ impl<T> Buffer<T> {
     }
 
     pub fn set_data(&mut self, data: &[T]) {
-        assert_eq!(data.len(), self.len);
         unsafe {
             gl::BindBuffer(self.target, self.id);
-            gl::BufferSubData(
-                self.target,
-                0,
-                (self.len * mem::size_of::<T>()) as GLsizeiptr,
-                data.as_ptr() as *const c_void,
-            );
         }
+        if self.len == data.len() {
+            unsafe {
+                gl::BufferSubData(
+                    self.target,
+                    0,
+                    (data.len() * mem::size_of::<T>()) as GLsizeiptr,
+                    data.as_ptr() as *const c_void,
+                );
+            }
+        } else {
+            unsafe {
+                gl::BufferData(
+                    self.target,
+                    (data.len() * mem::size_of::<T>()) as GLsizeiptr,
+                    data.as_ptr() as *const c_void,
+                    if self.dyn_draw {
+                        gl::DYNAMIC_DRAW
+                    } else {
+                        gl::STATIC_DRAW
+                    },
+                );
+            }
+        }
+        self.len = data.len();
     }
 }
 
