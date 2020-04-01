@@ -17,7 +17,11 @@ pub mod sdl2;
 #[cfg(feature = "opengl")]
 pub use opengl::DrawParams;
 #[cfg(feature = "opengl")]
-pub use opengl::graphics;
+pub use opengl::{
+    graphics,
+    Text,
+    Font,
+};
 
 #[cfg(feature = "sdl")]
 pub use self::sdl2::Window as DefaultWindow;

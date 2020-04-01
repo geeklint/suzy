@@ -1,5 +1,6 @@
 use crate::platform::DrawParams;
-pub use crate::platform::graphics::image;
+pub use crate::platform::graphics::image::*;
+pub use crate::platform::{Text, Font};
 
 pub trait Graphic {
     fn draw(&self, ctx: &mut DrawContext);

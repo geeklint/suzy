@@ -2,22 +2,25 @@
 mod drawparams;
 pub mod graphics;
 mod shader;
+pub mod text;
 mod window;
 
 pub use drawparams::{
     DrawParams,
 };
 
-pub use shader::{
+pub(crate) use shader::{
     Shader,
     ProgramCompileError,
 };
 
-pub use window::{
+pub(crate) use window::{
     Window,
 };
 
-pub use graphics::{
+pub(crate) use graphics::{
     primitive::Texture,
     image,
 };
+
+pub use text::{Text, Font};

@@ -8,7 +8,7 @@ pub mod pointer;
 pub mod units;
 pub mod widget;
 pub mod window;
-pub(crate) mod platform;
+pub mod platform;
 
 /// ```rust,no_run
 /// struct NoChildren {

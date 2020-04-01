@@ -3,7 +3,7 @@ use crate::math::consts::WHITE;
 use crate::math::Color;
 
 use super::Texture;
-use super::graphics::layout::StandardLayout;
+use super::graphics::layout::{StandardLayout, TextLayout};
 
 #[derive(Clone)]
 pub struct DrawParams {
@@ -36,5 +36,11 @@ impl DrawParams {
 
     pub fn use_texture(&mut self, texture: Texture) {
         self.texture = texture;
+    }
+
+    pub(crate) fn with_text<F, R>(&mut self, func: F) -> R
+        where F: FnOnce(&mut TextLayout) -> R
+    {
+        self.layout.with_text(func)
     }
 }
