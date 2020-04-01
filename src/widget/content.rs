@@ -1,8 +1,8 @@
 use crate::graphics;
 use crate::pointer::PointerEvent;
 
-use super::children;
-use super::{Widget, WidgetInit};
+use super::children::{WidgetChildren, WidgetChildrenMut};
+use super::{WidgetView, WidgetInit};
 
 /// This trait should be implemented for the types you provide as data for
 /// Widget implementations.

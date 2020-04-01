@@ -2,7 +2,9 @@ use drying_paint::{WatcherMeta, WatcherInit};
 
 use super::{
     WidgetContent,
+    WidgetId,
     WidgetInternal,
+    WidgetView,
 };
 
 /// This will get passed to a widget's initializer. It provides functions to
@@ -15,10 +17,15 @@ impl<T: WidgetContent> WidgetInit<'_, T> {
     /// Register a simple watch which will get re-run whenever a value it
     /// references changes.
     pub fn watch<F>(&mut self, func: F)
-        where F: Fn(&mut T, &WidgetRect) + 'static
+        where F: Fn(&mut WidgetView<'_, T>) + 'static
     {
+        let id = WidgetId { id: self.watcher.id() };
         self.watcher.watch(move |wid_int| {
-            (func)(&mut wid_int.data, &wid_int.rect);
+            let mut view = WidgetView {
+                source: wid_int,
+                id: id.clone(),
+            };
+            (func)(&mut view);
         });
     }
 }

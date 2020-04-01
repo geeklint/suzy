@@ -11,27 +11,24 @@ mod anon;
 mod children;
 mod content;
 mod init;
+mod internal;
 mod newwidget;
 mod rect;
 
+use internal::WidgetInternal;
 use rect::WidgetRect;
 
 pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
 pub use children::{WidgetChildren, WidgetChildrenMut};
 pub use content::WidgetContent;
 pub use init::WidgetInit;
+pub use internal::WidgetView;
 pub use newwidget::NewWidget;
 
 /// A basic structure to wrap some data and turn it into a widget.
 #[derive(Default)]
 pub struct Widget<T: WidgetContent> {
     watcher: Watcher<WidgetInternal<T>>,
-}
-
-#[derive(Default)]
-struct WidgetInternal<T: WidgetContent> {
-    rect: WidgetRect,
-    content: T,
 }
 
 impl<T: WidgetContent> Widget<T> {
@@ -79,7 +76,13 @@ impl<T: WidgetContent> Widget<T> {
             let content = &mut self.internal_mut().content;
             content.children_mut().pointer_event(event)
         };
-        handled_by_child || T::pointer_event(self, event)
+        handled_by_child || {
+            let mut view = WidgetView {
+                id: self.id(),
+                source: &mut self.internal_mut(),
+            };
+            T::pointer_event(&mut view, event)
+        }
     }
 }
 
