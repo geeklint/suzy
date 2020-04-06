@@ -112,7 +112,7 @@ pub fn build_fontasset<S, D, C>(
         })
         .collect::<Vec<_>>();
     println!("stitching atlas...");
-    result.sort_unstable_by_key(|r| r.width);
+    result.sort_unstable_by_key(|r| (r.width, r.character));
     let row_height = (target_size as usize) + 2 * (max_distance as usize);
     let mut rows: Vec<Vec<&render_glyph::RenderResult>> = vec![vec![]];
     let mut current = result.split_last();
