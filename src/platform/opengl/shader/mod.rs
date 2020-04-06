@@ -60,6 +60,10 @@ const VERTEX_SOURCE: &'static [u8] = include_bytes!(
     "standard_vertex.glsl");
 const FRAGMENT_SOURCE: &'static [u8] = include_bytes!(
     "standard_fragment.glsl");
+const TEXT_VERTEX_SOURCE: &'static [u8] = include_bytes!(
+    "text_vertex.glsl");
+const TEXT_FRAGMENT_SOURCE: &'static [u8] = include_bytes!(
+    "text_fragment.glsl");
 
 #[derive(Debug)]
 pub enum ProgramCompileError {
@@ -139,6 +143,12 @@ impl Shader {
     pub fn standard() -> Self {
         Self::create(VERTEX_SOURCE, FRAGMENT_SOURCE).expect(
             "Standard Shader failed to compile"
+        )
+    }
+
+    pub fn text() -> Self {
+        Self::create(TEXT_VERTEX_SOURCE, TEXT_FRAGMENT_SOURCE).expect(
+            "Text Shader failed to compile"
         )
     }
 
