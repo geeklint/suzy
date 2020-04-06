@@ -6,6 +6,7 @@ use sha2::Digest;
 use rayon::prelude::*;
 
 mod render_glyph;
+mod kerning;
 
 thread_local! {
     static CACHE_PATH: RefCell<Vec<PathBuf>> = RefCell::new(
@@ -111,6 +112,12 @@ pub fn build_fontasset<S, D, C>(
             }
         })
         .collect::<Vec<_>>();
+    println!("generating kerning...");
+    let kerning_pairs = kerning::get_pairs(
+        &result,
+        get_font,
+        (max_distance as u32) * 2,
+    );
     println!("stitching atlas...");
     result.sort_unstable_by_key(|r| (r.width, r.character));
     let row_height = (target_size as usize) + 2 * (max_distance as usize);
@@ -187,21 +194,28 @@ pub fn build_fontasset<S, D, C>(
     writeln!(&file, "use suzy::platform::opengl::text::FontSource;");
     coords.sort_unstable_by_key(|c| c.0);
     let coord_ref: &[(u32, f64, f64, f64, f64)] = &coords;
+    let kerning_ref: &[(char, char, f64)] = &kerning_pairs;
+    let font_size = target_size as f64;
+    let padding_ratio = (row_height as f64) / font_size;
     atlas.with_lock(|pixels| {
         writeln!(
             &file,
-            "pub const FONT: FontSource<'static, 'static> = FontSource {{
+            "pub const FONT: FontSource<'static, 'static, 'static> = FontSource {{
                 font_size: {:.1},
                 image_width: {},
                 image_height: {},
-                atlas_image: &{:#?},
-                coords: &{:#?},
+                atlas_image: &{:?},
+                coords: &{:?},
+                padding_ratio: {:.1},
+                kerning_pairs: &{:?},
             }};",
             (target_size as f64),
             output_height,
             output_height,
             pixels,
             coord_ref,
+            padding_ratio,
+            kerning_ref,
         ).expect(write_failure);
     });
 }
