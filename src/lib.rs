@@ -178,7 +178,6 @@ pub fn build_fontasset<S, D, C>(
                 x as f64 / dim,
                 y_coord,
                 source.width() as f64 / dim,
-                height_coord,
             ));
             x += source.width() as i32;
         }
@@ -193,15 +192,16 @@ pub fn build_fontasset<S, D, C>(
         .expect(write_failure);
     writeln!(&file, "use suzy::platform::opengl::text::FontSource;");
     coords.sort_unstable_by_key(|c| c.0);
-    let coord_ref: &[(u32, f64, f64, f64, f64)] = &coords;
+    let coord_ref: &[(u32, f64, f64, f64)] = &coords;
     let kerning_ref: &[(char, char, f64)] = &kerning_pairs;
     let font_size = target_size as f64;
     let padding_ratio = (row_height as f64) / font_size;
     atlas.with_lock(|pixels| {
         writeln!(
             &file,
-            "pub const FONT: FontSource<'static, 'static, 'static> = FontSource {{
+            "pub const FONT: FontSource = FontSource {{
                 font_size: {:.1},
+                char_height: {:.1},
                 image_width: {},
                 image_height: {},
                 atlas_image: &{:?},
@@ -210,6 +210,7 @@ pub fn build_fontasset<S, D, C>(
                 kerning_pairs: &{:?},
             }};",
             (target_size as f64),
+            height_coord,
             output_height,
             output_height,
             pixels,
