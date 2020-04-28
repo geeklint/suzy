@@ -7,6 +7,11 @@ use sdl2::surface::Surface;
 use sdl2::image::LoadSurface;
 use sdl2::pixels::PixelFormatEnum;
 
+use crate::platform::opengl::bindings::{
+    RGB,
+    RGBA,
+    UNSIGNED_BYTE,
+};
 use crate::platform::opengl::image::{
     TextureLoadResult, TextureBuilder
 };
@@ -30,18 +35,14 @@ pub fn load_texture(path: &Path) -> TextureLoadResult {
     let surf = Surface::from_file(path)
         .map_err(|msg| Box::new(SdlImageLoadError(msg)))?;
     let (fmt, type_, surf, opaque) = match surf.pixel_format_enum() {
-        PixelFormatEnum::RGB24 => (gl::BGR, gl::UNSIGNED_BYTE, surf, true),
-        PixelFormatEnum::BGR24 => (gl::RGB, gl::UNSIGNED_BYTE, surf, true),
+        PixelFormatEnum::BGR24 => (RGB, UNSIGNED_BYTE, surf, true),
         PixelFormatEnum::ABGR8888 => {
-            (gl::RGBA, gl::UNSIGNED_BYTE, surf, false)
-        },
-        PixelFormatEnum::ARGB8888 => {
-            (gl::BGRA, gl::UNSIGNED_BYTE, surf, false)
+            (RGBA, UNSIGNED_BYTE, surf, false)
         },
         _ => {
-            let conv = surf.convert_format(PixelFormatEnum::ARGB8888)
+            let conv = surf.convert_format(PixelFormatEnum::ABGR8888)
                 .map_err(|msg| Box::new(SdlImageLoadError(msg)))?;
-            (gl::BGRA, gl::UNSIGNED_BYTE, conv, false)
+            (RGBA, UNSIGNED_BYTE, conv, false)
         },
     };
     let (width, height) = surf.size();

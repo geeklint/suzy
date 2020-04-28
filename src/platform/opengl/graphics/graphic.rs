@@ -1,7 +1,18 @@
-use gl::types::*;
-
 use crate::graphics::{self, DrawContext};
-use super::primitive::{Buffer, Texture};
+
+use crate::platform::opengl;
+
+use opengl::bindings::types::*;
+use opengl::bindings::{
+    ARRAY_BUFFER,
+    ELEMENT_ARRAY_BUFFER,
+    FALSE,
+    FLOAT,
+    TRIANGLES,
+    UNSIGNED_BYTE,
+};
+use opengl::OpenGlRenderPlatform as Gl;
+use opengl::primitive::{Buffer, Texture};
 
 
 #[derive(Clone)]
@@ -21,10 +32,10 @@ impl Graphic {
         dynamic: (bool, bool, bool),
     ) -> Self {
         Graphic {
-            coords: Buffer::new(gl::ARRAY_BUFFER, dynamic.0, verts * 2),
-            uvs: Buffer::new(gl::ARRAY_BUFFER, dynamic.1, verts * 2),
+            coords: Buffer::new(ARRAY_BUFFER, dynamic.0, verts * 2),
+            uvs: Buffer::new(ARRAY_BUFFER, dynamic.1, verts * 2),
             tris: Buffer::new(
-                gl::ELEMENT_ARRAY_BUFFER,
+                ELEMENT_ARRAY_BUFFER,
                 dynamic.2,
                 tris * 3,
             ),
@@ -51,38 +62,38 @@ impl Graphic {
     }
 }
 
-impl graphics::Graphic for Graphic {
-    fn draw(&self, ctx: &mut DrawContext) {
+impl graphics::Graphic<Gl> for Graphic {
+    fn draw(&self, ctx: &mut DrawContext<Gl>) {
         let mut params = ctx.clone_current();
         params.use_texture(self.texture.clone());
         DrawContext::push(ctx, params);
-        unsafe {
+        Gl::global(|gl| unsafe {
             self.coords.bind();
-            gl::VertexAttribPointer(
+            gl.VertexAttribPointer(
                 0,
                 2,
-                gl::FLOAT,
-                gl::FALSE,
+                FLOAT,
+                FALSE,
                 0,
                 std::ptr::null(),
             );
             self.uvs.bind();
-            gl::VertexAttribPointer(
+            gl.VertexAttribPointer(
                 1,
                 2,
-                gl::FLOAT,
-                gl::FALSE,
+                FLOAT,
+                FALSE,
                 0,
                 std::ptr::null(),
             );
             self.tris.bind();
-            gl::DrawElements(
-                gl::TRIANGLES,
+            gl.DrawElements(
+                TRIANGLES,
                 self.tris.len() as i32,
-                gl::UNSIGNED_BYTE,
+                UNSIGNED_BYTE,
                 std::ptr::null(),
             );
-        }
+        });
         DrawContext::pop(ctx);
     }
 }

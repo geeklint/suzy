@@ -4,12 +4,12 @@ use std::convert::TryInto;
 
 use drying_paint::Watched;
 
-use crate::platform::DefaultWindow;
+use crate::platform::{DefaultPlatform, Platform};
 use crate::pointer::{PointerEvent, PointerId};
 use crate::widget::{Widget, WidgetContent, WidgetId};
 use crate::window;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
-use window::{WindowEvent, WindowSettings};
+use window::{Window, WindowEvent, WindowSettings};
 
 thread_local! {
     static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
@@ -108,23 +108,23 @@ impl window::WindowSettings for AppBuilder {
     }
 }
 
-pub struct App<Root, W>
+pub struct App<Root, P = DefaultPlatform>
 where
-    Root: WidgetContent,
-    for<'a> W: window::Window<'a>,
+    Root: WidgetContent<P::Renderer>,
+    P: Platform,
 {
     watch_ctx: drying_paint::WatchContext,
-    window: W,
-    root: Widget<Root>,
+    window: P::Window,
+    root: Widget<Root, P::Renderer>,
     values: AppValues,
     quit: bool,
     grab_map: std::collections::HashMap<PointerId, WidgetId>,
 }
 
-impl<Root, W> App<Root, W>
+impl<Root, P> App<Root, P>
 where
-    Root: WidgetContent,
-    for<'a> W: window::Window<'a>,
+    Root: WidgetContent<P::Renderer>,
+    P: Platform,
 {
     pub fn time() -> time::Instant {
         try_with_current(|values| {
@@ -154,7 +154,7 @@ where
         watch_ctx.with(|| {
             *values.frame_start = time::Instant::now();
             APP_STACK.with(|cell| cell.borrow_mut().push(values));
-            for event in window.events() {
+            while let Some(event) = window.next_event() {
                 match event {
                     WindowEvent::Quit => {
                         *quit = true;
@@ -201,6 +201,7 @@ where
     }
 }
 
+/*
 impl<Root> App<Root, DefaultWindow>
 where Root: WidgetContent + Default
 {
@@ -236,3 +237,4 @@ where Root: WidgetContent + Default
         }
     }
 }
+*/

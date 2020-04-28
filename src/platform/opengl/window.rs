@@ -1,24 +1,14 @@
-use gl::types::*;
+use std::ffi::c_void;
 
 use crate::graphics::DrawContext;
 
-use super::DrawParams;
-use super::graphics::layout::StandardLayout;
-
-extern "system" fn message_callback(
-    _source: GLenum,
-    _gltype: GLenum,
-    _id: GLuint,
-    _severity: GLenum,
-    length: GLsizei,
-    message: *const GLchar,
-    _user_param: *mut std::ffi::c_void,
-) {
-    let data = unsafe {
-        std::slice::from_raw_parts(message as *const u8, length as usize)
-    };
-    println!("{}", String::from_utf8_lossy(data));
-}
+use super::OpenGlRenderPlatform as Gl;
+use super::bindings::types::*;
+use super::bindings::{
+    COLOR_BUFFER_BIT,
+};
+use super::drawparams::DrawParams;
+use super::layout::StandardLayout;
 
 /// opengl::Window provides a subset of the methods to implement the Window
 /// struct. It can be embedded in another window implementation which
@@ -28,16 +18,10 @@ pub struct Window {
 }
 
 impl Window {
-    /// Create an opengl window. This assumes there is an active opengl
-    /// context.
-    pub fn new() -> Self {
-        unsafe {
-            gl::Enable(gl::DEBUG_OUTPUT);
-            gl::DebugMessageCallback(
-                Some(message_callback),
-                std::ptr::null(),
-            );
-        }
+    /// Create an opengl window with a specified function pointer loader
+    pub fn new<F>(loader: F) -> Self
+        where F: FnMut(&str) -> *const c_void,
+    {
         Window {
             layout: StandardLayout::new(),
         }
@@ -46,17 +30,19 @@ impl Window {
     /// Set the viewport. Wrapping windows will probably want to do this
     /// when they detect a resize.
     pub fn viewport(&mut self, x: i32, y: i32, width: u32, height: u32) {
-        unsafe {
-            gl::Viewport(
+        Gl::global(|gl| unsafe {
+            gl.Viewport(
                 x as GLint,
                 y as GLint,
                 width as GLsizei,
                 height as GLsizei,
             );
-        }
+        });
     }
 
-    pub fn prepare_draw(&mut self, screen_size: (f32, f32)) -> DrawContext {
+    pub fn prepare_draw(&mut self, screen_size: (f32, f32))
+        -> DrawContext<Gl>
+    {
         self.layout.make_current();
         self.layout.set_screen_size(screen_size);
         self.layout.set_tint_color(crate::math::consts::WHITE);
@@ -66,15 +52,15 @@ impl Window {
 
     /// Issue opengl call to clear the screen.
     pub fn clear(&mut self) {
-		unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
+        Gl::global(|gl| unsafe {
+            gl.Clear(COLOR_BUFFER_BIT);
+        });
     }
 
     /// This function does not block like window::Window requires.
     pub fn flip(&mut self) {
-        unsafe {
-            gl::Flush();  // needed?
-        }
+        Gl::global(|gl| unsafe {
+            gl.Flush();  // needed?
+        });
     }
 }

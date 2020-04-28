@@ -1,9 +1,10 @@
 
 use crate::math::consts::WHITE;
 use crate::math::Color;
+use crate::graphics;
 
 use super::Texture;
-use super::graphics::layout::{StandardLayout, TextLayout};
+use super::layout::{StandardLayout, TextLayout};
 
 #[derive(Clone)]
 pub struct DrawParams {
@@ -21,15 +22,6 @@ impl DrawParams {
         }
     }
 
-    pub fn apply_change(current: &Self, new: &mut Self) {
-        if new.tint_color != current.tint_color {
-            new.layout.set_tint_color(new.tint_color);
-        }
-        if new.texture != current.texture {
-            new.layout.set_texture(&new.texture);
-        }
-    }
-
     pub fn tint(&mut self, tint: Color) {
         self.tint_color.tint(tint);
     }
@@ -42,5 +34,16 @@ impl DrawParams {
         where F: FnOnce(&mut TextLayout) -> R
     {
         self.layout.with_text(func)
+    }
+}
+
+impl graphics::DrawParams for DrawParams {
+    fn apply_change(current: &Self, new: &mut Self) {
+        if new.tint_color != current.tint_color {
+            new.layout.set_tint_color(new.tint_color);
+        }
+        if new.texture != current.texture {
+            new.layout.set_texture(&new.texture);
+        }
     }
 }

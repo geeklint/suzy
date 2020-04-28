@@ -1,11 +1,15 @@
-use gl::types::*;
 
 use crate::graphics::{self, DrawContext};
 use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
-use super::graphic::Graphic;
-pub use super::primitive::{
+
+use super::Graphic;
+
+use crate::platform::opengl;
+use opengl::bindings::types::*;
+pub use opengl::primitive::{
     Texture, TextureLoader, TextureLoadResult, TextureBuilder
 };
+use opengl::OpenGlRenderPlatform as Gl;
 
 #[derive(Clone)]
 pub struct SlicedImage {
@@ -135,8 +139,8 @@ impl Rect for SlicedImage {
     }
 }
 
-impl graphics::Graphic for SlicedImage {
-    fn draw(&self, ctx: &mut DrawContext) {
+impl graphics::Graphic<Gl> for SlicedImage {
+    fn draw(&self, ctx: &mut DrawContext<Gl>) {
         self.graphic.draw(ctx);
     }
 }

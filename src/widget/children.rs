@@ -1,65 +1,80 @@
 use crate::graphics;
+use crate::platform::RenderPlatform;
 use crate::pointer::PointerEvent;
 
 use super::{Widget, WidgetProxy, WidgetProxyMut, WidgetContent};
 
-pub enum WidgetChildren<'a, A,B,C,D>
+pub enum WidgetChildren<'a, P, A,B,C,D>
 where
-    A: WidgetContent,
-    B: WidgetContent,
-    C: WidgetContent,
-    D: WidgetContent,
+    P: RenderPlatform,
+    A: WidgetContent<P>,
+    B: WidgetContent<P>,
+    C: WidgetContent<P>,
+    D: WidgetContent<P>,
 {
     Zero,
-    One(&'a Widget<A>),
-    Two(&'a Widget<A>,&'a Widget<B>),
-    Three(&'a Widget<A>,&'a Widget<B>,&'a Widget<C>),
-    Four(&'a Widget<A>,&'a Widget<B>,&'a Widget<C>,&'a Widget<D>),
-    Uniform(Vec<&'a Widget<A>>),
-    Varied(Vec<WidgetProxy<'a>>),
+    One(&'a Widget<A,P>),
+    Two(&'a Widget<A,P>,&'a Widget<B,P>),
+    Three(&'a Widget<A,P>,&'a Widget<B,P>,&'a Widget<C,P>),
+    Four(&'a Widget<A,P>,&'a Widget<B,P>,&'a Widget<C,P>,&'a Widget<D,P>),
+    Uniform(Vec<&'a Widget<A,P>>),
+    Varied(Vec<WidgetProxy<'a,P>>),
 }
 
 
-pub enum WidgetChildrenMut<'a, A,B,C,D>
+pub enum WidgetChildrenMut<'a,P, A,B,C,D>
 where
-    A: WidgetContent,
-    B: WidgetContent,
-    C: WidgetContent,
-    D: WidgetContent,
+    P: RenderPlatform,
+    A: WidgetContent<P>,
+    B: WidgetContent<P>,
+    C: WidgetContent<P>,
+    D: WidgetContent<P>,
 {
     Zero,
-    One(&'a mut Widget<A>),
-    Two(&'a mut Widget<A>,&'a mut Widget<B>),
-    Three(&'a mut Widget<A>,&'a mut Widget<B>,&'a mut Widget<C>),
-    Four(&'a mut Widget<A>,&'a mut Widget<B>,&'a mut Widget<C>,&'a mut Widget<D>),
-    Uniform(Vec<&'a mut Widget<A>>),
-    Varied(Vec<WidgetProxyMut<'a>>),
+    One(&'a mut Widget<A,P>),
+    Two(&'a mut Widget<A,P>,&'a mut Widget<B,P>),
+    Three(&'a mut Widget<A,P>,&'a mut Widget<B,P>,&'a mut Widget<C,P>),
+    Four(
+        &'a mut Widget<A,P>,
+        &'a mut Widget<B,P>,
+        &'a mut Widget<C,P>,
+        &'a mut Widget<D,P>,
+    ),
+    Uniform(Vec<&'a mut Widget<A,P>>),
+    Varied(Vec<WidgetProxyMut<'a,P>>),
 }
 
-impl<'a, T: WidgetContent> From<&'a [Widget<T>]>
-for WidgetChildren<'a, T,(),(),()>
+impl<'a, P, T> From<&'a [Widget<T,P>]>
+for WidgetChildren<'a, P, T,(),(),()>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>
 {
-    fn from(widgets: &'a [Widget<T>]) -> Self {
+    fn from(widgets: &'a [Widget<T,P>]) -> Self {
         WidgetChildren::Uniform(widgets.iter().collect())
     }
 }
 
-impl<'a, T: WidgetContent> From<&'a mut [Widget<T>]>
-for WidgetChildrenMut<'a, T,(),(),()>
+impl<'a, P, T> From<&'a mut [Widget<T,P>]>
+for WidgetChildrenMut<'a, P, T,(),(),()>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>
 {
-    fn from(widgets: &'a mut [Widget<T>]) -> Self {
+    fn from(widgets: &'a mut [Widget<T, P>]) -> Self {
         WidgetChildrenMut::Uniform(widgets.iter_mut().collect())
     }
 }
 
-impl<'a, A,B,C,D> WidgetChildren<'a, A,B,C,D>
+impl<'a, P, A,B,C,D> WidgetChildren<'a, P, A,B,C,D>
 where
-    A: WidgetContent,
-    B: WidgetContent,
-    C: WidgetContent,
-    D: WidgetContent,
+    P: RenderPlatform,
+    A: WidgetContent<P>,
+    B: WidgetContent<P>,
+    C: WidgetContent<P>,
+    D: WidgetContent<P>,
 {
-    pub(super) fn draw(self, ctx: &mut graphics::DrawContext) {
+    pub(super) fn draw(self, ctx: &mut graphics::DrawContext<P>) {
         use WidgetChildren::*;
         match self {
             Zero => (),
@@ -95,12 +110,13 @@ where
     }
 }
 
-impl<'a, A,B,C,D> WidgetChildrenMut<'a, A,B,C,D>
+impl<'a, P, A,B,C,D> WidgetChildrenMut<'a, P, A,B,C,D>
 where
-    A: WidgetContent,
-    B: WidgetContent,
-    C: WidgetContent,
-    D: WidgetContent,
+    P: RenderPlatform,
+    A: WidgetContent<P>,
+    B: WidgetContent<P>,
+    C: WidgetContent<P>,
+    D: WidgetContent<P>,
 {
     pub(super) fn pointer_event(self, event: &mut PointerEvent) -> bool {
         use WidgetChildrenMut::*;

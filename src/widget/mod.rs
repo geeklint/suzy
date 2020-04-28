@@ -5,6 +5,7 @@ pub use drying_paint::Watched;
 
 use crate::dims::{Rect, Dim};
 use crate::graphics::{Graphic, DrawContext};
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
 mod anon;
@@ -27,11 +28,19 @@ pub use newwidget::NewWidget;
 
 /// A basic structure to wrap some data and turn it into a widget.
 #[derive(Default)]
-pub struct Widget<T: WidgetContent> {
-    watcher: Watcher<WidgetInternal<T>>,
+pub struct Widget<T, P = DefaultRenderPlatform>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
+    watcher: Watcher<WidgetInternal<P, T>>,
 }
 
-impl<T: WidgetContent> Widget<T> {
+impl<P, T> Widget<T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
     pub fn id(&self) -> WidgetId {
         WidgetId {
             id: self.watcher.id(),
@@ -40,18 +49,18 @@ impl<T: WidgetContent> Widget<T> {
 
     /// Get an anonymous reference to this widget. This is required by
     /// WidgetContent::children(), for example.
-    pub fn proxy(&self) -> WidgetProxy {
+    pub fn proxy(&self) -> WidgetProxy<P> {
         WidgetProxy { anon: self }
     }
 
     /// Get an mutable anonymous reference to this widget. This is required
     /// by WidgetContent::children_mut(), for example.
-    pub fn proxy_mut(&mut self) -> WidgetProxyMut {
+    pub fn proxy_mut(&mut self) -> WidgetProxyMut<P> {
         WidgetProxyMut { anon: self }
     }
 
-    fn internal(&self) -> Ref<WidgetInternal<T>> { self.watcher.data() }
-    fn internal_mut(&mut self) -> RefMut<WidgetInternal<T>> {
+    fn internal(&self) -> Ref<WidgetInternal<P, T>> { self.watcher.data() }
+    fn internal_mut(&mut self) -> RefMut<WidgetInternal<P, T>> {
         self.watcher.data_mut()
     }
 
@@ -63,7 +72,7 @@ impl<T: WidgetContent> Widget<T> {
         RefMut::map(self.internal_mut(), |w| &mut w.content)
     }
 
-    pub(crate) fn draw(&self, ctx: &mut DrawContext) {
+    pub(crate) fn draw(&self, ctx: &mut DrawContext<P>) {
         let wid_int = self.internal();
         let content = &wid_int.content;
         content.graphic().draw(ctx);
@@ -86,20 +95,27 @@ impl<T: WidgetContent> Widget<T> {
     }
 }
 
-impl<T> Widget<T>
-where T: WidgetContent + Default
+impl<P, T> Widget<T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P> + Default,
 {
     pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
         Widget {
             watcher: Watcher::create(WidgetInternal {
                 rect: WidgetRect::from(rect),
                 content: Default::default(),
+                _platform: Default::default(),
             }),
         }
     }
 }
 
-impl<T: WidgetContent> Rect for Widget<T> {
+impl<P, T> Rect for Widget<T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
     fn x(&self) -> Dim { self.internal().rect.x() }
     fn y(&self) -> Dim { self.internal().rect.y() }
 
@@ -121,8 +137,12 @@ pub struct WidgetId {
     id: WatcherId,
 }
 
-impl<T: WidgetContent> From<&Widget<T>> for WidgetId {
-    fn from(widget: &Widget<T>) -> Self {
+impl<P, T> From<&Widget<T, P>> for WidgetId
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
+    fn from(widget: &Widget<T, P>) -> Self {
         widget.id()
     }
 }

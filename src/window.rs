@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
 use crate::graphics::DrawContext;
+use crate::platform::RenderPlatform;
 use crate::pointer::PointerEventData;
 
 pub enum WindowEvent {
@@ -72,7 +73,7 @@ impl WindowSettings for WindowBuilder {
     }
 }
 
-pub trait Window<'a> : WindowSettings + TryFrom<WindowBuilder> {
+pub trait Window<P: RenderPlatform> : WindowSettings + TryFrom<WindowBuilder> {
     /// Get the pixel density of the window as displayed
     fn pixels_per_dp(&self) -> f32;
 
@@ -84,11 +85,8 @@ pub trait Window<'a> : WindowSettings + TryFrom<WindowBuilder> {
     /// usually cause the back buffer to be displayed.
     fn flip(&mut self);
 
-    fn prepare_draw(&mut self) -> DrawContext;
+    fn prepare_draw(&mut self) -> DrawContext<P>;
 
-    /// An iterator for window events
-    type Events: Iterator<Item = WindowEvent> + 'a;
-
-    /// Get a iterator which returns window events
-    fn events(&'a mut self) -> Self::Events;
+    /// Check for a new event on the window
+    fn next_event(&mut self) -> Option<WindowEvent>;
 }

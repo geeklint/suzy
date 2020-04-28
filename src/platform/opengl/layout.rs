@@ -1,11 +1,16 @@
 use std::rc::Rc;
 
-use gl::types::*;
-
-use super::primitive::{VertexArrayObject, Texture};
-use super::super::Shader;
-use super::super::shader::UniformLoc;
 use crate::math::Color;
+
+use super::OpenGlRenderPlatform as Gl;
+use super::primitive::{VertexArrayObject, Texture};
+use super::Shader;
+use super::shader::UniformLoc;
+use super::bindings::types::*;
+use super::bindings::{
+    TEXTURE0,
+    TEXTURE_2D,
+};
 
 #[derive(Clone)]
 pub struct Layout {
@@ -16,21 +21,19 @@ pub struct Layout {
 impl Layout {
     pub fn create(shader: Shader, enabled_attribs: &[u32]) -> Self {
         let vao = Rc::new(VertexArrayObject::new());
-        unsafe {
-            gl::BindVertexArray(vao.id);
-        }
-        for index in enabled_attribs {
-            unsafe {
-                gl::EnableVertexAttribArray(*index);
+        Gl::global(|gl| unsafe {
+            gl.BindVertexArray(vao.id);
+            for index in enabled_attribs {
+                gl.EnableVertexAttribArray(*index);
             }
-        }
+        });
         Layout { vao, shader }
     }
 
     pub fn make_current(&self) {
-        unsafe {
-            gl::BindVertexArray(self.vao.id);
-        }
+        Gl::global(|gl| unsafe {
+            gl.BindVertexArray(self.vao.id);
+        });
         self.shader.make_current();
     }
 
@@ -113,10 +116,10 @@ impl StandardLayout {
             self.uniforms.tex_scale,
             (texture.scale[0], texture.scale[1]),
         );
-        unsafe {
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, texture.id);
-        }
+        Gl::global(|gl| unsafe {
+            gl.ActiveTexture(TEXTURE0);
+            texture.bind(gl);
+        });
     }
 
     pub fn set_tint_color(&mut self, value: Color) {
@@ -172,10 +175,10 @@ impl TextLayout {
     }
 
     pub fn set_texture(&mut self, texture: &Texture) {
-        unsafe {
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, texture.id);
-        }
+        Gl::global(|gl| unsafe {
+            gl.ActiveTexture(TEXTURE0);
+            texture.bind(gl);
+        });
     }
 
     pub fn set_text_color(&mut self, value: Color) {

@@ -1,28 +1,46 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::dims::{Dim, Rect};
+use crate::platform::RenderPlatform;
 
 use super::{WidgetId, WidgetContent, WidgetRect};
 
 
 #[derive(Default)]
-pub(super) struct WidgetInternal<T: WidgetContent> {
+pub(super) struct WidgetInternal<P, T>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
     pub(super) rect: WidgetRect,
     pub(super) content: T,
+    pub(super) _platform: std::marker::PhantomData<P>,
 }
 
-pub struct WidgetView<'a, T: WidgetContent> {
-    pub(super) source: &'a mut WidgetInternal<T>,
+pub struct WidgetView<'a, P, T>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
+    pub(super) source: &'a mut WidgetInternal<P, T>,
     pub(super) id: WidgetId,
 }
 
-impl<T: WidgetContent> WidgetView<'_, T> {
+impl<P, T> WidgetView<'_, P, T>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
     pub fn id(&self) -> WidgetId {
         self.id.clone()
     }
 }
 
-impl<T: WidgetContent> Rect for WidgetView<'_, T> {
+impl<P, T> Rect for WidgetView<'_, P, T>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
     fn x(&self) -> Dim { self.source.rect.x() }
     fn y(&self) -> Dim { self.source.rect.y() }
 
@@ -39,12 +57,20 @@ impl<T: WidgetContent> Rect for WidgetView<'_, T> {
     }
 }
 
-impl<T: WidgetContent> Deref for WidgetView<'_, T> {
+impl<P, T> Deref for WidgetView<'_, P, T>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
     type Target = T;
 
     fn deref(&self) -> &T { &self.source.content }
 }
 
-impl<T: WidgetContent> DerefMut for WidgetView<'_, T> {
+impl<P, T> DerefMut for WidgetView<'_, P, T>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
     fn deref_mut(&mut self) -> &mut T { &mut self.source.content }
 }

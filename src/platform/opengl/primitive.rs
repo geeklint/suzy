@@ -5,18 +5,37 @@ use std::ops::RangeBounds;
 use std::path::Path;
 use std::rc::Rc;
 
-use gl::types::*;
+use super::OpenGlRenderPlatform as Gl;
+use super::bindings::types::*;
+use super::bindings::{
+    CLAMP_TO_EDGE,
+    COPY_READ_BUFFER,
+    COPY_WRITE_BUFFER,
+    DYNAMIC_DRAW,
+    LINEAR,
+    RGB,
+    RGB8,
+    RGBA,
+    RGBA8,
+    STATIC_DRAW,
+    TEXTURE_2D,
+    TEXTURE_MAG_FILTER,
+    TEXTURE_MIN_FILTER,
+    TEXTURE_WRAP_S,
+    TEXTURE_WRAP_T,
+    UNSIGNED_BYTE,
+};
 
 macro_rules! gl_object {
     ($name:ident, $create:ident, $delete:ident) => {
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq)]
         struct $name {
             pub(crate) id: GLuint,
         }
         gl_object! {impl $name, $create, $delete}
     };
     (pub $name:ident, $create:ident, $delete:ident) => {
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq)]
         pub struct $name {
             pub(crate) id: GLuint,
         }
@@ -26,13 +45,17 @@ macro_rules! gl_object {
         impl $name {
             pub fn new() -> Self {
                 let mut id = 0;
-                unsafe { gl::$create(1, &mut id as *mut _) };
+                Gl::global(|gl| unsafe {
+                    gl.$create(1, &mut id as *mut _);
+                });
                 Self { id }
             }
         }
         impl Drop for $name {
             fn drop(&mut self) {
-                unsafe { gl::$delete(1, &self.id as *const _) };
+                Gl::global(|gl| unsafe {
+                    gl.$delete(1, &self.id as *const _);
+                });
             }
         }
     };
@@ -44,7 +67,6 @@ gl_object! { TextureData, GenTextures, DeleteTextures }
 
 pub struct Buffer<T> {
     obj: Rc<BufferData>,
-    id: GLuint,
     target: GLenum,
     dyn_draw: bool,
     len: usize,
@@ -53,19 +75,18 @@ pub struct Buffer<T> {
 
 impl<T> Buffer<T> {
     pub fn new(target: GLenum, dyn_draw: bool, len: usize) -> Self {
-        let obj = BufferData::new();
-        unsafe {
-            gl::BindBuffer(target, obj.id);
-            gl::BufferData(
+        let obj = Rc::new(BufferData::new());
+        Gl::global(|gl| unsafe {
+            gl.BindBuffer(target, obj.id);
+            gl.BufferData(
                 target,
                 (len * mem::size_of::<T>()) as GLsizeiptr,
                 std::ptr::null(),
-                if dyn_draw { gl::DYNAMIC_DRAW } else { gl::STATIC_DRAW },
+                if dyn_draw { DYNAMIC_DRAW } else { STATIC_DRAW },
             );
-        }
+        });
         Self {
-            id: obj.id,
-            obj: Rc::new(obj),
+            obj: obj,
             target,
             dyn_draw,
             len,
@@ -73,39 +94,39 @@ impl<T> Buffer<T> {
         }
     }
 
+    fn id(&self) -> GLuint { self.obj.id }
+
     pub fn len(&self) -> usize { self.len }
 
-    pub unsafe fn bind(&self) {
-        gl::BindBuffer(self.target, self.id);
+    pub fn bind(&self) {
+        Gl::global(|gl| unsafe {
+            gl.BindBuffer(self.target, self.id());
+        });
     }
 
     pub fn set_data(&mut self, data: &[T]) {
-        unsafe {
-            gl::BindBuffer(self.target, self.id);
-        }
-        if self.len == data.len() {
-            unsafe {
-                gl::BufferSubData(
+        Gl::global(|gl| unsafe {
+            gl.BindBuffer(self.target, self.id());
+            if self.len == data.len() {
+                gl.BufferSubData(
                     self.target,
                     0,
                     (data.len() * mem::size_of::<T>()) as GLsizeiptr,
                     data.as_ptr() as *const c_void,
                 );
-            }
-        } else {
-            unsafe {
-                gl::BufferData(
+            } else {
+                gl.BufferData(
                     self.target,
                     (data.len() * mem::size_of::<T>()) as GLsizeiptr,
                     data.as_ptr() as *const c_void,
                     if self.dyn_draw {
-                        gl::DYNAMIC_DRAW
+                        DYNAMIC_DRAW
                     } else {
-                        gl::STATIC_DRAW
+                        STATIC_DRAW
                     },
                 );
             }
-        }
+        });
         self.len = data.len();
     }
 }
@@ -114,8 +135,7 @@ impl<T> Clone for Buffer<T> {
     fn clone(&self) -> Self {
         if !self.dyn_draw {
             Self {
-                id: self.id,
-                obj: Rc::clone(&self.obj),
+                obj: self.obj.clone(),
                 target: self.target,
                 dyn_draw: self.dyn_draw,
                 len: self.len,
@@ -123,16 +143,16 @@ impl<T> Clone for Buffer<T> {
             }
         } else {
             let clone = Self::new(self.target, true, self.len);
-            unsafe {
-                gl::BindBuffer(gl::COPY_READ_BUFFER, self.id);
-                gl::BindBuffer(gl::COPY_WRITE_BUFFER, clone.id);
-                gl::CopyBufferSubData(
-                    gl::COPY_READ_BUFFER,
-                    gl::COPY_WRITE_BUFFER,
+            Gl::global(|gl| unsafe {
+                gl.BindBuffer(COPY_READ_BUFFER, self.id());
+                gl.BindBuffer(COPY_WRITE_BUFFER, clone.id());
+                gl.CopyBufferSubData(
+                    COPY_READ_BUFFER,
+                    COPY_WRITE_BUFFER,
                     0, 0,
                     (self.len * mem::size_of::<T>()) as GLsizeiptr,
                 );
-            }
+            });
             clone
         }
     }
@@ -148,16 +168,18 @@ pub struct TextureBuilder {
 
 impl TextureBuilder {
     pub fn create(width: GLsizei, height: GLsizei) -> Self {
-        Self::create_custom(gl::RGBA8, width, height)
+        Self::create_custom(RGBA8, width, height)
     }
 
     pub fn create_opaque(width: GLsizei, height: GLsizei) -> Self {
-        Self::create_custom(gl::RGB8, width, height)
+        Self::create_custom(RGB8, width, height)
     }
 
-    pub fn create_custom(format: GLenum, width: GLsizei, height: GLsizei)
-        -> Self
-    {
+    pub fn create_custom(
+        format: GLenum,
+        width: GLsizei,
+        height: GLsizei,
+    ) -> Self {
         let width_pot = (width as u32).next_power_of_two() as GLsizei;
         let height_pot = (height as u32).next_power_of_two() as GLsizei;
         let scale = [
@@ -165,18 +187,18 @@ impl TextureBuilder {
             (height_pot as f32) / (height as f32),
         ];
         let id = TextureData::new();
-        unsafe {
-            gl::BindTexture(gl::TEXTURE_2D, id.id);
-            gl::TexImage2D(
-                gl::TEXTURE_2D,
+        Gl::global(|gl| unsafe {
+            gl.BindTexture(TEXTURE_2D, id.id);
+            gl.TexImage2D(
+                TEXTURE_2D,
                 0,
                 format as GLint,
                 width_pot, height_pot,
                 0,
-                gl::RGBA, gl::UNSIGNED_BYTE,
+                RGBA, UNSIGNED_BYTE,
                 std::ptr::null(),
             );
-        }
+        });
         Self { id, width: width_pot, height: height_pot, scale }
     }
 
@@ -190,42 +212,41 @@ impl TextureBuilder {
         type_: GLenum,
         pixels: *const c_void,
     ) {
-        unsafe {
-            gl::BindTexture(gl::TEXTURE_2D, self.id.id);
-            gl::TexSubImage2D(
-                gl::TEXTURE_2D,
+        Gl::global(|gl| unsafe {
+            gl.BindTexture(TEXTURE_2D, self.id.id);
+            gl.TexSubImage2D(
+                TEXTURE_2D,
                 0,
                 xoffset, yoffset,
                 width, height,
                 format, type_,
                 pixels,
             );
-        }
+        });
     }
 
     pub fn build(self) -> Texture {
-        unsafe {
-            gl::BindTexture(gl::TEXTURE_2D, self.id.id);
-            gl::TexParameteri(
-                gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as GLint
+        Gl::global(|gl| unsafe {
+            gl.BindTexture(TEXTURE_2D, self.id.id);
+            gl.TexParameteri(
+                TEXTURE_2D, TEXTURE_MIN_FILTER, LINEAR as GLint
             );
-            gl::TexParameteri(
-                gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint
+            gl.TexParameteri(
+                TEXTURE_2D, TEXTURE_MAG_FILTER, LINEAR as GLint
             );
-            gl::TexParameteri(
-                gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as GLint
+            gl.TexParameteri(
+                TEXTURE_2D, TEXTURE_WRAP_S, CLAMP_TO_EDGE as GLint
             );
-            gl::TexParameteri(
-                gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as GLint
+            gl.TexParameteri(
+                TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE as GLint
             );
-            gl::GenerateMipmap(gl::TEXTURE_2D);
-        }
+            gl.GenerateMipmap(TEXTURE_2D);
+        });
         Texture {
-            id: self.id.id,
+            obj: self.id,
             size: [self.width as f32, self.height as f32],
             offset: [0.0, 0.0],
             scale: self.scale,
-            _obj: Rc::new(self.id),
         }
     }
 }
@@ -237,7 +258,7 @@ impl Default for TextureBuilder {
         builder.sub_image(
             0, 0,
             2, 2,
-            gl::RGB, gl::UNSIGNED_BYTE,
+            RGB, UNSIGNED_BYTE,
             data.as_ptr() as *const _,
         );
         builder
@@ -254,8 +275,7 @@ thread_local! {
 
 #[derive(Debug, Clone)]
 pub struct Texture {
-    _obj: Rc<TextureData>,
-    pub(crate) id: GLuint,
+    obj: TextureData,
     pub(crate) size: [f32; 2],
     pub(crate) offset: [f32; 2],
     pub(crate) scale: [f32; 2],
@@ -264,6 +284,12 @@ pub struct Texture {
 impl Texture {
     pub fn width(&self) -> f32 { self.size[0] }
     pub fn height(&self) -> f32 { self.size[1] }
+
+    pub(crate) fn bind(&self, gl: &super::Gl) {
+        unsafe {
+            gl.BindTexture(TEXTURE_2D, self.obj.id);
+        }
+    }
 
     pub fn crop<T, U>(&self, x: T, y: U) -> Self
     where
@@ -290,7 +316,7 @@ impl Texture {
 
 impl PartialEq for Texture {
     fn eq(&self, other: &Texture) -> bool {
-        self.id == other.id
+        self.obj == other.obj
             && self.offset == other.offset
             && self.scale == other.scale
     }

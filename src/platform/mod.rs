@@ -1,7 +1,8 @@
 
-// Platforms
+mod shared;
+pub use shared::{RenderPlatform, Platform};
 
-pub mod dummy;
+// Platforms
 
 #[cfg(feature = "tui")]
 pub mod tui;
@@ -12,16 +13,18 @@ pub mod opengl;
 #[cfg(feature = "sdl")]
 pub mod sdl2;
 
-// Re-exports
-
 #[cfg(feature = "opengl")]
-pub use opengl::DrawParams;
+pub use opengl::OpenGlRenderPlatform as DefaultRenderPlatform;
+
+#[cfg(feature = "sdl")]
+pub use self::sdl2::SDLPlatform as DefaultPlatform;
+
+/*
 #[cfg(feature = "opengl")]
 pub use opengl::{
     graphics,
     Text,
     Font,
 };
+*/
 
-#[cfg(feature = "sdl")]
-pub use self::sdl2::Window as DefaultWindow;

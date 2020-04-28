@@ -1,9 +1,10 @@
-extern crate bindgen;
 
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::fs::{File, OpenOptions};
 
-fn tui() {
+#[cfg(feature = "tui")]
+fn tui(out_dir: impl AsRef<Path>) {
     // Tell cargo to tell rustc to link the system ncurses
     // shared library.
     println!("cargo:rustc-link-lib=ncursesw");
@@ -17,14 +18,34 @@ fn tui() {
         .generate()
         .expect("Unable to generate tui bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let path = out_path.join("tui_bindings.rs");
-    let debug = path.to_string_lossy().to_string();
+    let path = out_dir.as_ref().join("tui_bindings.rs");
+    let debug = path.to_string_lossy();
     bindings
         .write_to_file(path)
-        .expect(&format!("Couldn't write {}!", debug));
+        .expect(&format!("Couldn't write {}!", &debug));
+}
+
+#[cfg(feature = "opengl")]
+fn opengl(out_dir: impl AsRef<Path>) {
+    use gl_generator::{Registry, Api, Profile, Fallbacks, StructGenerator};
+
+    let path = out_dir.as_ref().join("opengl_bindings.rs");
+    let debug = path.to_string_lossy();
+    let mut file = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(&path)
+        .expect(&format!("Couldn't open {}!", &debug));
+
+    Registry::new(Api::Gles2, (3, 0), Profile::Core, Fallbacks::All, [])
+        .write_bindings(StructGenerator, &mut file)
+        .expect(&format!("Couldn't write {}!", &debug));
 }
 
 fn main() {
-    if cfg!(feature="tui") { tui() };
+    let out_dir = env::var("OUT_DIR").expect("expected cargo to set OUT_DIR");
+
+    #[cfg(feature="tui")] { tui(&out_dir) };
+    #[cfg(feature="opengl")] { opengl(&out_dir) };
 }
