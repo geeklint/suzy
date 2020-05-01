@@ -8,6 +8,7 @@ use crate::graphics::DrawContext;
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
+use crate::platform::{Platform, RenderPlatform};
 
 use super::texture_loader::load_texture;
 
@@ -102,7 +103,7 @@ impl TryFrom<WindowBuilder> for Window {
         gl_attr.set_multisample_buffers(1);
         gl_attr.set_multisample_samples(4);
         gl_attr.set_context_profile(sdl2::video::GLProfile::GLES);
-        gl_attr.set_context_version(3, 0);
+        gl_attr.set_context_version(2, 0);
         if cfg!(debug_assertions) {
             gl_attr.set_context_flags().debug().set();
         }
@@ -154,9 +155,14 @@ impl TryFrom<WindowBuilder> for Window {
         opengl::Texture::set_loader(Some(load_texture));
         let _ = video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context()?;
-        let gl_win = opengl::Window::new(
-            |s| video.gl_get_proc_address(s) as *const _
+        let renderer_global = Box::new(
+            opengl::OpenGlRenderPlatform::load(
+                |s| video.gl_get_proc_address(s) as *const _
+            )
         );
+        let gl_win = opengl::OpenGlRenderPlatform::with(renderer_global, || {
+            opengl::Window::new()
+        }).1;
         Ok(Window {
             title: builder.into_title(),
             info: WindowInfo {

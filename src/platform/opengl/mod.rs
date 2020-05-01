@@ -4,7 +4,7 @@ pub mod graphics;
 mod layout;
 mod primitive;
 mod shader;
-//pub mod text;
+pub mod text;
 mod window;
 
 pub(crate) use shader::{
@@ -39,16 +39,15 @@ impl OpenGlRenderPlatform {
         where F: FnMut(&str) -> *const std::ffi::c_void,
     {
         let gl = Gl::load_with(loader);
-        /*
-        #[cfg(debug_assertions)]
-        unsafe {
-            gl.Enable(bindings::DEBUG_OUTPUT);
-            gl.DebugMessageCallback(
-                Some(Self::message_callback),
-                std::ptr::null(),
-            );
+        if cfg!(debug_assertions) && gl.DebugMessageCallback.is_loaded() {
+            unsafe {
+                gl.Enable(bindings::DEBUG_OUTPUT);
+                gl.DebugMessageCallback(
+                    Self::message_callback,
+                    std::ptr::null(),
+                );
+            }
         }
-        */
         gl
     }
 

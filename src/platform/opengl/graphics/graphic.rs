@@ -15,7 +15,6 @@ use opengl::OpenGlRenderPlatform as Gl;
 use opengl::primitive::{Buffer, Texture};
 
 
-#[derive(Clone)]
 pub struct Graphic {
     coords: Buffer<GLfloat>,
     uvs: Buffer<GLfloat>,

@@ -9,14 +9,11 @@ use super::OpenGlRenderPlatform as Gl;
 use super::bindings::types::*;
 use super::bindings::{
     CLAMP_TO_EDGE,
-    COPY_READ_BUFFER,
-    COPY_WRITE_BUFFER,
     DYNAMIC_DRAW,
     LINEAR,
+    NEAREST,
     RGB,
-    RGB8,
     RGBA,
-    RGBA8,
     STATIC_DRAW,
     TEXTURE_2D,
     TEXTURE_MAG_FILTER,
@@ -28,14 +25,14 @@ use super::bindings::{
 
 macro_rules! gl_object {
     ($name:ident, $create:ident, $delete:ident) => {
-        #[derive(Clone, Debug, PartialEq)]
+        #[derive(Debug, PartialEq)]
         struct $name {
             pub(crate) id: GLuint,
         }
         gl_object! {impl $name, $create, $delete}
     };
     (pub $name:ident, $create:ident, $delete:ident) => {
-        #[derive(Clone, Debug, PartialEq)]
+        #[derive(Debug, PartialEq)]
         pub struct $name {
             pub(crate) id: GLuint,
         }
@@ -61,7 +58,7 @@ macro_rules! gl_object {
     };
 }
 
-gl_object! { pub VertexArrayObject, GenVertexArrays, DeleteVertexArrays }
+//gl_object! { pub VertexArrayObject, GenVertexArrays, DeleteVertexArrays }
 gl_object! { BufferData, GenBuffers, DeleteBuffers }
 gl_object! { TextureData, GenTextures, DeleteTextures }
 
@@ -131,6 +128,7 @@ impl<T> Buffer<T> {
     }
 }
 
+/*
 impl<T> Clone for Buffer<T> {
     fn clone(&self) -> Self {
         if !self.dyn_draw {
@@ -157,6 +155,7 @@ impl<T> Clone for Buffer<T> {
         }
     }
 }
+*/
 
 #[derive(Debug)]
 pub struct TextureBuilder {
@@ -168,11 +167,11 @@ pub struct TextureBuilder {
 
 impl TextureBuilder {
     pub fn create(width: GLsizei, height: GLsizei) -> Self {
-        Self::create_custom(RGBA8, width, height)
+        Self::create_custom(RGBA, width, height)
     }
 
     pub fn create_opaque(width: GLsizei, height: GLsizei) -> Self {
-        Self::create_custom(RGB8, width, height)
+        Self::create_custom(RGB, width, height)
     }
 
     pub fn create_custom(
@@ -195,7 +194,7 @@ impl TextureBuilder {
                 format as GLint,
                 width_pot, height_pot,
                 0,
-                RGBA, UNSIGNED_BYTE,
+                format, UNSIGNED_BYTE,
                 std::ptr::null(),
             );
         });
@@ -240,10 +239,10 @@ impl TextureBuilder {
             gl.TexParameteri(
                 TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE as GLint
             );
-            gl.GenerateMipmap(TEXTURE_2D);
+            //gl.GenerateMipmap(TEXTURE_2D);
         });
         Texture {
-            obj: self.id,
+            obj: Rc::new(self.id),
             size: [self.width as f32, self.height as f32],
             offset: [0.0, 0.0],
             scale: self.scale,
@@ -251,17 +250,38 @@ impl TextureBuilder {
     }
 }
 
-impl Default for TextureBuilder {
-    fn default() -> Self {
-        let data: [u8; 12] = [0xff; 12];
-        let mut builder = Self::create_opaque(2, 2);
-        builder.sub_image(
-            0, 0,
+fn create_default_texture() -> Texture {
+    let data: [u8; 12] = [0xff; 12];
+    let id = Rc::new(TextureData::new());
+    Gl::global(|gl| unsafe {
+        gl.BindTexture(TEXTURE_2D, id.id);
+        gl.TexImage2D(
+            TEXTURE_2D,
+            0,
+            RGB as GLint,
             2, 2,
+            0,
             RGB, UNSIGNED_BYTE,
             data.as_ptr() as *const _,
         );
-        builder
+        gl.TexParameteri(
+            TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as GLint
+        );
+        gl.TexParameteri(
+            TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as GLint
+        );
+        gl.TexParameteri(
+            TEXTURE_2D, TEXTURE_WRAP_S, CLAMP_TO_EDGE as GLint
+        );
+        gl.TexParameteri(
+            TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE as GLint
+        );
+    });
+    Texture {
+        obj: id,
+        size: [2.0, 2.0],
+        offset: [0.0, 0.0],
+        scale: [1.0, 1.0],
     }
 }
 
@@ -269,13 +289,13 @@ pub type TextureLoadResult = Result<Texture, Box<dyn std::error::Error>>;
 pub type TextureLoader = Option<fn(&Path) -> TextureLoadResult>;
 
 thread_local! {
-    static DEFAULT_TEXTURE: Texture = TextureBuilder::default().build();
+    static DEFAULT_TEXTURE: Texture = create_default_texture();
     static TEXTURE_LOADER: Cell<TextureLoader> = Cell::new(None);
 }
 
 #[derive(Debug, Clone)]
 pub struct Texture {
-    obj: TextureData,
+    obj: Rc<TextureData>,
     pub(crate) size: [f32; 2],
     pub(crate) offset: [f32; 2],
     pub(crate) scale: [f32; 2],

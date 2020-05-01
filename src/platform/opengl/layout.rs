@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::math::Color;
 
 use super::OpenGlRenderPlatform as Gl;
-use super::primitive::{VertexArrayObject, Texture};
+use super::primitive::Texture;
 use super::Shader;
 use super::shader::UniformLoc;
 use super::bindings::types::*;
@@ -14,25 +14,20 @@ use super::bindings::{
 
 #[derive(Clone)]
 pub struct Layout {
-    vao: Rc<VertexArrayObject>,
+    enabled_attribs: Box<[u32]>,
     shader: Shader,
 }
 
 impl Layout {
-    pub fn create(shader: Shader, enabled_attribs: &[u32]) -> Self {
-        let vao = Rc::new(VertexArrayObject::new());
-        Gl::global(|gl| unsafe {
-            gl.BindVertexArray(vao.id);
-            for index in enabled_attribs {
-                gl.EnableVertexAttribArray(*index);
-            }
-        });
-        Layout { vao, shader }
+    pub fn create(shader: Shader, enabled_attribs: Box<[u32]>) -> Self {
+        Layout { enabled_attribs, shader }
     }
 
     pub fn make_current(&self) {
         Gl::global(|gl| unsafe {
-            gl.BindVertexArray(self.vao.id);
+            for index in self.enabled_attribs.iter() {
+                gl.EnableVertexAttribArray(*index);
+            }
         });
         self.shader.make_current();
     }
@@ -81,7 +76,7 @@ pub struct StandardLayout {
 
 impl StandardLayout {
     pub fn new() -> Self {
-        let mut layout = Layout::create(Shader::standard(), &[0, 1]);
+        let mut layout = Layout::create(Shader::standard(), Box::new([0, 1]));
         let uniforms = StandardUniforms {
             screen_size: layout.uniform("SCREEN_SIZE"),
             tex_offset: layout.uniform("TEX_OFFSET"),
@@ -153,7 +148,7 @@ pub(crate) struct TextLayout {
 
 impl TextLayout {
     pub fn new() -> Self {
-        let mut layout = Layout::create(Shader::text(), &[0, 1]);
+        let mut layout = Layout::create(Shader::text(), Box::new([0, 1]));
         let uniforms = TextUniforms {
             screen_size: layout.uniform("SCREEN_SIZE"),
             tex_id: layout.uniform("TEX_ID"),
@@ -178,6 +173,7 @@ impl TextLayout {
         Gl::global(|gl| unsafe {
             gl.ActiveTexture(TEXTURE0);
             texture.bind(gl);
+            self.layout.set_opaque(self.uniforms.tex_id, 0);
         });
     }
 

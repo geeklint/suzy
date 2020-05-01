@@ -1,15 +1,14 @@
-#version 330 core
-
-uniform vec4 TINT_COLOR;
+#version 100
 
 uniform sampler2D TEX_ID;
+uniform lowp vec4 TINT_COLOR;
 
-in VertexData {
-    vec2 uv;
-} i;
-
-layout(location = 0) out vec4 out_color;
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+varying highp vec2 pass_uv;
+#else
+varying mediump vec2 pass_uv;
+#endif
 
 void main() {
-    out_color = TINT_COLOR * texture(TEX_ID, i.uv);
+    gl_FragColor = TINT_COLOR * texture2D(TEX_ID, pass_uv);
 }

@@ -1,7 +1,14 @@
 
-use gl::types::*;
+use crate::platform::opengl;
+use opengl::OpenGlRenderPlatform as Gl;
+use opengl::bindings::types::*;
+use opengl::bindings::{
+    ALPHA,
+    RGB,
+    UNSIGNED_BYTE,
+};
 
-use crate::platform::opengl::graphics::primitive::{
+use opengl::primitive::{
     Texture,
     TextureBuilder,
 };
@@ -25,20 +32,20 @@ pub struct FontSourceDynamic<'a, 'b, 'c> {
 impl<'a, 'b, 'c> FontSourceDynamic<'a, 'b, 'c> {
     pub fn load(&self) -> FontDynamic<'a, 'c> {
         let mut builder = TextureBuilder::create_custom(
-            gl::R8,
+            ALPHA,
             self.image_width,
             self.image_height,
         );
         builder.sub_image(
             0, 0,
             self.image_width, self.image_height,
-            gl::RED, gl::UNSIGNED_BYTE,
+            ALPHA, UNSIGNED_BYTE,
             self.atlas_image.as_ptr() as *const _,
         );
         let texture = builder.build();
         let font_size_ratio = self.font_size / (self.image_height as f32);
         FontDynamic {
-            texture,
+            texture: texture,
             coords: self.coords,
             font_size: self.font_size,
             char_height: self.char_height,

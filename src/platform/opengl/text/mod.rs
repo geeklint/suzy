@@ -1,7 +1,14 @@
 
-use gl::types::*;
+use super::OpenGlRenderPlatform as Gl;
+use super::bindings::types::*;
+use super::bindings::{
+    ARRAY_BUFFER,
+    FALSE,
+    FLOAT,
+    TRIANGLES,
+};
 
-use crate::platform::opengl::graphics::primitive::{
+use super::primitive::{
     Texture,
     Buffer,
 };
@@ -24,8 +31,8 @@ pub struct Text {
 impl Text {
     pub fn new() -> Self {
         Text {
-            coords: Buffer::new(gl::ARRAY_BUFFER, true, 0),
-            uvs: Buffer::new(gl::ARRAY_BUFFER, true, 0),
+            coords: Buffer::new(ARRAY_BUFFER, true, 0),
+            uvs: Buffer::new(ARRAY_BUFFER, true, 0),
             texture: Default::default(),
         }
     }
@@ -86,31 +93,31 @@ impl Graphic for Text {
         params.with_text(|layout| {
             layout.set_text_color(WHITE);
             layout.set_texture(&self.texture);
-            unsafe {
+            Gl::global(|gl| unsafe {
                 self.coords.bind();
-                gl::VertexAttribPointer(
+                gl.VertexAttribPointer(
                     0,
                     2,
-                    gl::FLOAT,
-                    gl::FALSE,
+                    FLOAT,
+                    FALSE,
                     0,
                     std::ptr::null(),
                 );
                 self.uvs.bind();
-                gl::VertexAttribPointer(
+                gl.VertexAttribPointer(
                     1,
                     2,
-                    gl::FLOAT,
-                    gl::FALSE,
+                    FLOAT,
+                    FALSE,
                     0,
                     std::ptr::null(),
                 );
-                gl::DrawArrays(
-                    gl::TRIANGLES,
+                gl.DrawArrays(
+                    TRIANGLES,
                     0,
                     self.coords.len() as GLsizei,
                 );
-            }
+            });
         });
     }
 }

@@ -14,7 +14,7 @@ where
 {
     /// This method provides a convient place to register functions which
     /// watch values and update parts of your widget when they change
-    fn init(init: &mut WidgetInit<P, Self>);
+    fn init(init: &mut WidgetInit<Self, P>);
 
     type ChildA: WidgetContent<P>;
     type ChildB: WidgetContent<P>;
@@ -51,7 +51,7 @@ where
 }
 
 impl<P: RenderPlatform> WidgetContent<P> for () {
-    fn init(_init: &mut WidgetInit<P, Self>) {}
+    fn init(_init: &mut WidgetInit<Self, P>) {}
 
     type ChildA = ();
     type ChildB = ();

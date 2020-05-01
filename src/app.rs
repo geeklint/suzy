@@ -4,7 +4,7 @@ use std::convert::TryInto;
 
 use drying_paint::Watched;
 
-use crate::platform::{DefaultPlatform, Platform};
+use crate::platform::{DefaultPlatform, Platform, RenderPlatform};
 use crate::pointer::{PointerEvent, PointerId};
 use crate::widget::{Widget, WidgetContent, WidgetId};
 use crate::window;
@@ -119,6 +119,7 @@ where
     values: AppValues,
     quit: bool,
     grab_map: std::collections::HashMap<PointerId, WidgetId>,
+    renderer_global: Option<Box<<P::Renderer as RenderPlatform>::Global>>,
 }
 
 impl<Root, P> App<Root, P>
@@ -133,7 +134,10 @@ where
     }
 
     pub fn sync(&mut self) {
-        self.window.flip();
+        let renderer_global = self.renderer_global.take().unwrap();
+        self.renderer_global = Some(P::Renderer::with(renderer_global, || {
+            self.window.flip();
+        }).0);
     }
 
     pub fn run(&mut self) {
@@ -151,9 +155,11 @@ where
         let root = &mut self.root;
         let quit = &mut self.quit;
         let grab_map = &mut self.grab_map;
-        watch_ctx.with(|| {
+        let renderer_global = self.renderer_global.take().unwrap();
+        self.renderer_global = Some(watch_ctx.with(|| {
             *values.frame_start = time::Instant::now();
             APP_STACK.with(|cell| cell.borrow_mut().push(values));
+            P::Renderer::with(renderer_global, || {
             while let Some(event) = window.next_event() {
                 match event {
                     WindowEvent::Quit => {
@@ -190,24 +196,32 @@ where
                     },
                 }
             }
-            drying_paint::WatchContext::update_current();
-        });
-        window.clear();
-        let mut ctx = window.prepare_draw();
-        root.draw(&mut ctx);
+                drying_paint::WatchContext::update_current();
+            }).0
+        }));
+        let renderer_global = self.renderer_global.take().unwrap();
+        self.renderer_global = Some(P::Renderer::with(renderer_global, || {
+            window.clear();
+            let mut ctx = window.prepare_draw();
+            root.draw(&mut ctx);
+        }).0);
         self.values = {
             APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap()
         };
     }
 }
 
-/*
-impl<Root> App<Root, DefaultWindow>
+impl<Root> App<Root>
 where Root: WidgetContent + Default
 {
     pub fn new() -> Self {
         let builder = AppBuilder::default();
-        let window: DefaultWindow = builder.win.try_into().unwrap();
+        let mut window: <DefaultPlatform as Platform>::Window = (
+            builder.win.try_into().unwrap()
+        );
+        let renderer_global = Box::new(
+            DefaultPlatform::get_renderer_data(&mut window)
+        );
         let mut watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.size();
@@ -223,8 +237,10 @@ where Root: WidgetContent + Default
                 window_size: (width, height),
             });
         });
-        let root = watch_ctx.with(|| {
-            Widget::<Root>::default_with_rect(&rect)
+        let (renderer_global, root) = watch_ctx.with(|| {
+            <DefaultPlatform as Platform>::Renderer::with(renderer_global, || {
+                Widget::<Root>::default_with_rect(&rect)
+            })
         });
         let values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
         Self {
@@ -234,7 +250,7 @@ where Root: WidgetContent + Default
             values,
             quit: false,
             grab_map: std::collections::HashMap::new(),
+            renderer_global: Some(renderer_global),
         }
     }
 }
-*/

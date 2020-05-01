@@ -19,9 +19,10 @@ pub struct Window {
 
 impl Window {
     /// Create an opengl window with a specified function pointer loader
-    pub fn new<F>(loader: F) -> Self
-        where F: FnMut(&str) -> *const c_void,
-    {
+    pub fn new() -> Self {
+        Gl::global(|gl| unsafe {
+            gl.ClearColor(0.176, 0.176, 0.176, 1.0);
+        });
         Window {
             layout: StandardLayout::new(),
         }

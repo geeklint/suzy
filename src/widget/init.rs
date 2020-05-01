@@ -1,6 +1,6 @@
 use drying_paint::{WatcherMeta, WatcherInit};
 
-use crate::platform::RenderPlatform;
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
 use super::{
     WidgetContent,
@@ -11,7 +11,7 @@ use super::{
 
 /// This will get passed to a widget's initializer. It provides functions to
 /// watch values for changes and run code when those values change
-pub struct WidgetInit<'a, P, T>
+pub struct WidgetInit<'a, T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
     T: WidgetContent<P>,
@@ -19,7 +19,7 @@ where
     pub(super) watcher: &'a mut WatcherMeta<WidgetInternal<P, T>>,
 }
 
-impl<P, T> WidgetInit<'_, P, T>
+impl<P, T> WidgetInit<'_, T, P>
 where
     P: RenderPlatform,
     T: WidgetContent<P>,

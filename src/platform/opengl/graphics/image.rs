@@ -11,7 +11,6 @@ pub use opengl::primitive::{
 };
 use opengl::OpenGlRenderPlatform as Gl;
 
-#[derive(Clone)]
 pub struct SlicedImage {
     rect: SimpleRect,
     padding: SimplePadding2d,

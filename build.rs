@@ -38,7 +38,8 @@ fn opengl(out_dir: impl AsRef<Path>) {
         .open(&path)
         .expect(&format!("Couldn't open {}!", &debug));
 
-    Registry::new(Api::Gles2, (3, 0), Profile::Core, Fallbacks::All, [])
+    let ext = ["GL_KHR_debug"];
+    Registry::new(Api::Gles2, (2, 0), Profile::Core, Fallbacks::All, ext)
         .write_bindings(StructGenerator, &mut file)
         .expect(&format!("Couldn't write {}!", &debug));
 }

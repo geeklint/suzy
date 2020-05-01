@@ -1,18 +1,18 @@
-#version 330 core
+#version 100
 
-uniform vec4 TEXT_COLOR;
+uniform lowp vec4 TEXT_COLOR;
 
 uniform sampler2D TEX_ID;
 
-in VertexData {
-    vec2 uv;
-} i;
-
-layout(location = 0) out vec4 out_color;
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+varying highp vec2 pass_uv;
+#else
+varying mediump vec2 pass_uv;
+#endif
 
 void main() {
-    if (texture(TEX_ID, i.uv).x > 0.5) {
-        out_color = TEXT_COLOR;
+    if (texture2D(TEX_ID, pass_uv).a > 0.5) {
+        gl_FragColor = TEXT_COLOR;
     } else {
         discard;
     }

@@ -81,11 +81,10 @@ impl<T: 'static> GlobalData<T> {
         GLOBAL_DATA.with(|cell| {
             let map = cell.borrow();
             let untyped = map.get(&id)
-                .as_ref()
-                .expect("no global data currently active")
-                .as_ref()
+                .map(Option::as_ref)
+                .flatten()
                 .expect("no global data currently active");
-            (func)(&untyped.downcast_ref().unwrap())
+            (func)(&untyped.downcast_ref::<Self>().unwrap().data)
         })
     }
 }
