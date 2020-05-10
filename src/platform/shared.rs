@@ -29,6 +29,14 @@ pub trait Platform: 'static {
         -> <Self::Renderer as RenderPlatform>::Global;
 }
 
+pub trait SubRenderPlatform<P>: RenderPlatform
+where
+    P: RenderPlatform<Global = Self::Global>
+{
+    fn inherit_params(source: &<P as RenderPlatform>::DrawParams)
+        -> Self::DrawParams;
+}
+
 use std::any::{TypeId, Any};
 use std::cell::RefCell;
 use std::collections::HashMap;

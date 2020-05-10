@@ -57,15 +57,6 @@ impl Layout {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-struct StandardUniforms {
-    screen_size: UniformLoc,
-    tex_offset: UniformLoc,
-    tex_scale: UniformLoc,
-    tint_color: UniformLoc,
-    tex_id: UniformLoc,
-}
-
 #[derive(Clone)]
 pub struct StandardLayout {
     layout: Layout,
@@ -132,14 +123,6 @@ impl StandardLayout {
         res
     }
 }
-
-#[derive(Copy, Clone, Debug)]
-struct TextUniforms {
-    screen_size: UniformLoc,
-    tex_id: UniformLoc,
-    text_color: UniformLoc,
-}
-
 #[derive(Clone)]
 pub(crate) struct TextLayout {
     layout: Layout,

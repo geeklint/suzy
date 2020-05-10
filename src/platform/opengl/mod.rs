@@ -1,11 +1,15 @@
 
 mod drawparams;
 pub mod graphics;
-mod layout;
+mod matrix;
 mod primitive;
+mod sdf;
 mod shader;
+mod stdshaders;
 pub mod text;
 mod window;
+
+pub use matrix::Mat4;
 
 pub(crate) use shader::{
     Shader,

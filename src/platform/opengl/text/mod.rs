@@ -7,7 +7,7 @@ use super::bindings::{
     FLOAT,
     TRIANGLES,
 };
-
+use super::sdf::SdfRenderPlatform;
 use super::primitive::{
     Texture,
     Buffer,
@@ -87,37 +87,42 @@ impl Text {
 use crate::graphics::{DrawContext, Graphic};
 use crate::math::consts::WHITE;
 
-impl Graphic for Text {
-    fn draw(&self, ctx: &mut DrawContext) {
+impl Graphic<Gl> for Text {
+    fn draw(&self, ctx: &mut DrawContext<Gl>) {
+        ctx.descend(|ctx| Graphic::<SdfRenderPlatform>::draw(self, ctx));
+    }
+}
+
+impl Graphic<SdfRenderPlatform> for Text {
+    fn draw(&self, ctx: &mut DrawContext<SdfRenderPlatform>) {
         let mut params = ctx.clone_current();
-        params.with_text(|layout| {
-            layout.set_text_color(WHITE);
-            layout.set_texture(&self.texture);
-            Gl::global(|gl| unsafe {
-                self.coords.bind();
-                gl.VertexAttribPointer(
-                    0,
-                    2,
-                    FLOAT,
-                    FALSE,
-                    0,
-                    std::ptr::null(),
-                );
-                self.uvs.bind();
-                gl.VertexAttribPointer(
-                    1,
-                    2,
-                    FLOAT,
-                    FALSE,
-                    0,
-                    std::ptr::null(),
-                );
-                gl.DrawArrays(
-                    TRIANGLES,
-                    0,
-                    self.coords.len() as GLsizei,
-                );
-            });
+        params.use_texture(self.texture.clone());
+        DrawContext::push(ctx, params);
+        Gl::global(|gl| unsafe {
+            self.coords.bind();
+            gl.VertexAttribPointer(
+                0,
+                2,
+                FLOAT,
+                FALSE,
+                0,
+                std::ptr::null(),
+            );
+            self.uvs.bind();
+            gl.VertexAttribPointer(
+                1,
+                2,
+                FLOAT,
+                FALSE,
+                0,
+                std::ptr::null(),
+            );
+            gl.DrawArrays(
+                TRIANGLES,
+                0,
+                self.coords.len() as GLsizei,
+            );
         });
+        DrawContext::pop(ctx);
     }
 }

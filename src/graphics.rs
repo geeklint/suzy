@@ -1,4 +1,9 @@
-use crate::platform::{DefaultRenderPlatform, Platform, RenderPlatform};
+use crate::platform::{
+    DefaultRenderPlatform,
+    Platform,
+    RenderPlatform,
+    SubRenderPlatform,
+};
 
 pub trait Graphic<P: RenderPlatform = DefaultRenderPlatform> {
     fn draw(&self, ctx: &mut DrawContext<P>);
@@ -17,7 +22,9 @@ impl<P: RenderPlatform, T: Graphic<P>> Graphic<P> for [T] {
 }
 
 pub trait DrawParams {
-    fn apply_change(current: &Self, new: &mut Self);
+    fn apply_all(&self);
+
+    fn apply_change(current: &Self, new: &Self);
 }
 
 pub struct DrawContext<P: RenderPlatform = DefaultRenderPlatform> {
@@ -27,6 +34,7 @@ pub struct DrawContext<P: RenderPlatform = DefaultRenderPlatform> {
 
 impl<P: RenderPlatform> DrawContext<P> {
     pub fn new(starting: P::DrawParams) -> Self {
+        starting.apply_all();
         Self {
             current: starting,
             history: Vec::new(),
@@ -54,5 +62,16 @@ impl<P: RenderPlatform> DrawContext<P> {
         where P::DrawParams: Clone
     {
         self.current.clone()
+    }
+
+    pub fn descend<S, F, R>(&self, func: F) -> R
+    where
+        S: SubRenderPlatform<P> + RenderPlatform<Global = P::Global>,
+        F: FnOnce(&mut DrawContext<S>) -> R,
+    {
+        let dp = S::inherit_params(&self.current);
+        let res = (func)(&mut DrawContext::new(dp));
+        self.current.apply_all();
+        res
     }
 }

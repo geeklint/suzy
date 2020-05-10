@@ -296,9 +296,9 @@ thread_local! {
 #[derive(Debug, Clone)]
 pub struct Texture {
     obj: Rc<TextureData>,
-    pub(crate) size: [f32; 2],
-    pub(crate) offset: [f32; 2],
-    pub(crate) scale: [f32; 2],
+    pub(super) size: [f32; 2],
+    pub(super) offset: [f32; 2],
+    pub(super) scale: [f32; 2],
 }
 
 impl Texture {

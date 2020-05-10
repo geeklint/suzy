@@ -8,13 +8,14 @@ use super::bindings::{
     COLOR_BUFFER_BIT,
 };
 use super::drawparams::DrawParams;
-use super::layout::StandardLayout;
+use super::stdshaders::Shaders;
+use super::Mat4;
 
 /// opengl::Window provides a subset of the methods to implement the Window
 /// struct. It can be embedded in another window implementation which
 /// provides an opengl context.
 pub struct Window {
-    layout: StandardLayout,
+    shaders: Shaders,
 }
 
 impl Window {
@@ -24,7 +25,7 @@ impl Window {
             gl.ClearColor(0.176, 0.176, 0.176, 1.0);
         });
         Window {
-            layout: StandardLayout::new(),
+            shaders: Shaders::new().expect("Shaders failed to compile"),
         }
     }
 
@@ -44,10 +45,11 @@ impl Window {
     pub fn prepare_draw(&mut self, screen_size: (f32, f32))
         -> DrawContext<Gl>
     {
-        self.layout.make_current();
-        self.layout.set_screen_size(screen_size);
-        self.layout.set_tint_color(crate::math::consts::WHITE);
-        let params = DrawParams::new(self.layout.clone());
+        let mut params = DrawParams::new(self.shaders.clone());
+        params.transform(
+            Mat4::translate(-1.0, -1.0)
+            * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1)
+        );
         DrawContext::new(params)
     }
 

@@ -4,11 +4,13 @@ use std::rc::Rc;
 use super::OpenGlRenderPlatform as Gl;
 use super::bindings::types::*;
 use super::bindings::{
+    ACTIVE_ATTRIBUTES,
     COMPILE_STATUS,
     FALSE,
     FRAGMENT_SHADER,
     INFO_LOG_LENGTH,
     LINK_STATUS,
+    MAX_VERTEX_ATTRIBS,
     VERTEX_SHADER,
 };
 
@@ -64,15 +66,6 @@ fn compile_shader(type_: GLenum, text: &[u8]) -> Result<GLuint, CString> {
         Err(log)
     }
 }
-
-const VERTEX_SOURCE: &'static [u8] = include_bytes!(
-    "standard_vertex.glsl");
-const FRAGMENT_SOURCE: &'static [u8] = include_bytes!(
-    "standard_fragment.glsl");
-const TEXT_VERTEX_SOURCE: &'static [u8] = include_bytes!(
-    "text_vertex.glsl");
-const TEXT_FRAGMENT_SOURCE: &'static [u8] = include_bytes!(
-    "text_fragment.glsl");
 
 #[derive(Debug)]
 pub enum ProgramCompileError {
@@ -130,9 +123,11 @@ fn compile_program(vert_text: &[u8], frag_text: &[u8])
 pub struct Shader {
     _obj: Rc<ProgramObject>,
     program_id: GLuint,
+    attrs: GLint,
+    total_attrs: GLint,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct UniformLoc {
     id: GLint,
 }
@@ -142,30 +137,42 @@ impl Shader {
         -> Result<Self, ProgramCompileError>
     {
         let obj = compile_program(vert_text, frag_text)?;
+        let (attrs, total_attrs) = Gl::global(|gl| unsafe {
+            let mut attrs: GLint = 0;
+            let mut total_attrs: GLint = 8;
+            gl.GetProgramiv(
+                obj.id,
+                ACTIVE_ATTRIBUTES,
+                &mut attrs as *mut GLint,
+            );
+            gl.GetIntegerv(
+                MAX_VERTEX_ATTRIBS,
+                &mut total_attrs as *mut GLint,
+            );
+            (attrs, total_attrs)
+        });
         let shader = Shader {
             program_id: obj.id,
             _obj: Rc::new(obj),
+            attrs,
+            total_attrs,
         };
         Ok(shader)
     }
 
-    pub fn standard() -> Self {
-        Self::create(VERTEX_SOURCE, FRAGMENT_SOURCE).expect(
-            "Standard Shader failed to compile"
-        )
-    }
-
-    pub fn text() -> Self {
-        Self::create(TEXT_VERTEX_SOURCE, TEXT_FRAGMENT_SOURCE).expect(
-            "Text Shader failed to compile"
-        )
-    }
-
     pub fn make_current(&self) {
-        Gl::global(|gl| unsafe { gl.UseProgram(self.program_id) });
+        Gl::global(|gl| unsafe {
+            gl.UseProgram(self.program_id);
+            for i in 0..self.attrs {
+                gl.EnableVertexAttribArray(i as GLuint);
+            }
+            for i in self.attrs..self.total_attrs {
+                gl.DisableVertexAttribArray(i as GLuint);
+            }
+        });
     }
 
-    pub fn uniform(&mut self, name: &str) -> UniformLoc {
+    pub fn uniform(&self, name: &str) -> UniformLoc {
         let prog_id = self.program_id;
         let cname = CString::new(name)
             .expect("Uniform name contained null");
@@ -179,26 +186,25 @@ impl Shader {
         UniformLoc { id }
     }
 
-    pub fn set_opaque(&mut self, loc: UniformLoc, value: GLuint) {
+    pub fn set_opaque(loc: UniformLoc, value: GLuint) {
         Gl::global(|gl| unsafe {
             gl.Uniform1i(loc.id, value as GLint);
         });
     }
 
-    pub fn set_float(&mut self, loc: UniformLoc, value: GLfloat) {
+    pub fn set_float(loc: UniformLoc, value: GLfloat) {
         Gl::global(|gl| unsafe {
             gl.Uniform1f(loc.id, value);
         });
     }
 
-    pub fn set_vec2(&mut self, loc: UniformLoc, value: (GLfloat, GLfloat)) {
+    pub fn set_vec2(loc: UniformLoc, value: (GLfloat, GLfloat)) {
         Gl::global(|gl| unsafe {
             gl.Uniform2f(loc.id, value.0, value.1);
         });
     }
 
     pub fn set_vec4(
-        &mut self,
         loc: UniformLoc,
         value: (GLfloat, GLfloat, GLfloat, GLfloat),
     ) {
@@ -206,6 +212,18 @@ impl Shader {
             gl.Uniform4f(
                 loc.id,
                 value.0, value.1, value.2, value.3,
+            );
+        });
+    }
+
+    pub fn set_mat4(loc: UniformLoc, value: &[GLfloat]) {
+        debug_assert_eq!(value.len(), 16, "mat4 must have 16 elements!");
+        Gl::global(|gl| unsafe {
+            gl.UniformMatrix4fv(
+                loc.id,
+                1,
+                FALSE,
+                value.as_ptr(),
             );
         });
     }
