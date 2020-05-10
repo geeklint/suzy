@@ -77,4 +77,10 @@ impl OpenGlRenderPlatform {
     {
         <Self as super::RenderPlatform>::global(func)
     }
+
+    pub fn try_global<F, R>(func: F) -> Option<R>
+        where F: FnOnce(&Gl) -> R,
+    {
+        <Self as super::RenderPlatform>::try_global(func)
+    }
 }

@@ -50,7 +50,11 @@ macro_rules! gl_object {
         }
         impl Drop for $name {
             fn drop(&mut self) {
-                Gl::global(|gl| unsafe {
+                // if we can't get the gl bindings here, it's probably
+                // because the whole app is shutting down, in which case
+                // it's ok to leak the resource, it'll get cleaned up
+                // by the context getting disposed.
+                Gl::try_global(|gl| unsafe {
                     gl.$delete(1, &self.id as *const _);
                 });
             }
@@ -58,7 +62,6 @@ macro_rules! gl_object {
     };
 }
 
-//gl_object! { pub VertexArrayObject, GenVertexArrays, DeleteVertexArrays }
 gl_object! { BufferData, GenBuffers, DeleteBuffers }
 gl_object! { TextureData, GenTextures, DeleteTextures }
 

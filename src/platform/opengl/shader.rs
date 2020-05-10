@@ -80,7 +80,11 @@ struct ProgramObject {
 
 impl Drop for ProgramObject {
     fn drop(&mut self) {
-        Gl::global(|gl| unsafe { gl.DeleteProgram(self.id) });
+        // if we can't get the gl bindings here, it's probably
+        // because the whole app is shutting down, in which case
+        // it's ok to leak the resource, it'll get cleaned up
+        // by the context getting disposed.
+        Gl::try_global(|gl| unsafe { gl.DeleteProgram(self.id) });
     }
 }
 

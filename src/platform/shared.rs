@@ -19,6 +19,13 @@ pub trait RenderPlatform: 'static {
     {
         GlobalData::with_current(func)
     }
+
+    fn try_global<F, R>(func: F) -> Option<R>
+        where F: FnOnce(&Self::Global) -> R,
+    {
+        GlobalData::try_with_current(func)
+    }
+
 }
 
 pub trait Platform: 'static {
@@ -81,17 +88,25 @@ impl<T: 'static> GlobalData<T> {
         (self_restored, res)
     }
 
-    pub fn with_current<F, R>(func: F) -> R
+    pub fn try_with_current<F, R>(func: F) -> Option<R>
         where F: FnOnce(&T) -> R
     {
         let id = TypeId::of::<T>();
         GLOBAL_DATA.with(|cell| {
             let map = cell.borrow();
-            let untyped = map.get(&id)
+            let node = map.get(&id)
                 .map(Option::as_ref)
-                .flatten()
-                .expect("no global data currently active");
-            (func)(&untyped.downcast_ref::<Self>().unwrap().data)
+                .flatten()?
+                .downcast_ref::<Self>()
+                .unwrap();
+            Some((func)(&node.data))
         })
+    }
+
+    pub fn with_current<F, R>(func: F) -> R
+        where F: FnOnce(&T) -> R
+    {
+        Self::try_with_current(func)
+            .expect("no global data currently active")
     }
 }

@@ -145,11 +145,12 @@ where
         });
     }
 
-    pub fn run(&mut self) {
+    pub fn run(mut self) {
         while !self.events_state.quit {
             self.tick();
             self.sync();
         }
+        self.shutdown();
     }
 
     fn with_values<F: FnOnce() -> R, R>(values: &mut AppValues, func: F) -> R {
@@ -253,6 +254,15 @@ where
             let mut ctx = window.prepare_draw();
             root.draw(&mut ctx);
         });
+    }
+
+    pub fn shutdown(self) {
+        let Self { window, root, mut renderer_global, ..  } = self;
+        Self::with_renderer_global(&mut renderer_global, || {
+            std::mem::drop(root);
+        });
+        std::mem::drop(renderer_global);
+        std::mem::drop(window);
     }
 }
 
