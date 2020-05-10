@@ -108,6 +108,11 @@ impl window::WindowSettings for AppBuilder {
     }
 }
 
+struct EventsState {
+    quit: bool,
+    grab_map: std::collections::HashMap<PointerId, WidgetId>,
+}
+
 pub struct App<Root, P = DefaultPlatform>
 where
     Root: WidgetContent<P::Renderer>,
@@ -117,9 +122,9 @@ where
     window: P::Window,
     root: Widget<Root, P::Renderer>,
     values: AppValues,
-    quit: bool,
-    grab_map: std::collections::HashMap<PointerId, WidgetId>,
+    events_state: EventsState,
     renderer_global: Option<Box<<P::Renderer as RenderPlatform>::Global>>,
+    frame_start: Option<time::Instant>,
 }
 
 impl<Root, P> App<Root, P>
@@ -134,80 +139,120 @@ where
     }
 
     pub fn sync(&mut self) {
-        let renderer_global = self.renderer_global.take().unwrap();
-        self.renderer_global = Some(P::Renderer::with(renderer_global, || {
-            self.window.flip();
-        }).0);
+        let window = &mut self.window;
+        Self::with_renderer_global(&mut self.renderer_global, || {
+            window.flip();
+        });
     }
 
     pub fn run(&mut self) {
-        while !self.quit {
+        while !self.events_state.quit {
             self.tick();
             self.sync();
         }
     }
 
-    pub fn tick(&mut self) {
-        let mut values = self.values.clone();
-        std::mem::swap(&mut values, &mut self.values);
-        let watch_ctx = &mut self.watch_ctx;
-        let window = &mut self.window;
-        let root = &mut self.root;
-        let quit = &mut self.quit;
-        let grab_map = &mut self.grab_map;
-        let renderer_global = self.renderer_global.take().unwrap();
-        self.renderer_global = Some(watch_ctx.with(|| {
-            *values.frame_start = time::Instant::now();
-            APP_STACK.with(|cell| cell.borrow_mut().push(values));
-            P::Renderer::with(renderer_global, || {
-            while let Some(event) = window.next_event() {
-                match event {
-                    WindowEvent::Quit => {
-                        *quit = true;
-                    }
-                    WindowEvent::Resize(x, y) => {
-                        APP_STACK.with(|cell| {
-                            let mut handle = cell.borrow_mut();
-                            let values = handle.last_mut().unwrap();
-                            *values.cell_size = get_cell_size(x, y);
-                            values.window_size.0 = x;
-                            values.window_size.1 = y;
-                        });
-                        let xdim = Dim::with_length(x);
-                        let ydim = Dim::with_length(y);
-                        let rect = SimpleRect::new(xdim, ydim);
-                        root.set_fill(&rect, &SimplePadding2d::zero());
-                    },
-                    WindowEvent::DpScaleChange(ppd) => {
-                        APP_STACK.with(|cell| {
-                            let mut handle = cell.borrow_mut();
-                            let values = handle.last_mut().unwrap();
-                            *values.px_per_dp = ppd;
-                        });
-                    },
-                    WindowEvent::KeyDown(key) => {
-                        if key == 0x1b {
-                            *quit = true;
-                        }
-                    },
-                    WindowEvent::Pointer(pointer) => {
-                        let mut event = PointerEvent::new(pointer, grab_map);
-                        root.pointer_event(&mut event);
-                    },
+    fn with_values<F: FnOnce() -> R, R>(values: &mut AppValues, func: F) -> R {
+        let mut local = values.clone();
+        std::mem::swap(&mut local, values);
+        APP_STACK.with(|cell| cell.borrow_mut().push(local));
+        let res = (func)();
+        *values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
+        res
+    }
+
+    fn with_renderer_global<F: FnOnce() -> R, R>(
+        global: &mut Option<Box<<P::Renderer as RenderPlatform>::Global>>,
+        func: F,
+    ) -> R {
+        let renderer_global = global.take().unwrap();
+        let (rg_ret, res) = P::Renderer::with(renderer_global, func);
+        *global = Some(rg_ret);
+        res
+    }
+
+    fn poll_events(
+        window: &mut P::Window,
+        root: &mut Widget<Root, P::Renderer>,
+        state: &mut EventsState,
+    ) {
+        while let Some(event) = window.next_event() {
+            match event {
+                WindowEvent::Quit => {
+                    state.quit = true;
                 }
+                WindowEvent::Resize(x, y) => {
+                    APP_STACK.with(|cell| {
+                        let mut handle = cell.borrow_mut();
+                        let values = handle.last_mut().unwrap();
+                        *values.cell_size = get_cell_size(x, y);
+                        values.window_size.0 = x;
+                        values.window_size.1 = y;
+                    });
+                    let xdim = Dim::with_length(x);
+                    let ydim = Dim::with_length(y);
+                    let rect = SimpleRect::new(xdim, ydim);
+                    root.set_fill(&rect, &SimplePadding2d::zero());
+                },
+                WindowEvent::DpScaleChange(ppd) => {
+                    APP_STACK.with(|cell| {
+                        let mut handle = cell.borrow_mut();
+                        let values = handle.last_mut().unwrap();
+                        *values.px_per_dp = ppd;
+                    });
+                },
+                WindowEvent::KeyDown(_key) => {
+                },
+                WindowEvent::Pointer(pointer) => {
+                    let mut event = PointerEvent::new(
+                        pointer,
+                        &mut state.grab_map,
+                    );
+                    root.pointer_event(&mut event);
+                },
             }
-                drying_paint::WatchContext::update_current();
-            }).0
-        }));
-        let renderer_global = self.renderer_global.take().unwrap();
-        self.renderer_global = Some(P::Renderer::with(renderer_global, || {
+        }
+    }
+
+    pub fn tick(&mut self) {
+        self.update();
+        self.render();
+    }
+
+    pub fn frame_start_time(&mut self) {
+        self.frame_start = Some(time::Instant::now());
+    }
+
+    pub fn update(&mut self) {
+        let Self {
+            watch_ctx,
+            window,
+            root,
+            values,
+            events_state,
+            renderer_global,
+            ..
+        } = self;
+        let frame_start = self.frame_start.take()
+            .unwrap_or_else(time::Instant::now);
+        watch_ctx.with(|| {
+            *values.frame_start = frame_start;
+            Self::with_values(values, || {
+                Self::with_renderer_global(renderer_global, || {
+                    Self::poll_events(window, root, events_state);
+                    drying_paint::WatchContext::update_current();
+                });
+            });
+        });
+    }
+
+    pub fn render(&mut self) {
+        let Self { window, root, renderer_global, ..  } = self;
+        Self::with_renderer_global(renderer_global, || {
             window.clear();
             let mut ctx = window.prepare_draw();
             root.draw(&mut ctx);
-        }).0);
-        self.values = {
-            APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap()
-        };
+        });
     }
 }
 
@@ -219,9 +264,9 @@ where Root: WidgetContent + Default
         let mut window: <DefaultPlatform as Platform>::Window = {
             builder.win.try_into().unwrap()
         };
-        let renderer_global = Box::new(
+        let mut renderer_global = Some(Box::new(
             DefaultPlatform::get_renderer_data(&mut window)
-        );
+        ));
         let mut watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.size();
@@ -229,28 +274,30 @@ where Root: WidgetContent + Default
         let ydim = Dim::with_length(height);
         let rect = SimpleRect::new(xdim, ydim);
         
-        APP_STACK.with(|cell| {
-            cell.borrow_mut().push(AppValues {
-                frame_start: Watched::new(time::Instant::now()),
-                cell_size: Watched::new(get_cell_size(width, height)),
-                px_per_dp: Watched::new(1.0),
-                window_size: (width, height),
-            });
-        });
-        let (renderer_global, root) = watch_ctx.with(|| {
-            <DefaultPlatform as Platform>::Renderer::with(renderer_global, || {
-                Widget::<Root>::default_with_rect(&rect)
+        let mut values = AppValues {
+            frame_start: Watched::new(time::Instant::now()),
+            cell_size: Watched::new(get_cell_size(width, height)),
+            px_per_dp: Watched::new(1.0),
+            window_size: (width, height),
+        };
+        let root = watch_ctx.with(|| {
+            Self::with_values(&mut values, || {
+                Self::with_renderer_global(&mut renderer_global, || {
+                    Widget::<Root>::default_with_rect(&rect)
+                })
             })
         });
-        let values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
         Self {
             watch_ctx,
             window,
             root,
             values,
-            quit: false,
-            grab_map: std::collections::HashMap::new(),
-            renderer_global: Some(renderer_global),
+            events_state: EventsState {
+                quit: false,
+                grab_map: std::collections::HashMap::new(),
+            },
+            renderer_global: renderer_global,
+            frame_start: None,
         }
     }
 }
