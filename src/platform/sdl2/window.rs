@@ -8,7 +8,7 @@ use crate::graphics::DrawContext;
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
-use crate::platform::{Platform, RenderPlatform};
+use crate::platform::{RenderPlatform};
 
 use super::texture_loader::load_texture;
 

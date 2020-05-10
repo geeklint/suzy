@@ -10,7 +10,6 @@ use super::shader::Shader;
 use super::stdshaders::Shaders;
 use super::bindings::{
     TEXTURE0,
-    TEXTURE1,
 };
 
 #[derive(Clone)]

@@ -216,9 +216,9 @@ where Root: WidgetContent + Default
 {
     pub fn new() -> Self {
         let builder = AppBuilder::default();
-        let mut window: <DefaultPlatform as Platform>::Window = (
+        let mut window: <DefaultPlatform as Platform>::Window = {
             builder.win.try_into().unwrap()
-        );
+        };
         let renderer_global = Box::new(
             DefaultPlatform::get_renderer_data(&mut window)
         );

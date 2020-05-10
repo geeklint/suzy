@@ -1,10 +1,8 @@
 
 use crate::platform::opengl;
-use opengl::OpenGlRenderPlatform as Gl;
 use opengl::bindings::types::*;
 use opengl::bindings::{
     ALPHA,
-    RGB,
     UNSIGNED_BYTE,
 };
 

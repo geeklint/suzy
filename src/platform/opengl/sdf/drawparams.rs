@@ -1,5 +1,4 @@
 
-use crate::math::consts::WHITE;
 use crate::math::Color;
 use crate::graphics;
 
@@ -11,7 +10,6 @@ use opengl::shader::Shader;
 use opengl::stdshaders::Shaders;
 use opengl::bindings::{
     TEXTURE0,
-    TEXTURE1,
 };
 
 #[derive(Clone)]

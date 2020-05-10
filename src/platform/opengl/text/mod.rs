@@ -85,7 +85,6 @@ impl Text {
 }
 
 use crate::graphics::{DrawContext, Graphic};
-use crate::math::consts::WHITE;
 
 impl Graphic<Gl> for Text {
     fn draw(&self, ctx: &mut DrawContext<Gl>) {

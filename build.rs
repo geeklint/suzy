@@ -1,7 +1,7 @@
 
 use std::env;
-use std::path::{Path, PathBuf};
-use std::fs::{File, OpenOptions};
+use std::path::Path;
+use std::fs::OpenOptions;
 
 #[cfg(feature = "tui")]
 fn tui(out_dir: impl AsRef<Path>) {

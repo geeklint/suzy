@@ -1,5 +1,3 @@
-use std::ffi::c_void;
-
 use crate::graphics::DrawContext;
 
 use super::OpenGlRenderPlatform as Gl;

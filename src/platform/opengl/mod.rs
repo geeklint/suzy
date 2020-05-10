@@ -11,11 +11,6 @@ mod window;
 
 pub use matrix::Mat4;
 
-pub(crate) use shader::{
-    Shader,
-    ProgramCompileError,
-};
-
 pub(crate) use window::{
     Window,
 };

@@ -2,7 +2,6 @@
 mod drawparams;
 pub use drawparams::DrawParams;
 
-use crate::graphics::{Graphic, DrawContext};
 use crate::platform;
 use crate::platform::opengl;
 

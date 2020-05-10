@@ -59,7 +59,7 @@ impl<T: 'static> GlobalData<T> {
         let id = TypeId::of::<T>();
         GLOBAL_DATA.with(|cell| {
             let mut map = cell.borrow_mut();
-            let mut entry = map.entry(id);
+            let entry = map.entry(id);
             let bucket = entry.or_default();
             self.next = bucket.take().map(|prev| {
                 prev.downcast().ok()
@@ -75,7 +75,7 @@ impl<T: 'static> GlobalData<T> {
                     prev.downcast().ok()
                 })
                 .unwrap();
-            *bucket = self_restored.next.take().map(|x| x as Box<Any>);
+            *bucket = self_restored.next.take().map(|x| x as Box<dyn Any>);
             self_restored
         });
         (self_restored, res)
@@ -84,7 +84,6 @@ impl<T: 'static> GlobalData<T> {
     pub fn with_current<F, R>(func: F) -> R
         where F: FnOnce(&T) -> R
     {
-        use std::cell::Ref;
         let id = TypeId::of::<T>();
         GLOBAL_DATA.with(|cell| {
             let map = cell.borrow();

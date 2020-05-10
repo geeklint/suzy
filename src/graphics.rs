@@ -1,6 +1,5 @@
 use crate::platform::{
     DefaultRenderPlatform,
-    Platform,
     RenderPlatform,
     SubRenderPlatform,
 };

@@ -1,13 +1,3 @@
-use std::cell::Cell;
-use std::rc::Rc;
-
-use crate::math::Color;
-
-use super::OpenGlRenderPlatform as Gl;
-use super::bindings::{
-    TEXTURE0,
-};
-use super::Texture;
 use super::shader::{
     ProgramCompileError,
     Shader,
