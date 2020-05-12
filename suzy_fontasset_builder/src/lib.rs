@@ -5,6 +5,8 @@ use std::io::Write;
 use sha2::Digest;
 use rayon::prelude::*;
 
+use rusttype::Font;
+
 mod render_glyph;
 mod kerning;
 
@@ -61,44 +63,34 @@ pub fn build_fontasset<S, D, C>(
     cache_path.push(hex::encode(hash));
     std::fs::create_dir_all(&cache_path);
 
-    let sdl = sdl2::init().expect("SDL failed to init");
-    let ttf = sdl2::ttf::init().expect("SDL_ttf failed to init");
-
     let target_size = settings.target_size;
     let large_size = std::cmp::max(target_size, 512);
-    let get_font = || {
-        let ops = sdl2::rwops::RWops::from_bytes(&font_bytes)?;
-        ttf.load_font_from_rwops(ops, large_size)
-    };
     let max_distance = settings.max_distance;
+
+    let font: Font = Font::try_from_bytes(font_bytes)
+        .expect("Failed to parse font data");
     
     let mut result = settings.chars.into_par_iter()
-        .map_init(get_font, {
+        .map({
+            let font = font.clone();
             let cache_path = cache_path.clone();
-            move |maybe_font, ch| {
-                match maybe_font {
-                    Ok(font) => {
-                        let mut output_filename = cache_path.clone();
-                        output_filename.push(format!("{:x}.bmp", ch as u32));
-                        match render_glyph::render_glyph(
-                            ch,
-                            &font,
-                            target_size,
-                            max_distance,
-                            output_filename,
-                        ) {
-                            Ok(thing) => Ok(thing),
-                            Err(err) => Err(format!(
-                                "glyph '{}' ({:x}) failed to render: {}",
-                                ch,
-                                ch as u32,
-                                err,
-                            )),
-                        }
-                    },
-                    Err(err) => Err(
-                        format!("Font failed to parse: {}", err)
-                    ),
+            move |ch| {
+                let mut output_filename = cache_path.clone();
+                output_filename.push(format!("{:x}.bmp", ch as u32));
+                match render_glyph::render_glyph(
+                    ch,
+                    &font,
+                    target_size,
+                    max_distance,
+                    output_filename,
+                ) {
+                    Ok(thing) => Ok(thing),
+                    Err(err) => Err(format!(
+                        "glyph '{}' ({:x}) failed to render: {}",
+                        ch,
+                        ch as u32,
+                        err,
+                    )),
                 }
             }
         })

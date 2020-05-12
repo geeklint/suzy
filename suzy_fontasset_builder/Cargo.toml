@@ -8,8 +8,4 @@ edition = "2018"
 rayon = "1.3.0"
 sha2 = "0.8.1"
 hex = "0.4.2"
-
-[dependencies.sdl2]
-version = "0.33.0"
-default-features = false
-features = ["ttf"]
+rusttype = "0.9.1"
