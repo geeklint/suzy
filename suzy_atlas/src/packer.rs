@@ -1,3 +1,4 @@
+#[derive(Clone, Debug)]
 pub enum PackerNode<T> {
     Empty { x: f64, y: f64, width: f64, height: f64 },
     Occupied { item: T, x: f64, y: f64 },
