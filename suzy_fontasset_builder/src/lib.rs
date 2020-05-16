@@ -266,7 +266,8 @@ fn render_char(
         let y = y as usize;
         bitmap[y * pitch + x] = v >= 0.5;
     });
-    let mut interesting_pixels = Vec::new();
+    let mut edge_pixels_in = Vec::new();
+    let mut edge_pixels_out = Vec::new();
     let pxbb_xlim = (pxbb.width() as usize) - 1;
     let pxbb_ylim = (pxbb.height() as usize) - 1;
     for y in 0..=pxbb_ylim {
@@ -280,7 +281,12 @@ fn render_char(
                 (if x < pxbb_xlim - 1 { bitmap[index + 1] } else { !state }),
             ];
             if others.iter().any(|b| *b != state) {
-                interesting_pixels.push((x, y));
+                let list = if state {
+                    &mut edge_pixels_in
+                } else {
+                    &mut edge_pixels_out
+                };
+                list.push((x, y));
             }
         }
     }
@@ -333,17 +339,18 @@ fn render_char(
             let coord = py * buf.tex_size + px;
             let dest_px = &mut buf.buffer[coord * buf.nchans + ch.chan];
             let state = (state_at)(glyph_x, glyph_y);
+            let edge_list = if state {
+                &edge_pixels_out
+            } else {
+                &edge_pixels_in
+            };
             let min_dist = 
-                interesting_pixels.iter().filter_map(|pair| {
+                edge_list.iter().map(|pair| {
                     let gx = pair.0 as f64;
                     let gy = pair.1 as f64;
-                    if state == (state_at)(gx, gy) {
-                        None
-                    } else {
-                        let a2 = (glyph_x - gx).powi(2);
-                        let b2 = (glyph_y - gy).powi(2);
-                        Some((a2 + b2))
-                    }
+                    let a2 = (glyph_x - gx).powi(2);
+                    let b2 = (glyph_y - gy).powi(2);
+                    a2 + b2
                 })
                 .min_by(|a, b| {
                     a.partial_cmp(b).expect("Somehow got a NaN distance")
