@@ -2,9 +2,6 @@ use std::path::{Path, PathBuf};
 use std::io::Write;
 use std::collections::HashMap;
 
-use sha2::Digest;
-//use rayon::prelude::*;
-
 use rusttype::Font;
 
 use suzy_atlas::packer::PackerNode;
@@ -266,104 +263,36 @@ fn render_char(
         let y = y as usize;
         bitmap[y * pitch + x] = v >= 0.5;
     });
-    let mut edge_pixels_in = Vec::new();
-    let mut edge_pixels_out = Vec::new();
-    let pxbb_xlim = (pxbb.width() as usize) - 1;
-    let pxbb_ylim = (pxbb.height() as usize) - 1;
-    for y in 0..=pxbb_ylim {
-        for x in 0..=pxbb_xlim {
-            let index = y * pitch + x;
-            let state = bitmap[index];
-            let others = [
-                (if y > 0 { bitmap[index - pitch] } else { !state }),
-                (if y < pxbb_ylim { bitmap[index + pitch] } else { !state }),
-                (if x > 0 { bitmap[index - 1] } else { !state }),
-                (if x < pxbb_xlim - 1 { bitmap[index + 1] } else { !state }),
-            ];
-            if others.iter().any(|b| *b != state) {
-                let list = if state {
-                    &mut edge_pixels_in
-                } else {
-                    &mut edge_pixels_out
-                };
-                list.push((x, y));
-            }
-        }
-    }
-    let origin_x = (ch.x * (buf.tex_size as f64)).floor() as usize;
-    let origin_y = (ch.y * (buf.tex_size as f64)).floor() as usize;
+    let x_offset = (ch.x * (buf.tex_size as f64)).floor() as usize;
+    let y_offset = (ch.y * (buf.tex_size as f64)).floor() as usize;
     let bb = ch.font.glyph(ch.ch)
         .scaled(ch.dest_scale)
         .exact_bounding_box()
-        .expect("no bounding box?");
+        .expect("no bounding box for ?");
     let padding = ch.padding;
-    let width = (bb.width() + 2.0 * padding as f32).floor() as usize;
-    let height = (bb.height() + 2.0 * padding as f32).floor() as usize;
-    let to_glyph_single = {
-        let padding = padding;
-        move |val: usize, len: f32, glyph_len: i32| {
-            let val = (val as f64) - padding;
-            let val = val / (len as f64);
-            val * (glyph_len as f64)
-        }
+    let width = (bb.width() as f64 + 2.0 * padding).floor() as usize;
+    let height = (bb.height() as f64 + 2.0 * padding).floor() as usize;
+    let source = suzy_sdf::SourceBitmap {
+        buffer: &bitmap,
+        width: pxbb.width() as usize,
+        height: pxbb.height() as usize,
     };
-    let state_at = {
-        let pxbb = pxbb;
-        move |x: f64, y: f64| -> bool {
-            let oob = (
-                x < 0.0
-                || x >= (pxbb.width() as f64)
-                || y < 0.0
-                || y >= (pxbb.height() as f64)
-            );
-            if oob {
-                false
-            } else {
-                let src_x = x.floor() as usize;
-                let src_y = y.floor() as usize;
-                bitmap[src_y * pitch + src_x]
-            }
-        }
+    let dest = suzy_sdf::DestImage {
+        buf: suzy_sdf::DestBuffer {
+            buffer: buf.buffer,
+            width: buf.tex_size,
+            height: buf.tex_size,
+            num_channels: buf.nchans,
+        },
+        padding,
+        channel: ch.chan,
+        x_offset,
+        y_offset,
+        width,
+        height,
     };
-    let max_glyph_dist = (
-        (padding as f64)
-        * (bb.width() as f64)
-        / (pxbb.width() as f64)
-    );
-    for y in 0..height {
-        let glyph_y = (to_glyph_single)(y, bb.height(), pxbb.height());
-        for x in 0..width {
-            let glyph_x = (to_glyph_single)(x, bb.width(), pxbb.width());
-            let px = origin_x + x;
-            let py = origin_y + y;
-            let coord = py * buf.tex_size + px;
-            let dest_px = &mut buf.buffer[coord * buf.nchans + ch.chan];
-            let state = (state_at)(glyph_x, glyph_y);
-            let edge_list = if state {
-                &edge_pixels_out
-            } else {
-                &edge_pixels_in
-            };
-            let min_dist = 
-                edge_list.iter().map(|pair| {
-                    let gx = pair.0 as f64;
-                    let gy = pair.1 as f64;
-                    let a2 = (glyph_x - gx).powi(2);
-                    let b2 = (glyph_y - gy).powi(2);
-                    a2 + b2
-                })
-                .min_by(|a, b| {
-                    a.partial_cmp(b).expect("Somehow got a NaN distance")
-                })
-                .map_or(f64::INFINITY, f64::sqrt);
-            let min_dist = min_dist * (bb.width() as f64) / (pxbb.width() as f64);
-            let min_dist = if state { min_dist } else { -min_dist };
-            let frac_dist = min_dist / (padding as f64);
-            let frac_dist = (frac_dist + 1.0) / 2.0;
-            let frac_dist = frac_dist.max(0.0).min(1.0);
-            *dest_px = (frac_dist * 255.0).floor() as u8;
-        }
-    }
+    suzy_sdf::render_sdf(dest, source);
+    eprintln!("done rendering '{}'", ch.ch);
 }
 
 fn get_packed_size(padding_ratio: f64, font: &Font<'static>, chars: &[char])

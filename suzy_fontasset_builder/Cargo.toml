@@ -10,3 +10,4 @@ sha2 = "0.8.1"
 hex = "0.4.2"
 rusttype = "0.9.1"
 suzy_atlas = { path = "../suzy_atlas" }
+suzy_sdf = { path = "../suzy_sdf" }
