@@ -67,6 +67,14 @@ impl MaybePath for &str {
     fn try_as_path(&self) -> Option<&Path> { Some(self.as_ref()) }
 }
 
+impl MaybePath for Path {
+    fn try_as_path(&self) -> Option<&Path> { Some(self) }
+}
+
+impl MaybePath for &Path {
+    fn try_as_path(&self) -> Option<&Path> { Some(*self) }
+}
+
 impl MaybePath for () {
     fn try_as_path(&self) -> Option<&Path> { None }
 }
@@ -164,48 +172,105 @@ where
     );
     let channels = channels.0 + channels.1 + channels.2 + channels.3;
     let channels = if channels == 2 { 3 } else { channels };
+    assert_eq!(channels, 1);
 
     let bufsize = channels * texture_size * texture_size;
 
-    let buffer = settings.chars.iter()
+    let mut output = settings.chars.iter()
         .fold(
-            vec![0u8; bufsize],
-            |mut buffer, ch| {
+            FontOutput {
+                buffer: vec![0u8; bufsize],
+                metrics: vec![],
+                kerning_pairs: vec![],
+            },
+            |mut buffer_data, ch| {
                 let mut channel = 0;
+                let buffer = &mut buffer_data;
+                let tex_size = texture_size;
+                let nchans = channels;
+                let ch_shared = CharToRender {
+                    ch: *ch,
+                    dest_scale,
+                    ref_scale,
+                    x: 0.0,
+                    y: 0.0,
+                    chan: 0,
+                    padding,
+                    norm_padding: settings.padding_ratio as f32,
+                };
                 if let Some(font) = &fonts.0 {
                     let (x, y) = uniform.0.as_ref().unwrap()[&ch];
                     render_char(
-                        CharToRender {
-                            ch: *ch,
-                            font,
-                            dest_scale,
-                            ref_scale,
-                            x,
-                            y,
-                            chan: channel,
-                            padding,
-                        },
-                        DestBuffer {
-                            buffer: &mut buffer,
-                            tex_size: texture_size,
-                            nchans: channels,
-                        },
+                        font,
+                        CharToRender { x, y, chan: channel, ..ch_shared },
+                        DestBuffer { buffer, tex_size, nchans },
                     );
+                    channel += 1;
                 }
-                buffer
+                if let Some(font) = &fonts.1 {
+                    let (x, y) = uniform.1.as_ref().unwrap()[&ch];
+                    render_char(
+                        font,
+                        CharToRender { x, y, chan: channel, ..ch_shared },
+                        DestBuffer { buffer, tex_size, nchans },
+                    );
+                    channel += 1;
+                }
+                if let Some(font) = &fonts.2 {
+                    let (x, y) = uniform.2.as_ref().unwrap()[&ch];
+                    render_char(
+                        font,
+                        CharToRender { x, y, chan: channel, ..ch_shared },
+                        DestBuffer { buffer, tex_size, nchans },
+                    );
+                    channel += 1;
+                }
+                if let Some(font) = &fonts.3 {
+                    let (x, y) = uniform.3.as_ref().unwrap()[&ch];
+                    render_char(
+                        font,
+                        CharToRender { x, y, chan: channel, ..ch_shared },
+                        DestBuffer { buffer, tex_size, nchans },
+                    );
+                    channel += 1;
+                }
+                buffer_data
             }
         );
-        /*
-        .reduce_with(
-            |mut a, mut b| {
-                for (dest, other) in a.iter_mut().zip(b.iter()) {
-                    *dest += *other;
-                }
-                a
-            }
-        )
-        .unwrap_or_else(|| vec![0u8; bufsize]);
-        */
+    output.metrics.sort_unstable_by_key(|c| c.0);
+    let pixels_ref: &[u8] = &output.buffer;
+    let metrics_ref: &[GlyphMetricsSource] = &output.metrics;
+    let kerning_ref: &[(char, char, f32)] = &output.kerning_pairs;
+    let write_failure = "Failed to write to output file";
+    let file = std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(dest_file)
+        .expect(write_failure);
+    writeln!(&file, "use suzy::platform::opengl::text::FontSource;");
+    writeln!(
+        &file,
+        "pub const FONT: FontSource = FontSource {{
+            font_size: {:.1},
+            image_width: {},
+            image_height: {},
+            atlas_image: &{:?},
+            coords: &{:?},
+            padding_ratio: {:.1},
+            kerning_pairs: &{:?},
+        }};",
+        font_size,
+        texture_size,
+        texture_size,
+        pixels_ref,
+        metrics_ref,
+        settings.padding_ratio,
+        kerning_ref,
+    ).expect(write_failure);
+
+
+    /*
     let mut header = vec![0u8; 54];
     let palette = (0u8..=0xff).flat_map(|x| vec![x, x, x, 0x00])
         .collect::<Vec<_>>();
@@ -229,31 +294,69 @@ where
     file.write(&header);
     file.write(&palette);
     file.write(&buffer);
+    */
 }
 
-struct CharToRender<'a> {
+// 0: char
+// 1,2: u,v
+// 3,4: uv width,height
+// 5-8: relative bb
+// 9: relative advance width
+type GlyphMetricsSource = (char, f32, f32, f32, f32, f32, f32, f32, f32, f32);
+
+struct FontOutput {
+    buffer: Vec<u8>,
+    metrics: Vec<GlyphMetricsSource>,
+    kerning_pairs: Vec<(char, char, f32)>,
+}
+
+struct CharToRender {
     ch: char,
-    font: &'a Font<'static>,
     dest_scale: rusttype::Scale,
     ref_scale: rusttype::Scale,
     x: f64,
     y: f64,
     chan: usize,
     padding: f64,
+    norm_padding: f32,
 }
 
 struct DestBuffer<'a> {
-    buffer: &'a mut [u8],
+    buffer: &'a mut FontOutput,
     tex_size: usize,
     nchans: usize,
 }
 
 fn render_char(
-    ch: CharToRender<'_>,
+    font: &Font<'static>,
+    ch: CharToRender,
     mut buf: DestBuffer<'_>,
 ) {
+    let one = rusttype::Scale::uniform(1.0);
     let zero = rusttype::Point { x: 0.0, y: 0.0 };
-    let glyph = ch.font.glyph(ch.ch).scaled(ch.ref_scale).positioned(zero);
+    let bb = font.glyph(ch.ch)
+        .scaled(ch.dest_scale)
+        .exact_bounding_box()
+        .expect("no bounding box for ?");
+    let norm_glyph = font.glyph(ch.ch).scaled(one);
+    let norm_bb = norm_glyph.exact_bounding_box()
+        .expect("no bounding box for ?");
+    let sprite_width = (bb.width() as f64 + 2.0 * ch.padding).floor();
+    let sprite_height = (bb.height() as f64 + 2.0 * ch.padding).floor();
+    buf.buffer.metrics.push((
+        ch.ch,
+        ch.x as f32,
+        ch.y as f32,
+        sprite_width as f32 / buf.tex_size as f32,
+        sprite_height as f32 / buf.tex_size as f32,
+        norm_bb.min.x - ch.norm_padding,
+        norm_bb.max.x + ch.norm_padding,
+        -norm_bb.max.y - ch.norm_padding,
+        -norm_bb.min.y + ch.norm_padding,
+        norm_glyph.h_metrics().advance_width,
+    ));
+
+    let glyph = font.glyph(ch.ch).scaled(ch.ref_scale).positioned(zero);
     let pxbb = glyph.pixel_bounding_box().expect("no pixel bounding box?");
     let bm_bufsize = (pxbb.width() * pxbb.height()) as usize;
     let pitch = pxbb.width() as usize;
@@ -265,13 +368,6 @@ fn render_char(
     });
     let x_offset = (ch.x * (buf.tex_size as f64)).floor() as usize;
     let y_offset = (ch.y * (buf.tex_size as f64)).floor() as usize;
-    let bb = ch.font.glyph(ch.ch)
-        .scaled(ch.dest_scale)
-        .exact_bounding_box()
-        .expect("no bounding box for ?");
-    let padding = ch.padding;
-    let width = (bb.width() as f64 + 2.0 * padding).floor() as usize;
-    let height = (bb.height() as f64 + 2.0 * padding).floor() as usize;
     let source = suzy_sdf::SourceBitmap {
         buffer: &bitmap,
         width: pxbb.width() as usize,
@@ -279,20 +375,19 @@ fn render_char(
     };
     let dest = suzy_sdf::DestImage {
         buf: suzy_sdf::DestBuffer {
-            buffer: buf.buffer,
+            buffer: &mut buf.buffer.buffer,
             width: buf.tex_size,
             height: buf.tex_size,
             num_channels: buf.nchans,
         },
-        padding,
+        padding: ch.padding,
         channel: ch.chan,
         x_offset,
         y_offset,
-        width,
-        height,
+        width: sprite_width as usize,
+        height: sprite_height as usize,
     };
     suzy_sdf::render_sdf(dest, source);
-    eprintln!("done rendering '{}'", ch.ch);
 }
 
 fn get_packed_size(padding_ratio: f64, font: &Font<'static>, chars: &[char])
