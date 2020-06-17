@@ -2,8 +2,13 @@ use crate::graphics;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
-use super::children::{WidgetChildren, WidgetChildrenMut};
-use super::{WidgetView, WidgetInit};
+use super::{
+    WidgetChildReceiver,
+    WidgetGraphicReceiver,
+    WidgetInit,
+    WidgetMutChildReceiver,
+    WidgetView,
+};
 
 /// This trait should be implemented for the types you provide as data for
 /// Widget implementations.
@@ -16,30 +21,25 @@ where
     /// watch values and update parts of your widget when they change
     fn init(init: &mut WidgetInit<Self, P>);
 
-    type ChildA: WidgetContent<P>;
-    type ChildB: WidgetContent<P>;
-    type ChildC: WidgetContent<P>;
-    type ChildD: WidgetContent<P>;
+    /// Custom widgets must define a way to iterate over their children
+    /// if they want those children to be visible
+    fn children<R: WidgetChildReceiver<P>>(&self, receiver: R) {
+        let _unused = receiver;
+    }
 
     /// Custom widgets must define a way to iterate over their children
     /// if they want those children to be visible
-    fn children(&self) ->
-        WidgetChildren<
-            P, Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-    ;
+    fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R) {
+        let _unused = receiver;
+    }
 
-    /// Custom widgets must define a way to iterate over their children
-    /// if they want those children to be visible
-    fn children_mut(&mut self)
-        -> WidgetChildrenMut<
-            P, Self::ChildA,Self::ChildB,Self::ChildC,Self::ChildD>
-    ;
+    fn graphics<R: WidgetGraphicReceiver<P>>(&self, receiver: R) {
+        let _unused = receiver;
+    }
 
-    type Graphic: graphics::Graphic<P> + ?Sized;
-    type GraphicAfter: graphics::Graphic<P> + ?Sized;
-
-    fn graphic(&self) -> &Self::Graphic;
-    fn graphic_after(&self) -> &Self::GraphicAfter;
+    fn graphics_after<R: WidgetGraphicReceiver<P>>(&self, receiver: R) {
+        let _unused = receiver;
+    }
 
     fn pointer_event(
         this: &mut WidgetView<'_, P, Self>,
@@ -52,23 +52,4 @@ where
 
 impl<P: RenderPlatform> WidgetContent<P> for () {
     fn init(_init: &mut WidgetInit<Self, P>) {}
-
-    type ChildA = ();
-    type ChildB = ();
-    type ChildC = ();
-    type ChildD = ();
-
-    fn children(&self) -> WidgetChildren<P, (),(),(),()> {
-        WidgetChildren::Zero
-    }
-
-    fn children_mut(&mut self) -> WidgetChildrenMut<P, (),(),(),()> {
-        WidgetChildrenMut::Zero
-    }
-
-    type Graphic = ();
-    type GraphicAfter = ();
-
-    fn graphic(&self) -> &() { &() }
-    fn graphic_after(&self) -> &() { &() }
 }

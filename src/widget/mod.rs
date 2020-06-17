@@ -9,22 +9,32 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
 mod anon;
-mod children;
 mod content;
 mod init;
 mod internal;
 mod newwidget;
+mod receivers;
 mod rect;
 
 use internal::WidgetInternal;
 use rect::WidgetRect;
+use receivers::{
+    DrawChildReceiver,
+    PointerEventChildReceiver,
+    DrawGraphicReceiver,
+};
 
 pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
-pub use children::{WidgetChildren, WidgetChildrenMut};
 pub use content::WidgetContent;
 pub use init::WidgetInit;
 pub use internal::WidgetView;
 pub use newwidget::NewWidget;
+pub use receivers::{
+    WidgetChildReceiver,
+    WidgetMutChildReceiver,
+    WidgetGraphicReceiver,
+};
+
 
 /// A basic structure to wrap some data and turn it into a widget.
 #[derive(Default)]
@@ -75,16 +85,20 @@ where
     pub(crate) fn draw(&self, ctx: &mut DrawContext<P>) {
         let wid_int = self.internal();
         let content = &wid_int.content;
-        content.graphic().draw(ctx);
-        content.children().draw(ctx);
-        content.graphic_after().draw(ctx);
+        content.graphics(DrawGraphicReceiver { ctx });
+        content.children(DrawChildReceiver { ctx });
+        content.graphics_after(DrawGraphicReceiver { ctx });
     }
 
     pub(crate) fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
-        let handled_by_child = {
+        let mut handled_by_child = false;
+        {
             let content = &mut self.internal_mut().content;
-            content.children_mut().pointer_event(event)
-        };
+            content.children_mut(PointerEventChildReceiver {
+                event,
+                handled: &mut handled_by_child,
+            });
+        }
         handled_by_child || {
             let mut view = WidgetView {
                 id: self.id(),
