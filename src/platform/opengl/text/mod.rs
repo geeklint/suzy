@@ -40,7 +40,7 @@ impl Text {
     pub fn render(
         &mut self,
         text: &str,
-        font: &FontDynamic<'_, '_>,
+        font: &FontDynamic<'_>,
         font_size: f32,
     ) {
         self.texture = font.texture().clone();
