@@ -12,7 +12,7 @@ opengl = ["gl_generator"]
 sdl = ["sdl2", "opengl"]
 
 [dependencies]
-drying_paint = "0.1.4"
+drying_paint = "0.2.0"
 gag = { version = "0.1.10", optional = true }
 gl = { version = "0.14.0", optional = true }
 lazy_static = { version = "^1.4.0", optional = true }

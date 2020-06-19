@@ -118,7 +118,7 @@ where
     Root: WidgetContent<P::Renderer>,
     P: Platform,
 {
-    watch_ctx: drying_paint::WatchContext,
+    watch_ctx: Option<drying_paint::WatchContext>,
     window: P::Window,
     root: Widget<Root, P::Renderer>,
     values: AppValues,
@@ -236,7 +236,8 @@ where
         } = self;
         let frame_start = self.frame_start.take()
             .unwrap_or_else(time::Instant::now);
-        watch_ctx.with(|| {
+        let watch_ctx_inner = watch_ctx.take().unwrap();
+        let watch_ctx_inner = watch_ctx_inner.with(|| {
             *values.frame_start = frame_start;
             Self::with_values(values, || {
                 Self::with_renderer_global(renderer_global, || {
@@ -244,7 +245,8 @@ where
                     drying_paint::WatchContext::update_current();
                 });
             });
-        });
+        }).0;
+        *watch_ctx = Some(watch_ctx_inner);
     }
 
     pub fn render(&mut self) {
@@ -277,7 +279,7 @@ where Root: WidgetContent + Default
         let mut renderer_global = Some(Box::new(
             DefaultPlatform::get_renderer_data(&mut window)
         ));
-        let mut watch_ctx = drying_paint::WatchContext::new();
+        let watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.size();
         let xdim = Dim::with_length(width);
@@ -290,7 +292,7 @@ where Root: WidgetContent + Default
             px_per_dp: Watched::new(1.0),
             window_size: (width, height),
         };
-        let root = watch_ctx.with(|| {
+        let (watch_ctx, root) = watch_ctx.with(|| {
             Self::with_values(&mut values, || {
                 Self::with_renderer_global(&mut renderer_global, || {
                     Widget::<Root>::default_with_rect(&rect)
@@ -298,7 +300,7 @@ where Root: WidgetContent + Default
             })
         });
         Self {
-            watch_ctx,
+            watch_ctx: Some(watch_ctx),
             window,
             root,
             values,
