@@ -1,10 +1,8 @@
 [package]
-name = "suzy_fontasset_builder"
+name = "suzy_build_tools"
 version = "0.1.0"
 authors = ["Violet <violet@geeklint.com>"]
 edition = "2018"
 
 [dependencies]
 rusttype = "0.9.1"
-suzy_atlas = { path = "../suzy_atlas" }
-suzy_sdf = { path = "../suzy_sdf" }
