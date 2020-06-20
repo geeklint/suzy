@@ -1,0 +1,75 @@
+use std::io::Write;
+use std::process::{Command, Stdio};
+
+#[derive(Debug)]
+pub enum ProgressBar {
+    None,
+    IntPctChild(std::process::Child),
+}
+
+impl ProgressBar {
+    pub fn none() -> Self {
+        Self::None
+    }
+
+    pub fn best(title: &str) -> Self {
+        if cfg!(target_os = "linux") {
+            if let Ok(zenity) = Command::new("zenity")
+                .args(&[
+                    "--progress",
+                    "--title", title,
+                    "--no-cancel",
+                    "--auto-close",
+                    "--time-remaining",
+                ])
+                .stdin(Stdio::piped())
+                .spawn()
+            {
+                Self::IntPctChild(zenity)
+            } else if let Ok(whiptail) = Self::whiptail(title) {
+                Self::IntPctChild(whiptail)
+            } else {
+                Self::None
+            }
+        } else {
+            Self::None
+        }
+    }
+
+    pub fn update(&mut self, items: usize, total: usize) {
+        match self {
+            Self::None => (),
+            Self::IntPctChild(child) => {
+                if let Some(stdin) = child.stdin.as_mut() {
+                    let _ign = writeln!(
+                        stdin,
+                        "{}",
+                        items * 100 / total,
+                    );
+                }
+            }
+        }
+    }
+
+    fn whiptail(title: &str) -> std::io::Result<std::process::Child> {
+        let tty = std::fs::OpenOptions::new()
+            .write(true)
+            .open("/dev/tty")?;
+        Command::new("whiptail")
+            .args(&["--gauge", title, "6", "60", "0"])
+            .stdin(Stdio::piped())
+            .stdout(tty)
+            .spawn()
+    }
+}
+
+impl Drop for ProgressBar {
+    fn drop(&mut self) {
+        match self {
+            Self::None => (),
+            Self::IntPctChild(child) => {
+                let _ign = child.kill();
+            },
+        }
+    }
+}

@@ -10,6 +10,7 @@ pub struct Settings {
     pub(super) chars: Vec<char>,
     pub(super) padding_ratio: f64,
     pub(super) size: AssetSize,
+    pub(super) progressbar: bool,
 }
 
 impl Settings {
@@ -18,6 +19,7 @@ impl Settings {
             chars: Vec::new(),
             padding_ratio: 0.5,
             size: AssetSize::TextureSize(64),
+            progressbar: false,
         }
     }
 }
@@ -46,6 +48,13 @@ impl Settings {
 
     pub fn latin1(self) -> Settings {
         self.ascii().add_chars((0xa1..=0xff).map(char::from))
+    }
+
+    pub fn show_progress(self) -> Settings {
+        Settings {
+            progressbar: true,
+            ..self
+        }
     }
 }
 

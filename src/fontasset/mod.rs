@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use rusttype::Font;
 
 use crate::atlas_packer::PackerNode;
+use crate::progressbar::ProgressBar;
 
 mod render_char;
 mod output;
@@ -85,7 +86,13 @@ pub fn build_fontasset<P: AsRef<Path>>(
     let channels = if channels == 2 { 3 } else { channels };
     assert_eq!(channels, 1);
 
+    let mut progressbar = if settings.progressbar {
+        ProgressBar::best("Packing Glyphs")
+    } else {
+        ProgressBar::none()
+    };
     let mut output = settings.chars.iter()
+        .enumerate()
         .fold(
             output::FontOutput::new(
                 texture_size,
@@ -94,7 +101,7 @@ pub fn build_fontasset<P: AsRef<Path>>(
                 font_size,
                 settings.padding_ratio,
             ),
-            |mut buffer_data, ch| {
+            |mut buffer_data, (chindex, ch)| {
                 let mut channel = 0;
                 let tex_size = texture_size;
                 let nchans = channels;
@@ -155,9 +162,11 @@ pub fn build_fontasset<P: AsRef<Path>>(
                     );
                     channel += 1;
                 }
+                progressbar.update(chindex, settings.chars.len());
                 buffer_data
             }
         );
+    std::mem::drop(progressbar);
     let write_failure = "Failed to write to output file";
     output.write(dest_file).expect(write_failure);
 }
