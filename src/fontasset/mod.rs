@@ -3,7 +3,6 @@ use std::collections::HashMap;
 
 use rusttype::Font;
 
-use crate::atlas_packer::PackerNode;
 use crate::progressbar::ProgressBar;
 
 mod render_char;
@@ -48,9 +47,7 @@ pub fn build_fontasset<P: AsRef<Path>>(
             &settings.chars,
             max,
         ).expect("Failed to pack a font that previously fit in a larger box");
-        let mut flat = HashMap::new();
-        packer.for_each(|x, y, ch| { flat.insert(*ch, (x / max, y / max)); });
-        flat
+        packer.positions
     };
 
     let uniform = (
@@ -193,14 +190,14 @@ fn get_packed_size(padding_ratio: f64, font: &Font, chars: &[char])
 
     loop {
         let size = (high + low) / 2.0;
-        if let Some(packer) = get_layout(
+        if let Some(layout) = get_layout(
             padding_ratio,
             font,
             chars,
             size,
         ) {
             let empty_threshold = 0.05 * size * size;
-            if packer.empty_area() < empty_threshold || high < 1.05 * low {
+            if layout.empty_area < empty_threshold || high < 1.05 * low {
                 return size;
             } else {
                 high = size;
@@ -211,31 +208,50 @@ fn get_packed_size(padding_ratio: f64, font: &Font, chars: &[char])
     }
 }
 
+struct LayoutResult {
+    positions: HashMap<char, (f64, f64)>,
+    empty_area: f64,
+}
+
 fn get_layout(
     padding_ratio: f64,
     font: &Font,
     chars: &[char],
     size: f64,
-) -> Option<PackerNode<char>> {
-    let padding = padding_ratio * 2.0;
-    let mut packer = PackerNode::new(size, size);
+) -> Option<LayoutResult> {
+    let padding = (padding_ratio * 2.0 * 100_000.0) as i32;
+    let config = rect_packer::Config {
+        width: (size * 100_000.0).floor() as i32,
+        height: (size * 100_000.0).floor() as i32,
+        border_padding: 0,
+        rectangle_padding: 0,
+    };
+    let mut packer = rect_packer::Packer::new(config);
     let scale = rusttype::Scale::uniform(1.0);
     let mut array: Vec<_> = chars.iter()
         .map(|ch| {
             let glyph = font.glyph(*ch).scaled(scale);
             let rect = glyph.exact_bounding_box().expect("No bounding box?");
-            let width = rect.width() as f64 + padding;
-            let height = rect.height() as f64 + padding;
+            let width = (rect.width() * 100_000.0).ceil() as i32 + padding;
+            let height = (rect.height() * 100_000.0).ceil() as i32 + padding;
             (*ch, width, height)
         })
         .collect();
+    /* rect_packer doesn't seem to indicate it needs this...
     array.sort_unstable_by(|a, b| {
         (a.1 * a.2).partial_cmp(&(b.1 * b.2)).unwrap().reverse()
     });
+    */
+    let mut positions = HashMap::new();
+    let mut empty_area = size * size;
     for (ch, width, height) in array.into_iter() {
-        if packer.add(ch, width, height).is_err() {
-            return None;
-        }
+        let rect = packer.pack(width, height, false)?;
+        let x = rect.x as f64 / 100_000.0;
+        let y = rect.y as f64 / 100_000.0;
+        positions.insert(ch, (x / size, y / size));
+        let width = width as f64 / 100_000.0;
+        let height = height as f64 / 100_000.0;
+        empty_area -= width * height;
     }
-    Some(packer)
+    Some(LayoutResult { positions, empty_area })
 }
