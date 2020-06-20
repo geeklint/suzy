@@ -103,7 +103,7 @@ pub(super) struct ParsedFontFamily<'n, 'b, 'i, 'bi> {
 }
 
 impl<'n> FontFamily<'n, 'static, 'static, 'static> {
-    pub fn font_path<P: AsRef<Path>>(font_path: &'n P) -> Self
+    pub fn font_path<P: AsRef<Path> + ?Sized>(font_path: &'n P) -> Self
     {
         Self {
             normal: FontSource::Path(font_path.as_ref()),
@@ -134,7 +134,7 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn bold_path<'bnew, P: AsRef<Path>>(self, font_path: &'bnew P)
+    pub fn bold_path<'bnew, P: AsRef<Path> + ?Sized>(self, font_path: &'bnew P)
         -> FontFamily<'n, 'bnew, 'i, 'bi>
     {
         FontFamily {
@@ -145,7 +145,7 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn italic_path<'inew, P: AsRef<Path>>(self, font_path: &'inew P)
+    pub fn italic_path<'inew, P: AsRef<Path> + ?Sized>(self, font_path: &'inew P)
         -> FontFamily<'n, 'b, 'inew, 'bi>
     {
         FontFamily {
@@ -156,7 +156,7 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn bold_italic_path<'binew, P: AsRef<Path>>(self, font_path: &'binew P)
+    pub fn bold_italic_path<'binew, P: AsRef<Path> + ?Sized>(self, font_path: &'binew P)
         -> FontFamily<'n, 'b, 'i, 'binew>
     {
         FontFamily {
