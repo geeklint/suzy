@@ -12,6 +12,20 @@ mod settings;
 use render_char::render_char;
 pub use settings::{AssetSize, Settings, FontFamily};
 
+trait GlyphSizeExt {
+    fn glyph_size(&self) -> (f32, f32);
+}
+
+impl<'a> GlyphSizeExt for rusttype::ScaledGlyph<'a> {
+    fn glyph_size(&self) -> (f32, f32) {
+        if let Some(rect) = self.exact_bounding_box() {
+            (rect.width(), rect.height())
+        } else {
+            (0.0, 0.0)
+        }
+    }
+}
+
 pub fn build_fontasset<P: AsRef<Path>>(
     ttf_family: FontFamily<'_, '_, '_, '_>,
     dest_file: P,
@@ -79,9 +93,14 @@ pub fn build_fontasset<P: AsRef<Path>>(
         fonts.2.is_some() as usize,
         fonts.3.is_some() as usize,
     );
+    let bold_channel = fonts.1.as_ref()
+        .map(|_| 1);
+    let italic_channel = fonts.2.as_ref()
+        .map(|_| bold_channel.unwrap_or(0) + 1);
+    let bold_italic_channel = fonts.3.as_ref()
+        .map(|_| italic_channel.or(bold_channel).unwrap_or(0) + 1);
     let channels = channels.0 + channels.1 + channels.2 + channels.3;
     let channels = if channels == 2 { 3 } else { channels };
-    assert_eq!(channels, 1);
 
     let mut progressbar = if settings.progressbar {
         ProgressBar::best("Packing Glyphs")
@@ -97,6 +116,9 @@ pub fn build_fontasset<P: AsRef<Path>>(
                 channels,
                 font_size,
                 settings.padding_ratio,
+                bold_channel,
+                italic_channel,
+                bold_italic_channel,
             ),
             |mut buffer_data, (chindex, ch)| {
                 let mut channel = 0;
@@ -179,9 +201,9 @@ fn get_packed_size(padding_ratio: f64, font: &Font, chars: &[char])
     let mut sum_width = 0.0;
     let mut sum_height = 0.0;
     for glyph in glyphs {
-        let rect = glyph.exact_bounding_box().expect("no bounding box?");
-        sum_width += rect.width() + padding as f32;
-        sum_height += rect.height() + padding as f32;
+        let (width, height) = glyph.glyph_size();
+        sum_width += width + padding as f32;
+        sum_height += height + padding as f32;
     }
 
     let mut high: f64 = sum_width.max(sum_height).into();
@@ -231,9 +253,9 @@ fn get_layout(
     let mut array: Vec<_> = chars.iter()
         .map(|ch| {
             let glyph = font.glyph(*ch).scaled(scale);
-            let rect = glyph.exact_bounding_box().expect("No bounding box?");
-            let width = (rect.width() * 100_000.0).ceil() as i32 + padding;
-            let height = (rect.height() * 100_000.0).ceil() as i32 + padding;
+            let (width, height) = glyph.glyph_size();
+            let width = (width * 100_000.0).ceil() as i32 + padding;
+            let height = (height * 100_000.0).ceil() as i32 + padding;
             (*ch, width, height)
         })
         .collect();

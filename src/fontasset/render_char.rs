@@ -2,6 +2,7 @@ use rusttype::Font;
 
 use crate::sdf;
 use super::output::{FontOutput, GlyphMetric};
+use super::GlyphSizeExt;
 
 pub(super) struct CharToRender {
     pub ch: char,
@@ -28,16 +29,19 @@ pub(super) fn render_char(
 ) {
     let one = rusttype::Scale::uniform(1.0);
     let zero = rusttype::Point { x: 0.0, y: 0.0 };
-    let bb = font.glyph(ch.ch)
+    let (dest_width, dest_height) = font.glyph(ch.ch)
         .scaled(ch.dest_scale)
-        .exact_bounding_box()
-        .expect("no bounding box for ?");
+        .glyph_size();
     let norm_glyph = font.glyph(ch.ch).scaled(one);
-    let norm_bb = norm_glyph.exact_bounding_box()
-        .expect("no bounding box for ?");
-    let sprite_width = (bb.width() as f64 + 2.0 * ch.padding).floor();
-    let sprite_height = (bb.height() as f64 + 2.0 * ch.padding).floor();
-    buf.buffer.add_metric(GlyphMetric {
+    let norm_bb = if let Some(bb) = norm_glyph.exact_bounding_box() {
+        bb
+    } else {
+        let p0 = rusttype::Point { x: 0.0, y: 0.0 };
+        rusttype::Rect { min: p0, max: p0 }
+    };
+    let sprite_width = (dest_width as f64 + 2.0 * ch.padding).floor();
+    let sprite_height = (dest_height as f64 + 2.0 * ch.padding).floor();
+    buf.buffer.add_metric(ch.chan as u8, GlyphMetric {
         ch: ch.ch,
         u_offset: ch.x as f32,
         v_offset: ch.y as f32,

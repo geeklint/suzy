@@ -21,6 +21,54 @@ pub(crate) struct GlyphMetric {
 // 9: relative advance width
 type GlyphMetricsSource = (char, f32, f32, f32, f32, f32, f32, f32, f32, f32);
 
+pub struct FontSource {
+    channel: u8,
+    metrics: Vec<GlyphMetricsSource>,
+    kerning_pairs: Vec<(char, char, f32)>,
+}
+
+impl FontSource {
+    fn new(channel: u8) -> Self {
+        FontSource {
+            channel,
+            metrics: Vec::new(),
+            kerning_pairs: Vec::new(),
+        }
+    }
+        
+    fn write<W: std::io::Write>(&mut self, writer: &mut W)
+        -> std::io::Result<()>
+    {
+        self.metrics.sort_unstable_by_key(|c| c.0);
+        self.kerning_pairs.sort_unstable_by_key(|v| (v.0, v.1));
+        let metrics_ref: &[GlyphMetricsSource] = &self.metrics;
+        let kerning_ref: &[(char, char, f32)] = &self.kerning_pairs;
+        write!(
+            writer,
+            "({}, &{:?}, &{:?})",
+            self.channel,
+            metrics_ref,
+            kerning_ref,
+        )?;
+        Ok(())
+    }
+
+    fn write_opt<W: std::io::Write>(
+        opt: &mut Option<Self>,
+        writer: &mut W,
+    ) -> std::io::Result<()> {
+        match opt.as_mut() {
+            Some(source) => {
+                write!(writer, "Some(")?;
+                source.write(writer)?;
+                write!(writer, ")")?;
+            },
+            None => write!(writer, "None")?,
+        }
+        Ok(())
+    }
+}
+
 pub(super) struct FontOutput {
     width: usize,
     height: usize,
@@ -28,8 +76,10 @@ pub(super) struct FontOutput {
     font_size: f64,
     padding_ratio: f64,
     buffer: Vec<u8>,
-    metrics: Vec<GlyphMetricsSource>,
-    kerning_pairs: Vec<(char, char, f32)>,
+    normal: FontSource,
+    bold: Option<FontSource>,
+    italic: Option<FontSource>,
+    bold_italic: Option<FontSource>,
 }
 
 impl FontOutput {
@@ -39,6 +89,9 @@ impl FontOutput {
         channels: usize,
         font_size: f64,
         padding_ratio: f64,
+        bold_channel: Option<u8>,
+        italic_channel: Option<u8>,
+        bold_italic_channel: Option<u8>,
     ) -> Self {
         let bufsize = width * height * channels;
         Self {
@@ -48,8 +101,10 @@ impl FontOutput {
             font_size,
             padding_ratio,
             buffer: vec![0; bufsize],
-            metrics: vec![],
-            kerning_pairs: vec![],
+            normal: FontSource::new(0),
+            bold: bold_channel.map(FontSource::new),
+            italic: italic_channel.map(FontSource::new),
+            bold_italic: bold_italic_channel.map(FontSource::new),
         }
     }
 
@@ -57,8 +112,16 @@ impl FontOutput {
         &mut self.buffer
     }
 
-    pub fn add_metric(&mut self, metric: GlyphMetric) {
-        self.metrics.push((
+    pub fn add_metric(&mut self, channel: u8, metric: GlyphMetric) {
+        let source = if channel == 0 {
+            &mut self.normal
+        } else {
+            self.bold.as_mut().filter(|fs| fs.channel == channel)
+                .or(self.italic.as_mut().filter(|fs| fs.channel == channel))
+                .or(self.bold_italic.as_mut().filter(|fs| fs.channel == channel))
+                .expect("Cannot add metric to invalid channel")
+        };
+        source.metrics.push((
             metric.ch,
             metric.u_offset,
             metric.v_offset,
@@ -73,36 +136,40 @@ impl FontOutput {
     }
 
     pub fn write<P: AsRef<Path>>(&mut self, path: P) -> std::io::Result<()> {
-        self.metrics.sort_unstable_by_key(|c| c.0);
-        self.kerning_pairs.sort_unstable_by_key(|v| (v.0, v.1));
         let pixels_ref: &[u8] = &self.buffer;
-        let metrics_ref: &[GlyphMetricsSource] = &self.metrics;
-        let kerning_ref: &[(char, char, f32)] = &self.kerning_pairs;
-        let file = std::fs::OpenOptions::new()
+        let mut file = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
             .truncate(true)
             .open(path)?;
-        writeln!(&file, "use suzy::platform::opengl::text::FontSource;")?;
         writeln!(
             &file,
-            "pub const FONT: FontSource = FontSource {{
-                font_size: {:.1},
+            "use suzy::platform::opengl::text::FontFamilySource;",
+        )?;
+        write!(
+            &file,
+            "pub const FONT: FontFamilySource = FontFamilySource {{
                 image_width: {},
                 image_height: {},
+                image_channels: {},
                 atlas_image: &{:?},
-                coords: &{:?},
                 padding_ratio: {:.1},
-                kerning_pairs: &{:?},
-            }};",
-            self.font_size,
+            ",
             self.width,
             self.height,
+            self.channels,
             pixels_ref,
-            metrics_ref,
             self.padding_ratio,
-            kerning_ref,
         )?;
+        write!(&file, "normal: ")?;
+        self.normal.write(&mut file)?;
+        write!(&file, ", bold: ")?;
+        FontSource::write_opt(&mut self.bold, &mut file)?;
+        write!(&file, ", italic: ")?;
+        FontSource::write_opt(&mut self.italic, &mut file)?;
+        write!(&file, ", bold_italic: ")?;
+        FontSource::write_opt(&mut self.bold_italic, &mut file)?;
+        writeln!(&file, "}};")?;
         Ok(())
     }
 }
