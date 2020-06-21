@@ -4,6 +4,9 @@ use super::OpenGlRenderPlatform as Gl;
 use super::bindings::types::*;
 use super::bindings::{
     COLOR_BUFFER_BIT,
+    BLEND,
+    SRC_ALPHA,
+    ONE_MINUS_SRC_ALPHA,
 };
 use super::drawparams::DrawParams;
 use super::stdshaders::Shaders;
@@ -21,6 +24,8 @@ impl Window {
     pub fn new() -> Self {
         Gl::global(|gl| unsafe {
             gl.ClearColor(0.176, 0.176, 0.176, 1.0);
+            gl.Enable(BLEND);
+            gl.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
         });
         Window {
             shaders: Shaders::new().expect("Shaders failed to compile"),

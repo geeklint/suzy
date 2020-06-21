@@ -18,7 +18,10 @@ pub struct DrawParams {
     pub(super) transform: Mat4,
     pub(super) tint_color: Color,
     pub(super) text_color: Color,
+    pub(super) outline_color: Color,
+    pub(super) distance_edges: (f32, f32, f32, f32),
     pub(super) texture: Texture,
+    pub(super) tex_chan_mask: (f32, f32, f32, f32),
 }
 
 impl DrawParams {
@@ -34,6 +37,31 @@ impl DrawParams {
         self.text_color = color;
     }
 
+    pub fn use_outline_color(&mut self, color: Color) {
+        self.outline_color = color;
+    }
+
+    pub fn use_tex_chan_mask(&mut self, mask: (u8, u8, u8, u8)) {
+        self.tex_chan_mask = (
+            mask.0 as f32 / 255.0,
+            mask.1 as f32 / 255.0,
+            mask.2 as f32 / 255.0,
+            mask.3 as f32 / 255.0,
+        );
+    }
+
+    pub fn body_edge(&mut self, edge: f32, smoothing: f32) {
+        let smoothing = smoothing / 2.0;
+        self.distance_edges.0 = edge - smoothing;
+        self.distance_edges.1 = edge + smoothing;
+    }
+
+    pub fn outline_edge(&mut self, edge: f32, smoothing: f32) {
+        let smoothing = smoothing / 2.0;
+        self.distance_edges.2 = edge - smoothing;
+        self.distance_edges.3 = edge + smoothing;
+    }
+
     pub fn use_texture(&mut self, texture: Texture) {
         self.texture = texture;
     }
@@ -47,10 +75,20 @@ impl graphics::DrawParams for DrawParams {
             self.transform.as_ref(),
         );
         let mut text_color = self.text_color;
+        let mut outline_color = self.outline_color;
         text_color.tint(self.tint_color);
+        outline_color.tint(self.tint_color);
         Shader::set_vec4(
             self.shaders.sdf_uniforms.text_color,
             text_color.rgba(),
+        );
+        Shader::set_vec4(
+            self.shaders.sdf_uniforms.outline_color,
+            outline_color.rgba(),
+        );
+        Shader::set_vec4(
+            self.shaders.sdf_uniforms.distance_edges,
+            self.distance_edges,
         );
         Gl::global(|gl| unsafe {
             gl.ActiveTexture(TEXTURE0);
@@ -68,6 +106,10 @@ impl graphics::DrawParams for DrawParams {
                 self.texture.scale[0],
                 self.texture.scale[1],
             ),
+        );
+        Shader::set_vec4(
+            self.shaders.sdf_uniforms.tex_chan_mask,
+            self.tex_chan_mask,
         );
     }
 
@@ -88,6 +130,22 @@ impl graphics::DrawParams for DrawParams {
                 text_color.rgba(),
             );
         }
+        if new.tint_color != current.tint_color
+            || new.outline_color != current.outline_color
+        {
+            let mut outline_color = new.outline_color;
+            outline_color.tint(new.tint_color);
+            Shader::set_vec4(
+                new.shaders.sdf_uniforms.outline_color,
+                outline_color.rgba(),
+            );
+        }
+        if new.distance_edges != current.distance_edges {
+            Shader::set_vec4(
+                new.shaders.sdf_uniforms.distance_edges,
+                new.distance_edges,
+            );
+        }
         if new.texture != current.texture {
             Gl::global(|gl| unsafe {
                 gl.ActiveTexture(TEXTURE0);
@@ -105,6 +163,12 @@ impl graphics::DrawParams for DrawParams {
                     new.texture.scale[0],
                     new.texture.scale[1],
                 ),
+            );
+        }
+        if new.tex_chan_mask != current.tex_chan_mask {
+            Shader::set_vec4(
+                new.shaders.sdf_uniforms.tex_chan_mask,
+                new.tex_chan_mask,
             );
         }
     }

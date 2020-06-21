@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 
 use super::OpenGlRenderPlatform as Gl;
 use super::bindings::types::*;
@@ -14,25 +15,37 @@ use super::primitive::{
 };
 
 mod font;
+mod calc;
 
 pub use font::{
-    Font,
-    FontDynamic,
-    FontSource,
-    FontSourceDynamic,
+    FontFamily,
+    FontFamilySource,
+    FontFamilyDynamic,
+    FontFamilySourceDynamic,
 };
 
+pub use calc::{
+    FontStyle,
+    TextAlignment,
+    TextLayoutSettings,
+    RichTextCommand,
+    RichTextParser,
+};
+
+use font::{ChannelMask, GlyphMetricsSource};
+use calc::FontCharCalc;
+
 pub struct Text {
-    coords: Buffer<GLfloat>,
-    uvs: Buffer<GLfloat>,
+    vertices: Buffer<GLfloat>,
+    channels: HashMap<ChannelMask, std::ops::Range<usize>>,
     texture: Texture,
 }
 
 impl Text {
     pub fn new() -> Self {
         Text {
-            coords: Buffer::new(ARRAY_BUFFER, true, 0),
-            uvs: Buffer::new(ARRAY_BUFFER, true, 0),
+            vertices: Buffer::new(ARRAY_BUFFER, true, 0),
+            channels: HashMap::new(),
             texture: Default::default(),
         }
     }
@@ -40,47 +53,19 @@ impl Text {
     pub fn render(
         &mut self,
         text: &str,
-        font: &FontDynamic<'_>,
-        font_size: f32,
+        font: &FontFamilyDynamic<'_>,
+        settings: TextLayoutSettings,
     ) {
-        self.texture = font.texture().clone();
-        let mut coord_data = vec![];
-        let mut uv_data = vec![];
-        let mut calc = font.get_char_calc(font_size);
-        let mut iter = text.chars().peekable();
-        while let Some(ch) = iter.next() {
-            calc.push(ch, iter.peek().copied());
-            let coord_sq = calc.current_coords();
-            let uv_sq = calc.current_uvs();
-            // top-left triangle
-            coord_data.push(coord_sq.left);
-            coord_data.push(coord_sq.bottom);
-            coord_data.push(coord_sq.right);
-            coord_data.push(coord_sq.top);
-            coord_data.push(coord_sq.left);
-            coord_data.push(coord_sq.top);
-            uv_data.push(uv_sq.left);
-            uv_data.push(uv_sq.bottom);
-            uv_data.push(uv_sq.right);
-            uv_data.push(uv_sq.top);
-            uv_data.push(uv_sq.left);
-            uv_data.push(uv_sq.top);
-            // bottom right triangle
-            coord_data.push(coord_sq.left);
-            coord_data.push(coord_sq.bottom);
-            coord_data.push(coord_sq.right);
-            coord_data.push(coord_sq.bottom);
-            coord_data.push(coord_sq.right);
-            coord_data.push(coord_sq.top);
-            uv_data.push(uv_sq.left);
-            uv_data.push(uv_sq.bottom);
-            uv_data.push(uv_sq.right);
-            uv_data.push(uv_sq.bottom);
-            uv_data.push(uv_sq.right);
-            uv_data.push(uv_sq.top);
+        self.texture = font.texture.clone();
+        let mut verts = vec![];
+        let mut calc = FontCharCalc::new(font, settings);
+        let parser = RichTextParser::new(text);
+        for rich_text_cmd in parser {
+            calc.push(rich_text_cmd);
         }
-        self.coords.set_data(&coord_data);
-        self.uvs.set_data(&uv_data);
+        self.channels.clear();
+        calc.merge_verts(&mut verts, &mut self.channels);
+        self.vertices.set_data(&verts);
     }
 }
 
@@ -96,31 +81,38 @@ impl Graphic<SdfRenderPlatform> for Text {
     fn draw(&self, ctx: &mut DrawContext<SdfRenderPlatform>) {
         let mut params = ctx.clone_current();
         params.use_texture(self.texture.clone());
-        DrawContext::push(ctx, params);
+        DrawContext::push(ctx, params.clone());
         Gl::global(|gl| unsafe {
-            self.coords.bind();
+            self.vertices.bind();
+            let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
+            let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
             gl.VertexAttribPointer(
                 0,
                 2,
                 FLOAT,
                 FALSE,
-                0,
+                stride,
                 std::ptr::null(),
             );
-            self.uvs.bind();
             gl.VertexAttribPointer(
                 1,
                 2,
                 FLOAT,
                 FALSE,
-                0,
-                std::ptr::null(),
+                stride,
+                offset,
             );
-            gl.DrawArrays(
-                TRIANGLES,
-                0,
-                self.coords.len() as GLsizei,
-            );
+            for (mask, range) in self.channels.iter() {
+                let mut masked_params = params.clone();
+                masked_params.use_tex_chan_mask(*mask);
+                DrawContext::push(ctx, masked_params);
+                gl.DrawArrays(
+                    TRIANGLES,
+                    range.start as GLsizei,
+                    range.len() as GLsizei,
+                );
+                DrawContext::pop(ctx);
+            }
         });
         DrawContext::pop(ctx);
     }
