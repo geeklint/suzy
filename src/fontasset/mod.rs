@@ -103,7 +103,7 @@ pub fn build_fontasset<P: AsRef<Path>>(
     let channels = if channels == 2 { 3 } else { channels };
 
     let mut progressbar = if settings.progressbar {
-        ProgressBar::best("Packing Glyphs")
+        ProgressBar::best("Packing Glyphs...")
     } else {
         ProgressBar::none()
     };

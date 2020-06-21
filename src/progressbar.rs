@@ -12,21 +12,22 @@ impl ProgressBar {
         Self::None
     }
 
-    pub fn best(title: &str) -> Self {
+    pub fn best(label: &str) -> Self {
         if cfg!(target_os = "linux") {
             if let Ok(zenity) = Command::new("zenity")
                 .args(&[
                     "--progress",
-                    "--title", title,
+                    "--title", "Suzy Build Tools",
+                    "--text", label,
                     "--no-cancel",
                     "--auto-close",
-                    "--time-remaining",
+                    "--width=400",
                 ])
                 .stdin(Stdio::piped())
                 .spawn()
             {
                 Self::IntPctChild(zenity)
-            } else if let Ok(whiptail) = Self::whiptail(title) {
+            } else if let Ok(whiptail) = Self::whiptail(label) {
                 Self::IntPctChild(whiptail)
             } else {
                 Self::None
@@ -51,12 +52,12 @@ impl ProgressBar {
         }
     }
 
-    fn whiptail(title: &str) -> std::io::Result<std::process::Child> {
+    fn whiptail(label: &str) -> std::io::Result<std::process::Child> {
         let tty = std::fs::OpenOptions::new()
             .write(true)
             .open("/dev/tty")?;
         Command::new("whiptail")
-            .args(&["--gauge", title, "6", "60", "0"])
+            .args(&["--gauge", label, "6", "60", "0"])
             .stdin(Stdio::piped())
             .stdout(tty)
             .spawn()
