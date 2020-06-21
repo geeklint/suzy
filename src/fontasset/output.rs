@@ -136,7 +136,22 @@ impl FontOutput {
     }
 
     pub fn write<P: AsRef<Path>>(&mut self, path: P) -> std::io::Result<()> {
-        let pixels_ref: &[u8] = &self.buffer;
+        let mut data_filename = path.as_ref().to_path_buf();
+        let mut ext = data_filename.extension()
+            .unwrap_or("".as_ref())
+            .to_os_string();
+        ext.push(".texdata");
+        data_filename.set_extension(ext);
+        let data_filename_str = data_filename.to_str()
+            .expect("Sorry, output filenames must be valid unicode");
+        {
+            let mut texfile = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(&data_filename)?;
+            texfile.write_all(&self.buffer)?;
+        }
         let mut file = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
@@ -152,13 +167,13 @@ impl FontOutput {
                 image_width: {},
                 image_height: {},
                 image_channels: {},
-                atlas_image: &{:?},
+                atlas_image: include_bytes!({:?}),
                 padding_ratio: {:.1},
             ",
             self.width,
             self.height,
             self.channels,
-            pixels_ref,
+            data_filename_str,
             self.padding_ratio,
         )?;
         write!(&file, "normal: ")?;
