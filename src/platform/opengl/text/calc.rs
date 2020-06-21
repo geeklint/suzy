@@ -217,10 +217,11 @@ impl<'a> FontCharCalc<'a> {
     }
 
     pub(super) fn merge_verts(
-        &self,
+        &mut self,
         vertex_buffer: &mut Vec<f32>,
         channels: &mut HashMap<ChannelMask, std::ops::Range<usize>>,
     ) {
+        self.commit_line();
         let mut vertex_offset = 0;
         for (mask, buf) in self.bufs.iter() {
             let next_vo = vertex_offset + buf.len() / 4;
@@ -245,8 +246,8 @@ impl<'a> FontCharCalc<'a> {
             .unwrap_or(0.0)
     }
 
-    pub fn push_newline(&mut self) {
-        let remaining_in_line = self.settings.wrap_width - self.y_offset;
+    fn commit_line(&mut self) {
+        let remaining_in_line = self.settings.wrap_width - self.x_offset;
         let shift = match self.settings.alignment {
             TextAlignment::Left => 0.0,
             TextAlignment::Center => remaining_in_line / 2.0,
@@ -259,6 +260,10 @@ impl<'a> FontCharCalc<'a> {
             }
             *commit = buf.len();
         }
+    }
+
+    pub fn push_newline(&mut self) {
+        self.commit_line();
         self.x_offset = 0.0;
         self.y_offset -= self.settings.font_size;
     }
