@@ -1,31 +1,7 @@
 
 pub trait RenderPlatform: 'static {
-    type Global: 'static;
+    type Context: 'static;
     type DrawParams: crate::graphics::DrawParams;
-
-    fn with<F, R>(global: Box<Self::Global>, func: F) -> (Box<Self::Global>, R)
-        where F: FnOnce() -> R
-    {
-        let gd = Box::new(GlobalData {
-            data: global,
-            next: None,
-        });
-        let res = gd.with(func);
-        (res.0.data, res.1)
-    }
-
-    fn global<F, R>(func: F) -> R
-        where F: FnOnce(&Self::Global) -> R,
-    {
-        GlobalData::with_current(func)
-    }
-
-    fn try_global<F, R>(func: F) -> Option<R>
-        where F: FnOnce(&Self::Global) -> R,
-    {
-        GlobalData::try_with_current(func)
-    }
-
 }
 
 pub trait Platform: 'static {
@@ -33,12 +9,12 @@ pub trait Platform: 'static {
     type Renderer: RenderPlatform;
 
     fn get_renderer_data(window: &mut Self::Window)
-        -> <Self::Renderer as RenderPlatform>::Global;
+        -> <Self::Renderer as RenderPlatform>::Context;
 }
 
 pub trait SubRenderPlatform<P>: RenderPlatform
 where
-    P: RenderPlatform<Global = Self::Global>
+    P: RenderPlatform<Context = Self::Context>
 {
     fn inherit_params(source: &<P as RenderPlatform>::DrawParams)
         -> Self::DrawParams;
