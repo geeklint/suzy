@@ -1,7 +1,7 @@
 use std::ffi::{CStr, CString};
 use std::rc::Rc;
 
-use super::OpenGlRenderPlatform as Gl;
+use super::OpenGlBindings;
 use super::bindings::types::*;
 use super::bindings::{
     ACTIVE_ATTRIBUTES,
@@ -15,11 +15,11 @@ use super::bindings::{
 };
 
 macro_rules! info_log {
-    ( $id:expr, $fn_iv:ident, $fn_log:ident ) => {
+    ( $id:expr, $gl:expr, $fn_get_iv:ident, $fn_log:ident ) => {
         {
-            let log_len = Gl::global(|gl| unsafe {
+            let log_len = unsafe {
                 let mut log_len = 0;
-                gl.$fn_iv(
+                $gl.$fn_get_iv(
                     $id,
                     INFO_LOG_LENGTH,
                     &mut log_len as *mut GLint,
@@ -28,41 +28,56 @@ macro_rules! info_log {
             });
             let mut array = vec![0; log_len];
             let mut actual_len = 0;
-            Gl::global(|gl| unsafe {
+            unsafe {
                 gl.$fn_log(
                     $id,
                     array.len() as GLsizei,
                     &mut actual_len as *mut GLsizei,
                     array.as_mut_ptr() as *mut GLchar,
                 );
-            });
+            }
             array.truncate((actual_len + 1) as usize);
             CStr::from_bytes_with_nul(&array).unwrap().to_owned()
         }
     };
 }
 
-fn compile_shader(type_: GLenum, text: &[u8]) -> Result<GLuint, CString> {
+struct ShaderObj<'a> {
+    id: GLuint,
+    gl: &'a OpenGlBindings,
+}
+
+impl<'a> Drop for ShaderObj<'a> {
+    fn drop(&mut self) {
+        self.gl.DeleteShader(self.id);
+    }
+}
+
+fn compile_shader<'a>(gl: &'a OpenGlBindings, type_: GLenum, text: &[u8])
+    -> Result<ShaderObj<'a>, CString>
+{
     let lines = [text.as_ptr()];
     let lengths = [text.len()];
-    let (id, success) = Gl::global(|gl| unsafe {
-        let id = gl.CreateShader(type_);
+    let (obj, success) = unsafe {
+        let obj = ShaderObj {
+            id: gl.CreateShader(type_),
+            gl,
+        };
         gl.ShaderSource(
-            id,
+            obj.id,
             lines.len() as GLsizei,
             lines.as_ptr() as *const *const GLchar,
             lengths.as_ptr() as *const GLint,
         );
-        gl.CompileShader(id);
+        gl.CompileShader(obj.id);
         let mut success: GLint = 0;
-        gl.GetShaderiv(id, COMPILE_STATUS, &mut success as *mut GLint);
-        (id, success)
-    });
+        gl.GetShaderiv(obj.id, COMPILE_STATUS, &mut success as *mut GLint);
+        (obj, success)
+    };
     if success != FALSE as GLint {
-        Ok(id)
+        Ok(obj)
     } else {
-        let log = info_log!(id, GetShaderiv, GetShaderInfoLog);
-        Gl::global(|gl| unsafe { gl.DeleteShader(id) });
+        let log = info_log!(obj.id, gl, GetShaderiv, GetShaderInfoLog);
         Err(log)
     }
 }
@@ -76,59 +91,63 @@ pub enum ProgramCompileError {
 
 struct ProgramObject {
     id: GLuint,
+    gl: Weak<OpenGlBindings>,
 }
 
 impl Drop for ProgramObject {
     fn drop(&mut self) {
         // if we can't get the gl bindings here, it's probably
-        // because the whole app is shutting down, in which case
-        // it's ok to leak the resource, it'll get cleaned up
-        // by the context getting disposed.
-        Gl::try_global(|gl| unsafe { gl.DeleteProgram(self.id) });
+        // because the context went away, in which case
+        // it's ok to "leak" the resource, it's already cleaned
+        // up by the context going away
+        if let Some(gl) = self.gl.upgrade() {
+            unsafe {
+                gl.DeleteProgram(self.id);
+            }
+        }
     }
 }
 
-fn compile_program(vert_text: &[u8], frag_text: &[u8])
+fn compile_program(gl: &Rc<OpenGlBindings>, vert_text: &[u8], frag_text: &[u8])
     -> Result<ProgramObject, ProgramCompileError>
 {
-    let vert_id = compile_shader(VERTEX_SHADER, vert_text)
+    let vert = compile_shader(&gl, VERTEX_SHADER, vert_text)
         .map_err(ProgramCompileError::Vertex)?;
-    let frag_id = compile_shader(FRAGMENT_SHADER, frag_text)
+    let frag = compile_shader(&gl, FRAGMENT_SHADER, frag_text)
         .map_err(ProgramCompileError::Fragment)?;
-    let (success, program) = Gl::global(|gl| unsafe {
+    let (success, program) = unsafe {
         let program = ProgramObject {
             id: gl.CreateProgram(),
+            gl: Rc::downgrade(gl),
         };
-        gl.AttachShader(program.id, vert_id);
-        gl.AttachShader(program.id, frag_id);
+        gl.AttachShader(program.id, vert.id);
+        gl.AttachShader(program.id, frag.id);
         gl.LinkProgram(program.id);
         let mut success: GLint = 0;
         gl.GetProgramiv(program.id, LINK_STATUS, &mut success as *mut GLint);
         let success = success != (FALSE as GLint);
         (success, program)
     });
-    let err = if success {
+    let result = if success {
         Ok(())
     } else {
         Err(ProgramCompileError::Link(
-            info_log!(program.id, GetProgramiv, GetProgramInfoLog)
+            info_log!(program.id, gl, GetProgramiv, GetProgramInfoLog)
         ))
     };
-    Gl::global(|gl| unsafe {
-        gl.DetachShader(program.id, vert_id);
-        gl.DetachShader(program.id, frag_id);
-        gl.DeleteShader(vert_id);
-        gl.DeleteShader(frag_id);
-    });
-    err.map(|_| program)
+    unsafe {
+        gl.DetachShader(program.id, vert.id);
+        gl.DetachShader(program.id, frag.id);
+    }
+    result.map(|()| program)
 }
 
 #[derive(Clone)]
 pub struct Shader {
     _obj: Rc<ProgramObject>,
     program_id: GLuint,
-    attrs: GLint,
-    total_attrs: GLint,
+    attrs: GLuint,
+    total_attrs: GLuint,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -137,11 +156,11 @@ pub struct UniformLoc {
 }
 
 impl Shader {
-    pub fn create(vert_text: &[u8], frag_text: &[u8])
+    pub fn create(gl: &Rc<OpenGlBindings>, vert_text: &[u8], frag_text: &[u8])
         -> Result<Self, ProgramCompileError>
     {
-        let obj = compile_program(vert_text, frag_text)?;
-        let (attrs, total_attrs) = Gl::global(|gl| unsafe {
+        let obj = compile_program(gl, vert_text, frag_text)?;
+        let (attrs, total_attrs) = unsafe {
             let mut attrs: GLint = 0;
             let mut total_attrs: GLint = 8;
             gl.GetProgramiv(
@@ -153,8 +172,8 @@ impl Shader {
                 MAX_VERTEX_ATTRIBS,
                 &mut total_attrs as *mut GLint,
             );
-            (attrs, total_attrs)
-        });
+            (attrs as GLuint, total_attrs as GLuint)
+        }
         let shader = Shader {
             program_id: obj.id,
             _obj: Rc::new(obj),
@@ -164,71 +183,75 @@ impl Shader {
         Ok(shader)
     }
 
-    pub fn make_current(&self) {
-        Gl::global(|gl| unsafe {
+    pub fn make_current(
+        &self,
+        gl: &OpenGlBindings,
+        prev_attribs: Option<GLint>,
+    ) {
+        let start = prev_attribs.or(0);
+        let end = prev_attribs.or(self.total_attrs);
+        unsafe {
             gl.UseProgram(self.program_id);
-            for i in 0..self.attrs {
-                gl.EnableVertexAttribArray(i as GLuint);
+            for i in start..self.attrs {
+                gl.EnableVertexAttribArray(i);
             }
-            for i in self.attrs..self.total_attrs {
-                gl.DisableVertexAttribArray(i as GLuint);
+            for i in self.attrs..end {
+                gl.DisableVertexAttribArray(i);
             }
-        });
+        }
     }
 
-    pub fn uniform(&self, name: &str) -> UniformLoc {
-        let prog_id = self.program_id;
+    pub fn uniform(&self, gl: &OpenGlBindings, name: &str) -> UniformLoc {
         let cname = CString::new(name)
             .expect("Uniform name contained null");
-        let id = Gl::global(|gl| unsafe {
+        let id = unsafe {
             gl.GetUniformLocation(
-                prog_id,
+                self.program_id,
                 cname.as_ptr() as *const GLchar,
             )
-        });
+        };
         debug_assert_ne!(id, -1, "Failed to get uniform {}", name);
         UniformLoc { id }
     }
 
-    pub fn set_opaque(loc: UniformLoc, value: GLuint) {
-        Gl::global(|gl| unsafe {
-            gl.Uniform1i(loc.id, value as GLint);
-        });
+    pub fn set_opaque(gl: &OpenGlBindings, loc: UniformLoc, value: GLuint) {
+        unsafe { gl.Uniform1i(loc.id, value as GLint) };
     }
 
-    pub fn set_float(loc: UniformLoc, value: GLfloat) {
-        Gl::global(|gl| unsafe {
-            gl.Uniform1f(loc.id, value);
-        });
+    pub fn set_float(gl: &OpenGlBindings, loc: UniformLoc, value: GLfloat) {
+        unsafe { gl.Uniform1f(loc.id, value) };
     }
 
-    pub fn set_vec2(loc: UniformLoc, value: (GLfloat, GLfloat)) {
-        Gl::global(|gl| unsafe {
-            gl.Uniform2f(loc.id, value.0, value.1);
-        });
+    pub fn set_vec2(
+        gl: &OpenGlBindings,
+        loc: UniformLoc,
+        value: (GLfloat, GLfloat),
+    ) {
+        unsafe { gl.Uniform2f(loc.id, value.0, value.1) };
     }
 
     pub fn set_vec4(
+        gl: &OpenGlBindings,
         loc: UniformLoc,
         value: (GLfloat, GLfloat, GLfloat, GLfloat),
     ) {
-        Gl::global(|gl| unsafe {
+        unsafe {
             gl.Uniform4f(
                 loc.id,
                 value.0, value.1, value.2, value.3,
             );
-        });
+        }
     }
 
-    pub fn set_mat4(loc: UniformLoc, value: &[GLfloat]) {
+    pub fn set_mat4(gl: &OpenGlBindings, loc: UniformLoc, value: &[GLfloat]) {
         debug_assert_eq!(value.len(), 16, "mat4 must have 16 elements!");
-        Gl::global(|gl| unsafe {
+        unsafe {
             gl.UniformMatrix4fv(
                 loc.id,
                 1,
                 FALSE,
                 value.as_ptr(),
             );
-        });
+        }
     }
 }
