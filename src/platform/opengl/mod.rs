@@ -19,10 +19,6 @@ pub(crate) use window::{
     Window,
 };
 
-pub(crate) use graphics::{
-    image,
-};
-
 pub struct OpenGlRenderPlatform;
 
 impl super::RenderPlatform for OpenGlRenderPlatform {
