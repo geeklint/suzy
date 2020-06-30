@@ -17,11 +17,8 @@ pub struct DrawParams {
     pub(super) shaders: Shaders,
     pub(super) transform: Mat4,
     pub(super) tint_color: Color,
-    pub(super) text_color: Color,
-    pub(super) outline_color: Color,
-    pub(super) distance_edges: (f32, f32, f32, f32),
     pub(super) texture: Texture,
-    pub(super) tex_chan_mask: (f32, f32, f32, f32),
+    pub(super) 
 }
 
 impl DrawParams {

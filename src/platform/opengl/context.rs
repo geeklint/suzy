@@ -2,6 +2,7 @@ use std::rc::Rc;
 use std::borrow::Cow
 use std::collections::HashMap;
 
+use super::stdshaders::Shaders;
 use super::texture::TextureCache;
 
 mod bindings {
@@ -12,6 +13,7 @@ pub type OpenGlBindings = bindings::Gles2;
 
 pub struct OpenGlContext {
     pub(super) bindings: Rc<OpenGlBindings>,
+    pub(super) shaders: Shaders,
     pub(super) texture_cache: TextureCache,
 }
 
@@ -30,8 +32,10 @@ impl OpenGlContext {
                 );
             }
         }
+        let shaders = Shaders::new(&ptr).expect("Failed to compile shaders");
         Self {
             bindings: ptr,
+            shaders,
             texture_cache: HashMap::new(),
         }
     }

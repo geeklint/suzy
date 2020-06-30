@@ -6,7 +6,6 @@ mod context;
 mod drawparams;
 pub mod graphics;
 mod matrix;
-mod sdf;
 mod shader;
 mod stdshaders;
 pub mod text;

@@ -183,10 +183,12 @@ impl Shader {
         Ok(shader)
     }
 
+    pub fn attrs(&self) -> GLuint { self.attrs }
+
     pub fn make_current(
         &self,
         gl: &OpenGlBindings,
-        prev_attribs: Option<GLint>,
+        prev_attribs: Option<GLuint>,
     ) {
         let start = prev_attribs.or(0);
         let end = prev_attribs.or(self.total_attrs);

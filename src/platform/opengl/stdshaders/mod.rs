@@ -1,3 +1,4 @@
+use super::OpenGlBindings;
 use super::shader::{
     ProgramCompileError,
     Shader,
@@ -17,15 +18,13 @@ pub(super) struct VertUniforms {
     pub(super) tex_transform: UniformLoc,
 }
 
-impl From<&Shader> for VertUniforms {
-    fn from(shader: &Shader) -> Self {
-        Self {
-            transform: shader.uniform("TRANSFORM"),
-            tex_transform: shader.uniform("TEX_TRANSFORM"),
-        }
+pub fn common(gl: &OpenGlBindings, shader: &Shader) -> VertUniforms {
+    VertUniforms {
+        transform: shader.uniform(gl, "TRANSFORM"),
+        tex_transform: shader.uniform(gl, "TEX_TRANSFORM"),
     }
 }
-
+    
 #[derive(Clone, Copy, Debug)]
 pub(super) struct StdUniforms {
     pub(super) common: VertUniforms,
@@ -52,22 +51,22 @@ pub struct Shaders {
 }
 
 impl Shaders {
-    pub fn new() -> Result<Self, ProgramCompileError> {
-        let std = Shader::create(STD_VERTEX_SOURCE, STD_FRAGMENT_SOURCE)?;
-        let sdf = Shader::create(STD_VERTEX_SOURCE, SDF_FRAGMENT_SOURCE)?;
+    pub fn new(gl: &Rc<OpenGlBindings>) -> Result<Self, ProgramCompileError> {
+        let std = Shader::create(gl, STD_VERTEX_SOURCE, STD_FRAGMENT_SOURCE)?;
+        let sdf = Shader::create(gl, STD_VERTEX_SOURCE, SDF_FRAGMENT_SOURCE)?;
         Ok(Self {
             std_uniforms: StdUniforms {
-                common: (&std).into(),
-                tex_id: std.uniform("TEX_ID"),
-                tint_color: std.uniform("TINT_COLOR"),
+                common: common(gl, &std),
+                tex_id: std.uniform(gl, "TEX_ID"),
+                tint_color: std.uniform(gl, "TINT_COLOR"),
             },
             sdf_uniforms: SdfUniforms {
-                common: (&sdf).into(),
-                text_color: sdf.uniform("TEXT_COLOR"),
-                outline_color: sdf.uniform("OUTLINE_COLOR"),
-                distance_edges: sdf.uniform("DISTANCE_EDGES"),
-                tex_id: sdf.uniform("TEX_ID"),
-                tex_chan_mask: sdf.uniform("TEX_CHAN_MASK"),
+                common: common(gl, &sdf),
+                text_color: sdf.uniform(gl, "TEXT_COLOR"),
+                outline_color: sdf.uniform(gl, "OUTLINE_COLOR"),
+                distance_edges: sdf.uniform(gl, "DISTANCE_EDGES"),
+                tex_id: sdf.uniform(gl, "TEX_ID"),
+                tex_chan_mask: sdf.uniform(gl, "TEX_CHAN_MASK"),
             },
             std,
             sdf,

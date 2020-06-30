@@ -20,17 +20,18 @@ impl<P: RenderPlatform, T: Graphic<P>> Graphic<P> for [T] {
     }
 }
 
-pub trait DrawParams {
-    fn apply_all(&self);
+pub trait DrawParams<Ctx> {
+    fn apply_all(&mut self, ctx: &mut Ctx);
 
-    fn apply_change(current: &Self, new: &mut Self);
+    fn apply_change(current: &Self, new: &mut Self, ctx: &mut Ctx);
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum LastApplied {
+enum LastApplied<T> {
     History(usize),
     Current,
     None,
+    Removed(T),
 }
 
 impl Default for LastApplied {
@@ -45,16 +46,18 @@ pub enum DrawPass {
 }
 
 #[derive(Debug, Default)]
-pub struct DrawContext<P: RenderPlatform = DefaultRenderPlatform> {
+pub struct DrawContext<'a, P: RenderPlatform = DefaultRenderPlatform> {
+    context: &'a mut P::Context,
     current: P::DrawParams,
     history: Vec<P::DrawParams>,
-    last_applied: LastApplied,
+    last_applied: LastApplied<P::DrawParams>,
     pass: DrawPass,
 }
 
-impl<P: RenderPlatform> DrawContext<P> {
-    pub fn new(starting: P::DrawParams) -> Self {
+impl<'a, P: RenderPlatform> DrawContext<'a, P> {
+    pub fn new(ctx: &'a mut P::Context, starting: P::DrawParams) -> Self {
         Self {
+            contex: ctx,
             current: starting,
             history: Vec::new(),
             last_applied: LastApplied::None,
@@ -69,17 +72,20 @@ impl<P: RenderPlatform> DrawContext<P> {
     }
 
     pub fn prepare_draw(ctx: &mut Self) {
-        match ctx.last_applied {
+        match std::mem::replace(ctx.last_applied, LastApplied::Current) {
             LastApplied::Current => (),
-            LastApplied::None => ctx.current.apply_all(),
+            LastApplied::None => ctx.current.apply_all(ctx.context),
+            LastApplied::Removed(old) => {
+                DrawParams::apply_change(&old, &ctx.current, ctx.context);
+            },
             LastApplied::History(index) => {
                 DrawParams::apply_change(
                     &ctx.history[index],
                     &ctx.current,
+                    ctx.context,
                 );
             }
         }
-        ctx.last_applied = LastApplied::Current;
     }
 
     pub(crate) fn draw<T>(ctx: &mut Self, root: &mut Widget<T, P>) -> bool
@@ -94,7 +100,7 @@ impl<P: RenderPlatform> DrawContext<P> {
     }
 }
 
-impl<P> DrawContext<P>
+impl<'a, P> DrawContext<'a, P>
 where
     P: RenderPlatform,
     P::DrawParams: Clone
@@ -125,9 +131,9 @@ where
                 }
             },
             LastApplied::Current => {
-                DrawParams::apply_change(&old, &ctx.current);
-                LastApplied::Current;
+                LastApplied::Removed(old),
             },
+            LastApplied::Removed(params) => LastApplied::Removed(params),
             LastApplied::None => LastApplied::None,
         }
     }
