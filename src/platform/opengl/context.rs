@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use std::borrow::Cow
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use super::stdshaders::Shaders;

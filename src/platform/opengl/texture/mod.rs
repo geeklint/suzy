@@ -174,7 +174,7 @@ impl TextureInstance {
                     let cached = entry.or_insert_with(move || {
                         SharedTexture::new(populator)
                     });
-                    *self = Self::Existing(cached.clone())
+                    *self = Self::Existing(cached.clone());
                     if let Self::Existing(ref existing) = self {
                         &existing
                     } else {
@@ -215,30 +215,33 @@ impl Texture {
 
     pub fn from_alpha<T>(width: usize, height: usize, pixels: T)
     where
-        T: Into<Cow<'static, [u8]>>>
+        T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
         Self::new(|gl| {
+            PopulateTextureUtil::default_params();
             PopulateTextureUtil::populate_alpha(gl, width, height, &pixels)
         });
     }
 
     pub fn from_rgb<T>(width: usize, height: usize, pixels: T)
     where
-        T: Into<Cow<'static, [u8]>>>
+        T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
         Self::new(|gl| {
+            PopulateTextureUtil::default_params();
             PopulateTextureUtil::populate_rgb(gl, width, height, &pixels)
         });
     }
 
     pub fn from_rgba<T>(width: usize, height: usize, pixels: T)
     where
-        T: Into<Cow<'static, [u8]>>>
+        T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
         Self::new(|gl| {
+            PopulateTextureUtil::default_params();
             PopulateTextureUtil::populate_rgba(gl, width, height, &pixels)
         });
     }

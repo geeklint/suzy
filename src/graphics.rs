@@ -114,7 +114,7 @@ where
         let old = std::mem::replace(&mut ctx.current, new);
         ctx.history.push(old);
         if ctx.last_applied == LastApplied::Current {
-            ctx.last_applied = LastApplied::History(ctx.history.len() - 1),
+            ctx.last_applied = LastApplied::History(ctx.history.len() - 1);
         }
     }
 
@@ -134,9 +134,7 @@ where
                     LastApplied::None
                 }
             },
-            LastApplied::Current => {
-                LastApplied::Removed(old),
-            },
+            LastApplied::Current => LastApplied::Removed(old),
             LastApplied::Removed(params) => LastApplied::Removed(params),
             LastApplied::None => LastApplied::None,
         }

@@ -60,7 +60,7 @@ where
 pub struct PopulateTextureUtil;
 
 impl PopulateTextureUtil {
-    pub fn default_params(&OpenGlBindings) {
+    pub fn default_params(gl: &OpenGlBindings) {
         unsafe {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, LINEAR as _);
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, LINEAR as _);

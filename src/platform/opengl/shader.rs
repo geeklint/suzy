@@ -25,7 +25,7 @@ macro_rules! info_log {
                     &mut log_len as *mut GLint,
                 );
                 log_len as usize
-            });
+            }
             let mut array = vec![0; log_len];
             let mut actual_len = 0;
             unsafe {
@@ -127,7 +127,7 @@ fn compile_program(gl: &Rc<OpenGlBindings>, vert_text: &[u8], frag_text: &[u8])
         gl.GetProgramiv(program.id, LINK_STATUS, &mut success as *mut GLint);
         let success = success != (FALSE as GLint);
         (success, program)
-    });
+    };
     let result = if success {
         Ok(())
     } else {
