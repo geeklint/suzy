@@ -1,12 +1,15 @@
+use drying_paint::WatchedMeta;
+
 use crate::graphics::{DrawContext, DrawPass};
 
+use super::OpenGlRenderPlatform;
 use super::context::bindings::{
     ARRAY_BUFFER,
     DYNAMIC_DRAW,
     STATIC_DRAW,
 };
 
-use super::primitive::gl_object;
+#[macro_use] use super::primitive;
 
 gl_object! { SingleBufferData, GenBuffers, DeleteBuffers, 1 }
 gl_object! { TwoBufferData, GenBuffers, DeleteBuffers, 2 }
@@ -67,8 +70,8 @@ impl<T> SingleVertexBuffer<T> {
             gl.BindBuffer(ARRAY_BUFFER, ids[0]);
             gl.BufferData(
                 ARRAY_BUFFER,
-                (data.len() * mem::size_of::<T>()) as _,
-                data.as_ptr() as *const c_void,
+                (data.len() * std::mem::size_of::<T>()) as _,
+                data.as_ptr() as *const _,
                 if self.dyn_draw {
                     DYNAMIC_DRAW
                 } else {

@@ -1,4 +1,4 @@
-mod primitive;
+#[macro_use] mod primitive;
 mod buffer;
 mod texture;
 

@@ -1,5 +1,8 @@
-use crate::platform::opengl::bindings::types::*;
-use crate::platform::opengl::bindings::{
+use crate::platform::opengl;
+use opengl::context::OpenGlBindings;
+use opengl::context::bindings::types::*;
+use opengl::context::bindings::{
+    ALPHA,
     CLAMP_TO_EDGE,
     LINEAR,
     NEAREST,
@@ -16,44 +19,61 @@ use crate::platform::opengl::bindings::{
 
 use super::TextureSize;
 
-pub trait PopulateTexture: Clone {
+pub trait PopulateTextureDynClone {
+    fn clone_boxed(&self) -> Box<dyn PopulateTexture>;
+}
+
+impl<T> PopulateTextureDynClone for T
+where
+    T: 'static + PopulateTexture + Clone
+{
+    fn clone_boxed(&self) -> Box<dyn PopulateTexture> {
+        Box::new(self.clone())
+    }
+}
+
+pub trait PopulateTexture: PopulateTextureDynClone {
     fn populate(&self, gl: &OpenGlBindings) -> TextureSize;
 
     fn get_known_size(&self) -> Option<(f32, f32)> { None }
 }
 
-#[derive(Debug)]
-struct FnPopulateTexture<F: Fn(&OpenGlBindings) -> TextureSize + 'static>(F);
+#[derive(Clone, Debug)]
+struct FnPopulateTexture<F: 'static + Clone + Fn(&OpenGlBindings) -> TextureSize>(F);
 
 impl<F> PopulateTexture for FnPopulateTexture<F>
 where
-    F: Fn(&OpenGlBindings) -> TextureSize
+    F: 'static + Clone + Fn(&OpenGlBindings) -> TextureSize
 {
     fn populate(&self, gl: &OpenGlBindings) -> TextureSize {
         (self.0)(gl)
     }
 }
 
-pub struct TexurePopulator(Box<dyn PopulateTexture>);
+pub struct TexturePopulator(Box<dyn PopulateTexture>);
 
-impl<T: PopulateTexture> From<T> for TexurePopulator {
-    fn from(populator: T) -> Self {
-        TexurePopulator(Box::new(populator))
+impl TexturePopulator {
+    pub fn new<T, U>(populator: T) -> Self
+    where
+        T: Into<Box<U>>,
+        U: 'static + PopulateTexture,
+    {
+        TexturePopulator(populator.into())
     }
 }
 
-impl<T: PopulateTexture> From<Box<T>> for TexurePopulator {
-    fn from(boxed: Box<T>) -> Self {
-        TexurePopulator(boxed)
-    }
-}
-
-impl<F> From<F> for TexurePopulator
+impl<F> From<F> for TexturePopulator
 where
     F: Fn(&OpenGlBindings) -> TextureSize
 {
     fn from(populator: F) -> Self {
-        TexurePopulator(Box::new(FnPopulateTexture(populator)))
+        TexturePopulator(Box::new(FnPopulateTexture(populator)))
+    }
+}
+
+impl Clone for Box<dyn PopulateTexture> {
+    fn clone(&self) -> Self {
+        self.clone_boxed()
     }
 }
 
@@ -140,7 +160,7 @@ impl PopulateTextureUtil {
         height: u16,
         pixels: &[u8],
     ) -> TextureSize {
-        assert_eq!(width * height, bytes.len());
+        assert_eq!(width * height, pixels.len());
         Self::populate_format(gl, ALPHA as _, width, height, pixels)
     }
 
@@ -150,7 +170,7 @@ impl PopulateTextureUtil {
         height: u16,
         pixels: &[u8],
     ) -> TextureSize {
-        assert_eq!(width * height * 3, bytes.len());
+        assert_eq!(width * height * 3, pixels.len());
         Self::populate_format(gl, RGB as _, width, height, pixels)
     }
 
@@ -160,7 +180,7 @@ impl PopulateTextureUtil {
         height: u16,
         pixels: &[u8],
     ) -> TextureSize {
-        assert_eq!(width * height * 4, bytes.len());
+        assert_eq!(width * height * 4, pixels.len());
         Self::populate_format(gl, RGBA as _, width, height, pixels)
     }
 }

@@ -2,7 +2,7 @@ use drying_paint::WatchedMeta;
 
 macro_rules! gl_object {
     ($name:ident, $create:ident, $delete:ident, $count:expr) => {
-        #[derive(Debug, PartialEq)]
+        #[derive(Debug)]
         struct $name {
             pub(crate) ids: [u32; $count],
             pub(crate) ready: bool,
@@ -12,7 +12,7 @@ macro_rules! gl_object {
         gl_object! {impl $name, $create, $delete, $count}
     };
     (pub $name:ident, $create:ident, $delete:ident, $count:expr) => {
-        #[derive(Debug, PartialEq)]
+        #[derive(Debug)]
         pub struct $name {
             pub(crate) ids: [u32; $count],
             pub(crate) ready: bool,

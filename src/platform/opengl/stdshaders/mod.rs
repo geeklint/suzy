@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::OpenGlBindings;
 use super::shader::{
     ProgramCompileError,

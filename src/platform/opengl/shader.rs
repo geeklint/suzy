@@ -1,9 +1,9 @@
 use std::ffi::{CStr, CString};
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use super::OpenGlBindings;
-use super::bindings::types::*;
-use super::bindings::{
+use super::context::bindings::types::*;
+use super::context::bindings::{
     ACTIVE_ATTRIBUTES,
     COMPILE_STATUS,
     FALSE,
@@ -25,11 +25,11 @@ macro_rules! info_log {
                     &mut log_len as *mut GLint,
                 );
                 log_len as usize
-            }
+            };
             let mut array = vec![0; log_len];
             let mut actual_len = 0;
             unsafe {
-                gl.$fn_log(
+                $gl.$fn_log(
                     $id,
                     array.len() as GLsizei,
                     &mut actual_len as *mut GLsizei,
@@ -173,7 +173,7 @@ impl Shader {
                 &mut total_attrs as *mut GLint,
             );
             (attrs as GLuint, total_attrs as GLuint)
-        }
+        };
         let shader = Shader {
             program_id: obj.id,
             _obj: Rc::new(obj),

@@ -80,6 +80,7 @@ impl Graphic<OpenGlRenderPlatform> for Text {
         if self.vertices.bind_if_ready(ctx) {
             let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
             let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
+            let gl = &DrawContext::render_ctx(ctx).bindings;
             gl.VertexAttribPointer(
                 0, 2, FLOAT, FALSE, stride, std::ptr::null(),
             );
@@ -87,9 +88,10 @@ impl Graphic<OpenGlRenderPlatform> for Text {
                 1, 2, FLOAT, FALSE, stride, offset,
             );
             for (mask, range) in self.channels.iter() {
-                let mut masked_params = params.clone();
-                masked_params.use_tex_chan_mask(*mask);
-                DrawContext::push(ctx, masked_params);
+                DrawContext::push(ctx);
+                ctx.use_tex_chan_mask(*mask);
+                DrawContext::prepare_draw(ctx);
+                let gl = &DrawContext::render_ctx(ctx).bindings;
                 gl.DrawArrays(
                     TRIANGLES,
                     range.start as GLsizei,

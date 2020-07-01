@@ -1,8 +1,8 @@
 use crate::platform::{
     DefaultRenderPlatform,
     RenderPlatform,
-    SubRenderPlatform,
 };
+use crate::widget::{Widget, WidgetContent};
 
 pub trait Graphic<P: RenderPlatform = DefaultRenderPlatform> {
     fn draw(&self, ctx: &mut DrawContext<P>);
@@ -34,7 +34,7 @@ enum LastApplied<T> {
     Removed(T),
 }
 
-impl Default for LastApplied {
+impl<T> Default for LastApplied<T> {
     fn default() -> Self { Self::None }
 }
 
@@ -72,7 +72,7 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
     pub fn render_ctx_mut(ctx: &mut Self) -> &mut P::Context { &mut ctx.context }
 
     pub fn graphic_not_ready(ctx: &mut Self) {
-        self.pass = DrawPass::UpdateContext;
+        ctx.pass = DrawPass::UpdateContext;
     }
 
     pub fn prepare_draw(ctx: &mut Self) {
@@ -96,8 +96,8 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
     where
         T: WidgetContent<P>,
     {
-        if self.pass == DrawPass::UpdateContext {
-            self.pass = DrawRemaining;
+        if ctx.pass == DrawPass::UpdateContext {
+            ctx.pass = DrawPass::DrawRemaining;
         }
         Widget::draw(root, &mut ctx);
         ctx.pass == DrawPass::UpdateContext
@@ -141,11 +141,11 @@ where
     }
 }
 
-impl<P: RenderPlatform> Deref for DrawContext<P> {
+impl<P: RenderPlatform> std::ops::Deref for DrawContext<'_, P> {
     type Target = P::DrawParams;
     fn deref(&self) -> &P::DrawParams { &self.current }
 }
 
-impl<P: RenderPlatform> DerefMut for DrawContext<P> {
+impl<P: RenderPlatform> std::ops::DerefMut for DrawContext<'_, P> {
     fn deref_mut(&mut self) -> &mut P::DrawParams { &mut self.current }
 }

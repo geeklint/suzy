@@ -26,7 +26,7 @@ where
 }
 
 pub(super) struct DrawChildReceiver<'a, P: RenderPlatform> {
-    pub ctx: &'a mut DrawContext<P>,
+    pub ctx: &'a mut DrawContext<'a, P>,
 }
 
 pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
@@ -35,7 +35,7 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
 }
 
 pub(super) struct DrawGraphicReceiver<'a, P: RenderPlatform> {
-    pub ctx: &'a mut DrawContext<P>,
+    pub ctx: &'a mut DrawContext<'a, P>,
 }
 
 impl<'a, P> WidgetChildReceiver<P> for DrawChildReceiver<'a, P>

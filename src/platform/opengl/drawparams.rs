@@ -5,8 +5,10 @@ use crate::graphics;
 
 use super::Mat4;
 use super::OpenGlContext;
-use super::Texture;
-use super::bindings::{
+use super::texture::Texture;
+use super::shader::Shader;
+use super::context::bindings::types::GLuint;
+use super::context::bindings::{
     TEXTURE0,
 };
 

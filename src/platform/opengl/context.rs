@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use super::stdshaders::Shaders;
 use super::texture::TextureCache;
 
-mod bindings {
+pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/opengl_bindings.rs"));
 }
 

@@ -6,13 +6,13 @@ use super::{
     OpenGlContext,
     Mat4,
 };
-use super::bindings::types::*;
-use super::bindings::{
+use super::context::bindings::types::*;
+use super::context::bindings::{
     COLOR_BUFFER_BIT,
     BLEND,
     SRC_ALPHA,
     ONE_MINUS_SRC_ALPHA,
-    CLEAR_COLOR_VALUE,
+    COLOR_CLEAR_VALUE,
 };
 use super::drawparams::DrawParams;
 use super::stdshaders::Shaders;
@@ -38,10 +38,10 @@ impl Window {
     }
 
     pub fn get_clear_color(&self) -> Color {
-        let mut array = [f32; 4];
+        let mut array = [0f32; 4];
         unsafe {
             self.ctx.bindings.GetFloatv(
-                CLEAR_COLOR_VALUE,
+                COLOR_CLEAR_VALUE,
                 array.as_mut_ptr(),
             );
         }

@@ -1,6 +1,6 @@
 
 mod shared;
-pub use shared::{Platform, RenderPlatform, SubRenderPlatform};
+pub use shared::{Platform, RenderPlatform};
 
 // Platforms
 

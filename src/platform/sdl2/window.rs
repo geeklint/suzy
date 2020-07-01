@@ -4,13 +4,14 @@ use sdl2::event::Event;
 use sdl2::event::WindowEvent as sdl_WindowEvent;
 use sdl2::video::WindowBuildError;
 
+use crate::math::Color;
 use crate::graphics::DrawContext;
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
 use crate::platform::{RenderPlatform};
 
-use super::texture_loader::load_texture;
+//use super::texture_loader::load_texture;
 
 #[derive(Copy, Clone, PartialEq)]
 struct PixelInfo {
