@@ -1,4 +1,6 @@
-use super::bindings::{
+use crate::graphics::{DrawContext, DrawPass};
+
+use super::context::bindings::{
     ARRAY_BUFFER,
     DYNAMIC_DRAW,
     STATIC_DRAW,
@@ -13,6 +15,7 @@ pub struct SingleVertexBuffer<T> {
     obj: SingleBufferData,
     tracker: WatchedMeta,
     dyn_draw: bool,
+    remaining_to_draw: bool,
     _data: std::marker::PhantomData<[T]>,
 }
 
@@ -22,23 +25,45 @@ impl<T> SingleVertexBuffer<T> {
             obj: SingleBufferData::new(),
             tracker: WatchedMeta::new(),
             dyn_draw,
+            remaining_to_draw: true,
             _data: std::marker::PhantomData,
         }
     }
 
-    pub fn bind_if_ready(&mut self, gl: &Rc<OpenGlBindings>) -> bool {
+    pub fn bind_if_ready(
+        &mut self,
+        draw_ctx: &mut DrawContext<OpenGlRenderPlatform>,
+    ) -> bool {
+        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
         if self.obj.check_ready(gl) {
-            gl.BindBuffer(ARRAY_BUFFER, ids[0]);
-            true
+            match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
+                (DrawPass::DrawRemaining, false) => false,
+                (DrawPass::DrawAll, _)
+                | (DrawPass::DrawRemaining, true) => {
+                    DrawContext::prepare_draw(draw_ctx);
+                    gl.BindBuffer(ARRAY_BUFFER, self.obj.ids[0]);
+                    self.remaining_to_draw = false;
+                    true
+                },
+                (DrawPass::UpdateContext, _) => {
+                    self.remaining_to_draw = true;
+                    false
+                },
+            }
         } else {
+            DrawContext::graphic_not_ready(draw_ctx);
             self.tracker.trigger();
             false
         }
     }
 
-    pub fn set_data(&mut self, data: &[T]) {
+    pub fn set_data<'a, F>(&mut self, make_data: F)
+    where
+        F: FnOnce() -> &'a [u8] + 'a
+    {
         self.tracker.watched();
         if let Some((ids, gl)) = self.obj.get() {
+            let data = (make_data)();
             gl.BindBuffer(ARRAY_BUFFER, ids[0]);
             gl.BufferData(
                 ARRAY_BUFFER,

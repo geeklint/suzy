@@ -1,18 +1,17 @@
 use std::collections::HashMap;
 
-use super::OpenGlRenderPlatform as Gl;
-use super::bindings::types::*;
-use super::bindings::{
+use crate::graphics::{DrawContext, Graphic};
+
+use super::{OpenGlRenderPlatform, OpenGlContext};
+use super::context::bindings::types::*;
+use super::context::bindings::{
     ARRAY_BUFFER,
     FALSE,
     FLOAT,
     TRIANGLES,
 };
-use super::sdf::SdfRenderPlatform;
-use super::primitive::{
-    Texture,
-    Buffer,
-};
+use super::texture::Texture;
+use super::buffer::SingleVertexBuffer;
 
 mod font;
 mod calc;
@@ -36,7 +35,7 @@ use font::{ChannelMask, GlyphMetricsSource};
 use calc::FontCharCalc;
 
 pub struct Text {
-    vertices: Buffer<GLfloat>,
+    vertices: SingleVertexBuffer<GLfloat>,
     channels: HashMap<ChannelMask, std::ops::Range<usize>>,
     texture: Texture,
 }
@@ -44,7 +43,7 @@ pub struct Text {
 impl Text {
     pub fn new() -> Self {
         Text {
-            vertices: Buffer::new(ARRAY_BUFFER, true, 0),
+            vertices: SingleVertexBuffer::new(true),
             channels: HashMap::new(),
             texture: Default::default(),
         }
@@ -58,49 +57,34 @@ impl Text {
     ) {
         self.texture = font.texture.clone();
         let mut verts = vec![];
-        let mut calc = FontCharCalc::new(font, settings);
-        let parser = RichTextParser::new(text);
-        for rich_text_cmd in parser {
-            calc.push(rich_text_cmd);
-        }
-        self.channels.clear();
-        calc.merge_verts(&mut verts, &mut self.channels);
-        self.vertices.set_data(&verts);
+        let channels = &mut self.channels;
+        self.vertices.set_data(|| {
+            let mut calc = FontCharCalc::new(font, settings);
+            let parser = RichTextParser::new(text);
+            for rich_text_cmd in parser {
+                calc.push(rich_text_cmd);
+            }
+            channels.clear();
+            calc.merge_verts(&mut verts, channels);
+            &verts
+        });
     }
 }
 
-use crate::graphics::{DrawContext, Graphic};
 
-impl Graphic<Gl> for Text {
-    fn draw(&self, ctx: &mut DrawContext<Gl>) {
-        ctx.descend(|ctx| Graphic::<SdfRenderPlatform>::draw(self, ctx));
-    }
-}
-
-impl Graphic<SdfRenderPlatform> for Text {
-    fn draw(&self, ctx: &mut DrawContext<SdfRenderPlatform>) {
-        let mut params = ctx.clone_current();
-        params.use_texture(self.texture.clone());
-        DrawContext::push(ctx, params.clone());
-        Gl::global(|gl| unsafe {
-            self.vertices.bind();
+impl Graphic<OpenGlRenderPlatform> for Text {
+    fn draw(&self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+        DrawContext::push(ctx);
+        ctx.sdf_mode();
+        ctx.use_texture(self.texture.clone());
+        if self.vertices.bind_if_ready(ctx) {
             let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
             let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
             gl.VertexAttribPointer(
-                0,
-                2,
-                FLOAT,
-                FALSE,
-                stride,
-                std::ptr::null(),
+                0, 2, FLOAT, FALSE, stride, std::ptr::null(),
             );
             gl.VertexAttribPointer(
-                1,
-                2,
-                FLOAT,
-                FALSE,
-                stride,
-                offset,
+                1, 2, FLOAT, FALSE, stride, offset,
             );
             for (mask, range) in self.channels.iter() {
                 let mut masked_params = params.clone();
@@ -113,7 +97,7 @@ impl Graphic<SdfRenderPlatform> for Text {
                 );
                 DrawContext::pop(ctx);
             }
-        });
+        }
         DrawContext::pop(ctx);
     }
 }

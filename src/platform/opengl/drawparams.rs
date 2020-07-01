@@ -22,6 +22,21 @@ enum ShaderExclusive {
 }
 
 impl ShaderExclusive {
+    fn make_standard(&mut self) {
+        *self = Self::Standard;
+    }
+
+    fn make_sdf(&mut self) {
+        if let Self::Standard = self {
+            *self = Self::Sdf {
+                text_color: WHITE,
+                outline_color: Color::create_rgba8(0xff, 0xff, 0xff, 0),
+                distance_edges: (0.49, 0.51, 0.0, 0.0),
+                tex_chan_mask: (0.0, 0.0, 0.0, 0.0),
+            };
+        }
+    }
+
     fn apply_all(
         &self,
         tint_color: Color,
@@ -81,15 +96,17 @@ impl ShaderExclusive {
         current_tint_color: Color,
         new_tint_color: Color,
         ctx: &OpenGlContext,
-    ) {
+    ) -> bool {
         match (current, new) {
             (Self::Standard, Self::Sdf { .. }) => {
                 let prev_attrs = Some(ctx.shaders.std.attrs());
                 new.apply_all(new_tint_color, ctx, prev_attrs);
+                true
             },
             (Self::Sdf { .. }, Self::Standard) => {
                 let prev_attrs = Some(ctx.shaders.sdf.attrs());
                 new.apply_all(new_tint_color, ctx, prev_attrs);
+                true
             },
             (Self::Standard, Self::Standard) => {
                 if new_tint_color != current_tint_color {
@@ -99,6 +116,7 @@ impl ShaderExclusive {
                         new_tint_color.rgba(),
                     );
                 }
+                false
             },
             (
                 Self::Sdf {
@@ -148,6 +166,7 @@ impl ShaderExclusive {
                         new_tex_chan_mask,
                     );
                 }
+                false
             },
         }
     }
@@ -181,6 +200,14 @@ impl DrawParams {
 
     pub fn use_texture(&mut self, texture: Texture) {
         self.texture = texture;
+    }
+
+    pub fn standard_mode(&mut self) {
+        self.shader_exclusive.make_standard();
+    }
+
+    pub fn sdf_mode(&mut self) {
+        self.shader_exclusive.make_sdf();
     }
 
     pub fn text_color(&mut self, color: Color) {
@@ -271,21 +298,21 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
     }
 
     fn apply_change(current: &Self, new: &mut Self, ctx: &mut OpenGlContext) {
-        ShaderExclusive::apply_change(
+        let shader_changed = ShaderExclusive::apply_change(
             current.shader_exclusive,
             new.shader_exclusive,
             current.tint_color,
             new.tint_color,
             &ctx,
         );
-        if new.transform != current.transform {
+        if shader_changed || new.transform != current.transform {
             Shader::set_mat4(
                 &ctx.bindings,
                 ctx.shaders.std_uniforms.common.transform, 
                 new.transform.as_ref(),
             );
         }
-        if new.texture != current.texture {
+        if shader_changed || new.texture != current.texture {
             unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
             let tex_trans = new.texture.bind(ctx);
             Shader::set_vec4(

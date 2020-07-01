@@ -22,6 +22,6 @@ pub(crate) use window::{
 pub struct OpenGlRenderPlatform;
 
 impl super::RenderPlatform for OpenGlRenderPlatform {
-    type Context = Gl;
+    type Context = OpenGlContext;
     type DrawParams = drawparams::DrawParams;
 }

@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use crate::math::Color;
 use crate::graphics::DrawContext;
 use crate::platform::RenderPlatform;
 use crate::pointer::PointerEventData;
@@ -30,6 +31,12 @@ pub trait WindowSettings {
 
     /// Set the fullscreen state
     fn set_fullscreen(&mut self, fullscreen: bool);
+
+    /// Get the window background color
+    fn background_color(&self) -> Color;
+
+    /// Set the window background color
+    fn set_background_color(&mut self, color: Color);
 }
 
 /// A structure which defines the initial creation parameters for a window
@@ -37,6 +44,7 @@ pub struct WindowBuilder {
     size: (f32, f32),
     title: String,
     fullscreen: bool,
+    background_color: Color,
 }
 
 impl WindowBuilder {
@@ -49,6 +57,7 @@ impl Default for WindowBuilder {
             size: (1366.0, 768.0),
             title: "Suzy Window".to_string(),
             fullscreen: false,
+            background_color: Color::create_rgba(0.176, 0.176, 0.176, 1.0),
         }
     }
 }
@@ -70,6 +79,12 @@ impl WindowSettings for WindowBuilder {
 
     fn set_fullscreen(&mut self, fullscreen: bool) {
         self.fullscreen = fullscreen;
+    }
+
+    fn background_color(&self) -> Color { self.background_color }
+
+    fn set_background_color(&mut self, color: Color) {
+        self.background_color = color;
     }
 }
 

@@ -1,16 +1,8 @@
 
 use crate::platform::opengl;
-use opengl::bindings::types::*;
-use opengl::bindings::{
-    ALPHA,
-    RGB,
-    RGBA,
-    UNSIGNED_BYTE,
-};
-
-use opengl::primitive::{
+use opengl::context::bindings::types::*;
+use opengl::texture::{
     Texture,
-    TextureBuilder,
 };
 
 use super::{
@@ -36,7 +28,7 @@ pub type FontFamilySource = FontFamilySourceDynamic<'static>;
 pub type FontFamily = FontFamilyDynamic<'static>;
 
 pub struct FontFamilySourceDynamic<'a> {
-    pub atlas_image: &'a [u8],
+    pub atlas_image: &'static [u8],
     pub image_channels: GLsizei,
     pub image_width: GLsizei,
     pub image_height: GLsizei,
@@ -59,10 +51,10 @@ const RGBA_MASKS: &[ChannelMask] = &[
 
 impl<'a> FontFamilySourceDynamic<'a> {
     pub fn load(&self) -> FontFamilyDynamic<'a> {
-        let (format, masks) = match self.image_channels {
-            1 => (ALPHA, ALPHA_MASKS),
-            3 => (RGB, RGB_MASKS),
-            4 => (RGBA, RGBA_MASKS),
+        let (channel_masks, texture_from) = match self.image_channels {
+            1 => (ALPHA_MASKS, Texture::from_alpha),
+            3 => (RGB_MASKS, Texture::from_rgb),
+            4 => (RGBA_MASKS, Texture::from_rgba),
             _ => panic!(
                 concat!(
                     "Invalid number of channels specified ({}). Must be one",
@@ -71,21 +63,13 @@ impl<'a> FontFamilySourceDynamic<'a> {
                 self.image_channels,
             ),
         };
-        let mut builder = TextureBuilder::create_custom(
-            format,
-            self.image_width,
-            self.image_height,
-        );
-        builder.sub_image(
-            0, 0,
-            self.image_width, self.image_height,
-            format, UNSIGNED_BYTE,
-            self.atlas_image.as_ptr() as *const _,
+        let texture = (texture_from)(
+            self.image_width, self.image_height, self.atlas_image
         );
         FontFamilyDynamic {
-            texture: builder.build(),
+            texture,
             padding_ratio: self.padding_ratio,
-            channel_masks: masks,
+            channel_masks,
             normal: self.normal,
             bold: self.bold,
             italic: self.italic,

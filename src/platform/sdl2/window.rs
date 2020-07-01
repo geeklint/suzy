@@ -152,17 +152,15 @@ impl TryFrom<WindowBuilder> for Window {
             }
         };
         // setup opengl stuff
-        opengl::Texture::set_loader(Some(load_texture));
+        //opengl::Texture::set_loader(Some(load_texture));
         let _ = video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context()?;
-        let renderer_global = Box::new(
-            opengl::OpenGlRenderPlatform::load(
+        let plat_gl_context = {
+            opengl::OpenGlContext::new(
                 |s| video.gl_get_proc_address(s) as *const _
             )
-        );
-        let gl_win = opengl::OpenGlRenderPlatform::with(renderer_global, || {
-            opengl::Window::new()
-        }).1;
+        };
+        let gl_win = opengl::Window::new(plat_gl_context);
         Ok(Window {
             title: builder.into_title(),
             info: WindowInfo {
@@ -213,6 +211,14 @@ impl WindowSettings for Window {
                 sdl2::video::FullscreenType::Off
             }
         );
+    }
+
+    fn background_color(&self) -> Color {
+        self.info.gl_win.get_clear_color()
+    }
+
+    fn set_background_color(&mut self, color: Color) {
+        self.info.gl_win.clear_color(color);
     }
 }
 

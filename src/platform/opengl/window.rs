@@ -12,6 +12,7 @@ use super::bindings::{
     BLEND,
     SRC_ALPHA,
     ONE_MINUS_SRC_ALPHA,
+    CLEAR_COLOR_VALUE,
 };
 use super::drawparams::DrawParams;
 use super::stdshaders::Shaders;
@@ -34,6 +35,17 @@ impl Window {
         unsafe {
             self.ctx.bindings.ClearColor(r, g, b, a);
         }
+    }
+
+    pub fn get_clear_color(&self) -> Color {
+        let mut array = [f32; 4];
+        unsafe {
+            self.ctx.bindings.GetFloatv(
+                CLEAR_COLOR_VALUE,
+                array.as_mut_ptr(),
+            );
+        }
+        Color::create_rgba(array[0], array[1], array[2], array[3])
     }
 
     /// Set the viewport. Wrapping windows will probably want to do this

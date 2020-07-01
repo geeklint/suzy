@@ -213,6 +213,36 @@ impl Texture {
         }
     }
 
+    pub fn from_alpha<T>(width: usize, height: usize, pixels: T)
+    where
+        T: Into<Cow<'static, [u8]>>>
+    {
+        let pixels = pixels.into();
+        Self::new(|gl| {
+            PopulateTextureUtil::populate_alpha(gl, width, height, &pixels)
+        });
+    }
+
+    pub fn from_rgb<T>(width: usize, height: usize, pixels: T)
+    where
+        T: Into<Cow<'static, [u8]>>>
+    {
+        let pixels = pixels.into();
+        Self::new(|gl| {
+            PopulateTextureUtil::populate_rgb(gl, width, height, &pixels)
+        });
+    }
+
+    pub fn from_rgba<T>(width: usize, height: usize, pixels: T)
+    where
+        T: Into<Cow<'static, [u8]>>>
+    {
+        let pixels = pixels.into();
+        Self::new(|gl| {
+            PopulateTextureUtil::populate_rgba(gl, width, height, &pixels)
+        });
+    }
+
     pub fn crop(self, x: f32, y: f32, height: f32, width: f32) -> Self {
         Self {
             ins: self.ins,

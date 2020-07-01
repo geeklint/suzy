@@ -67,6 +67,10 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
 
     pub fn pass(ctx: &Self) -> DrawPass { ctx.pass }
 
+    pub fn render_ctx(ctx: &Self) -> &P::Context { &ctx.context }
+
+    pub fn render_ctx_mut(ctx: &mut Self) -> &mut P::Context { &mut ctx.context }
+
     pub fn graphic_not_ready(ctx: &mut Self) {
         self.pass = DrawPass::UpdateContext;
     }

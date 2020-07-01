@@ -134,6 +134,16 @@ impl PopulateTextureUtil {
         }
     }
 
+    pub fn populate_alpha(
+        gl: &OpenGlBindings,
+        width: u16,
+        height: u16,
+        pixels: &[u8],
+    ) -> TextureSize {
+        assert_eq!(width * height, bytes.len());
+        Self::populate_format(gl, ALPHA as _, width, height, pixels)
+    }
+
     pub fn populate_rgb(
         gl: &OpenGlBindings,
         width: u16,
@@ -144,7 +154,7 @@ impl PopulateTextureUtil {
         Self::populate_format(gl, RGB as _, width, height, pixels)
     }
 
-    pub fn populate_rgb(
+    pub fn populate_rgba(
         gl: &OpenGlBindings,
         width: u16,
         height: u16,
