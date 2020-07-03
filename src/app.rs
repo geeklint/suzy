@@ -131,7 +131,6 @@ where
     root: Widget<Root, P::Renderer>,
     values: AppValues,
     events_state: EventsState,
-    renderer_global: Option<Box<<P::Renderer as RenderPlatform>::Global>>,
     frame_start: Option<time::Instant>,
 }
 
@@ -147,10 +146,7 @@ where
     }
 
     pub fn sync(&mut self) {
-        let window = &mut self.window;
-        Self::with_renderer_global(&mut self.renderer_global, || {
-            window.flip();
-        });
+        self.window.flip();
     }
 
     pub fn run(mut self) {
@@ -167,16 +163,6 @@ where
         APP_STACK.with(|cell| cell.borrow_mut().push(local));
         let res = (func)();
         *values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
-        res
-    }
-
-    fn with_renderer_global<F: FnOnce() -> R, R>(
-        global: &mut Option<Box<<P::Renderer as RenderPlatform>::Global>>,
-        func: F,
-    ) -> R {
-        let renderer_global = global.take().unwrap();
-        let (rg_ret, res) = P::Renderer::with(renderer_global, func);
-        *global = Some(rg_ret);
         res
     }
 
@@ -239,7 +225,6 @@ where
             root,
             values,
             events_state,
-            renderer_global,
             ..
         } = self;
         let frame_start = self.frame_start.take()
@@ -248,30 +233,29 @@ where
         let watch_ctx_inner = watch_ctx_inner.with(|| {
             *values.frame_start = frame_start;
             Self::with_values(values, || {
-                Self::with_renderer_global(renderer_global, || {
-                    Self::poll_events(window, root, events_state);
-                    drying_paint::WatchContext::update_current();
-                });
+                Self::poll_events(window, root, events_state);
+                drying_paint::WatchContext::update_current();
             });
         }).0;
         *watch_ctx = Some(watch_ctx_inner);
     }
 
     pub fn render(&mut self) {
-        let Self { window, root, renderer_global, ..  } = self;
-        Self::with_renderer_global(renderer_global, || {
-            window.clear();
+        let Self { watch_ctx, window, root, ..  } = self;
+        window.clear();
+        let watch_ctx_inner = watch_ctx.take().unwrap();
+        let watch_ctx_inner = watch_ctx_inner.with(|| {
             let mut ctx = window.prepare_draw();
-            root.draw(&mut ctx);
-        });
+            while crate::graphics::DrawContext::draw(&mut ctx, root) {
+                drying_paint::WatchContext::update_current();
+            }
+        }).0;
+        *watch_ctx = Some(watch_ctx_inner);
     }
 
     pub fn shutdown(self) {
-        let Self { window, root, mut renderer_global, ..  } = self;
-        Self::with_renderer_global(&mut renderer_global, || {
-            std::mem::drop(root);
-        });
-        std::mem::drop(renderer_global);
+        let Self { window, root, ..  } = self;
+        std::mem::drop(root);
         std::mem::drop(window);
     }
 }
@@ -281,12 +265,9 @@ where Root: WidgetContent + Default
 {
     pub fn new() -> Self {
         let builder = AppBuilder::default();
-        let mut window: <DefaultPlatform as Platform>::Window = {
+        let window: <DefaultPlatform as Platform>::Window = {
             builder.win.try_into().unwrap()
         };
-        let mut renderer_global = Some(Box::new(
-            DefaultPlatform::get_renderer_data(&mut window)
-        ));
         let watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.size();
@@ -302,9 +283,7 @@ where Root: WidgetContent + Default
         };
         let (watch_ctx, root) = watch_ctx.with(|| {
             Self::with_values(&mut values, || {
-                Self::with_renderer_global(&mut renderer_global, || {
-                    Widget::<Root>::default_with_rect(&rect)
-                })
+                Widget::<Root>::default_with_rect(&rect)
             })
         });
         Self {
@@ -316,7 +295,6 @@ where Root: WidgetContent + Default
                 quit: false,
                 grab_map: std::collections::HashMap::new(),
             },
-            renderer_global: renderer_global,
             frame_start: None,
         }
     }

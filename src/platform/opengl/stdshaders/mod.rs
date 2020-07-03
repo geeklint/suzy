@@ -20,7 +20,7 @@ pub(super) struct VertUniforms {
     pub(super) tex_transform: UniformLoc,
 }
 
-pub fn common(gl: &OpenGlBindings, shader: &Shader) -> VertUniforms {
+fn common(gl: &OpenGlBindings, shader: &Shader) -> VertUniforms {
     VertUniforms {
         transform: shader.uniform(gl, "TRANSFORM"),
         tex_transform: shader.uniform(gl, "TEX_TRANSFORM"),

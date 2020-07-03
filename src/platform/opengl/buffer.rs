@@ -44,7 +44,10 @@ impl<T> SingleVertexBuffer<T> {
                 (DrawPass::DrawAll, _)
                 | (DrawPass::DrawRemaining, true) => {
                     DrawContext::prepare_draw(draw_ctx);
-                    gl.BindBuffer(ARRAY_BUFFER, self.obj.ids[0]);
+                    let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+                    unsafe {
+                        gl.BindBuffer(ARRAY_BUFFER, self.obj.ids[0]);
+                    }
                     self.remaining_to_draw = false;
                     true
                 },
@@ -68,17 +71,19 @@ impl<T> SingleVertexBuffer<T> {
         self.tracker.watched();
         if let Some((ids, gl)) = self.obj.get() {
             let data = (make_data)();
-            gl.BindBuffer(ARRAY_BUFFER, ids[0]);
-            gl.BufferData(
-                ARRAY_BUFFER,
-                (data.len() * std::mem::size_of::<T>()) as _,
-                data.as_ptr() as *const _,
-                if self.dyn_draw {
-                    DYNAMIC_DRAW
-                } else {
-                    STATIC_DRAW
-                },
-            );
+            unsafe {
+                gl.BindBuffer(ARRAY_BUFFER, ids[0]);
+                gl.BufferData(
+                    ARRAY_BUFFER,
+                    (data.len() * std::mem::size_of::<T>()) as _,
+                    data.as_ptr() as *const _,
+                    if self.dyn_draw {
+                        DYNAMIC_DRAW
+                    } else {
+                        STATIC_DRAW
+                    },
+                );
+            }
             self.obj.mark_ready();
         }
     }

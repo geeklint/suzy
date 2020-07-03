@@ -49,7 +49,9 @@ struct ShaderObj<'a> {
 
 impl<'a> Drop for ShaderObj<'a> {
     fn drop(&mut self) {
-        self.gl.DeleteShader(self.id);
+        unsafe {
+            self.gl.DeleteShader(self.id);
+        }
     }
 }
 

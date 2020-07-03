@@ -285,16 +285,20 @@ impl DrawParams {
 impl graphics::DrawParams<OpenGlContext> for DrawParams {
     fn apply_all(&mut self, ctx: &mut OpenGlContext) {
         self.shader_exclusive.apply_all(self.tint_color, &ctx, None);
+        let uniforms = match &self.shader_exclusive {
+            ShaderExclusive::Standard => ctx.shaders.std_uniforms.common,
+            ShaderExclusive::Sdf { .. } => ctx.shaders.sdf_uniforms.common,
+        };
         Shader::set_mat4(
             &ctx.bindings,
-            ctx.shaders.std_uniforms.common.transform, 
+            uniforms.transform, 
             self.transform.as_ref(),
         );
         unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
         let tex_trans = self.texture.bind(ctx);
         Shader::set_vec4(
             &ctx.bindings,
-            ctx.shaders.std_uniforms.common.tex_transform,
+            uniforms.tex_transform,
             tex_trans,
         );
     }

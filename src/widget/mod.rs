@@ -82,11 +82,11 @@ where
         RefMut::map(self.internal_mut(), |w| &mut w.content)
     }
 
-    pub(crate) fn draw(&self, ctx: &mut DrawContext<P>) {
-        let wid_int = self.internal();
-        let content = &wid_int.content;
+    pub(crate) fn draw(&mut self, ctx: &mut DrawContext<P>) {
+        let mut wid_int = self.internal_mut();
+        let content = &mut wid_int.content;
         content.graphics(DrawGraphicReceiver { ctx });
-        content.children(DrawChildReceiver { ctx });
+        content.children_mut(DrawChildReceiver { ctx });
         content.graphics_after(DrawGraphicReceiver { ctx });
     }
 

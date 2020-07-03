@@ -5,15 +5,15 @@ use crate::platform::{
 use crate::widget::{Widget, WidgetContent};
 
 pub trait Graphic<P: RenderPlatform = DefaultRenderPlatform> {
-    fn draw(&self, ctx: &mut DrawContext<P>);
+    fn draw(&mut self, ctx: &mut DrawContext<P>);
 }
 
 impl<P: RenderPlatform> Graphic<P> for () {
-    fn draw(&self, _ctx: &mut DrawContext<P>) {}
+    fn draw(&mut self, _ctx: &mut DrawContext<P>) {}
 }
 
 impl<P: RenderPlatform, T: Graphic<P>> Graphic<P> for [T] {
-    fn draw(&self, ctx: &mut DrawContext<P>) {
+    fn draw(&mut self, ctx: &mut DrawContext<P>) {
         for graphic in self {
             graphic.draw(ctx);
         }
@@ -99,7 +99,7 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
         if ctx.pass == DrawPass::UpdateContext {
             ctx.pass = DrawPass::DrawRemaining;
         }
-        Widget::draw(root, &mut ctx);
+        Widget::draw(root, ctx);
         ctx.pass == DrawPass::UpdateContext
     }
 }
@@ -123,21 +123,22 @@ where
             "DrawContext::pop called more times than push!"
         );
         let old = std::mem::replace(&mut ctx.current, new);
-        ctx.last_applied = match ctx.last_applied {
+        match &ctx.last_applied {
             LastApplied::History(index) => {
-                if index < ctx.history.len() {
-                    LastApplied::History(index)
-                } else if index == ctx.history.len() {
+                ctx.last_applied = if *index < ctx.history.len() {
+                    LastApplied::History(*index)
+                } else if *index == ctx.history.len() {
                     LastApplied::Current
                 } else {
                     debug_assert!(false, "DrawContext corrupted");
                     LastApplied::None
-                }
+                };
             },
-            LastApplied::Current => LastApplied::Removed(old),
-            LastApplied::Removed(params) => LastApplied::Removed(params),
-            LastApplied::None => LastApplied::None,
-        }
+            LastApplied::Current => {
+                ctx.last_applied = LastApplied::Removed(old);
+            }
+            _ => (),
+        };
     }
 }
 

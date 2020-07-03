@@ -6,17 +6,7 @@ use std::path::{Path, PathBuf};
 
 use super::context::{OpenGlContext, OpenGlBindings};
 use super::context::bindings::{
-    CLAMP_TO_EDGE,
-    LINEAR,
-    NEAREST,
-    RGB,
-    RGBA,
     TEXTURE_2D,
-    TEXTURE_MAG_FILTER,
-    TEXTURE_MIN_FILTER,
-    TEXTURE_WRAP_S,
-    TEXTURE_WRAP_T,
-    UNSIGNED_BYTE,
 };
 
 #[macro_use] use super::primitive;
@@ -43,8 +33,8 @@ impl TextureSize {
     {
         let width = if width.is_nan() { self.image_width - x } else { width };
         let height = if height.is_nan() { self.image_height - y } else { height };
-        let offset_x = (x / self.texture_width);
-        let offset_y = (y / self.texture_height);
+        let offset_x = x / self.texture_width;
+        let offset_y = y / self.texture_height;
         let scale_x = self.texture_width / width;
         let scale_y = self.texture_height / height;
         (offset_x, offset_y, scale_x, scale_y)
@@ -90,10 +80,12 @@ impl SharedTexture {
     }
 
     fn bind(&self, gl: &Rc<OpenGlBindings>) {
-        let borrow = self.obj.borrow_mut();
-        let SizedTexture { obj, size } = &*borrow;
+        let mut borrow = self.obj.borrow_mut();
+        let SizedTexture { obj, size } = &mut *borrow;
         let ready = obj.check_ready(gl);
-        gl.BindTexture(TEXTURE_2D, obj.ids[0]);
+        unsafe {
+            gl.BindTexture(TEXTURE_2D, obj.ids[0]);
+        }
         if !ready {
             *size = self.populator.populate(gl);
             obj.mark_ready();
@@ -246,7 +238,7 @@ impl Texture {
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(|gl: &_| {
+        Self::new(move |gl: &_| {
             PopulateTextureUtil::default_params(gl);
             PopulateTextureUtil::populate_alpha(gl, width, height, &pixels)
         })
@@ -257,7 +249,7 @@ impl Texture {
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(|gl: &_| {
+        Self::new(move |gl: &_| {
             PopulateTextureUtil::default_params(gl);
             PopulateTextureUtil::populate_rgb(gl, width, height, &pixels)
         })
@@ -268,7 +260,7 @@ impl Texture {
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(|gl: &_| {
+        Self::new(move |gl: &_| {
             PopulateTextureUtil::default_params(gl);
             PopulateTextureUtil::populate_rgba(gl, width, height, &pixels)
         })

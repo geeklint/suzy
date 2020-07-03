@@ -72,7 +72,7 @@ macro_rules! gl_object {
             fn fmt(&self, f: &mut ::std::fmt::Formatter)
                 -> Result<(), ::std::fmt::Error>
             {
-                let st = f.debug_struct(stringify!($name));
+                let mut st = f.debug_struct(stringify!($name));
                 if self.ready {
                     st.field("ids", &self.ids);
                 } else {

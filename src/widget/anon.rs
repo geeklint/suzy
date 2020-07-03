@@ -8,7 +8,7 @@ use super::WidgetContent;
 
 pub(crate) trait AnonWidget<P: RenderPlatform> {
     fn id(&self) -> WidgetId;
-    fn draw(&self, ctx: &mut DrawContext<P>);
+    fn draw(&mut self, ctx: &mut DrawContext<P>);
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
 }
 
@@ -21,7 +21,7 @@ where
         Widget::id(self)
     }
 
-    fn draw(&self, ctx: &mut DrawContext<P>) {
+    fn draw(&mut self, ctx: &mut DrawContext<P>) {
         Widget::draw(self, ctx);
     }
 

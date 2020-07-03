@@ -33,7 +33,7 @@ where
         let _unused = receiver;
     }
 
-    fn graphics<R: WidgetGraphicReceiver<P>>(&self, receiver: R) {
+    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {
         let _unused = receiver;
     }
 

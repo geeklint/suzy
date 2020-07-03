@@ -73,7 +73,7 @@ impl Text {
 
 
 impl Graphic<OpenGlRenderPlatform> for Text {
-    fn draw(&self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
         DrawContext::push(ctx);
         ctx.sdf_mode();
         ctx.use_texture(self.texture.clone());
@@ -81,22 +81,26 @@ impl Graphic<OpenGlRenderPlatform> for Text {
             let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
             let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
             let gl = &DrawContext::render_ctx(ctx).bindings;
-            gl.VertexAttribPointer(
-                0, 2, FLOAT, FALSE, stride, std::ptr::null(),
-            );
-            gl.VertexAttribPointer(
-                1, 2, FLOAT, FALSE, stride, offset,
-            );
+            unsafe {
+                gl.VertexAttribPointer(
+                    0, 2, FLOAT, FALSE, stride, std::ptr::null(),
+                );
+                gl.VertexAttribPointer(
+                    1, 2, FLOAT, FALSE, stride, offset,
+                );
+            }
             for (mask, range) in self.channels.iter() {
                 DrawContext::push(ctx);
                 ctx.tex_chan_mask(*mask);
                 DrawContext::prepare_draw(ctx);
                 let gl = &DrawContext::render_ctx(ctx).bindings;
-                gl.DrawArrays(
-                    TRIANGLES,
-                    range.start as GLsizei,
-                    range.len() as GLsizei,
-                );
+                unsafe {
+                    gl.DrawArrays(
+                        TRIANGLES,
+                        range.start as GLsizei,
+                        range.len() as GLsizei,
+                    );
+                }
                 DrawContext::pop(ctx);
             }
         }
