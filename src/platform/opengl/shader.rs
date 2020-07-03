@@ -190,8 +190,8 @@ impl Shader {
         gl: &OpenGlBindings,
         prev_attribs: Option<GLuint>,
     ) {
-        let start = prev_attribs.or(0);
-        let end = prev_attribs.or(self.total_attrs);
+        let start = prev_attribs.unwrap_or(0);
+        let end = prev_attribs.unwrap_or(self.total_attrs);
         unsafe {
             gl.UseProgram(self.program_id);
             for i in start..self.attrs {

@@ -2,7 +2,6 @@ use drying_paint::WatchedMeta;
 
 macro_rules! gl_object {
     ($name:ident, $create:ident, $delete:ident, $count:expr) => {
-        #[derive(Debug)]
         struct $name {
             pub(crate) ids: [u32; $count],
             pub(crate) ready: bool,
@@ -12,7 +11,6 @@ macro_rules! gl_object {
         gl_object! {impl $name, $create, $delete, $count}
     };
     (pub $name:ident, $create:ident, $delete:ident, $count:expr) => {
-        #[derive(Debug)]
         pub struct $name {
             pub(crate) ids: [u32; $count],
             pub(crate) ready: bool,
@@ -37,9 +35,7 @@ macro_rules! gl_object {
                     ::std::rc::Rc<crate::platform::opengl::OpenGlBindings>,
                 )>
             {
-                self.ids.and_then(|ids| {
-                    self.gl.upgrade().map(|gl| (ids, gl))
-                })
+                self.gl.upgrade().map(|gl| (self.ids, gl))
             }
 
             pub fn mark_ready(&mut self) {
@@ -51,9 +47,9 @@ macro_rules! gl_object {
                 gl: &::std::rc::Rc<crate::platform::opengl::OpenGlBindings>,
             ) -> bool {
                 let weak_gl = ::std::rc::Rc::downgrade(gl);
-                if !self.gl.ptr_eq(weak_gl) {
-                    self.drop();
+                if !self.gl.ptr_eq(&weak_gl) {
                     unsafe {
+                        self.invalidate();
                         gl.$create($count, self.ids.as_mut_ptr());
                     }
                     self.ready = false;
@@ -61,22 +57,39 @@ macro_rules! gl_object {
                 }
                 self.ready
             }
-        }
-        impl PartialEq for $name {
-            fn eq(&self, other: &Self) -> bool {
-                (self.ids == other.ids) && self.gl.ptr_eq(other.gl)
-            }
-        }
-        impl Drop for $name {
-            fn drop(&mut self) {
+
+            unsafe fn invalidate(&mut self) {
                 // if we can't get the gl bindings here, it's probably
                 // because the context went away, in which case
                 // it's ok to "leak" the resource, it's already cleaned
                 // up by the context going away
                 if let Some(gl) = self.gl.upgrade() {
-                    unsafe {
-                        gl.$delete($count, self.ids.as_mut_ptr());
-                    }
+                    gl.$delete($count, self.ids.as_ptr());
+                }
+            }
+        }
+        impl ::std::fmt::Debug for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter)
+                -> Result<(), ::std::fmt::Error>
+            {
+                let st = f.debug_struct(stringify!($name));
+                if self.ready {
+                    st.field("ids", &self.ids);
+                } else {
+                    st.field("ready", &false);
+                }
+                st.finish()
+            }
+        }
+        impl PartialEq for $name {
+            fn eq(&self, other: &Self) -> bool {
+                (self.ids == other.ids) && self.gl.ptr_eq(&other.gl)
+            }
+        }
+        impl Drop for $name {
+            fn drop(&mut self) {
+                unsafe {
+                    self.invalidate();
                 }
             }
         }

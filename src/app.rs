@@ -106,6 +106,14 @@ impl window::WindowSettings for AppBuilder {
     fn set_fullscreen(&mut self, fullscreen: bool) {
         self.win.set_fullscreen(fullscreen);
     }
+
+    fn background_color(&self) -> crate::math::Color {
+        self.win.background_color()
+    }
+
+    fn set_background_color(&mut self, color: crate::math::Color) {
+        self.win.set_background_color(color);
+    }
 }
 
 struct EventsState {

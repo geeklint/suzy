@@ -86,7 +86,7 @@ impl ShaderExclusive {
                 Shader::set_vec4(
                     &ctx.bindings,
                     ctx.shaders.sdf_uniforms.distance_edges,
-                    self.distance_edges,
+                    *distance_edges,
                 );
             },
         }
@@ -135,7 +135,7 @@ impl ShaderExclusive {
                 },
             ) => {
                 if new_tint_color != current_tint_color
-                    || new_text_color != current_text_color
+                    || new_text_color != *current_text_color
                 {
                     new_text_color.tint(new_tint_color);
                     Shader::set_vec4(
@@ -145,7 +145,7 @@ impl ShaderExclusive {
                     );
                 }
                 if new_tint_color != current_tint_color
-                    || new_outline_color != current_outline_color
+                    || new_outline_color != *current_outline_color
                 {
                     new_outline_color.tint(new_tint_color);
                     Shader::set_vec4(
@@ -158,14 +158,14 @@ impl ShaderExclusive {
                     Shader::set_vec4(
                         &ctx.bindings,
                         ctx.shaders.sdf_uniforms.distance_edges,
-                        new_distance_edges,
+                        *new_distance_edges,
                     );
                 }
                 if new_tex_chan_mask != current_tex_chan_mask {
                     Shader::set_vec4(
                         &ctx.bindings,
                         ctx.shaders.sdf_uniforms.tex_chan_mask,
-                        new_tex_chan_mask,
+                        *new_tex_chan_mask,
                     );
                 }
                 false
@@ -301,8 +301,8 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
 
     fn apply_change(current: &Self, new: &mut Self, ctx: &mut OpenGlContext) {
         let shader_changed = ShaderExclusive::apply_change(
-            current.shader_exclusive,
-            new.shader_exclusive,
+            &current.shader_exclusive,
+            &new.shader_exclusive,
             current.tint_color,
             new.tint_color,
             &ctx,

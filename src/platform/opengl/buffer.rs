@@ -62,7 +62,8 @@ impl<T> SingleVertexBuffer<T> {
 
     pub fn set_data<'a, F>(&mut self, make_data: F)
     where
-        F: FnOnce() -> &'a [u8] + 'a
+        F: 'a + FnOnce() -> &'a [T],
+        T: 'a
     {
         self.tracker.watched();
         if let Some((ids, gl)) = self.obj.get() {

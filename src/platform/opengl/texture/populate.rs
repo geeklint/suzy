@@ -19,6 +19,16 @@ use opengl::context::bindings::{
 
 use super::TextureSize;
 
+static DEFAULT_POPULATE_DEBUG: DefaultPopulateDebug = DefaultPopulateDebug;
+
+struct DefaultPopulateDebug;
+
+impl std::fmt::Debug for DefaultPopulateDebug {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        f.write_str("dyn PopulateTexture")
+    }
+}
+
 pub trait PopulateTextureDynClone {
     fn clone_boxed(&self) -> Box<dyn PopulateTexture>;
 }
@@ -36,44 +46,28 @@ pub trait PopulateTexture: PopulateTextureDynClone {
     fn populate(&self, gl: &OpenGlBindings) -> TextureSize;
 
     fn get_known_size(&self) -> Option<(f32, f32)> { None }
+
+    fn debug(&self) -> &dyn std::fmt::Debug { &DEFAULT_POPULATE_DEBUG }
 }
 
-#[derive(Clone, Debug)]
-struct FnPopulateTexture<F: 'static + Clone + Fn(&OpenGlBindings) -> TextureSize>(F);
-
-impl<F> PopulateTexture for FnPopulateTexture<F>
+impl<F> PopulateTexture for F
 where
-    F: 'static + Clone + Fn(&OpenGlBindings) -> TextureSize
+    F: 'static + Clone + for<'a> Fn(&'a OpenGlBindings) -> TextureSize
 {
     fn populate(&self, gl: &OpenGlBindings) -> TextureSize {
-        (self.0)(gl)
-    }
-}
-
-pub struct TexturePopulator(Box<dyn PopulateTexture>);
-
-impl TexturePopulator {
-    pub fn new<T, U>(populator: T) -> Self
-    where
-        T: Into<Box<U>>,
-        U: 'static + PopulateTexture,
-    {
-        TexturePopulator(populator.into())
-    }
-}
-
-impl<F> From<F> for TexturePopulator
-where
-    F: Fn(&OpenGlBindings) -> TextureSize
-{
-    fn from(populator: F) -> Self {
-        TexturePopulator(Box::new(FnPopulateTexture(populator)))
+        (self)(gl)
     }
 }
 
 impl Clone for Box<dyn PopulateTexture> {
     fn clone(&self) -> Self {
         self.clone_boxed()
+    }
+}
+
+impl std::fmt::Debug for Box<dyn PopulateTexture> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        self.debug().fmt(f)
     }
 }
 
@@ -105,7 +99,7 @@ impl PopulateTextureUtil {
                     width.into(),
                     height.into(),
                     0,
-                    format,
+                    format as GLenum,
                     UNSIGNED_BYTE,
                     pixels.as_ptr() as *const _,
                 );
@@ -117,10 +111,10 @@ impl PopulateTextureUtil {
                 texture_height: height as f32,
             }
         } else {
-            let width = width.into::<GLsizei>();
-            let height = height.into::<GLsizei>();
-            let texture_width = width.next_power_of_two();
-            let texture_height = height.next_power_of_two();
+            let texture_width = width.next_power_of_two().into();
+            let texture_height = height.next_power_of_two().into();
+            let width: GLsizei = width.into();
+            let height: GLsizei = height.into();
             unsafe {
                 gl.TexImage2D(
                     TEXTURE_2D,
@@ -129,7 +123,7 @@ impl PopulateTextureUtil {
                     texture_width,
                     texture_height,
                     0,
-                    format,
+                    format as GLenum,
                     UNSIGNED_BYTE,
                     std::ptr::null(),
                 );
@@ -140,7 +134,7 @@ impl PopulateTextureUtil {
                     0,
                     width,
                     height,
-                    format,
+                    format as GLenum,
                     UNSIGNED_BYTE,
                     pixels.as_ptr() as *const _,
                 );
@@ -148,8 +142,8 @@ impl PopulateTextureUtil {
             TextureSize {
                 image_width: width as f32,
                 image_height: height as f32,
-                texture_width,
-                texture_height,
+                texture_width: texture_width as f32,
+                texture_height: texture_height as f32,
             }
         }
     }
@@ -160,7 +154,7 @@ impl PopulateTextureUtil {
         height: u16,
         pixels: &[u8],
     ) -> TextureSize {
-        assert_eq!(width * height, pixels.len());
+        assert_eq!((width as usize) * (height as usize), pixels.len());
         Self::populate_format(gl, ALPHA as _, width, height, pixels)
     }
 
@@ -170,7 +164,7 @@ impl PopulateTextureUtil {
         height: u16,
         pixels: &[u8],
     ) -> TextureSize {
-        assert_eq!(width * height * 3, pixels.len());
+        assert_eq!((width as usize) * (height as usize) * 3, pixels.len());
         Self::populate_format(gl, RGB as _, width, height, pixels)
     }
 
@@ -180,7 +174,7 @@ impl PopulateTextureUtil {
         height: u16,
         pixels: &[u8],
     ) -> TextureSize {
-        assert_eq!(width * height * 4, pixels.len());
+        assert_eq!((width as usize) * (height as usize) * 4, pixels.len());
         Self::populate_format(gl, RGBA as _, width, height, pixels)
     }
 }

@@ -26,7 +26,7 @@ pub trait DrawParams<Ctx> {
     fn apply_change(current: &Self, new: &mut Self, ctx: &mut Ctx);
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 enum LastApplied<T> {
     History(usize),
     Current,
@@ -45,7 +45,7 @@ pub enum DrawPass {
     DrawRemaining,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct DrawContext<'a, P: RenderPlatform = DefaultRenderPlatform> {
     context: &'a mut P::Context,
     current: P::DrawParams,
@@ -57,7 +57,7 @@ pub struct DrawContext<'a, P: RenderPlatform = DefaultRenderPlatform> {
 impl<'a, P: RenderPlatform> DrawContext<'a, P> {
     pub fn new(ctx: &'a mut P::Context, starting: P::DrawParams) -> Self {
         Self {
-            contex: ctx,
+            context: ctx,
             current: starting,
             history: Vec::new(),
             last_applied: LastApplied::None,
@@ -76,16 +76,16 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
     }
 
     pub fn prepare_draw(ctx: &mut Self) {
-        match std::mem::replace(ctx.last_applied, LastApplied::Current) {
+        match std::mem::replace(&mut ctx.last_applied, LastApplied::Current) {
             LastApplied::Current => (),
             LastApplied::None => ctx.current.apply_all(ctx.context),
             LastApplied::Removed(old) => {
-                DrawParams::apply_change(&old, &ctx.current, ctx.context);
+                DrawParams::apply_change(&old, &mut ctx.current, ctx.context);
             },
             LastApplied::History(index) => {
                 DrawParams::apply_change(
                     &ctx.history[index],
-                    &ctx.current,
+                    &mut ctx.current,
                     ctx.context,
                 );
             }
@@ -113,7 +113,7 @@ where
         let new = ctx.current.clone();
         let old = std::mem::replace(&mut ctx.current, new);
         ctx.history.push(old);
-        if ctx.last_applied == LastApplied::Current {
+        if let LastApplied::Current = ctx.last_applied {
             ctx.last_applied = LastApplied::History(ctx.history.len() - 1);
         }
     }

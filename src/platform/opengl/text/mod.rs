@@ -89,7 +89,7 @@ impl Graphic<OpenGlRenderPlatform> for Text {
             );
             for (mask, range) in self.channels.iter() {
                 DrawContext::push(ctx);
-                ctx.use_tex_chan_mask(*mask);
+                ctx.tex_chan_mask(*mask);
                 DrawContext::prepare_draw(ctx);
                 let gl = &DrawContext::render_ctx(ctx).bindings;
                 gl.DrawArrays(

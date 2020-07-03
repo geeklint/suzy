@@ -25,8 +25,8 @@ where
     fn graphic<T: Graphic<P>>(&mut self, graphic: &T);
 }
 
-pub(super) struct DrawChildReceiver<'a, P: RenderPlatform> {
-    pub ctx: &'a mut DrawContext<'a, P>,
+pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform> {
+    pub ctx: &'a mut DrawContext<'b, P>,
 }
 
 pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
@@ -34,11 +34,11 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
     pub handled: &'b mut bool,
 }
 
-pub(super) struct DrawGraphicReceiver<'a, P: RenderPlatform> {
-    pub ctx: &'a mut DrawContext<'a, P>,
+pub(super) struct DrawGraphicReceiver<'a, 'b, P: RenderPlatform> {
+    pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, P> WidgetChildReceiver<P> for DrawChildReceiver<'a, P>
+impl<'a, 'b, P> WidgetChildReceiver<P> for DrawChildReceiver<'a, 'b, P>
 where P: RenderPlatform
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &Widget<T, P>) {
@@ -58,7 +58,7 @@ where
     }
 }
 
-impl<'a, P> WidgetGraphicReceiver<P> for DrawGraphicReceiver<'a, P>
+impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicReceiver<'a, 'b, P>
 where
     P: RenderPlatform,
 {

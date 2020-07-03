@@ -51,6 +51,7 @@ impl TextureSize {
     }
 }
 
+#[derive(Debug)]
 pub(super) struct SizedTexture {
     obj: TextureData,
     size: TextureSize,
@@ -66,6 +67,7 @@ impl SizedTexture {
     }
 }
 
+#[derive(Debug)]
 pub(super) struct SharedTexture {
     obj: RefCell<SizedTexture>,
     populator: Box<dyn PopulateTexture>,
@@ -89,7 +91,7 @@ impl SharedTexture {
 
     fn bind(&self, gl: &Rc<OpenGlBindings>) {
         let borrow = self.obj.borrow_mut();
-        let SizedTexture { obj, size } = borrow;
+        let SizedTexture { obj, size } = &*borrow;
         let ready = obj.check_ready(gl);
         gl.BindTexture(TEXTURE_2D, obj.ids[0]);
         if !ready {
@@ -128,24 +130,26 @@ impl From<PathBuf> for TextureCacheKey {
 }
 
 impl From<&'static Path> for TextureCacheKey {
-    fn from(path: &'static str) -> Self {
+    fn from(path: &'static Path) -> Self {
         Self { inner: KeyVariants::Path(path.into()) }
     }
 }
 
 impl From<String> for TextureCacheKey {
     fn from(string: String) -> Self {
-        string.into::<PathBuf>().into()
+        let path: PathBuf = string.into();
+        path.into()
     }
 }
 
 impl From<&'static str> for TextureCacheKey {
     fn from(string: &'static str) -> Self {
-        string.as_ref::<Path>().into()
+        let path: &Path = string.as_ref();
+        path.into()
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum TextureInstance {
     Existing(Rc<SharedTexture>),
     ToCache(TextureCacheKey, Box<dyn PopulateTexture>),
@@ -162,7 +166,7 @@ impl TextureInstance {
     fn size(&self) -> Option<TextureSize> {
         match self {
             Self::Existing(existing) => existing.size(),
-            Self::ToCache(_) => None,
+            Self::ToCache(_, _) => None,
         }
     }
 
@@ -201,7 +205,21 @@ impl Default for TextureInstance {
     }
 }
 
-#[derive(Clone)]
+impl PartialEq<Self> for TextureInstance {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Existing(ptr), Self::Existing(other_ptr)) => {
+                Rc::ptr_eq(ptr, other_ptr)
+            }
+            (Self::ToCache(key, _), Self::ToCache(other_key, _)) => {
+                key == other_key
+            }
+            _ => false
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct Texture {
     ins: TextureInstance,
     offset: (f32, f32),
@@ -209,8 +227,12 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn new<T: Into<TexurePopulator>>(populator: T) -> Self {
-        let populator = populator.into().0;
+    pub fn new<T, U>(populator: T) -> Self
+    where
+        T: Into<Box<U>>,
+        U: PopulateTexture + 'static,
+    {
+        let populator = populator.into();
         let size = populator.get_known_size().unwrap_or((f32::NAN, f32::NAN));
         Self {
             ins: TextureInstance::Existing(SharedTexture::new(populator)),
@@ -219,37 +241,37 @@ impl Texture {
         }
     }
 
-    pub fn from_alpha<T>(width: usize, height: usize, pixels: T)
+    pub fn from_alpha<T>(width: u16, height: u16, pixels: T) -> Self
     where
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(|gl| {
-            PopulateTextureUtil::default_params();
+        Self::new(|gl: &_| {
+            PopulateTextureUtil::default_params(gl);
             PopulateTextureUtil::populate_alpha(gl, width, height, &pixels)
-        });
+        })
     }
 
-    pub fn from_rgb<T>(width: usize, height: usize, pixels: T)
+    pub fn from_rgb<T>(width: u16, height: u16, pixels: T) -> Self
     where
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(|gl| {
-            PopulateTextureUtil::default_params();
+        Self::new(|gl: &_| {
+            PopulateTextureUtil::default_params(gl);
             PopulateTextureUtil::populate_rgb(gl, width, height, &pixels)
-        });
+        })
     }
 
-    pub fn from_rgba<T>(width: usize, height: usize, pixels: T)
+    pub fn from_rgba<T>(width: u16, height: u16, pixels: T) -> Self
     where
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(|gl| {
-            PopulateTextureUtil::default_params();
+        Self::new(|gl: &_| {
+            PopulateTextureUtil::default_params(gl);
             PopulateTextureUtil::populate_rgba(gl, width, height, &pixels)
-        });
+        })
     }
 
     pub fn crop(self, x: f32, y: f32, height: f32, width: f32) -> Self {

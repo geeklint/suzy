@@ -30,8 +30,8 @@ pub type FontFamily = FontFamilyDynamic<'static>;
 pub struct FontFamilySourceDynamic<'a> {
     pub atlas_image: &'static [u8],
     pub image_channels: GLsizei,
-    pub image_width: GLsizei,
-    pub image_height: GLsizei,
+    pub image_width: u16,
+    pub image_height: u16,
     pub padding_ratio: f32,
     pub normal: FontSource<'a>,
     pub bold: Option<FontSource<'a>>,
@@ -51,10 +51,31 @@ const RGBA_MASKS: &[ChannelMask] = &[
 
 impl<'a> FontFamilySourceDynamic<'a> {
     pub fn load(&self) -> FontFamilyDynamic<'a> {
-        let (channel_masks, texture_from) = match self.image_channels {
-            1 => (ALPHA_MASKS, Texture::from_alpha),
-            3 => (RGB_MASKS, Texture::from_rgb),
-            4 => (RGBA_MASKS, Texture::from_rgba),
+        let (texture, channel_masks) = match self.image_channels {
+            1 => {
+                let texture = Texture::from_alpha(
+                    self.image_width,
+                    self.image_height,
+                    self.atlas_image,
+                );
+                (texture, ALPHA_MASKS)
+            },
+            3 => {
+                let texture = Texture::from_rgb(
+                    self.image_width,
+                    self.image_height,
+                    self.atlas_image,
+                );
+                (texture, RGB_MASKS)
+            }
+            4 => {
+                let texture = Texture::from_rgba(
+                    self.image_width,
+                    self.image_height,
+                    self.atlas_image,
+                );
+                (texture, RGBA_MASKS)
+            }
             _ => panic!(
                 concat!(
                     "Invalid number of channels specified ({}). Must be one",
@@ -63,9 +84,6 @@ impl<'a> FontFamilySourceDynamic<'a> {
                 self.image_channels,
             ),
         };
-        let texture = (texture_from)(
-            self.image_width, self.image_height, self.atlas_image
-        );
         FontFamilyDynamic {
             texture,
             padding_ratio: self.padding_ratio,
