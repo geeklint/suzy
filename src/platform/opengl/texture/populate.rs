@@ -206,7 +206,7 @@ impl PopulateTexture for DefaultTexturePopulator {
 pub(super) struct ErrorTexturePopulator;
 
 const ERRTEX_SIDE: u16 = 16;
-const ERRTEX: &'static [u8] = include_bytes!("errtex.data");
+const ERRTEX: &[u8] = include_bytes!("errtex.data");
 
 impl PopulateTexture for ErrorTexturePopulator {
     fn get_known_size(&self) -> Option<(f32, f32)> {

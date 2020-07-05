@@ -428,12 +428,10 @@ pub trait Rect {
     /// becomes the one provided
     fn set_fit_aspect(&mut self, aspect: f32) {
         let self_aspect = self.aspect();
-        if self_aspect == aspect {
-            // do nothing
-        } else if self_aspect < aspect {  // we are relatively taller
+        if self_aspect < aspect {  // we are relatively taller
             let new = self.x().length / aspect;
             self.set_height(new);
-        } else {  // we're relatively wider
+        } else if self_aspect > aspect {  // we're relatively wider
             let new = self.y().length * aspect;
             self.set_width(new);
         }
@@ -443,12 +441,10 @@ pub trait Rect {
     /// becomes the one provided
     fn set_fill_aspect(&mut self, aspect: f32) {
         let self_aspect = self.aspect();
-        if self_aspect == aspect {
-            // do nothing
-        } else if self_aspect < aspect {  // we are relatively taller
+        if self_aspect < aspect {  // we are relatively taller
             let new = self.y().length * aspect;
             self.set_width(new);
-        } else {  // we're relatively wider
+        } else if self_aspect > aspect {  // we're relatively wider
             let new = self.x().length / aspect;
             self.set_height(new)
         }

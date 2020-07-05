@@ -1,3 +1,6 @@
+// TODO: clippy is probably right
+#![allow(clippy::excessive_precision)]
+
 use super::CubicBezier;
 use super::Color;
 

@@ -90,7 +90,7 @@ impl std::str::FromStr for Color {
     type Err = ParseColorError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("#") {
+        if s.starts_with('#') {  // TODO: replace with strip_prefix
             let hex_part = s.split_at(1).1;
             if (hex_part.len() == 6 || hex_part.len() == 8)
                 && hex_part.chars().all(|c| c.is_ascii_hexdigit())

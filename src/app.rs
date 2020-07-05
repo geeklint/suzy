@@ -260,10 +260,10 @@ where
     }
 }
 
-impl<Root> App<Root>
+impl<Root> Default for App<Root>
 where Root: WidgetContent + Default
 {
-    pub fn new() -> Self {
+    fn default() -> Self {
         let builder = AppBuilder::default();
         let window: <DefaultPlatform as Platform>::Window = {
             builder.win.try_into().unwrap()

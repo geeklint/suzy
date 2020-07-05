@@ -7,11 +7,11 @@ use super::shader::{
     UniformLoc,
 };
 
-const STD_VERTEX_SOURCE: &'static [u8] = include_bytes!(
+const STD_VERTEX_SOURCE: &[u8] = include_bytes!(
     "std.vert.glsl");
-const STD_FRAGMENT_SOURCE: &'static [u8] = include_bytes!(
+const STD_FRAGMENT_SOURCE: &[u8] = include_bytes!(
     "std.frag.glsl");
-const SDF_FRAGMENT_SOURCE: &'static [u8] = include_bytes!(
+const SDF_FRAGMENT_SOURCE: &[u8] = include_bytes!(
     "sdf.frag.glsl");
 
 #[derive(Clone, Copy, Debug)]

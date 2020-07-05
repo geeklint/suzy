@@ -6,6 +6,9 @@ use super::texture::TextureCache;
 
 pub mod bindings {
     #![allow(bare_trait_objects)]
+    #![allow(clippy::too_many_arguments)]
+    #![allow(clippy::unused_unit)]
+
     include!(concat!(env!("OUT_DIR"), "/opengl_bindings.rs"));
 }
 

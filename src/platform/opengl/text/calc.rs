@@ -150,7 +150,7 @@ impl<'a> RichTextParser<'a> {
 impl<'a> Iterator for RichTextParser<'a> {
     type Item = RichTextCommand<'a>;
     fn next(&mut self) -> Option<RichTextCommand<'a>> {
-        if self.text.len() == 0 {
+        if self.text.is_empty() {
             None
         } else if self.text.starts_with("<b>") {
             self.text = &self.text[3..];
@@ -416,7 +416,7 @@ impl<'a> FontCharCalc<'a> {
 
     pub fn push_str(&mut self, text: &str) {
         let mut remaining = text;
-        while remaining.len() > 0 {
+        while !remaining.is_empty() {
             let word_end = remaining.find(char::is_whitespace);
             match word_end {
                 None => {

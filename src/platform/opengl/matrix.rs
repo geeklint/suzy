@@ -126,6 +126,7 @@ impl Mul for Mat4 {
     type Output = Mat4;
 
     fn mul(self, rhs: Mat4) -> Mat4 {
+        #![allow(clippy::op_ref)]
         (&self) * (&rhs)
     }
 }
@@ -134,6 +135,7 @@ impl Mul<&Mat4> for Mat4 {
     type Output = Mat4;
 
     fn mul(self, rhs: &Mat4) -> Mat4 {
+        #![allow(clippy::op_ref)]
         (&self) * rhs
     }
 }
@@ -142,6 +144,7 @@ impl Mul<Mat4> for &Mat4 {
     type Output = Mat4;
 
     fn mul(self, rhs: Mat4) -> Mat4 {
+        #![allow(clippy::op_ref)]
         self * (&rhs)
     }
 }

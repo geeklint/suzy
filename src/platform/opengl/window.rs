@@ -60,8 +60,8 @@ impl Window {
         }
     }
 
-    pub fn prepare_draw<'a>(&'a mut self, screen_size: (f32, f32))
-        -> DrawContext<'a, OpenGlRenderPlatform>
+    pub fn prepare_draw(&mut self, screen_size: (f32, f32))
+        -> DrawContext<OpenGlRenderPlatform>
     {
         unsafe {
             self.ctx.bindings.Enable(BLEND);

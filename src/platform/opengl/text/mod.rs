@@ -70,6 +70,11 @@ impl Text {
     }
 }
 
+impl Default for Text {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Graphic<OpenGlRenderPlatform> for Text {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {

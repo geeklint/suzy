@@ -1,13 +1,9 @@
 
 use crate::platform::opengl;
 use opengl::context::bindings::types::*;
-use opengl::texture::{
-    Texture,
-};
+use opengl::texture::Texture;
 
-use super::{
-    FontStyle,
-};
+use super::FontStyle;
 
 // 0: char
 // 1,2: u,v

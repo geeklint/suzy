@@ -125,13 +125,14 @@ where
         let old = std::mem::replace(&mut ctx.current, new);
         match &ctx.last_applied {
             LastApplied::History(index) => {
-                ctx.last_applied = if *index < ctx.history.len() {
-                    LastApplied::History(*index)
-                } else if *index == ctx.history.len() {
-                    LastApplied::Current
-                } else {
-                    debug_assert!(false, "DrawContext corrupted");
-                    LastApplied::None
+                use std::cmp::Ordering;
+                ctx.last_applied = match index.cmp(&ctx.history.len()) {
+                    Ordering::Less => LastApplied::History(*index),
+                    Ordering::Equal => LastApplied::Current,
+                    Ordering::Greater => {
+                        debug_assert!(false, "DrawContext corrupted");
+                        LastApplied::None
+                    },
                 };
             },
             LastApplied::Current => {

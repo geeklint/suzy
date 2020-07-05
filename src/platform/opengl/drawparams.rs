@@ -8,9 +8,7 @@ use super::OpenGlContext;
 use super::texture::Texture;
 use super::shader::Shader;
 use super::context::bindings::types::GLuint;
-use super::context::bindings::{
-    TEXTURE0,
-};
+use super::context::bindings::TEXTURE0;
 
 #[derive(Clone)]
 enum ShaderExclusive {
