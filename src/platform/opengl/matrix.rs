@@ -151,13 +151,15 @@ impl Mul<Mat4> for &Mat4 {
 
 impl MulAssign for Mat4 {
     fn mul_assign(&mut self, rhs: Mat4) {
-        *self = (&*self) * (&rhs)
+        #![allow(clippy::op_ref)]
+        *self = &*self * rhs
     }
 }
 
 impl MulAssign<&Mat4> for Mat4 {
     fn mul_assign(&mut self, rhs: &Mat4) {
-        *self = (&*self) * rhs
+        #![allow(clippy::op_ref)]
+        *self = &*self * rhs
     }
 }
 

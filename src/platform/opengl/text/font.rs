@@ -113,8 +113,8 @@ impl<'a> FontFamilyDynamic<'a> {
             FontStyle::Italic => self.italic.as_ref()
                 .unwrap_or(&self.normal),
             FontStyle::BoldItalic => self.bold_italic.as_ref()
-                .or(self.bold.as_ref())
-                .or(self.italic.as_ref())
+                .or_else(|| self.bold.as_ref())
+                .or_else(|| self.italic.as_ref())
                 .unwrap_or(&self.normal),
         }
     }

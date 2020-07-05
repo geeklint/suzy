@@ -24,10 +24,14 @@ struct PixelInfo {
 
 impl PixelInfo {
     fn diff_to_event(&mut self, other: &Self) -> Option<WindowEvent> {
-        if self.size != other.size {
+        let size_change = self.size != other.size;
+        #[allow(clippy::float_cmp)]
+        let dp_change = self.pixels_per_dp != other.pixels_per_dp;
+
+        if size_change {
             self.size = other.size;
             Some(WindowEvent::Resize(self.size.0, self.size.1))
-        } else if self.pixels_per_dp != other.pixels_per_dp {
+        } else if dp_change {
             self.pixels_per_dp = other.pixels_per_dp;
             Some(WindowEvent::DpScaleChange(self.pixels_per_dp))
         } else {
