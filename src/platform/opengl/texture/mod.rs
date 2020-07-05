@@ -9,8 +9,6 @@ use super::context::bindings::{
     TEXTURE_2D,
 };
 
-#[macro_use] use super::primitive;
-
 mod populate;
 
 pub use populate::*;

@@ -9,8 +9,6 @@ use super::context::bindings::{
     STATIC_DRAW,
 };
 
-#[macro_use] use super::primitive;
-
 gl_object! { SingleBufferData, GenBuffers, DeleteBuffers, 1 }
 gl_object! { TwoBufferData, GenBuffers, DeleteBuffers, 2 }
 
