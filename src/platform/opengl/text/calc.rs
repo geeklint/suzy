@@ -9,7 +9,7 @@ use super::{
 
 
 struct GlyphMetrics {
-    ch: char,
+    _ch: char,
     uv_x: f32,
     uv_y: f32,
     uv_width: f32,
@@ -23,7 +23,7 @@ struct GlyphMetrics {
 
 fn conv_glyph_metrics(source: GlyphMetricsSource) -> GlyphMetrics {
     GlyphMetrics {
-        ch: source.0,
+        _ch: source.0,
         uv_x: source.1,
         uv_y: source.2,
         uv_width: source.3,

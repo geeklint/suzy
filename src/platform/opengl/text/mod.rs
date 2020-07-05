@@ -2,10 +2,9 @@ use std::collections::HashMap;
 
 use crate::graphics::{DrawContext, Graphic};
 
-use super::{OpenGlRenderPlatform, OpenGlContext};
+use super::OpenGlRenderPlatform;
 use super::context::bindings::types::*;
 use super::context::bindings::{
-    ARRAY_BUFFER,
     FALSE,
     FLOAT,
     TRIANGLES,

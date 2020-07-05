@@ -1,4 +1,3 @@
-use crate::graphics;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 

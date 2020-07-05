@@ -4,7 +4,7 @@ use drying_paint::{Watcher, WatcherId};
 pub use drying_paint::Watched;
 
 use crate::dims::{Rect, Dim};
-use crate::graphics::{Graphic, DrawContext};
+use crate::graphics::DrawContext;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 

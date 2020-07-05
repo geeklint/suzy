@@ -15,7 +15,6 @@ use super::context::bindings::{
     COLOR_CLEAR_VALUE,
 };
 use super::drawparams::DrawParams;
-use super::stdshaders::Shaders;
 
 /// opengl::Window provides a subset of the methods to implement the Window
 /// trait. It can be embedded in another window implementation which

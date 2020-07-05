@@ -222,18 +222,6 @@ impl Shader {
         unsafe { gl.Uniform1i(loc.id, value as GLint) };
     }
 
-    pub fn set_float(gl: &OpenGlBindings, loc: UniformLoc, value: GLfloat) {
-        unsafe { gl.Uniform1f(loc.id, value) };
-    }
-
-    pub fn set_vec2(
-        gl: &OpenGlBindings,
-        loc: UniformLoc,
-        value: (GLfloat, GLfloat),
-    ) {
-        unsafe { gl.Uniform2f(loc.id, value.0, value.1) };
-    }
-
     pub fn set_vec4(
         gl: &OpenGlBindings,
         loc: UniformLoc,

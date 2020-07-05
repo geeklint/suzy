@@ -32,7 +32,6 @@ pub struct FontFamilySourceDynamic<'a> {
     pub image_channels: GLsizei,
     pub image_width: u16,
     pub image_height: u16,
-    pub padding_ratio: f32,
     pub normal: FontSource<'a>,
     pub bold: Option<FontSource<'a>>,
     pub italic: Option<FontSource<'a>>,
@@ -86,7 +85,6 @@ impl<'a> FontFamilySourceDynamic<'a> {
         };
         FontFamilyDynamic {
             texture,
-            padding_ratio: self.padding_ratio,
             channel_masks,
             normal: self.normal,
             bold: self.bold,
@@ -98,7 +96,6 @@ impl<'a> FontFamilySourceDynamic<'a> {
 
 pub struct FontFamilyDynamic<'a> {
     pub(super) texture: Texture,
-    pub(super) padding_ratio: f32,
     pub(super) channel_masks: &'static [ChannelMask],
     pub(super) normal: FontSource<'a>,
     pub(super) bold: Option<FontSource<'a>>,

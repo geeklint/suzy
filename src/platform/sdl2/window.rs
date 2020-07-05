@@ -9,7 +9,6 @@ use crate::graphics::DrawContext;
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
-use crate::platform::{RenderPlatform};
 
 //use super::texture_loader::load_texture;
 
@@ -75,16 +74,10 @@ pub struct Window {
     title: String,
     info: WindowInfo,
     _context: sdl2::video::GLContext,
-    video: sdl2::VideoSubsystem,
+    _video: sdl2::VideoSubsystem,
     _image: sdl2::image::Sdl2ImageContext,
     sdl: sdl2::Sdl,
     events: Option<Events>,
-}
-
-impl Window {
-    pub(super) fn load_glfn(&self, fn_name: &str) -> *const () {
-        self.video.gl_get_proc_address(fn_name)
-    }
 }
 
 impl TryFrom<WindowBuilder> for Window {
@@ -169,7 +162,7 @@ impl TryFrom<WindowBuilder> for Window {
                 pixel_info,
                 gl_win,
             },
-            video: video,
+            _video: video,
             _image: image,
             _context: context,
             sdl,

@@ -88,6 +88,11 @@ impl ShaderExclusive {
                     ctx.shaders.sdf_uniforms.distance_edges,
                     *distance_edges,
                 );
+                Shader::set_vec4(
+                    &ctx.bindings,
+                    ctx.shaders.sdf_uniforms.tex_chan_mask,
+                    *tex_chan_mask,
+                );
             },
         }
     }

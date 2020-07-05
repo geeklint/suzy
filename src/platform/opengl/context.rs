@@ -1,11 +1,11 @@
 use std::rc::Rc;
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 use super::stdshaders::Shaders;
 use super::texture::TextureCache;
 
 pub mod bindings {
+    #![allow(bare_trait_objects)]
     include!(concat!(env!("OUT_DIR"), "/opengl_bindings.rs"));
 }
 

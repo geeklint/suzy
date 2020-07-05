@@ -1,4 +1,3 @@
-use drying_paint::WatchedMeta;
 
 macro_rules! gl_object {
     ($name:ident, $create:ident, $delete:ident, $count:expr) => {
@@ -6,7 +5,7 @@ macro_rules! gl_object {
             pub(crate) ids: [u32; $count],
             pub(crate) ready: bool,
             pub(crate) gl:
-                ::std::rc::Weak<crate::platform::opengl::OpenGlBindings>,
+                ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
         }
         gl_object! {impl $name, $create, $delete, $count}
     };
@@ -15,12 +14,13 @@ macro_rules! gl_object {
             pub(crate) ids: [u32; $count],
             pub(crate) ready: bool,
             pub(crate) gl:
-                ::std::rc::Weak<crate::platform::opengl::OpenGlBindings>,
+                ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
         }
         gl_object! {impl $name, $create, $delete, $count}
     };
     (impl $name:ident, $create:ident, $delete:ident, $count:expr) => {
         impl $name {
+            #[allow(dead_code)]
             pub fn new() -> Self {
                 Self {
                     ids: [0; $count],
@@ -29,22 +29,25 @@ macro_rules! gl_object {
                 }
             }
 
+            #[allow(dead_code)]
             pub fn get(&self)
                 -> Option<(
                     [u32; $count],
-                    ::std::rc::Rc<crate::platform::opengl::OpenGlBindings>,
+                    ::std::rc::Rc<$crate::platform::opengl::OpenGlBindings>,
                 )>
             {
                 self.gl.upgrade().map(|gl| (self.ids, gl))
             }
 
+            #[allow(dead_code)]
             pub fn mark_ready(&mut self) {
                 self.ready = true;
             }
 
+            #[allow(dead_code)]
             pub fn check_ready(
                 &mut self,
-                gl: &::std::rc::Rc<crate::platform::opengl::OpenGlBindings>,
+                gl: &::std::rc::Rc<$crate::platform::opengl::OpenGlBindings>,
             ) -> bool {
                 let weak_gl = ::std::rc::Rc::downgrade(gl);
                 if !self.gl.ptr_eq(&weak_gl) {

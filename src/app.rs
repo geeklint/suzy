@@ -4,7 +4,7 @@ use std::convert::TryInto;
 
 use drying_paint::Watched;
 
-use crate::platform::{DefaultPlatform, Platform, RenderPlatform};
+use crate::platform::{DefaultPlatform, Platform};
 use crate::pointer::{PointerEvent, PointerId};
 use crate::widget::{Widget, WidgetContent, WidgetId};
 use crate::window;
