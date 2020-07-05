@@ -43,7 +43,7 @@ where
 }
 
 pub trait PopulateTexture: PopulateTextureDynClone {
-    fn populate(&self, gl: &OpenGlBindings) -> TextureSize;
+    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()>;
 
     fn get_known_size(&self) -> Option<(f32, f32)> { None }
 
@@ -52,9 +52,10 @@ pub trait PopulateTexture: PopulateTextureDynClone {
 
 impl<F> PopulateTexture for F
 where
-    F: 'static + Clone + for<'a> Fn(&'a OpenGlBindings) -> TextureSize
+    F: 'static + Clone,
+    F: for<'a> Fn(&'a OpenGlBindings) -> Result<TextureSize, ()>
 {
-    fn populate(&self, gl: &OpenGlBindings) -> TextureSize {
+    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
         (self)(gl)
     }
 }
@@ -89,7 +90,7 @@ impl PopulateTextureUtil {
         width: u16,
         height: u16,
         pixels: &[u8],
-    ) -> TextureSize {
+    ) -> Result<TextureSize, ()> {
         if width.is_power_of_two() && height.is_power_of_two() {
             unsafe {
                 gl.TexImage2D(
@@ -104,12 +105,12 @@ impl PopulateTextureUtil {
                     pixels.as_ptr() as *const _,
                 );
             }
-            TextureSize {
+            Ok(TextureSize {
                 image_width: width as f32,
                 image_height: height as f32,
                 texture_width: width as f32,
                 texture_height: height as f32,
-            }
+            })
         } else {
             let texture_width = width.next_power_of_two().into();
             let texture_height = height.next_power_of_two().into();
@@ -139,12 +140,12 @@ impl PopulateTextureUtil {
                     pixels.as_ptr() as *const _,
                 );
             }
-            TextureSize {
+            Ok(TextureSize {
                 image_width: width as f32,
                 image_height: height as f32,
                 texture_width: texture_width as f32,
                 texture_height: texture_height as f32,
-            }
+            })
         }
     }
 
@@ -153,7 +154,7 @@ impl PopulateTextureUtil {
         width: u16,
         height: u16,
         pixels: &[u8],
-    ) -> TextureSize {
+    ) -> Result<TextureSize, ()> {
         assert_eq!((width as usize) * (height as usize), pixels.len());
         Self::populate_format(gl, ALPHA as _, width, height, pixels)
     }
@@ -163,7 +164,7 @@ impl PopulateTextureUtil {
         width: u16,
         height: u16,
         pixels: &[u8],
-    ) -> TextureSize {
+    ) -> Result<TextureSize, ()> {
         assert_eq!((width as usize) * (height as usize) * 3, pixels.len());
         Self::populate_format(gl, RGB as _, width, height, pixels)
     }
@@ -173,7 +174,7 @@ impl PopulateTextureUtil {
         width: u16,
         height: u16,
         pixels: &[u8],
-    ) -> TextureSize {
+    ) -> Result<TextureSize, ()> {
         assert_eq!((width as usize) * (height as usize) * 4, pixels.len());
         Self::populate_format(gl, RGBA as _, width, height, pixels)
     }
@@ -187,7 +188,7 @@ impl PopulateTexture for DefaultTexturePopulator {
         Some((2.0, 2.0))
     }
 
-    fn populate(&self, gl: &OpenGlBindings) -> TextureSize {
+    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
         let pixels: [u8; 12] = [0xff; 12];
         let size = PopulateTextureUtil::populate_rgb(
             gl, 2, 2, &pixels
@@ -213,7 +214,7 @@ impl PopulateTexture for ErrorTexturePopulator {
         Some((16.0, 16.0))
     }
 
-    fn populate(&self, gl: &OpenGlBindings) -> TextureSize {
+    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
         let size = PopulateTextureUtil::populate_rgb(
             gl, ERRTEX_SIDE, ERRTEX_SIDE, ERRTEX
         );

@@ -77,7 +77,7 @@ impl SharedTexture {
         self.obj.borrow().size().copied()
     }
 
-    fn bind(&self, gl: &Rc<OpenGlBindings>) {
+    fn bind(&self, gl: &Rc<OpenGlBindings>) -> bool {
         let mut borrow = self.obj.borrow_mut();
         let SizedTexture { obj, size } = &mut *borrow;
         let ready = obj.check_ready(gl);
@@ -85,9 +85,14 @@ impl SharedTexture {
             gl.BindTexture(TEXTURE_2D, obj.ids[0]);
         }
         if !ready {
-            *size = self.populator.populate(gl);
-            obj.mark_ready();
+            if let Ok(pop_size) = self.populator.populate(gl) {
+                *size = pop_size;
+                obj.mark_ready();
+            } else {
+                return false;
+            }
         }
+        true
     }
 }
 
@@ -160,28 +165,35 @@ impl TextureInstance {
         }
     }
 
-    fn ensure_existing(&mut self, cache: &mut TextureCache)
-        -> &Rc<SharedTexture>
-    {
-        if let Self::Existing(ref existing) = self {
-            &existing
+    fn bind(&mut self, ctx: &mut OpenGlContext) {
+        let success = if let Self::Existing(ref existing) = self {
+            existing.bind(&ctx.bindings)
         } else {
             match std::mem::replace(self, Self::error()) {
                 // TODO: figure out how to do this without unreachable!() ?
                 Self::Existing(_) => unreachable!(),
                 Self::ToCache(key, populator) => {
-                    let entry = cache.entry(key);
+                    let entry = ctx.texture_cache.entry(key);
                     let cached = entry.or_insert_with(move || {
                         SharedTexture::new(populator)
                     });
-                    *self = Self::Existing(cached.clone());
-                    if let Self::Existing(ref existing) = self {
-                        &existing
-                    } else {
-                        unreachable!()
-                    }
+                    let clone = cached.clone();
+                    let success = clone.bind(&ctx.bindings);
+                    *self = Self::Existing(clone);
+                    success
                 },
             }
+        };
+        if !success {
+            let entry = ctx.texture_cache.entry(TextureCacheKey::error());
+            let cached = entry.or_insert_with(move || {
+                SharedTexture::new(Box::new(ErrorTexturePopulator))
+            });
+            let clone = cached.clone();
+            assert!(
+                clone.bind(&ctx.bindings),
+                "Failed to bind error texture",
+            );
         }
     }
 }
@@ -275,7 +287,7 @@ impl Texture {
     pub(super) fn bind(&mut self, ctx: &mut OpenGlContext)
         -> (f32, f32, f32, f32)
     {
-        self.ins.ensure_existing(&mut ctx.texture_cache).bind(&ctx.bindings);
+        self.ins.bind(ctx);
         self.ins.size().unwrap().get_crop_transform(
             self.offset.0,
             self.offset.1,
