@@ -4,20 +4,42 @@ mod texture;
 
 mod context;
 mod drawparams;
-pub mod graphics;
+mod graphics;
 mod matrix;
 mod shader;
 mod stdshaders;
-pub mod text;
+mod text;
 mod window;
 
-pub use context::{OpenGlContext, OpenGlBindings};
-
-pub use matrix::Mat4;
-
-pub(crate) use window::{
-    Window,
+pub use buffer::SingleVertexBuffer;
+pub use texture::{
+    PopulateTexture,
+    PopulateTextureDynClone,
+    PopulateTextureUtil,
+    Texture,
+    TextureCacheKey,
+    TextureSize,
 };
+pub use context::{
+    OpenGlContext,
+    OpenGlBindings,
+};
+pub use drawparams::DrawParams;
+pub use graphics::*;
+pub use matrix::Mat4;
+pub use text::{
+    FontFamily,
+    FontFamilyDynamic,
+    FontFamilySource,
+    FontFamilySourceDynamic,
+    FontStyle,
+    RichTextCommand,
+    RichTextParser,
+    Text,
+    TextAlignment,
+    TextLayoutSettings,
+};
+pub use window::Window;
 
 pub struct OpenGlRenderPlatform;
 
