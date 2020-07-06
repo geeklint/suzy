@@ -114,8 +114,6 @@ pub fn build_fontasset<P: AsRef<Path>>(
                 texture_size,
                 texture_size,
                 channels,
-                font_size,
-                settings.padding_ratio,
                 bold_channel,
                 italic_channel,
                 bold_italic_channel,

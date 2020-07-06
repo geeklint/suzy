@@ -73,8 +73,6 @@ pub(super) struct FontOutput {
     width: usize,
     height: usize,
     channels: usize,
-    font_size: f64,
-    padding_ratio: f64,
     buffer: Vec<u8>,
     normal: FontSource,
     bold: Option<FontSource>,
@@ -87,8 +85,6 @@ impl FontOutput {
         width: usize,
         height: usize,
         channels: usize,
-        font_size: f64,
-        padding_ratio: f64,
         bold_channel: Option<u8>,
         italic_channel: Option<u8>,
         bold_italic_channel: Option<u8>,
@@ -98,8 +94,6 @@ impl FontOutput {
             width,
             height,
             channels,
-            font_size,
-            padding_ratio,
             buffer: vec![0; bufsize],
             normal: FontSource::new(0),
             bold: bold_channel.map(FontSource::new),
@@ -159,7 +153,7 @@ impl FontOutput {
             .open(path)?;
         writeln!(
             &file,
-            "use suzy::platform::opengl::text::FontFamilySource;",
+            "use suzy::platform::opengl::FontFamilySource;",
         )?;
         write!(
             &file,
@@ -168,13 +162,11 @@ impl FontOutput {
                 image_height: {},
                 image_channels: {},
                 atlas_image: include_bytes!({:?}),
-                padding_ratio: {:.1},
             ",
             self.width,
             self.height,
             self.channels,
             data_filename_str,
-            self.padding_ratio,
         )?;
         write!(&file, "normal: ")?;
         self.normal.write(&mut file)?;
