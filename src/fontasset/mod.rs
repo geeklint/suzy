@@ -257,7 +257,7 @@ fn get_layout(
         })
         .collect();
     array.sort_unstable_by(|a, b| {
-        (a.1 * a.2).partial_cmp(&(b.1 * b.2)).unwrap().reverse()
+        (a.1.max(a.2)).partial_cmp(&(b.1.max(b.2))).unwrap().reverse()
     });
     let mut positions = HashMap::new();
     let mut empty_area = size * size;
