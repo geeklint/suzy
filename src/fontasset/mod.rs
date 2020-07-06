@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::collections::HashMap;
 
 use rusttype::Font;
@@ -177,7 +177,6 @@ pub fn build_fontasset<P: AsRef<Path>>(
                         },
                         &mut dest_buffer,
                     );
-                    channel += 1;
                 }
                 progressbar.update(chindex, settings.chars.len());
                 buffer_data
@@ -257,11 +256,9 @@ fn get_layout(
             (*ch, width, height)
         })
         .collect();
-    /* rect_packer doesn't seem to indicate it needs this...
     array.sort_unstable_by(|a, b| {
         (a.1 * a.2).partial_cmp(&(b.1 * b.2)).unwrap().reverse()
     });
-    */
     let mut positions = HashMap::new();
     let mut empty_area = size * size;
     for (ch, width, height) in array.into_iter() {

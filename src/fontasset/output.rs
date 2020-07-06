@@ -110,9 +110,13 @@ impl FontOutput {
         let source = if channel == 0 {
             &mut self.normal
         } else {
-            self.bold.as_mut().filter(|fs| fs.channel == channel)
-                .or(self.italic.as_mut().filter(|fs| fs.channel == channel))
-                .or(self.bold_italic.as_mut().filter(|fs| fs.channel == channel))
+            let Self { bold, italic, bold_italic, .. } = self;
+            let bold = bold.as_mut();
+            let italic = italic.as_mut();
+            let bold_italic = bold_italic.as_mut();
+            bold.filter(|fs| fs.channel == channel)
+                .or_else(|| italic.filter(|fs| fs.channel == channel))
+                .or_else(|| bold_italic.filter(|fs| fs.channel == channel))
                 .expect("Cannot add metric to invalid channel")
         };
         source.metrics.push((
@@ -132,7 +136,7 @@ impl FontOutput {
     pub fn write<P: AsRef<Path>>(&mut self, path: P) -> std::io::Result<()> {
         let mut data_filename = path.as_ref().to_path_buf();
         let mut ext = data_filename.extension()
-            .unwrap_or("".as_ref())
+            .unwrap_or_default()
             .to_os_string();
         ext.push(".texdata");
         data_filename.set_extension(ext);

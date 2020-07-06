@@ -13,8 +13,8 @@ pub struct Settings {
     pub(super) progressbar: bool,
 }
 
-impl Settings {
-    pub fn new() -> Self {
+impl Default for Settings {
+    fn default() -> Self {
         Self {
             chars: Vec::new(),
             padding_ratio: 0.5,
@@ -25,6 +25,10 @@ impl Settings {
 }
 
 impl Settings {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub fn padding_ratio(mut self, ratio: f64) -> Self {
         self.padding_ratio = ratio;
         self
@@ -65,9 +69,7 @@ enum FontSource<'a> {
     Bytes(Cow<'a, [u8]>),
 }
 
-fn parse_font<'a>(source: FontSource<'a>)
-    -> Result<rusttype::Font<'a>, String>
-{
+fn parse_font(source: FontSource) -> Result<rusttype::Font, String> {
     Ok(match source {
         FontSource::Path(path) => {
             let bytes = std::fs::read(path)

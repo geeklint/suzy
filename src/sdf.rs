@@ -25,8 +25,12 @@ pub struct DestImage<'a> {
     pub height: usize,
 }
 
-fn get_edge_pixels(source: SourceBitmap<'_>)
-    -> (Vec<(f64, f64)>, Vec<(f64, f64)>)
+struct EdgePixels {
+    edge_pixels_in: Vec<(f64, f64)>,
+    edge_pixels_out: Vec<(f64, f64)>,
+}
+
+fn get_edge_pixels(source: SourceBitmap<'_>) -> EdgePixels
 {
     let mut edge_pixels_in = Vec::new();
     let mut edge_pixels_out = Vec::new();
@@ -57,11 +61,12 @@ fn get_edge_pixels(source: SourceBitmap<'_>)
             }
         }
     }
-    (edge_pixels_in, edge_pixels_out)
+    EdgePixels { edge_pixels_in, edge_pixels_out }
 }
 
 pub fn render_sdf(dest: DestImage<'_>, source: SourceBitmap<'_>) {
-    let (edge_pixels_in, edge_pixels_out) = get_edge_pixels(source);
+    let edge_pixels = get_edge_pixels(source);
+    let EdgePixels { edge_pixels_in, edge_pixels_out } = edge_pixels;
     // 'inner' = dest space size w/o padding
     let inner_width = (dest.width as f64) - (2.0 * dest.padding);
     let inner_height = (dest.height as f64) - (2.0 * dest.padding);
