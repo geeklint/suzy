@@ -2,7 +2,10 @@
 macro_rules! gl_object {
     ($name:ident, $create:ident, $delete:ident, $count:expr) => {
         struct $name {
-            pub(crate) ids: [u32; $count],
+            pub(crate) ids: [
+                $crate::platform::opengl::context::bindings::types::GLuint;
+                $count
+            ],
             pub(crate) ready: bool,
             pub(crate) gl:
                 ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
@@ -11,7 +14,10 @@ macro_rules! gl_object {
     };
     (pub $name:ident, $create:ident, $delete:ident, $count:expr) => {
         pub struct $name {
-            pub(crate) ids: [u32; $count],
+            pub(crate) ids: [
+                $crate::platform::opengl::context::bindings::types::GLuint;
+                $count
+            ],
             pub(crate) ready: bool,
             pub(crate) gl:
                 ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
@@ -31,8 +37,10 @@ macro_rules! gl_object {
 
             #[allow(dead_code)]
             pub fn get(&self)
-                -> Option<(
-                    [u32; $count],
+                -> Option<([
+                    $crate::platform::opengl::context::bindings::types::GLuint;
+                    $count
+                ],
                     ::std::rc::Rc<$crate::platform::opengl::OpenGlBindings>,
                 )>
             {

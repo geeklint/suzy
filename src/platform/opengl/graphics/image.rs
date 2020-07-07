@@ -1,20 +1,25 @@
 
-use crate::graphics::{self, DrawContext};
+use crate::graphics::{DrawContext, Graphic};
 use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
 
-use super::Graphic;
-
 use crate::platform::opengl;
-use opengl::bindings::types::*;
-pub use opengl::primitive::{
-    Texture, TextureLoader, TextureLoadResult, TextureBuilder
+use opengl::context::bindings::{
+    FALSE,
+    FLOAT,
+    TRIANGLES,
+    UNSIGNED_BYTE,
 };
-use opengl::OpenGlRenderPlatform as Gl;
+use opengl::{
+    OpenGlRenderPlatform,
+    DualVertexBufferIndexed,
+    Texture,
+};
 
 pub struct SlicedImage {
     rect: SimpleRect,
     padding: SimplePadding2d,
-    graphic: Graphic,
+    texture: Texture,
+    buffers: DualVertexBufferIndexed<f32>,
 }
 
 static SLICED_INDICES: [u8; 18 * 3] = [
@@ -38,82 +43,91 @@ static SLICED_INDICES: [u8; 18 * 3] = [
     7, 2, 8,
 ];
 
-impl SlicedImage {
-    pub fn create<R, P>(texture: Texture, rect: R, padding: P) -> Self
-    where
-        R: Into<SimpleRect>,
-        P: Into<SimplePadding2d>,
-    {
-        let padding = padding.into();
-        let mut graphic = Graphic::new(16, 18, (true, false, false));
-        let coords = [0.0; 32];
-        graphic.set_coords(&coords);
-        Self::calc_uvs(&mut graphic, &padding, &texture);
-        graphic.set_tris(&SLICED_INDICES);
-        graphic.set_texture(texture);
-        SlicedImage {
-            rect: rect.into(),
-            padding,
-            graphic,
+impl Default for SlicedImage {
+    fn default() -> Self {
+        Self {
+            rect: SimpleRect::default(),
+            padding: SimplePadding2d::default(),
+            texture: Texture::default(),
+            buffers: DualVertexBufferIndexed::new(true, false, false),
         }
     }
+}
 
-    fn calc_uvs<P>(graphic: &mut Graphic, padding: &P, texture: &Texture)
-        where P: Padding2d
+impl SlicedImage {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn update_image<P>(&mut self, texture: Texture, padding: &P)
+    where
+        P: Padding2d
     {
-        let left = padding.left() / texture.width();
-        let right = 1.0 - (padding.right() / texture.width());
-        let bottom = padding.bottom() / texture.height();
-        let top = 1.0 - (padding.top() / texture.height());
-        let uvs: [GLfloat; 32] = [
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            left, 0.0,
-            right, 0.0,
-            1.0, bottom,
-            1.0, top,
-            right, 1.0,
-            left, 1.0,
-            0.0, top,
-            0.0, bottom,
-            left, bottom,
-            right, bottom,
-            right, top,
-            left, top,
-        ];
-        graphic.set_uvs(&uvs);
+        self.texture = texture;
+        let texture = &self.texture;
+        self.padding = padding.into();
+        let mut uvs = [0f32; 32];
+        self.buffers.set_data_1(|| {
+            texture.size().map(|(tex_width, tex_height)| {
+                let left = padding.left() / tex_width;
+                let right = 1.0 - (padding.right() / tex_width);
+                let bottom = padding.bottom() / tex_height;
+                let top = 1.0 - (padding.top() / tex_height);
+                uvs = [
+                    0.0, 0.0,
+                    1.0, 0.0,
+                    1.0, 1.0,
+                    0.0, 1.0,
+                    left, 0.0,
+                    right, 0.0,
+                    1.0, bottom,
+                    1.0, top,
+                    right, 1.0,
+                    left, 1.0,
+                    0.0, top,
+                    0.0, bottom,
+                    left, bottom,
+                    right, bottom,
+                    right, top,
+                    left, top,
+                ];
+                &uvs[..]
+            })
+        });
     }
 
     fn update(&mut self) {
         let mut inner = SimpleRect::default();
         inner.set_fill(&self.rect, &self.padding);
-        let vertices: [GLfloat; 32] = [
-            // outer corners
-            self.rect.left(), self.rect.bottom(),
-            self.rect.right(), self.rect.bottom(),
-            self.rect.right(), self.rect.top(),
-            self.rect.left(), self.rect.top(),
-            // bottom edge
-            inner.left(), self.rect.bottom(),
-            inner.right(), self.rect.bottom(),
-            // right edge
-            self.rect.right(), inner.bottom(),
-            self.rect.right(), inner.top(),
-            // top edge
-            inner.right(), self.rect.top(),
-            inner.left(), self.rect.top(),
-            // left edge
-            self.rect.left(), inner.top(),
-            self.rect.left(), inner.bottom(),
-            // inner corners
-            inner.left(), inner.bottom(),
-            inner.right(), inner.bottom(),
-            inner.right(), inner.top(),
-            inner.left(), inner.top(),
-        ];
-        self.graphic.set_coords(&vertices);
+        let rect = &self.rect;
+        let mut vertices = [0f32; 32];
+        self.buffers.set_data_0(|| {
+            vertices = [
+                // outer corners
+                rect.left(), rect.bottom(),
+                rect.right(), rect.bottom(),
+                rect.right(), rect.top(),
+                rect.left(), rect.top(),
+                // bottom edge
+                inner.left(), rect.bottom(),
+                inner.right(), rect.bottom(),
+                // right edge
+                rect.right(), inner.bottom(),
+                rect.right(), inner.top(),
+                // top edge
+                inner.right(), rect.top(),
+                inner.left(), rect.top(),
+                // left edge
+                rect.left(), inner.top(),
+                rect.left(), inner.bottom(),
+                // inner corners
+                inner.left(), inner.bottom(),
+                inner.right(), inner.bottom(),
+                inner.right(), inner.top(),
+                inner.left(), inner.top(),
+            ];
+            &vertices[..]
+        });
     }
 }
 
@@ -138,8 +152,38 @@ impl Rect for SlicedImage {
     }
 }
 
-impl graphics::Graphic<Gl> for SlicedImage {
-    fn draw(&self, ctx: &mut DrawContext<Gl>) {
-        self.graphic.draw(ctx);
+impl Graphic<OpenGlRenderPlatform> for SlicedImage {
+    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+        DrawContext::push(ctx);
+        ctx.standard_mode();
+        ctx.use_texture(self.texture.clone());
+        if let Some(ready) = self.buffers.check_ready(ctx) {
+            let gl = ready.gl;
+            ready.bind_0();
+            unsafe {
+                gl.VertexAttribPointer(
+                    0, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                );
+            }
+            ready.bind_1();
+            unsafe {
+                gl.VertexAttribPointer(
+                    1, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                );
+            }
+            ready.bind_indices();
+            DrawContext::prepare_draw(ctx);
+            let gl = &DrawContext::render_ctx(ctx).bindings;
+            unsafe {
+                gl.DrawElements(
+                    TRIANGLES,
+                    SLICED_INDICES.len() as _,
+                    UNSIGNED_BYTE,
+                    std::ptr::null(),
+                );
+            }
+        } else {
+            self.buffers.set_indices(|| &SLICED_INDICES[..]);
+        }
     }
 }

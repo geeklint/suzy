@@ -65,7 +65,7 @@ impl Text {
             }
             channels.clear();
             calc.merge_verts(&mut verts, channels);
-            &verts
+            &verts[..]
         });
     }
 }

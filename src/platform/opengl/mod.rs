@@ -11,7 +11,11 @@ mod stdshaders;
 mod text;
 mod window;
 
-pub use buffer::SingleVertexBuffer;
+pub use buffer::{
+    SingleVertexBuffer,
+    DualVertexBuffer,
+    DualVertexBufferIndexed,
+};
 pub use texture::{
     PopulateTexture,
     PopulateTextureDynClone,

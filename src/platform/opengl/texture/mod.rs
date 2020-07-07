@@ -165,6 +165,15 @@ impl TextureInstance {
         }
     }
 
+    fn image_size(&self) -> Option<(f32, f32)> {
+        match self {
+            Self::Existing(existing) => existing.size()
+                .map(|ts| (ts.image_width, ts.image_height)
+            ),
+            Self::ToCache(_, pop) => pop.get_known_size(),
+        }
+    }
+
     fn bind(&mut self, ctx: &mut OpenGlContext) {
         let success = if let Self::Existing(ref existing) = self {
             existing.bind(&ctx.bindings)
@@ -240,6 +249,14 @@ impl Texture {
             ins: TextureInstance::Existing(SharedTexture::new(populator)),
             offset: (0.0, 0.0),
             size,
+        }
+    }
+
+    pub fn size(&self) -> Option<(f32, f32)> {
+        if !self.size.0.is_nan() {
+            Some(self.size)
+        } else {
+            self.ins.image_size()
         }
     }
 
