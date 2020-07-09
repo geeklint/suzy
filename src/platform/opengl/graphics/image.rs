@@ -59,15 +59,19 @@ impl SlicedImage {
         Self::default()
     }
 
-    pub fn update_image<P>(&mut self, texture: Texture, padding: &P)
+    pub fn set_image<P>(&mut self, texture: Texture, padding: &P)
     where
         P: Padding2d
     {
         self.texture = texture;
-        let texture = &self.texture;
         self.padding = padding.into();
+        self.update_image();
+    }
+
+    fn update_image(&mut self) {
         let mut uvs = [0f32; 32];
-        self.buffers.set_data_1(|| {
+        let Self { buffers, texture, padding, .. } = self;
+        buffers.set_data_1(|gl| {
             texture.size().map(|(tex_width, tex_height)| {
                 let left = padding.left() / tex_width;
                 let right = 1.0 - (padding.right() / tex_width);
@@ -101,7 +105,7 @@ impl SlicedImage {
         inner.set_fill(&self.rect, &self.padding);
         let rect = &self.rect;
         let mut vertices = [0f32; 32];
-        self.buffers.set_data_0(|| {
+        self.buffers.set_data_0(|_gl| {
             vertices = [
                 // outer corners
                 rect.left(), rect.bottom(),
@@ -154,36 +158,38 @@ impl Rect for SlicedImage {
 
 impl Graphic<OpenGlRenderPlatform> for SlicedImage {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        DrawContext::push(ctx);
-        ctx.standard_mode();
-        ctx.use_texture(self.texture.clone());
-        if let Some(ready) = self.buffers.check_ready(ctx) {
-            let gl = ready.gl;
-            ready.bind_0();
-            unsafe {
-                gl.VertexAttribPointer(
-                    0, 2, FLOAT, FALSE, 0, std::ptr::null(),
-                );
+        DrawContext::push(ctx, |ctx| {
+            ctx.standard_mode();
+            ctx.use_texture(self.texture.clone());
+            if let Some(ready) = self.buffers.check_ready(ctx) {
+                let gl = ready.gl;
+                ready.bind_0();
+                unsafe {
+                    gl.VertexAttribPointer(
+                        0, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                    );
+                }
+                ready.bind_1();
+                unsafe {
+                    gl.VertexAttribPointer(
+                        1, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                    );
+                }
+                ready.bind_indices();
+                unsafe {
+                    gl.DrawElements(
+                        TRIANGLES,
+                        SLICED_INDICES.len() as _,
+                        UNSIGNED_BYTE,
+                        std::ptr::null(),
+                    );
+                }
+            } else {
+                self.update();
+                self.update_image();
+                self.buffers.set_indices(|_gl| &SLICED_INDICES[..]);
+                self.texture.bind(DrawContext::render_ctx_mut(ctx));
             }
-            ready.bind_1();
-            unsafe {
-                gl.VertexAttribPointer(
-                    1, 2, FLOAT, FALSE, 0, std::ptr::null(),
-                );
-            }
-            ready.bind_indices();
-            DrawContext::prepare_draw(ctx);
-            let gl = &DrawContext::render_ctx(ctx).bindings;
-            unsafe {
-                gl.DrawElements(
-                    TRIANGLES,
-                    SLICED_INDICES.len() as _,
-                    UNSIGNED_BYTE,
-                    std::ptr::null(),
-                );
-            }
-        } else {
-            self.buffers.set_indices(|| &SLICED_INDICES[..]);
-        }
+        });
     }
 }

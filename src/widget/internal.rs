@@ -36,7 +36,7 @@ where
     }
 }
 
-impl<P, T> Rect for WidgetView<'_, P, T>
+impl<P, T> Rect for &mut WidgetView<'_, P, T>
 where
     P: RenderPlatform,
     T: WidgetContent<P>,

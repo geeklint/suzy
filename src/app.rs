@@ -8,6 +8,7 @@ use crate::platform::{DefaultPlatform, Platform};
 use crate::pointer::{PointerEvent, PointerId};
 use crate::widget::{Widget, WidgetContent, WidgetId};
 use crate::window;
+use crate::graphics::DrawContext;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
 use window::{Window, WindowEvent, WindowSettings};
 
@@ -246,8 +247,14 @@ where
         let watch_ctx_inner = watch_ctx.take().unwrap();
         let watch_ctx_inner = watch_ctx_inner.with(|| {
             let mut ctx = window.prepare_draw();
-            while crate::graphics::DrawContext::draw(&mut ctx, root) {
+            let mut loop_count = 0;
+            while DrawContext::draw(&mut ctx, root) {
+                debug_assert!(
+                    loop_count < 1024,
+                    "render exceeded its loop count (possible infinite loop)",
+                );
                 drying_paint::WatchContext::update_current();
+                loop_count += 1;
             }
         }).0;
         *watch_ctx = Some(watch_ctx_inner);

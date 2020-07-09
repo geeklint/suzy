@@ -57,7 +57,7 @@ impl Text {
         self.texture = font.texture.clone();
         let mut verts = vec![];
         let channels = &mut self.channels;
-        self.vertices.set_data(|| {
+        self.vertices.set_data(|_gl| {
             let mut calc = FontCharCalc::new(font, settings);
             let parser = RichTextParser::new(text);
             for rich_text_cmd in parser {
@@ -78,36 +78,36 @@ impl Default for Text {
 
 impl Graphic<OpenGlRenderPlatform> for Text {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        DrawContext::push(ctx);
-        ctx.sdf_mode();
-        ctx.use_texture(self.texture.clone());
-        if self.vertices.bind_if_ready(ctx) {
-            let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
-            let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
-            let gl = &DrawContext::render_ctx(ctx).bindings;
-            unsafe {
-                gl.VertexAttribPointer(
-                    0, 2, FLOAT, FALSE, stride, std::ptr::null(),
-                );
-                gl.VertexAttribPointer(
-                    1, 2, FLOAT, FALSE, stride, offset,
-                );
-            }
-            for (mask, range) in self.channels.iter() {
-                DrawContext::push(ctx);
-                ctx.tex_chan_mask(*mask);
-                DrawContext::prepare_draw(ctx);
+        DrawContext::push(ctx, |ctx| {
+            ctx.sdf_mode();
+            ctx.use_texture(self.texture.clone());
+            if self.vertices.bind_if_ready(ctx) {
+                let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
+                let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
                 let gl = &DrawContext::render_ctx(ctx).bindings;
                 unsafe {
-                    gl.DrawArrays(
-                        TRIANGLES,
-                        range.start as GLsizei,
-                        range.len() as GLsizei,
+                    gl.VertexAttribPointer(
+                        0, 2, FLOAT, FALSE, stride, std::ptr::null(),
+                    );
+                    gl.VertexAttribPointer(
+                        1, 2, FLOAT, FALSE, stride, offset,
                     );
                 }
-                DrawContext::pop(ctx);
+                for (mask, range) in self.channels.iter() {
+                    DrawContext::push(ctx, |ctx| {
+                        ctx.tex_chan_mask(*mask);
+                        DrawContext::prepare_draw(ctx);
+                        let gl = &DrawContext::render_ctx(ctx).bindings;
+                        unsafe {
+                            gl.DrawArrays(
+                                TRIANGLES,
+                                range.start as GLsizei,
+                                range.len() as GLsizei,
+                            );
+                        }
+                    });
+                }
             }
-        }
-        DrawContext::pop(ctx);
+        });
     }
 }

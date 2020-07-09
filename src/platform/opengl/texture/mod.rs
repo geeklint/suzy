@@ -47,7 +47,7 @@ pub(super) struct SizedTexture {
 
 impl SizedTexture {
     fn size(&self) -> Option<&TextureSize> {
-        if self.obj.ready {
+        if let Some(true) = self.obj.ready {
             Some(&self.size)
         } else {
             None
@@ -84,7 +84,7 @@ impl SharedTexture {
         unsafe {
             gl.BindTexture(TEXTURE_2D, obj.ids[0]);
         }
-        if !ready {
+        if !ready.unwrap_or(false) {
             if let Ok(pop_size) = self.populator.populate(gl) {
                 *size = pop_size;
                 obj.mark_ready();
@@ -305,7 +305,8 @@ impl Texture {
         -> (f32, f32, f32, f32)
     {
         self.ins.bind(ctx);
-        self.ins.size().unwrap().get_crop_transform(
+        let size = self.ins.size().unwrap();
+        size.get_crop_transform(
             self.offset.0,
             self.offset.1,
             self.size.0,

@@ -6,7 +6,7 @@ macro_rules! gl_object {
                 $crate::platform::opengl::context::bindings::types::GLuint;
                 $count
             ],
-            pub(crate) ready: bool,
+            pub(crate) ready: Option<bool>,
             pub(crate) gl:
                 ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
         }
@@ -18,7 +18,7 @@ macro_rules! gl_object {
                 $crate::platform::opengl::context::bindings::types::GLuint;
                 $count
             ],
-            pub(crate) ready: bool,
+            pub(crate) ready: Option<bool>,
             pub(crate) gl:
                 ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
         }
@@ -30,13 +30,13 @@ macro_rules! gl_object {
             pub fn new() -> Self {
                 Self {
                     ids: [0; $count],
-                    ready: false,
+                    ready: None,
                     gl: ::std::rc::Weak::new(),
                 }
             }
 
             #[allow(dead_code)]
-            pub fn get(&self)
+            pub fn get(&mut self)
                 -> Option<([
                     $crate::platform::opengl::context::bindings::types::GLuint;
                     $count
@@ -44,26 +44,27 @@ macro_rules! gl_object {
                     ::std::rc::Rc<$crate::platform::opengl::OpenGlBindings>,
                 )>
             {
+                self.ready.get_or_insert(false);
                 self.gl.upgrade().map(|gl| (self.ids, gl))
             }
 
             #[allow(dead_code)]
             pub fn mark_ready(&mut self) {
-                self.ready = true;
+                self.ready = Some(true);
             }
 
             #[allow(dead_code)]
             pub fn check_ready(
                 &mut self,
                 gl: &::std::rc::Rc<$crate::platform::opengl::OpenGlBindings>,
-            ) -> bool {
+            ) -> Option<bool> {
                 let weak_gl = ::std::rc::Rc::downgrade(gl);
                 if !self.gl.ptr_eq(&weak_gl) {
                     unsafe {
                         self.invalidate();
                         gl.$create($count, self.ids.as_mut_ptr());
                     }
-                    self.ready = false;
+                    self.ready = self.ready.map(|_| false);
                     self.gl = weak_gl;
                 }
                 self.ready
@@ -84,10 +85,10 @@ macro_rules! gl_object {
                 -> Result<(), ::std::fmt::Error>
             {
                 let mut st = f.debug_struct(stringify!($name));
-                if self.ready {
+                if let Some(true) = self.ready {
                     st.field("ids", &self.ids);
                 } else {
-                    st.field("ready", &false);
+                    st.field("ready", &self.ready);
                 }
                 st.finish()
             }

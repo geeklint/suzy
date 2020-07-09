@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use drying_paint::WatchedMeta;
 
 use crate::graphics::{DrawContext, DrawPass};
@@ -21,7 +23,7 @@ pub struct SingleVertexBuffer<T> {
     tracker: WatchedMeta,
     dyn_draw: bool,
     remaining_to_draw: bool,
-    _data: std::marker::PhantomData<[T]>,
+    _data: PhantomData<[T]>,
 }
 
 impl<T> SingleVertexBuffer<T> {
@@ -31,7 +33,7 @@ impl<T> SingleVertexBuffer<T> {
             tracker: WatchedMeta::new(),
             dyn_draw,
             remaining_to_draw: true,
-            _data: std::marker::PhantomData,
+            _data: PhantomData,
         }
     }
 
@@ -40,40 +42,44 @@ impl<T> SingleVertexBuffer<T> {
         draw_ctx: &mut DrawContext<OpenGlRenderPlatform>,
     ) -> bool {
         let gl = &DrawContext::render_ctx(draw_ctx).bindings;
-        if self.obj.check_ready(gl) {
-            match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
-                (DrawPass::DrawRemaining, false) => false,
-                (DrawPass::DrawAll, _)
-                | (DrawPass::DrawRemaining, true) => {
-                    DrawContext::prepare_draw(draw_ctx);
-                    let gl = &DrawContext::render_ctx(draw_ctx).bindings;
-                    unsafe {
-                        gl.BindBuffer(ARRAY_BUFFER, self.obj.ids[0]);
-                    }
-                    self.remaining_to_draw = false;
-                    true
-                },
-                (DrawPass::UpdateContext, _) => {
-                    self.remaining_to_draw = true;
-                    false
-                },
-            }
-        } else {
-            DrawContext::graphic_not_ready(draw_ctx);
-            self.tracker.trigger();
-            false
+        match self.obj.check_ready(gl) {
+            Some(true) => {
+                match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
+                    (DrawPass::DrawRemaining, false) => false,
+                    (DrawPass::DrawAll, _)
+                    | (DrawPass::DrawRemaining, true) => {
+                        DrawContext::prepare_draw(draw_ctx);
+                        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+                        unsafe {
+                            gl.BindBuffer(ARRAY_BUFFER, self.obj.ids[0]);
+                        }
+                        self.remaining_to_draw = false;
+                        true
+                    },
+                    (DrawPass::UpdateContext, _) => {
+                        self.remaining_to_draw = true;
+                        false
+                    },
+                }
+            },
+            Some(false) => {
+                DrawContext::graphic_not_ready(draw_ctx);
+                self.tracker.trigger();
+                false
+            },
+            None => false,
         }
     }
 
     pub fn set_data<'a, F, OptT>(&mut self, make_data: F)
     where
-        F: 'a + FnOnce() -> OptT,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptT,
         T: 'a,
         OptT: Into<Option<&'a [T]>>
     {
         self.tracker.watched();
         if let Some((ids, gl)) = self.obj.get() {
-            if let Some(data) = (make_data)().into() {
+            if let Some(data) = (make_data)(&gl).into() {
                 unsafe {
                     gl.BindBuffer(ARRAY_BUFFER, ids[0]);
                     gl.BufferData(
@@ -99,7 +105,7 @@ pub struct DualVertexBuffer<T> {
     dyn_draw: [bool; 2],
     ready: [bool; 2],
     remaining_to_draw: bool,
-    _data: std::marker::PhantomData<[T]>,
+    _data: PhantomData<[T]>,
 }
 
 impl<T> DualVertexBuffer<T> {
@@ -110,7 +116,7 @@ impl<T> DualVertexBuffer<T> {
             dyn_draw: [dyn_draw_0, dyn_draw_1],
             ready: [false, false],
             remaining_to_draw: true,
-            _data: std::marker::PhantomData,
+            _data: PhantomData,
         }
     }
 
@@ -120,7 +126,7 @@ impl<T> DualVertexBuffer<T> {
     ) -> Option<ReadyDualVertexBuffer<'a>> {
         let gl = &DrawContext::render_ctx(draw_ctx).bindings;
         match (self.ready[0], self.ready[1], self.obj.check_ready(gl)) {
-            (true, true, true) => {
+            (true, true, Some(true)) => {
                 match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
                     (DrawPass::DrawRemaining, false) => None,
                     (DrawPass::DrawAll, _)
@@ -139,23 +145,24 @@ impl<T> DualVertexBuffer<T> {
                     },
                 }
             },
-            (_, _, true) => {
+            (_, _, Some(true)) => {
                 DrawContext::graphic_not_ready(draw_ctx);
                 self.tracker.trigger();
                 None
             },
-            (_, _, false) => {
+            (_, _, Some(false)) => {
                 self.ready = [false, false];
                 DrawContext::graphic_not_ready(draw_ctx);
                 self.tracker.trigger();
                 None
             },
+            (_, _, None) => None,
         }
     }
 
     pub fn set_data_0<'a, F, OptT>(&mut self, make_data: F)
     where
-        F: 'a + FnOnce() -> OptT,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptT,
         T: 'a,
         OptT: Into<Option<&'a [T]>>
     {
@@ -164,7 +171,7 @@ impl<T> DualVertexBuffer<T> {
 
     pub fn set_data_1<'a, F, OptT>(&mut self, make_data: F)
     where
-        F: 'a + FnOnce() -> OptT,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptT,
         T: 'a,
         OptT: Into<Option<&'a [T]>>
     {
@@ -173,13 +180,13 @@ impl<T> DualVertexBuffer<T> {
 
     fn set_data<'a, F, OptT>(&mut self, index: usize, make_data: F)
     where
-        F: 'a + FnOnce() -> OptT,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptT,
         T: 'a,
         OptT: Into<Option<&'a [T]>>
     {
         self.tracker.watched();
         if let Some((ids, gl)) = self.obj.get() {
-            if let Some(data) = (make_data)().into() {
+            if let Some(data) = (make_data)(&gl).into() {
                 unsafe {
                     gl.BindBuffer(ARRAY_BUFFER, ids[index]);
                     gl.BufferData(
@@ -227,7 +234,7 @@ pub struct DualVertexBufferIndexed<T> {
     dyn_draw: [bool; 3],
     ready: [bool; 3],
     remaining_to_draw: bool,
-    _data: std::marker::PhantomData<[T]>,
+    _data: PhantomData<[T]>,
 }
 
 impl<T> DualVertexBufferIndexed<T> {
@@ -242,7 +249,7 @@ impl<T> DualVertexBufferIndexed<T> {
             dyn_draw: [dyn_draw_0, dyn_draw_1, dyn_draw_indices],
             ready: [false, false, false],
             remaining_to_draw: true,
-            _data: std::marker::PhantomData,
+            _data: PhantomData,
         }
     }
 
@@ -252,7 +259,7 @@ impl<T> DualVertexBufferIndexed<T> {
     ) -> Option<ReadyDualVertexBufferIndexed<'a>> {
         let gl = &DrawContext::render_ctx(draw_ctx).bindings;
         match (self.ready[0], self.ready[1], self.obj.check_ready(gl)) {
-            (true, true, true) => {
+            (true, true, Some(true)) => {
                 match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
                     (DrawPass::DrawRemaining, false) => None,
                     (DrawPass::DrawAll, _)
@@ -271,23 +278,24 @@ impl<T> DualVertexBufferIndexed<T> {
                     },
                 }
             },
-            (_, _, true) => {
+            (_, _, Some(true)) => {
                 DrawContext::graphic_not_ready(draw_ctx);
                 self.tracker.trigger();
                 None
             },
-            (_, _, false) => {
+            (_, _, Some(false)) => {
                 self.ready = [false, false, false];
                 DrawContext::graphic_not_ready(draw_ctx);
                 self.tracker.trigger();
                 None
             },
+            (_, _, None) => None,
         }
     }
 
     pub fn set_data_0<'a, F, OptT>(&mut self, make_data: F)
     where
-        F: 'a + FnOnce() -> OptT,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptT,
         T: 'a,
         OptT: Into<Option<&'a [T]>>
     {
@@ -296,7 +304,7 @@ impl<T> DualVertexBufferIndexed<T> {
 
     pub fn set_data_1<'a, F, OptT>(&mut self, make_data: F)
     where
-        F: 'a + FnOnce() -> OptT,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptT,
         T: 'a,
         OptT: Into<Option<&'a [T]>>
     {
@@ -305,7 +313,7 @@ impl<T> DualVertexBufferIndexed<T> {
 
     pub fn set_indices<'a, F, OptI>(&mut self, make_indices: F)
     where
-        F: 'a + FnOnce() -> OptI,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptI,
         T: 'a,
         OptI: Into<Option<&'a [u8]>>
     {
@@ -319,13 +327,13 @@ impl<T> DualVertexBufferIndexed<T> {
         target: GLenum,
     )
     where
-        F: 'a + FnOnce() -> OptU,
+        F: 'a + FnOnce(&OpenGlBindings) -> OptU,
         U: 'a,
         OptU: Into<Option<&'a [U]>>
     {
         self.tracker.watched();
         if let Some((ids, gl)) = self.obj.get() {
-            if let Some(data) = (make_data)().into() {
+            if let Some(data) = (make_data)(&gl).into() {
                 unsafe {
                     gl.BindBuffer(target, ids[index]);
                     gl.BufferData(

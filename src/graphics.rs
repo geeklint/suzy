@@ -76,6 +76,11 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
     }
 
     pub fn prepare_draw(ctx: &mut Self) {
+        assert_ne!(
+            ctx.pass, 
+            DrawPass::UpdateContext,
+            "prepare_draw called during an UpdateContext pass",
+        );
         match std::mem::replace(&mut ctx.last_applied, LastApplied::Current) {
             LastApplied::Current => (),
             LastApplied::None => ctx.current.apply_all(ctx.context),
@@ -109,7 +114,14 @@ where
     P: RenderPlatform,
     P::DrawParams: Clone
 {
-    pub fn push(ctx: &mut Self) {
+    pub fn push<R, F: FnOnce(&mut Self) -> R>(ctx: &mut Self, func: F) -> R {
+        Self::manually_push(ctx);
+        let ret = func(ctx);
+        Self::manually_pop(ctx);
+        ret
+    }
+
+    pub fn manually_push(ctx: &mut Self) {
         let new = ctx.current.clone();
         let old = std::mem::replace(&mut ctx.current, new);
         ctx.history.push(old);
@@ -118,7 +130,7 @@ where
         }
     }
 
-    pub fn pop(ctx: &mut Self) {
+    pub fn manually_pop(ctx: &mut Self) {
         let new = ctx.history.pop().expect(
             "DrawContext::pop called more times than push!"
         );

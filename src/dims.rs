@@ -1,5 +1,5 @@
 /// Representation of a single dimension of padding.
-#[derive(Default, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
 pub struct Padding {
     pub before: f32,
     pub after: f32,
@@ -96,7 +96,7 @@ where Self: Padding2d + Sized
 }
 
 /// Representation of two dimensions of padding
-#[derive(Copy, Clone, Default, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct SimplePadding2d {
     x: Padding,
     y: Padding,
@@ -174,7 +174,7 @@ impl<P: Padding2d> From<&P> for SimplePadding2d {
 /// assert_feq(span.start(), 3.0);
 /// assert_feq(span.end(), 10.0);
 /// ```
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Dim {
     pivot: f32,
     pos: f32,
@@ -462,7 +462,7 @@ pub trait Rect {
 }
 
 /// A struct representing a rectangular region
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct SimpleRect {
     x: Dim,
     y: Dim,
