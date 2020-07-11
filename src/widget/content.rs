@@ -6,7 +6,7 @@ use super::{
     WidgetGraphicReceiver,
     WidgetInit,
     WidgetMutChildReceiver,
-    WidgetView,
+    WidgetExtra,
 };
 
 /// This trait should be implemented for the types you provide as data for
@@ -31,10 +31,11 @@ where
     fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R);
 
     fn pointer_event(
-        this: &mut WidgetView<'_, P, Self>,
+        &mut self,
+        extra: WidgetExtra<'_>,
         event: &mut PointerEvent,
     ) -> bool {
-        let _unused = (this, event);
+        let _unused = (extra, event);
         false
     }
 }

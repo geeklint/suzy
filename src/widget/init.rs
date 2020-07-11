@@ -6,7 +6,7 @@ use super::{
     WidgetContent,
     WidgetId,
     WidgetInternal,
-    WidgetView,
+    WidgetRect,
 };
 
 /// This will get passed to a widget's initializer. It provides functions to
@@ -24,18 +24,21 @@ where
     P: RenderPlatform,
     T: WidgetContent<P>,
 {
+    /// Get a value representing a unique id for the widget this WidgetInit
+    /// was created for. This value may outlive the widget, and will never
+    /// compare equal to a value returned by the id method of a Widget other
+    /// than this one.
+    pub fn widget_id(&self) -> WidgetId {
+        WidgetId { id: self.watcher.id() }
+    }
+
     /// Register a simple watch which will get re-run whenever a value it
     /// references changes.
     pub fn watch<F>(&mut self, func: F)
-        where F: Fn(&mut WidgetView<'_, P, T>) + 'static
+        where F: Fn(&mut T, &mut WidgetRect) + 'static
     {
-        let id = WidgetId { id: self.watcher.id() };
         self.watcher.watch(move |wid_int| {
-            let mut view = WidgetView {
-                source: wid_int,
-                id: id.clone(),
-            };
-            (func)(&mut view);
+            (func)(&mut wid_int.content, &mut wid_int.rect);
         });
     }
 }

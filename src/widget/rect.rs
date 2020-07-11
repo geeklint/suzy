@@ -25,7 +25,7 @@ impl TwoSidedDim {
             result.set_pivot(self.internal.pivot());
         }
         if result.pivot_pos().is_nan() {
-            result.set_pivot_pos(self.internal.pivot());
+            result.set_pivot_pos(self.internal.pivot_pos());
         }
         if result.length().is_nan() {
             result.set_length(self.internal.length());
@@ -76,40 +76,56 @@ pub struct WidgetRect {
 }
 
 impl WidgetRect {
-    pub fn x(&self) -> Dim { self.x.get() }
-    pub fn y(&self) -> Dim { self.y.get() }
-
-    pub fn external_x_mut<F, R>(&mut self, f: F) -> R
+    pub(super) fn external_x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
         self.x.mut_external(f)
     }
 
-    pub fn external_y_mut<F, R>(&mut self, f: F) -> R
+    pub(super) fn external_y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
         self.y.mut_external(f)
     }
 
-    pub fn internal_x_mut<F, R>(&mut self, f: F) -> R
+    pub(super) fn external_from<T: Rect>(rect: &T) -> Self {
+        Self {
+            x: Watched::new(rect.x().into()),
+            y: Watched::new(rect.y().into()),
+        }
+    }
+}
+
+impl Rect for WidgetRect {
+    fn x(&self) -> Dim { self.x.get() }
+    fn y(&self) -> Dim { self.y.get() }
+
+    fn x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
         self.x.mut_internal(f)
     }
 
-    pub fn internal_y_mut<F, R>(&mut self, f: F) -> R
+    fn y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
         self.y.mut_internal(f)
     }
-
 }
 
-impl<T: Rect> From<&T> for WidgetRect {
-    fn from(rect: &T) -> Self {
-        Self {
-            x: Watched::new(rect.x().into()),
-            y: Watched::new(rect.y().into()),
-        }
+impl Rect for &mut WidgetRect {
+    fn x(&self) -> Dim { self.x.get() }
+    fn y(&self) -> Dim { self.y.get() }
+
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        self.x.mut_internal(f)
+    }
+
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        self.y.mut_internal(f)
     }
 }

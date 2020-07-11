@@ -30,7 +30,7 @@ pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
 pub use content::WidgetContent;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
-pub use internal::WidgetView;
+pub use internal::WidgetExtra;
 pub use newwidget::NewWidget;
 pub use receivers::{
     WidgetChildReceiver,
@@ -103,11 +103,14 @@ where
             });
         }
         handled_by_child || {
-            let mut view = WidgetView {
-                id: self.id(),
-                source: &mut self.internal_mut(),
+            let id = self.id();
+            let mut borrow = self.internal_mut();
+            let wid_int: &mut WidgetInternal<P, T> = &mut borrow;
+            let extra = WidgetExtra {
+                id,
+                rect: &mut wid_int.rect,
             };
-            T::pointer_event(&mut view, event)
+            T::pointer_event(&mut wid_int.content, extra, event)
         }
     }
 }
@@ -120,7 +123,7 @@ where
     pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
         Widget {
             watcher: Watcher::create(WidgetInternal {
-                rect: WidgetRect::from(rect),
+                rect: WidgetRect::external_from(rect),
                 content: Default::default(),
                 _platform: Default::default(),
             }),
