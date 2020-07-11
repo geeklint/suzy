@@ -12,6 +12,10 @@ impl<P: RenderPlatform> Graphic<P> for () {
     fn draw(&mut self, _ctx: &mut DrawContext<P>) {}
 }
 
+impl<P: RenderPlatform> Graphic<P> for [(); 0] {
+    fn draw(&mut self, _ctx: &mut DrawContext<P>) {}
+}
+
 impl<P: RenderPlatform, T: Graphic<P>> Graphic<P> for [T] {
     fn draw(&mut self, ctx: &mut DrawContext<P>) {
         for graphic in self {

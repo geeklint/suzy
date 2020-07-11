@@ -2,7 +2,7 @@ use crate::graphics::{Graphic, DrawContext};
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
-use super::{Widget, WidgetContent};
+use super::{Widget, WidgetGraphic, WidgetContent};
 
 pub trait WidgetChildReceiver<P = DefaultRenderPlatform>
 where
@@ -22,19 +22,10 @@ pub trait WidgetGraphicReceiver<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
 {
-    fn graphic<T: Graphic<P>>(&mut self, graphic: &mut T);
+    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T);
 }
 
 pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform> {
-    pub ctx: &'a mut DrawContext<'b, P>,
-}
-
-pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
-    pub event: &'a mut PointerEvent<'c>,
-    pub handled: &'b mut bool,
-}
-
-pub(super) struct DrawGraphicReceiver<'a, 'b, P: RenderPlatform> {
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
@@ -44,6 +35,11 @@ where P: RenderPlatform
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
         child.draw(self.ctx);
     }
+}
+
+pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
+    pub event: &'a mut PointerEvent<'c>,
+    pub handled: &'b mut bool,
 }
 
 impl<'a, 'b, 'c, P> WidgetMutChildReceiver<P>
@@ -58,11 +54,28 @@ where
     }
 }
 
-impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicReceiver<'a, 'b, P>
+pub(super) struct DrawGraphicBeforeReceiver<'a, 'b, P: RenderPlatform> {
+    pub ctx: &'a mut DrawContext<'b, P>,
+}
+
+impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicBeforeReceiver<'a, 'b, P>
 where
     P: RenderPlatform,
 {
-    fn graphic<T: Graphic<P>>(&mut self, graphic: &mut T) {
-        graphic.draw(self.ctx);
+    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
+        graphic.before_children().draw(self.ctx);
+    }
+}
+
+pub(super) struct DrawGraphicAfterReceiver<'a, 'b, P: RenderPlatform> {
+    pub ctx: &'a mut DrawContext<'b, P>,
+}
+
+impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicAfterReceiver<'a, 'b, P>
+where
+    P: RenderPlatform,
+{
+    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
+        graphic.after_children().draw(self.ctx);
     }
 }

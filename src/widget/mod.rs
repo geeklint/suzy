@@ -10,6 +10,7 @@ use crate::pointer::PointerEvent;
 
 mod anon;
 mod content;
+mod graphic;
 mod init;
 mod internal;
 mod newwidget;
@@ -21,11 +22,13 @@ use rect::WidgetRect;
 use receivers::{
     DrawChildReceiver,
     PointerEventChildReceiver,
-    DrawGraphicReceiver,
+    DrawGraphicBeforeReceiver,
+    DrawGraphicAfterReceiver,
 };
 
 pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
 pub use content::WidgetContent;
+pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
 pub use internal::WidgetView;
 pub use newwidget::NewWidget;
@@ -85,9 +88,9 @@ where
     pub(crate) fn draw(&mut self, ctx: &mut DrawContext<P>) {
         let mut wid_int = self.internal_mut();
         let content = &mut wid_int.content;
-        content.graphics(DrawGraphicReceiver { ctx });
+        content.graphics(DrawGraphicBeforeReceiver { ctx });
         content.children_mut(DrawChildReceiver { ctx });
-        content.graphics_after(DrawGraphicReceiver { ctx });
+        content.graphics(DrawGraphicAfterReceiver { ctx });
     }
 
     pub(crate) fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {

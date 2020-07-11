@@ -22,23 +22,13 @@ where
 
     /// Custom widgets must define a way to iterate over their children
     /// if they want those children to be visible
-    fn children<R: WidgetChildReceiver<P>>(&self, receiver: R) {
-        let _unused = receiver;
-    }
+    fn children<R: WidgetChildReceiver<P>>(&self, receiver: R);
 
     /// Custom widgets must define a way to iterate over their children
     /// if they want those children to be visible
-    fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R) {
-        let _unused = receiver;
-    }
+    fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R);
 
-    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {
-        let _unused = receiver;
-    }
-
-    fn graphics_after<R: WidgetGraphicReceiver<P>>(&self, receiver: R) {
-        let _unused = receiver;
-    }
+    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R);
 
     fn pointer_event(
         this: &mut WidgetView<'_, P, Self>,
@@ -51,4 +41,7 @@ where
 
 impl<P: RenderPlatform> WidgetContent<P> for () {
     fn init(_init: &mut WidgetInit<Self, P>) {}
+    fn children<R: WidgetChildReceiver<P>>(&self, _receiver: R) {}
+    fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, _receiver: R) {}
+    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, _receiver: R) {}
 }
