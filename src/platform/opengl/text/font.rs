@@ -28,6 +28,7 @@ pub struct FontFamilySourceDynamic<'a> {
     pub image_channels: GLsizei,
     pub image_width: u16,
     pub image_height: u16,
+    pub image_row_alignment: u16,
     pub normal: FontSource<'a>,
     pub bold: Option<FontSource<'a>>,
     pub italic: Option<FontSource<'a>>,
@@ -51,6 +52,7 @@ impl<'a> FontFamilySourceDynamic<'a> {
                 let texture = Texture::from_alpha(
                     self.image_width,
                     self.image_height,
+                    self.image_row_alignment,
                     self.atlas_image,
                 );
                 (texture, ALPHA_MASKS)
@@ -59,6 +61,7 @@ impl<'a> FontFamilySourceDynamic<'a> {
                 let texture = Texture::from_rgb(
                     self.image_width,
                     self.image_height,
+                    self.image_row_alignment,
                     self.atlas_image,
                 );
                 (texture, RGB_MASKS)
@@ -67,6 +70,7 @@ impl<'a> FontFamilySourceDynamic<'a> {
                 let texture = Texture::from_rgba(
                     self.image_width,
                     self.image_height,
+                    self.image_row_alignment,
                     self.atlas_image,
                 );
                 (texture, RGBA_MASKS)

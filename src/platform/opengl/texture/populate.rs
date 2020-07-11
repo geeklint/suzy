@@ -15,6 +15,7 @@ use opengl::context::bindings::{
     TEXTURE_WRAP_S,
     TEXTURE_WRAP_T,
     UNSIGNED_BYTE,
+    UNPACK_ALIGNMENT,
 };
 
 use super::TextureSize;
@@ -89,8 +90,12 @@ impl PopulateTextureUtil {
         format: GLint,
         width: u16,
         height: u16,
+        alignment: u16,
         pixels: &[u8],
     ) -> Result<TextureSize, ()> {
+        unsafe {
+            gl.PixelStorei(UNPACK_ALIGNMENT, alignment.into());
+        }
         if width.is_power_of_two() && height.is_power_of_two() {
             unsafe {
                 gl.TexImage2D(
@@ -149,34 +154,47 @@ impl PopulateTextureUtil {
         }
     }
 
+    pub fn data_len(width: u16, height: u16, alignment: u16, channels: u16)
+        -> usize
+    {
+        assert!(match alignment { 1 | 2 | 4 => true, _ => false });
+        let pixel_row_len = width * channels;
+        let padding = (alignment - (pixel_row_len % alignment)) % alignment;
+        let full_row_len = pixel_row_len + padding;
+        (full_row_len as usize) * (height as usize)
+    }
+
     pub fn populate_alpha(
         gl: &OpenGlBindings,
         width: u16,
         height: u16,
+        alignment: u16,
         pixels: &[u8],
     ) -> Result<TextureSize, ()> {
-        assert_eq!((width as usize) * (height as usize), pixels.len());
-        Self::populate_format(gl, ALPHA as _, width, height, pixels)
+        assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 1));
+        Self::populate_format(gl, ALPHA as _, width, height, alignment, pixels)
     }
 
     pub fn populate_rgb(
         gl: &OpenGlBindings,
         width: u16,
         height: u16,
+        alignment: u16,
         pixels: &[u8],
     ) -> Result<TextureSize, ()> {
-        assert_eq!((width as usize) * (height as usize) * 3, pixels.len());
-        Self::populate_format(gl, RGB as _, width, height, pixels)
+        assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 3));
+        Self::populate_format(gl, RGB as _, width, height, alignment, pixels)
     }
 
     pub fn populate_rgba(
         gl: &OpenGlBindings,
         width: u16,
         height: u16,
+        alignment: u16,
         pixels: &[u8],
     ) -> Result<TextureSize, ()> {
-        assert_eq!((width as usize) * (height as usize) * 4, pixels.len());
-        Self::populate_format(gl, RGBA as _, width, height, pixels)
+        assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 4));
+        Self::populate_format(gl, RGBA as _, width, height, alignment, pixels)
     }
 }
 
@@ -190,8 +208,11 @@ impl PopulateTexture for DefaultTexturePopulator {
 
     fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
         let pixels: [u8; 12] = [0xff; 12];
+        unsafe {
+            gl.PixelStorei(UNPACK_ALIGNMENT, 1);
+        }
         let size = PopulateTextureUtil::populate_rgb(
-            gl, 2, 2, &pixels
+            gl, 2, 2, 1, &pixels
         );
         unsafe {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
@@ -215,8 +236,11 @@ impl PopulateTexture for ErrorTexturePopulator {
     }
 
     fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
+        unsafe {
+            gl.PixelStorei(UNPACK_ALIGNMENT, 1);
+        }
         let size = PopulateTextureUtil::populate_rgb(
-            gl, ERRTEX_SIDE, ERRTEX_SIDE, ERRTEX
+            gl, ERRTEX_SIDE, ERRTEX_SIDE, 1, ERRTEX
         );
         unsafe {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
@@ -224,6 +248,78 @@ impl PopulateTexture for ErrorTexturePopulator {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, REPEAT as _);
             gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, REPEAT as _);
         }
+        size
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct AlphaTexturePopulator {
+    pub(super) width: u16,
+    pub(super) height: u16,
+    pub(super) alignment: u16,
+    pub(super) pixels: std::borrow::Cow<'static, [u8]>,
+}
+
+impl PopulateTexture for AlphaTexturePopulator {
+    fn get_known_size(&self) -> Option<(f32, f32)> {
+        Some((self.width as f32, self.height as f32))
+    }
+
+    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
+        unsafe {
+            gl.PixelStorei(UNPACK_ALIGNMENT, self.alignment.into());
+        }
+        let size = PopulateTextureUtil::populate_alpha(
+            gl, self.width, self.height, self.alignment, &self.pixels
+        );
+        PopulateTextureUtil::default_params(gl);
+        size
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct RGBTexturePopulator {
+    pub(super) width: u16,
+    pub(super) height: u16,
+    pub(super) alignment: u16,
+    pub(super) pixels: std::borrow::Cow<'static, [u8]>,
+}
+
+impl PopulateTexture for RGBTexturePopulator {
+    fn get_known_size(&self) -> Option<(f32, f32)> {
+        Some((self.width as f32, self.height as f32))
+    }
+
+    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
+        unsafe {
+            gl.PixelStorei(UNPACK_ALIGNMENT, self.alignment.into());
+        }
+        let size = PopulateTextureUtil::populate_rgb(
+            gl, self.width, self.height, self.alignment, &self.pixels
+        );
+        PopulateTextureUtil::default_params(gl);
+        size
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct RGBATexturePopulator {
+    pub(super) width: u16,
+    pub(super) height: u16,
+    pub(super) alignment: u16,
+    pub(super) pixels: std::borrow::Cow<'static, [u8]>,
+}
+
+impl PopulateTexture for RGBATexturePopulator {
+    fn get_known_size(&self) -> Option<(f32, f32)> {
+        Some((self.width as f32, self.height as f32))
+    }
+
+    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
+        let size = PopulateTextureUtil::populate_rgba(
+            gl, self.width, self.height, self.alignment, &self.pixels
+        );
+        PopulateTextureUtil::default_params(gl);
         size
     }
 }

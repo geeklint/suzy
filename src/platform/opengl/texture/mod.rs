@@ -260,36 +260,60 @@ impl Texture {
         }
     }
 
-    pub fn from_alpha<T>(width: u16, height: u16, pixels: T) -> Self
+    pub fn from_alpha<T>(width: u16, height: u16, alignment: u16, pixels: T)
+        -> Self
     where
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(move |gl: &_| {
-            PopulateTextureUtil::default_params(gl);
-            PopulateTextureUtil::populate_alpha(gl, width, height, &pixels)
+        assert_eq!(
+            pixels.len(),
+            PopulateTextureUtil::data_len(width, height, alignment, 1),
+            "Invalid pixel data for given width/height/alignment",
+        );
+        Self::new(AlphaTexturePopulator {
+            width,
+            height,
+            alignment,
+            pixels,
         })
     }
 
-    pub fn from_rgb<T>(width: u16, height: u16, pixels: T) -> Self
+    pub fn from_rgb<T>(width: u16, height: u16, alignment: u16, pixels: T)
+        -> Self
     where
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(move |gl: &_| {
-            PopulateTextureUtil::default_params(gl);
-            PopulateTextureUtil::populate_rgb(gl, width, height, &pixels)
+        assert_eq!(
+            pixels.len(),
+            PopulateTextureUtil::data_len(width, height, alignment, 3),
+            "Invalid pixel data for given width/height/alignment",
+        );
+        Self::new(RGBTexturePopulator {
+            width,
+            height,
+            alignment,
+            pixels,
         })
     }
 
-    pub fn from_rgba<T>(width: u16, height: u16, pixels: T) -> Self
+    pub fn from_rgba<T>(width: u16, height: u16, alignment: u16, pixels: T)
+        -> Self
     where
         T: Into<Cow<'static, [u8]>>
     {
         let pixels = pixels.into();
-        Self::new(move |gl: &_| {
-            PopulateTextureUtil::default_params(gl);
-            PopulateTextureUtil::populate_rgba(gl, width, height, &pixels)
+        assert_eq!(
+            pixels.len(),
+            PopulateTextureUtil::data_len(width, height, alignment, 4),
+            "Invalid pixel data for given width/height/alignment",
+        );
+        Self::new(RGBATexturePopulator {
+            width,
+            height,
+            alignment,
+            pixels,
         })
     }
 
