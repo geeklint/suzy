@@ -11,15 +11,7 @@ use super::{
 
 /// This will get passed to a widget's initializer. It provides functions to
 /// watch values for changes and run code when those values change
-pub struct WidgetInit<'a, T, P = DefaultRenderPlatform>
-where
-    P: RenderPlatform,
-    T: WidgetContent<P>,
-{
-    pub(super) watcher: &'a mut WatcherMeta<WidgetInternal<P, T>>,
-}
-
-impl<P, T> WidgetInit<'_, T, P>
+pub trait WidgetInit<T, P>
 where
     P: RenderPlatform,
     T: WidgetContent<P>,
@@ -28,13 +20,33 @@ where
     /// was created for. This value may outlive the widget, and will never
     /// compare equal to a value returned by the id method of a Widget other
     /// than this one.
-    pub fn widget_id(&self) -> WidgetId {
-        WidgetId { id: self.watcher.id() }
-    }
+    fn widget_id(&self) -> WidgetId;
 
     /// Register a simple watch which will get re-run whenever a value it
     /// references changes.
-    pub fn watch<F>(&mut self, func: F)
+    fn watch<F>(&mut self, func: F)
+        where F: Fn(&mut T, &mut WidgetRect) + 'static
+    ;
+}
+
+struct WidgetInitImpl<'a, T, P = DefaultRenderPlatform>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
+    pub(super) watcher: &'a mut WatcherMeta<WidgetInternal<P, T>>,
+}
+
+impl<T, P> WidgetInit<T, P> for WidgetInitImpl<'_, T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
+    fn widget_id(&self) -> WidgetId {
+        WidgetId { id: self.watcher.id() }
+    }
+
+    fn watch<F>(&mut self, func: F)
         where F: Fn(&mut T, &mut WidgetRect) + 'static
     {
         self.watcher.watch(move |wid_int| {
@@ -49,6 +61,6 @@ where
     T: WidgetContent<P>,
 {
     fn init(watcher: &mut WatcherMeta<Self>) {
-        WidgetContent::init(&mut WidgetInit { watcher });
+        WidgetContent::init(WidgetInitImpl { watcher });
     }
 }

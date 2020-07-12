@@ -19,7 +19,7 @@ where
 {
     /// This method provides a convient place to register functions which
     /// watch values and update parts of your widget when they change
-    fn init(init: &mut WidgetInit<Self, P>);
+    fn init<I: WidgetInit<Self, P>>(init: I);
 
     /// Custom widgets must define a way to iterate over their children
     /// if they want those children to be visible
@@ -46,7 +46,7 @@ where
 }
 
 impl<P: RenderPlatform> WidgetContent<P> for () {
-    fn init(_init: &mut WidgetInit<Self, P>) {}
+    fn init<I: WidgetInit<Self, P>>(_init: I) {}
     fn children<R: WidgetChildReceiver<P>>(&self, _receiver: R) {}
     fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, _receiver: R) {}
     fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, _receiver: R) {}
