@@ -1,3 +1,4 @@
+use crate::dims::Rect;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
@@ -29,6 +30,10 @@ where
     fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R);
 
     fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R);
+
+    fn hittest(&self, extra: WidgetExtra<'_>, point: (f32, f32)) -> bool {
+        extra.contains(point)
+    }
 
     fn pointer_event(
         &mut self,
