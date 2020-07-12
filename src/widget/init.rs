@@ -11,7 +11,7 @@ use super::{
 
 /// This will get passed to a widget's initializer. It provides functions to
 /// watch values for changes and run code when those values change
-pub trait WidgetInit<T, P>
+pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
     T: WidgetContent<P>,
@@ -25,21 +25,33 @@ where
     /// Register a simple watch which will get re-run whenever a value it
     /// references changes.
     fn watch<F>(&mut self, func: F)
-        where F: Fn(&mut T, &mut WidgetRect) + 'static
+    where
+        F: Fn(&mut T, &mut WidgetRect) + 'static
+    ;
+
+    fn init_child_inline<F, C>(&mut self, getter: F)
+    where
+        C: WidgetContent<P>,
+        F: 'static + Clone + Fn(&mut T) -> &mut C,
     ;
 }
 
-struct WidgetInitImpl<'a, T, P = DefaultRenderPlatform>
+struct WidgetInitImpl<'a, O, T, G, P>
 where
     P: RenderPlatform,
+    G: 'static + Clone + Fn(&mut O) -> &mut T,
+    O: WidgetContent<P>,
     T: WidgetContent<P>,
 {
-    pub(super) watcher: &'a mut WatcherMeta<WidgetInternal<P, T>>,
+    watcher: &'a mut WatcherMeta<WidgetInternal<P, O>>,
+    getter: G,
 }
 
-impl<T, P> WidgetInit<T, P> for WidgetInitImpl<'_, T, P>
+impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, O, T, G, P>
 where
     P: RenderPlatform,
+    G: 'static + Clone + Fn(&mut O) -> &mut T,
+    O: WidgetContent<P>,
     T: WidgetContent<P>,
 {
     fn widget_id(&self) -> WidgetId {
@@ -49,8 +61,22 @@ where
     fn watch<F>(&mut self, func: F)
         where F: Fn(&mut T, &mut WidgetRect) + 'static
     {
+        let getter = self.getter.clone();
         self.watcher.watch(move |wid_int| {
-            (func)(&mut wid_int.content, &mut wid_int.rect);
+            let content = getter(&mut wid_int.content);
+            (func)(content, &mut wid_int.rect);
+        });
+    }
+
+    fn init_child_inline<F, C>(&mut self, getter: F)
+    where
+        C: WidgetContent<P>,
+        F: 'static + Clone + Fn(&mut T) -> &mut C,
+    {
+        let current_getter = self.getter.clone();
+        WidgetContent::init(WidgetInitImpl {
+            watcher: self.watcher,
+            getter: move |base| getter(current_getter(base)),
         });
     }
 }
@@ -61,6 +87,9 @@ where
     T: WidgetContent<P>,
 {
     fn init(watcher: &mut WatcherMeta<Self>) {
-        WidgetContent::init(WidgetInitImpl { watcher });
+        WidgetContent::init(WidgetInitImpl {
+            watcher,
+            getter: |x| x,
+        });
     }
 }
