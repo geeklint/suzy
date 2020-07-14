@@ -73,6 +73,97 @@ pub trait Selectable {
     fn selection_changed(&mut self, state: SelectionState);
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct SelectableData<T> {
+    state: drying_paint::Watched<SelectionState>,
+    normal: T,
+    hover: Option<T>,
+    focus: Option<T>,
+    active: Option<T>,
+}
+
+impl<T> SelectableData<T> {
+    pub fn builder(normal: T) -> SelectableDataBuilder<T> {
+        SelectableDataBuilder {
+            content: Self {
+                state: Default::default(),
+                normal,
+                hover: None,
+                focus: None,
+                active: None,
+            }
+        }
+    }
+}
+
+impl<T> std::ops::Deref for SelectableData<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        match self.state.0 {
+            SelectionStateAll::Normal => &self.normal,
+            SelectionStateAll::Hover => {
+                self.hover.as_ref().unwrap_or(&self.normal)
+            },
+            SelectionStateAll::Focus => {
+                self.focus.as_ref().unwrap_or(&self.normal)
+            },
+            SelectionStateAll::Active => {
+                self.active.as_ref().unwrap_or(&self.normal)
+            },
+        }
+    }
+}
+
+impl<T> std::ops::DerefMut for SelectableData<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        match self.state.0 {
+            SelectionStateAll::Normal => &mut self.normal,
+            SelectionStateAll::Hover => {
+                self.hover.as_mut().unwrap_or(&mut self.normal)
+            },
+            SelectionStateAll::Focus => {
+                self.focus.as_mut().unwrap_or(&mut self.normal)
+            },
+            SelectionStateAll::Active => {
+                self.active.as_mut().unwrap_or(&mut self.normal)
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct SelectableDataBuilder<T> {
+    content: SelectableData<T>,
+}
+
+impl<T> SelectableDataBuilder<T> {
+    pub fn hover(mut self, item: T) -> Self {
+        self.content.hover = Some(item);
+        self
+    }
+
+    pub fn focus(mut self, item: T) -> Self {
+        self.content.focus = Some(item);
+        self
+    }
+
+    pub fn active(mut self, item: T) -> Self {
+        self.content.active = Some(item);
+        self
+    }
+
+    pub fn build(self) -> SelectableData<T> {
+        self.content
+    }
+}
+
+impl<T> Selectable for SelectableData<T> {
+    fn selection_changed(&mut self, state: SelectionState) {
+        *self.state = state;
+    }
+}
+
+
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SelectableIgnored<T> {
     data: T,
@@ -89,4 +180,76 @@ impl<T> std::ops::DerefMut for SelectableIgnored<T> {
 
 impl<T> Selectable for SelectableIgnored<T> {
     fn selection_changed(&mut self, _state: SelectionState) { }
+}
+
+mod extra_impls {
+    use crate::platform::RenderPlatform;
+    use crate::pointer::PointerEvent;
+    use crate::graphics::{
+        DrawContext,
+        Graphic,
+    };
+    use crate::widget::{
+        WidgetContent,
+        WidgetInit,
+        WidgetChildReceiver,
+        WidgetMutChildReceiver,
+        WidgetGraphicReceiver,
+        WidgetExtra,
+    };
+    use super::*;
+
+    impl<T, P> WidgetContent<P> for SelectableIgnored<T>
+    where
+        P: RenderPlatform,
+        T: WidgetContent<P>,
+    {
+        fn init<I: WidgetInit<Self, P>>(mut init: I) {
+            init.init_child_inline(|x| &mut x.data);
+        }
+
+        fn children<R: WidgetChildReceiver<P>>(&self, receiver: R) {
+            self.data.children(receiver);
+        }
+
+        fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R) {
+            self.data.children_mut(receiver);
+        }
+
+        fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {
+            self.data.graphics(receiver);
+        }
+
+        fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
+            self.data.hittest(extra, point)
+        }
+
+        fn pointer_event(
+            &mut self,
+            extra: &mut WidgetExtra<'_>,
+            event: &mut PointerEvent,
+        ) -> bool {
+            self.data.pointer_event(extra, event)
+        }
+    }
+
+    impl <T, P> Graphic<P> for SelectableIgnored<T>
+    where
+        P: RenderPlatform,
+        T: Graphic<P>,
+    {
+        fn draw(&mut self, ctx: &mut DrawContext<P>) {
+            self.data.draw(ctx)
+        }
+    }
+
+    impl <T, P> Graphic<P> for SelectableData<T>
+    where
+        P: RenderPlatform,
+        T: Graphic<P>,
+    {
+        fn draw(&mut self, ctx: &mut DrawContext<P>) {
+            T::draw(self, ctx)
+        }
+    }
 }
