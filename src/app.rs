@@ -5,7 +5,12 @@ use std::convert::TryInto;
 use drying_paint::Watched;
 
 use crate::platform::{DefaultPlatform, Platform};
-use crate::pointer::{PointerEvent, PointerId};
+use crate::pointer::{
+    PointerAction,
+    PointerEvent,
+    PointerId,
+    PointerEventData,
+};
 use crate::widget::{Widget, WidgetContent, WidgetId};
 use crate::window;
 use crate::graphics::DrawContext;
@@ -205,6 +210,17 @@ where
                         &mut state.grab_map,
                     );
                     root.pointer_event(&mut event);
+                    if let Some(id) = event.grab_stolen_from {
+                        root.find_widget(id, |widget| {
+                            widget.pointer_event_self(&mut PointerEvent::new(
+                                PointerEventData {
+                                    action: PointerAction::GrabStolen,
+                                    ..pointer
+                                },
+                                &mut state.grab_map,
+                            ));
+                        });
+                    }
                 },
             }
         }

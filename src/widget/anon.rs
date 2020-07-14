@@ -10,6 +10,7 @@ pub(crate) trait AnonWidget<P: RenderPlatform> {
     fn id(&self) -> WidgetId;
     fn draw(&mut self, ctx: &mut DrawContext<P>);
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
+    fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
 }
 
 impl<P, T> AnonWidget<P> for Widget<T, P>
@@ -27,6 +28,10 @@ where
 
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
         Widget::pointer_event(self, event)
+    }
+
+    fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool {
+        Widget::pointer_event_self(self, event)
     }
 }
 

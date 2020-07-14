@@ -17,6 +17,7 @@ mod newwidget;
 mod receivers;
 mod rect;
 
+use anon::AnonWidget;
 use internal::WidgetInternal;
 use rect::WidgetRect;
 use receivers::{
@@ -24,9 +25,14 @@ use receivers::{
     PointerEventChildReceiver,
     DrawGraphicBeforeReceiver,
     DrawGraphicAfterReceiver,
+    FindWidgetReceiver,
 };
 
-pub use anon::{OwnedWidgetProxy, WidgetProxy, WidgetProxyMut};
+pub use anon::{
+    OwnedWidgetProxy,
+    WidgetProxy,
+    WidgetProxyMut,
+};
 pub use content::WidgetContent;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
@@ -93,6 +99,29 @@ where
         content.graphics(DrawGraphicAfterReceiver { ctx });
     }
 
+    pub(crate) fn find_widget<F>(&mut self, id: WidgetId, func: F)
+    where
+        F: FnOnce(&mut dyn AnonWidget<P>)
+    {
+        self.find_widget_internal(&id, &mut Some(func));
+    }
+
+    fn find_widget_internal(
+        &mut self,
+        id: &WidgetId,
+        func: &mut Option<impl FnOnce(&mut dyn AnonWidget<P>)>,
+    ) {
+        if let Some(f) = func.take() {
+            if self.id() == *id {
+                f(self);
+            } else {
+                *func = Some(f);
+                let content = &mut self.internal_mut().content;
+                content.children_mut(FindWidgetReceiver { id, func });
+            }
+        }
+    }
+
     pub(crate) fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
         let mut handled_by_child = false;
         {
@@ -102,17 +131,22 @@ where
                 handled: &mut handled_by_child,
             });
         }
-        handled_by_child || {
-            let id = self.id();
-            let mut borrow = self.internal_mut();
-            let wid_int: &mut WidgetInternal<P, T> = &mut borrow;
-            let extra = WidgetExtra {
-                id,
-                rect: &mut wid_int.rect,
-            };
-            T::pointer_event(&mut wid_int.content, extra, event)
-        }
+        handled_by_child || self.pointer_event_self(event)
     }
+
+    pub(crate) fn pointer_event_self(&mut self, event: &mut PointerEvent)
+        -> bool
+    {
+        let id = self.id();
+        let mut borrow = self.internal_mut();
+        let wid_int: &mut WidgetInternal<P, T> = &mut borrow;
+        let mut extra = WidgetExtra {
+            id,
+            rect: &mut wid_int.rect,
+        };
+        T::pointer_event(&mut wid_int.content, &mut extra, event)
+    }
+
 }
 
 impl<P, T> Widget<T, P>

@@ -79,3 +79,18 @@ where
         graphic.after_children().draw(self.ctx);
     }
 }
+
+pub(super) struct FindWidgetReceiver<'a, F> {
+    pub id: &'a super::WidgetId,
+    pub func: &'a mut Option<F>,
+}
+
+impl<'a, F, P> WidgetMutChildReceiver<P> for FindWidgetReceiver<'a, F>
+where
+    F: FnOnce(&mut dyn super::AnonWidget<P>),
+    P: RenderPlatform,
+{
+    fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
+        child.find_widget_internal(self.id, self.func);
+    }
+}

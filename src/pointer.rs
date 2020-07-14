@@ -30,7 +30,7 @@ pub enum PointerAction {
 }
 
 mod internal {
-    #[derive(Debug)]
+    #[derive(Copy, Clone, Debug)]
     pub struct PointerEvent {
         pub id: super::PointerId,
         pub action: super::PointerAction,
@@ -56,7 +56,7 @@ pub use internal::PointerEvent as PointerEventData;
 pub struct PointerEvent<'a> {
     data: PointerEventData,
     grab_map: &'a mut HashMap<PointerId, WidgetId>,
-    grab_stolen_from: Option<WidgetId>,
+    pub(crate) grab_stolen_from: Option<WidgetId>,
 }
 
 impl std::fmt::Debug for PointerEvent<'_> {
