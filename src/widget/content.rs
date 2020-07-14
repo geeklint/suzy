@@ -31,13 +31,13 @@ where
 
     fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R);
 
-    fn hittest(&self, extra: WidgetExtra<'_>, point: (f32, f32)) -> bool {
+    fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
         extra.contains(point)
     }
 
     fn pointer_event(
         &mut self,
-        extra: WidgetExtra<'_>,
+        extra: &mut WidgetExtra<'_>,
         event: &mut PointerEvent,
     ) -> bool {
         let _unused = (extra, event);

@@ -152,7 +152,7 @@ where
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WidgetId {
     id: WatcherId,
 }
@@ -164,5 +164,11 @@ where
 {
     fn from(widget: &Widget<T, P>) -> Self {
         widget.id()
+    }
+}
+
+impl From<&mut WidgetExtra<'_>> for WidgetId {
+    fn from(extra: &mut WidgetExtra) -> Self {
+        extra.id()
     }
 }

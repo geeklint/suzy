@@ -25,6 +25,8 @@ pub enum PointerAction {
     Wheel(f32, f32),
     AltDown(AltMouseButton),
     AltUp(AltMouseButton),
+    Hover,
+    GrabStolen,
 }
 
 mod internal {
@@ -54,6 +56,7 @@ pub use internal::PointerEvent as PointerEventData;
 pub struct PointerEvent<'a> {
     data: PointerEventData,
     grab_map: &'a mut HashMap<PointerId, WidgetId>,
+    grab_stolen_from: Option<WidgetId>,
 }
 
 impl std::fmt::Debug for PointerEvent<'_> {
@@ -68,7 +71,9 @@ impl<'a> PointerEvent<'a> {
         grab_map: &'a mut HashMap<PointerId, WidgetId>,
     ) -> Self {
         PointerEvent {
-            data, grab_map
+            data,
+            grab_map,
+            grab_stolen_from: None,
         }
     }
 }
