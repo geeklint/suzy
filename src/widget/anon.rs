@@ -1,3 +1,4 @@
+use crate::dims::DynRect;
 use crate::graphics::DrawContext;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
@@ -6,7 +7,7 @@ use super::{Widget, WidgetId};
 use super::WidgetContent;
 
 
-pub(crate) trait AnonWidget<P: RenderPlatform> {
+pub(crate) trait AnonWidget<P: RenderPlatform>: DynRect {
     fn id(&self) -> WidgetId;
     fn draw(&mut self, ctx: &mut DrawContext<P>);
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
