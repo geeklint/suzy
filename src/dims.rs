@@ -405,20 +405,28 @@ pub trait Rect {
 
     /// Calculate the width and horizontal position of this rect based on
     /// another rect and some padding
-    fn set_fill_width<R: Rect>(&mut self, other: &R, padding: Padding) {
+    fn set_fill_width<R>(&mut self, other: &R, padding: Padding)
+    where
+        R: Rect + ?Sized,
+    {
         self.x_mut(|x| x.set_fill(other.x(), padding));
     }
 
     /// Calculate the height and vertical position of this rect based on
     /// another rect and some padding
-    fn set_fill_height<R: Rect>(&mut self, other: &R, padding: Padding) {
+    fn set_fill_height<R>(&mut self, other: &R, padding: Padding)
+    where
+        R: Rect + ?Sized,
+    {
         self.y_mut(|y| y.set_fill(other.y(), padding));
     }
 
     /// Calculate the size and position of this rect based on another rect
     /// and some padding
     fn set_fill<R, P>(&mut self, other: &R, padding: &P)
-        where R: Rect, P: Padding2d
+    where
+        R: Rect + ?Sized,
+        P: Padding2d + ?Sized,
     {
         self.x_mut(|x| x.set_fill(other.x(), padding.x()));
         self.y_mut(|y| y.set_fill(other.y(), padding.y()));
@@ -451,12 +459,12 @@ pub trait Rect {
     }
 
     /// Check if another rect is completely contained within this one
-    fn surrounds<R: Rect>(&self, other: &R) -> bool {
+    fn surrounds<R: Rect + ?Sized>(&self, other: &R) -> bool {
         self.x().surrounds(other.x()) && self.y().surrounds(other.y())
     }
 
     /// Check if this rect overlaps at all with another
-    fn overlaps<R: Rect>(&self, other: &R) -> bool {
+    fn overlaps<R: Rect + ?Sized>(&self, other: &R) -> bool {
         self.x().overlaps(other.x()) && self.y().overlaps(other.y())
     }
 }
@@ -548,79 +556,88 @@ impl From<SimpleRect> for FixedSizeRect {
 pub trait DynRect {
     fn x(&self) -> Dim;
     fn y(&self) -> Dim;
-    fn left(&self) -> f32;
+    fn x_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>);
+    fn y_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>);
+ 
     fn set_left(&mut self, value: f32);
-    fn right(&self) -> f32;
     fn set_right(&mut self, value: f32);
-    fn bottom(&self) -> f32;
     fn set_bottom(&mut self, value: f32);
-    fn top(&self) -> f32;
     fn set_top(&mut self, value: f32);
-    fn center_x(&self) -> f32;
     fn set_center_x(&mut self, value: f32);
-    fn center_y(&self) -> f32;
     fn set_center_y(&mut self, value: f32);
-    fn center(&self) -> (f32, f32);
     fn set_center(&mut self, value: (f32, f32));
-    fn width(&self) -> f32;
     fn set_width(&mut self, value: f32);
-    fn height(&self) -> f32;
     fn set_height(&mut self, value: f32);
-    fn pivot(&self) -> (f32, f32);
     fn set_pivot(&mut self, value: (f32, f32));
-    fn pivot_pos(&self) -> (f32, f32);
     fn set_pivot_pos(&mut self, value: (f32, f32));
-    fn area(&self) -> f32;
-    fn aspect(&self) -> f32;
-    fn contains(&self, point: (f32, f32)) -> bool;
-    fn set_fill_width(&mut self, other: &SimpleRect, padding: Padding);
-    fn set_fill_height(&mut self, other: &SimpleRect, padding: Padding);
-    fn set_fill(&mut self, other: &SimpleRect, padding: &SimplePadding2d);
     fn set_fit_aspect(&mut self, aspect: f32);
     fn set_fill_aspect(&mut self, aspect: f32);
-    fn surrounds(&self, other: &SimpleRect) -> bool;
-    fn overlaps(&self, other: &SimpleRect) -> bool;
 }
 
 impl<T: Rect> DynRect for T {
-    fn x(&self) -> Dim { self.x() }
-    fn y(&self) -> Dim { self.y() }
-    fn left(&self) -> f32 { self.left() }
-    fn set_left(&mut self, value: f32) { self.set_left(value) }
-    fn right(&self) -> f32 { self.right() }
-    fn set_right(&mut self, value: f32) { self.set_right(value) }
-    fn bottom(&self) -> f32 { self.bottom() }
-    fn set_bottom(&mut self, value: f32) { self.set_bottom(value) }
-    fn top(&self) -> f32 { self.top() }
-    fn set_top(&mut self, value: f32) { self.set_top(value) }
-    fn center_x(&self) -> f32 { self.center_x() }
-    fn set_center_x(&mut self, value: f32) { self.set_center_x(value) }
-    fn center_y(&self) -> f32 { self.center_y() }
-    fn set_center_y(&mut self, value: f32) { self.set_center_y(value) }
-    fn center(&self) -> (f32, f32) { self.center() }
-    fn set_center(&mut self, value: (f32, f32)) { self.set_center(value) }
-    fn width(&self) -> f32 { self.width() }
-    fn set_width(&mut self, value: f32) { self.set_width(value) }
-    fn height(&self) -> f32 { self.height() }
-    fn set_height(&mut self, value: f32) { self.set_height(value) }
-    fn pivot(&self) -> (f32, f32) { self.pivot() }
-    fn set_pivot(&mut self, value: (f32, f32)) { self.set_pivot(value) }
-    fn pivot_pos(&self) -> (f32, f32) { self.pivot_pos() }
-    fn set_pivot_pos(&mut self, value: (f32, f32)) { self.set_pivot_pos(value) }
-    fn area(&self) -> f32 { self.area() }
-    fn aspect(&self) -> f32 { self.aspect() }
-    fn contains(&self, point: (f32, f32)) -> bool { self.contains(point) }
-    fn set_fill_width(&mut self, other: &SimpleRect, padding: Padding) {
-        self.set_fill_width(other, padding);
+    fn x(&self) -> Dim { Rect::x(self) }
+    fn y(&self) -> Dim { Rect::y(self) }
+    fn x_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>) {
+        Rect::x_mut(self, |dim| f(dim))
     }
-    fn set_fill_height(&mut self, other: &SimpleRect, padding: Padding) {
-        self.set_fill_height(other, padding);
+    fn y_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>) {
+        Rect::y_mut(self, |dim| f(dim))
     }
-    fn set_fill(&mut self, other: &SimpleRect, padding: &SimplePadding2d) {
-        self.set_fill(other, padding);
+ 
+    fn set_left(&mut self, value: f32) { Rect::set_left(self, value) }
+    fn set_right(&mut self, value: f32) { Rect::set_right(self, value) }
+    fn set_bottom(&mut self, value: f32) { Rect::set_bottom(self, value) }
+    fn set_top(&mut self, value: f32) { Rect::set_top(self, value) }
+    fn set_center_x(&mut self, value: f32) { Rect::set_center_x(self, value) }
+    fn set_center_y(&mut self, value: f32) { Rect::set_center_y(self, value) }
+    fn set_center(&mut self, value: (f32, f32)) { Rect::set_center(self, value) }
+    fn set_width(&mut self, value: f32) { Rect::set_width(self, value) }
+    fn set_height(&mut self, value: f32) { Rect::set_height(self, value) }
+    fn set_pivot(&mut self, value: (f32, f32)) { Rect::set_pivot(self, value) }
+    fn set_pivot_pos(&mut self, value: (f32, f32)) { Rect::set_pivot_pos(self, value) }
+    fn set_fit_aspect(&mut self, aspect: f32) { Rect::set_fit_aspect(self, aspect) }
+    fn set_fill_aspect(&mut self, aspect: f32) { Rect::set_fill_aspect(self, aspect) }
+}
+
+impl Rect for dyn DynRect {
+    fn x(&self) -> Dim { (*self).x() }
+    fn y(&self) -> Dim { (*self).y() }
+
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        let res = None;
+        (*self).x_mut(Box::new(|dim| {
+            res = Some(f(dim));
+        }));
+        res.expect(
+            "DynRect implementation did not call the closure passed to x_mut"
+        )
     }
-    fn set_fit_aspect(&mut self, aspect: f32) { self.set_fit_aspect(aspect) }
-    fn set_fill_aspect(&mut self, aspect: f32) { self.set_fill_aspect(aspect) }
-    fn surrounds(&self, other: &SimpleRect) -> bool { self.surrounds(other) }
-    fn overlaps(&self, other: &SimpleRect) -> bool { self.overlaps(other) }
+
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        let res = None;
+        (*self).y_mut(Box::new(|dim| {
+            res = Some(f(dim));
+        }));
+        res.expect(
+            "DynRect implementation did not call the closure passed to y_mut"
+        )
+    }
+ 
+    fn set_left(&mut self, value: f32) { (*self).set_left(value) }
+    fn set_right(&mut self, value: f32) { (*self).set_right(value) }
+    fn set_bottom(&mut self, value: f32) { (*self).set_bottom(value) }
+    fn set_top(&mut self, value: f32) { (*self).set_top(value) }
+    fn set_center_x(&mut self, value: f32) { (*self).set_center_x(value) }
+    fn set_center_y(&mut self, value: f32) { (*self).set_center_y(value) }
+    fn set_center(&mut self, value: (f32, f32)) { (*self).set_center(value) }
+    fn set_width(&mut self, value: f32) { (*self).set_width(value) }
+    fn set_height(&mut self, value: f32) { (*self).set_height(value) }
+    fn set_pivot(&mut self, value: (f32, f32)) { (*self).set_pivot(value) }
+    fn set_pivot_pos(&mut self, value: (f32, f32)) { (*self).set_pivot_pos(value) }
+    fn set_fit_aspect(&mut self, aspect: f32) { (*self).set_fit_aspect(aspect) }
+    fn set_fill_aspect(&mut self, aspect: f32) { (*self).set_fill_aspect(aspect) }
 }
