@@ -480,6 +480,12 @@ impl SimpleRect {
     pub fn new(x: Dim, y: Dim) -> Self {
         Self { x, y }
     }
+
+    pub fn with_size(width: f32, height: f32) -> Self {
+        let xdim = Dim::with_length(width);
+        let ydim = Dim::with_length(height);
+        Self::new(xdim, ydim)
+    }
 }
 
 impl<'a> Rect for SimpleRect {
