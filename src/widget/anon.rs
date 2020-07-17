@@ -15,6 +15,11 @@ pub(crate) trait AnonWidget<P: RenderPlatform>: crate::dims::DynRect {
     fn draw(&mut self, ctx: &mut DrawContext<P>);
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
     fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
+    fn find_widget(
+        &mut self,
+        id: WidgetId,
+        func: &mut dyn FnMut(&mut dyn AnonWidget<P>),
+    );
 }
 
 impl<P, T> AnonWidget<P> for Widget<T, P>
@@ -36,6 +41,14 @@ where
 
     fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool {
         Widget::pointer_event_self(self, event)
+    }
+
+    fn find_widget(
+        &mut self,
+        id: WidgetId,
+        func: &mut dyn FnMut(&mut dyn AnonWidget<P>),
+    ) {
+        Widget::find_widget(self, id, |node| func(node));
     }
 }
 
