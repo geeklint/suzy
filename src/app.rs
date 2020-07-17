@@ -1,17 +1,26 @@
 use std::cell::RefCell;
 use std::time;
 use std::convert::TryInto;
+use std::collections::HashMap;
 
 use drying_paint::Watched;
 
-use crate::platform::{DefaultPlatform, Platform};
+use crate::platform::{
+    DefaultPlatform,
+    Platform,
+};
 use crate::pointer::{
     PointerAction,
     PointerEvent,
     PointerId,
     PointerEventData,
 };
-use crate::widget::{Widget, WidgetContent, WidgetId};
+use crate::widget::{
+    Widget,
+    WidgetContent,
+    WidgetId,
+    OwnedWidgetProxy,
+};
 use crate::window;
 use crate::graphics::DrawContext;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
@@ -21,7 +30,7 @@ thread_local! {
     static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct AppValues {
     pub frame_start: Watched<time::Instant>,
     pub cell_size: Watched<f32>,
