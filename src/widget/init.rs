@@ -14,7 +14,7 @@ use super::{
 pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
-    T: WidgetContent<P>,
+    T: WidgetContent<P> + ?Sized,
 {
     /// Get a value representing a unique id for the widget this WidgetInit
     /// was created for. This value may outlive the widget, and will never

@@ -8,11 +8,11 @@ use super::{WidgetId, WidgetContent, WidgetRect};
 pub(super) struct WidgetInternal<P, T>
 where
     P: RenderPlatform,
-    T: WidgetContent<P>,
+    T: WidgetContent<P> + ?Sized,
 {
     pub(super) rect: WidgetRect,
-    pub(super) content: T,
     pub(super) _platform: std::marker::PhantomData<P>,
+    pub(super) content: T,
 }
 
 pub struct WidgetExtra<'a> {

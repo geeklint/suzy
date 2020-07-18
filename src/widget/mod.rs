@@ -50,7 +50,7 @@ pub use receivers::{
 pub struct Widget<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
-    T: WidgetContent<P>,
+    T: WidgetContent<P> + ?Sized,
 {
     watcher: Watcher<WidgetInternal<P, T>>,
 }

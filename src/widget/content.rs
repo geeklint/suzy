@@ -15,7 +15,7 @@ use super::{
 pub trait WidgetContent<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
-    Self: Sized + 'static,
+    Self: 'static,
 {
     /// This method provides a convient place to register functions which
     /// watch values and update parts of your widget when they change
