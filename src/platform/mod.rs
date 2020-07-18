@@ -3,6 +3,7 @@ mod shared;
 pub use shared::{
     Platform,
     RenderPlatform,
+    Event,
 };
 
 // Platforms

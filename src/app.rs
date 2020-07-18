@@ -8,6 +8,7 @@ use drying_paint::Watched;
 use crate::platform::{
     DefaultPlatform,
     Platform,
+    Event,
 };
 use crate::pointer::{
     PointerAction,
@@ -145,7 +146,6 @@ where
     roots: Vec<OwnedWidgetProxy<P::Renderer>>,
     values: AppValues,
     events_state: EventsState,
-    frame_start: Option<time::Instant>,
 }
 
 impl<P: Platform> App<P> {
@@ -155,13 +155,10 @@ impl<P: Platform> App<P> {
         T: WidgetContent<P::Renderer>,
     {
         let Self { watch_ctx, roots, values, window, .. } = self;
-        let frame_start = self.frame_start.take()
-            .unwrap_or_else(time::Instant::now);
         let (width, height) = window.size();
         let rect = SimpleRect::with_size(width, height);
         let watch_ctx_inner = watch_ctx.take().unwrap();
         let watch_ctx_inner = watch_ctx_inner.with(|| {
-            *values.frame_start = frame_start;
             Self::with_values(values, || {
                 let mut widget = f();
                 widget.set_fill(&rect, &SimplePadding2d::zero());
@@ -198,69 +195,89 @@ impl<P: Platform> App<P> {
         res
     }
 
-    fn poll_events(
-        window: &mut P::Window,
+    fn handle_event(
         roots: &mut Vec<OwnedWidgetProxy<P::Renderer>>,
         state: &mut EventsState,
+        event: Event,
     ) {
-        while let Some(event) = window.next_event() {
-            match event {
-                WindowEvent::Quit => {
-                    state.quit = true;
+        use self::WindowEvent::*;
+
+        match event {
+            Event::StartFrame(frame_time) => {
+                APP_STACK.with(|cell| {
+                    let mut handle = cell.borrow_mut();
+                    let values = handle.last_mut().unwrap();
+                    *values.frame_start = frame_time;
+                });
+            },
+            Event::Update => {
+                drying_paint::WatchContext::update_current();
+            },
+            Event::Draw => {
+            },
+            Event::WindowEvent(Quit) => {
+                state.quit = true;
+            },
+            Event::WindowEvent(Resize(x, y)) => {
+                APP_STACK.with(|cell| {
+                    let mut handle = cell.borrow_mut();
+                    let values = handle.last_mut().unwrap();
+                    *values.cell_size = get_cell_size(x, y);
+                    values.window_size.0 = x;
+                    values.window_size.1 = y;
+                });
+                let xdim = Dim::with_length(x);
+                let ydim = Dim::with_length(y);
+                let rect = SimpleRect::new(xdim, ydim);
+                for root in roots.iter_mut() {
+                    root.set_fill(&rect, &SimplePadding2d::zero());
                 }
-                WindowEvent::Resize(x, y) => {
-                    APP_STACK.with(|cell| {
-                        let mut handle = cell.borrow_mut();
-                        let values = handle.last_mut().unwrap();
-                        *values.cell_size = get_cell_size(x, y);
-                        values.window_size.0 = x;
-                        values.window_size.1 = y;
-                    });
-                    let xdim = Dim::with_length(x);
-                    let ydim = Dim::with_length(y);
-                    let rect = SimpleRect::new(xdim, ydim);
-                    for root in roots.iter_mut() {
-                        root.set_fill(&rect, &SimplePadding2d::zero());
-                    }
-                },
-                WindowEvent::DpScaleChange(ppd) => {
-                    APP_STACK.with(|cell| {
-                        let mut handle = cell.borrow_mut();
-                        let values = handle.last_mut().unwrap();
-                        *values.px_per_dp = ppd;
-                    });
-                },
-                WindowEvent::KeyDown(_key) => {
-                },
-                WindowEvent::Pointer(pointer) => {
-                    let mut event = PointerEvent::new(
-                        pointer,
-                        &mut state.grab_map,
-                    );
-                    {
-                        let mut handled = false;
-                        let mut iter = roots.iter_mut().rev();
-                        while let (false, Some(root)) = (handled, iter.next()) {
-                            handled = root.pointer_event(&mut event);
-                        }
-                    }
-                    if let Some(id) = event.grab_stolen_from {
-                        let mut found = false;
-                        let mut iter = roots.iter_mut();
-                        while let (false, Some(root)) = (found, iter.next()) {
-                            root.find_widget(id.clone(), |widget| {
-                                found = true;
-                                widget.pointer_event_self(&mut PointerEvent::new(
-                                    PointerEventData {
-                                        action: PointerAction::GrabStolen,
-                                        ..pointer
-                                    },
-                                    &mut state.grab_map,
-                                ));
-                            });
-                        }
-                    }
-                },
+            },
+            Event::WindowEvent(DpScaleChange(ppd)) => {
+                APP_STACK.with(|cell| {
+                    let mut handle = cell.borrow_mut();
+                    let values = handle.last_mut().unwrap();
+                    *values.px_per_dp = ppd;
+                });
+            },
+            Event::WindowEvent(KeyDown(_key)) => {
+            },
+            Event::WindowEvent(Pointer(pointer)) => {
+                Self::pointer_event(roots, &mut state.grab_map, pointer);
+            },
+        }
+    }
+
+    fn pointer_event(
+        roots: &mut Vec<OwnedWidgetProxy<P::Renderer>>,
+        grab_map: &mut HashMap<PointerId, WidgetId>,
+        pointer: PointerEventData,
+    ) {
+        let mut event = PointerEvent::new(
+            pointer,
+            grab_map,
+        );
+        {
+            let mut handled = false;
+            let mut iter = roots.iter_mut().rev();
+            while let (false, Some(root)) = (handled, iter.next()) {
+                handled = root.pointer_event(&mut event);
+            }
+        }
+        if let Some(id) = event.grab_stolen_from {
+            let mut found = false;
+            let mut iter = roots.iter_mut();
+            while let (false, Some(root)) = (found, iter.next()) {
+                root.find_widget(id.clone(), |widget| {
+                    found = true;
+                    widget.pointer_event_self(&mut PointerEvent::new(
+                        PointerEventData {
+                            action: PointerAction::GrabStolen,
+                            ..pointer
+                        },
+                        grab_map,
+                    ));
+                });
             }
         }
     }
@@ -268,10 +285,6 @@ impl<P: Platform> App<P> {
     pub fn tick(&mut self) {
         self.update();
         self.render();
-    }
-
-    pub fn frame_start_time(&mut self) {
-        self.frame_start = Some(time::Instant::now());
     }
 
     pub fn update(&mut self) {
@@ -283,14 +296,26 @@ impl<P: Platform> App<P> {
             events_state,
             ..
         } = self;
-        let frame_start = self.frame_start.take()
-            .unwrap_or_else(time::Instant::now);
         let watch_ctx_inner = watch_ctx.take().unwrap();
         let watch_ctx_inner = watch_ctx_inner.with(|| {
-            *values.frame_start = frame_start;
             Self::with_values(values, || {
-                Self::poll_events(window, roots, events_state);
-                drying_paint::WatchContext::update_current();
+                Self::handle_event(
+                    roots,
+                    events_state,
+                    Event::StartFrame(time::Instant::now()),
+                );
+                while let Some(event) = window.next_event() {
+                    Self::handle_event(
+                        roots,
+                        events_state,
+                        Event::WindowEvent(event),
+                    );
+                }
+                Self::handle_event(
+                    roots,
+                    events_state,
+                    Event::Update,
+                );
             });
         }).0;
         *watch_ctx = Some(watch_ctx_inner);
@@ -347,7 +372,6 @@ impl Default for App {
                 quit: false,
                 grab_map: HashMap::new(),
             },
-            frame_start: None,
         }
     }
 }
