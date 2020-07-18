@@ -15,10 +15,10 @@ pub(crate) trait AnonWidget<P: RenderPlatform>: crate::dims::DynRect {
     fn draw(&mut self, ctx: &mut DrawContext<P>);
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
     fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
-    fn find_widget(
+    fn find_widget<'a>(
         &mut self,
         id: WidgetId,
-        func: &mut dyn FnMut(&mut dyn AnonWidget<P>),
+        func: Box<dyn FnOnce(&mut dyn AnonWidget<P>) + 'a>,
     );
 }
 
@@ -43,10 +43,10 @@ where
         Widget::pointer_event_self(self, event)
     }
 
-    fn find_widget(
+    fn find_widget<'a>(
         &mut self,
         id: WidgetId,
-        func: &mut dyn FnMut(&mut dyn AnonWidget<P>),
+        func: Box<dyn FnOnce(&mut dyn AnonWidget<P>) + 'a>,
     ) {
         Widget::find_widget(self, id, |node| func(node));
     }
@@ -65,6 +65,23 @@ pub struct WidgetProxyMut<'a, P: RenderPlatform = DefaultRenderPlatform> {
 
 pub struct OwnedWidgetProxy<P: RenderPlatform = DefaultRenderPlatform> {
     pub(crate) anon: Box<dyn AnonWidget<P>>,
+}
+
+impl<P: RenderPlatform> OwnedWidgetProxy<P> {
+    pub(crate) fn find_widget<F>(&mut self, id: WidgetId, func: F)
+    where
+        F: FnOnce(&mut dyn AnonWidget<P>)
+    {
+        self.anon.find_widget(id, Box::new(func));
+    }
+
+    pub(crate) fn draw(&mut self, ctx: &mut DrawContext<P>) {
+        self.anon.draw(ctx);
+    }
+
+    pub(crate) fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
+        self.anon.pointer_event(event)
+    }
 }
 
 impl<P, T> From<Widget<T, P>> for OwnedWidgetProxy<P>
@@ -102,7 +119,7 @@ impl<P: RenderPlatform> Rect for OwnedWidgetProxy<P> {
     fn x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        let res = None;
+        let mut res = None;
         self.anon.x_mut(Box::new(|dim| {
             res = Some(f(dim));
         }));
@@ -114,7 +131,7 @@ impl<P: RenderPlatform> Rect for OwnedWidgetProxy<P> {
     fn y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        let res = None;
+        let mut res = None;
         self.anon.y_mut(Box::new(|dim| {
             res = Some(f(dim));
         }));

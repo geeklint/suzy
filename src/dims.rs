@@ -612,7 +612,7 @@ impl Rect for dyn DynRect {
     fn x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        let res = None;
+        let mut res = None;
         (*self).x_mut(Box::new(|dim| {
             res = Some(f(dim));
         }));
@@ -624,7 +624,7 @@ impl Rect for dyn DynRect {
     fn y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        let res = None;
+        let mut res = None;
         (*self).y_mut(Box::new(|dim| {
             res = Some(f(dim));
         }));

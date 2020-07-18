@@ -101,14 +101,16 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
         }
     }
 
-    pub(crate) fn draw<T>(ctx: &mut Self, root: &mut Widget<T, P>) -> bool
+    pub(crate) fn draw<'b, I>(ctx: &mut Self, roots: I) -> bool
     where
-        T: WidgetContent<P>,
+        I: 'b + Iterator<Item = &'b mut crate::widget::OwnedWidgetProxy<P>>,
     {
         if ctx.pass == DrawPass::UpdateContext {
             ctx.pass = DrawPass::DrawRemaining;
         }
-        Widget::draw(root, ctx);
+        for widget in roots {
+            widget.draw(ctx);
+        }
         ctx.pass == DrawPass::UpdateContext
     }
 }

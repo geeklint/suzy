@@ -133,27 +133,44 @@ impl window::WindowSettings for AppBuilder {
 
 struct EventsState {
     quit: bool,
-    grab_map: std::collections::HashMap<PointerId, WidgetId>,
+    grab_map: HashMap<PointerId, WidgetId>,
 }
 
-pub struct App<Root, P = DefaultPlatform>
+pub struct App<P = DefaultPlatform>
 where
-    Root: WidgetContent<P::Renderer>,
     P: Platform,
 {
     watch_ctx: Option<drying_paint::WatchContext>,
     window: P::Window,
-    root: Widget<Root, P::Renderer>,
+    roots: Vec<OwnedWidgetProxy<P::Renderer>>,
     values: AppValues,
     events_state: EventsState,
     frame_start: Option<time::Instant>,
 }
 
-impl<Root, P> App<Root, P>
-where
-    Root: WidgetContent<P::Renderer>,
-    P: Platform,
-{
+impl<P: Platform> App<P> {
+    pub fn add_root<F, T>(&mut self, f: F)
+    where
+        F: FnOnce() -> Widget<T, P::Renderer>,
+        T: WidgetContent<P::Renderer>,
+    {
+        let Self { watch_ctx, roots, values, window, .. } = self;
+        let frame_start = self.frame_start.take()
+            .unwrap_or_else(time::Instant::now);
+        let (width, height) = window.size();
+        let rect = SimpleRect::with_size(width, height);
+        let watch_ctx_inner = watch_ctx.take().unwrap();
+        let watch_ctx_inner = watch_ctx_inner.with(|| {
+            *values.frame_start = frame_start;
+            Self::with_values(values, || {
+                let mut widget = f();
+                widget.set_fill(&rect, &SimplePadding2d::zero());
+                roots.push(widget.into());
+            });
+        }).0;
+        *watch_ctx = Some(watch_ctx_inner);
+    }
+
     pub fn time() -> time::Instant {
         try_with_current(|values| {
             *values.frame_start
@@ -183,7 +200,7 @@ where
 
     fn poll_events(
         window: &mut P::Window,
-        root: &mut Widget<Root, P::Renderer>,
+        roots: &mut Vec<OwnedWidgetProxy<P::Renderer>>,
         state: &mut EventsState,
     ) {
         while let Some(event) = window.next_event() {
@@ -202,7 +219,9 @@ where
                     let xdim = Dim::with_length(x);
                     let ydim = Dim::with_length(y);
                     let rect = SimpleRect::new(xdim, ydim);
-                    root.set_fill(&rect, &SimplePadding2d::zero());
+                    for root in roots.iter_mut() {
+                        root.set_fill(&rect, &SimplePadding2d::zero());
+                    }
                 },
                 WindowEvent::DpScaleChange(ppd) => {
                     APP_STACK.with(|cell| {
@@ -218,17 +237,28 @@ where
                         pointer,
                         &mut state.grab_map,
                     );
-                    root.pointer_event(&mut event);
+                    {
+                        let mut handled = false;
+                        let mut iter = roots.iter_mut().rev();
+                        while let (false, Some(root)) = (handled, iter.next()) {
+                            handled = root.pointer_event(&mut event);
+                        }
+                    }
                     if let Some(id) = event.grab_stolen_from {
-                        root.find_widget(id, |widget| {
-                            widget.pointer_event_self(&mut PointerEvent::new(
-                                PointerEventData {
-                                    action: PointerAction::GrabStolen,
-                                    ..pointer
-                                },
-                                &mut state.grab_map,
-                            ));
-                        });
+                        let mut found = false;
+                        let mut iter = roots.iter_mut();
+                        while let (false, Some(root)) = (found, iter.next()) {
+                            root.find_widget(id.clone(), |widget| {
+                                found = true;
+                                widget.pointer_event_self(&mut PointerEvent::new(
+                                    PointerEventData {
+                                        action: PointerAction::GrabStolen,
+                                        ..pointer
+                                    },
+                                    &mut state.grab_map,
+                                ));
+                            });
+                        }
                     }
                 },
             }
@@ -248,7 +278,7 @@ where
         let Self {
             watch_ctx,
             window,
-            root,
+            roots,
             values,
             events_state,
             ..
@@ -259,7 +289,7 @@ where
         let watch_ctx_inner = watch_ctx_inner.with(|| {
             *values.frame_start = frame_start;
             Self::with_values(values, || {
-                Self::poll_events(window, root, events_state);
+                Self::poll_events(window, roots, events_state);
                 drying_paint::WatchContext::update_current();
             });
         }).0;
@@ -267,13 +297,13 @@ where
     }
 
     pub fn render(&mut self) {
-        let Self { watch_ctx, window, root, ..  } = self;
+        let Self { watch_ctx, window, roots, ..  } = self;
         window.clear();
         let watch_ctx_inner = watch_ctx.take().unwrap();
         let watch_ctx_inner = watch_ctx_inner.with(|| {
             let mut ctx = window.prepare_draw();
             let mut loop_count = 0;
-            while DrawContext::draw(&mut ctx, root) {
+            while DrawContext::draw(&mut ctx, roots.iter_mut()) {
                 debug_assert!(
                     loop_count < 1024,
                     "render exceeded its loop count (possible infinite loop)",
@@ -286,15 +316,13 @@ where
     }
 
     pub fn shutdown(self) {
-        let Self { window, root, ..  } = self;
-        std::mem::drop(root);
+        let Self { window, roots, ..  } = self;
+        std::mem::drop(roots);
         std::mem::drop(window);
     }
 }
 
-impl<Root> Default for App<Root>
-where Root: WidgetContent + Default
-{
+impl Default for App {
     fn default() -> Self {
         let builder = AppBuilder::default();
         let window: <DefaultPlatform as Platform>::Window = {
@@ -303,9 +331,6 @@ where Root: WidgetContent + Default
         let watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.size();
-        let xdim = Dim::with_length(width);
-        let ydim = Dim::with_length(height);
-        let rect = SimpleRect::new(xdim, ydim);
         
         let mut values = AppValues {
             frame_start: Watched::new(time::Instant::now()),
@@ -313,19 +338,14 @@ where Root: WidgetContent + Default
             px_per_dp: Watched::new(1.0),
             window_size: (width, height),
         };
-        let (watch_ctx, root) = watch_ctx.with(|| {
-            Self::with_values(&mut values, || {
-                Widget::<Root>::default_with_rect(&rect)
-            })
-        });
         Self {
             watch_ctx: Some(watch_ctx),
             window,
-            root,
+            roots: Vec::new(),
             values,
             events_state: EventsState {
                 quit: false,
-                grab_map: std::collections::HashMap::new(),
+                grab_map: HashMap::new(),
             },
             frame_start: None,
         }
