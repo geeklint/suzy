@@ -241,10 +241,9 @@ impl<P: Platform> CurrentApp<P> {
     }
 
     fn handle_event<E: EventLoopState>(
-        roots: &mut Vec<OwnedWidgetProxy<P::Renderer>>,
-        pointer_grab_map: &mut HashMap<PointerId, WidgetId>,
+        &mut self,
         state: &mut E,
-        event: Event<P::Window>,
+        event: Event,
     ) {
         use self::WindowEvent::*;
 
@@ -259,10 +258,10 @@ impl<P: Platform> CurrentApp<P> {
             Event::Update => {
                 drying_paint::WatchContext::update_current();
             },
-            Event::Draw(window) => {
-                let mut ctx = window.prepare_draw();
+            Event::Draw => {
+                let mut ctx = self.window.prepare_draw();
                 let mut loop_count = 0;
-                while DrawContext::draw(&mut ctx, roots.iter_mut()) {
+                while DrawContext::draw(&mut ctx, self.roots.iter_mut()) {
                     debug_assert!(
                         loop_count < 1024,
                         "render exceeded its loop count (possible infinite loop)",
@@ -285,7 +284,7 @@ impl<P: Platform> CurrentApp<P> {
                 let xdim = Dim::with_length(x);
                 let ydim = Dim::with_length(y);
                 let rect = SimpleRect::new(xdim, ydim);
-                for root in roots.iter_mut() {
+                for root in self.roots.iter_mut() {
                     root.set_fill(&rect, &SimplePadding2d::zero());
                 }
             },
@@ -299,30 +298,30 @@ impl<P: Platform> CurrentApp<P> {
             Event::WindowEvent(KeyDown(_key)) => {
             },
             Event::WindowEvent(Pointer(pointer)) => {
-                Self::pointer_event(roots, pointer_grab_map, pointer);
+                self.pointer_event(pointer);
             },
         }
     }
 
     fn pointer_event(
-        roots: &mut Vec<OwnedWidgetProxy<P::Renderer>>,
-        grab_map: &mut HashMap<PointerId, WidgetId>,
+        &mut self,
         pointer: PointerEventData,
     ) {
+        let grab_map = &mut self.pointer_grab_map;
         let mut event = PointerEvent::new(
             pointer,
             grab_map,
         );
         {
             let mut handled = false;
-            let mut iter = roots.iter_mut().rev();
+            let mut iter = self.roots.iter_mut().rev();
             while let (false, Some(root)) = (handled, iter.next()) {
                 handled = root.pointer_event(&mut event);
             }
         }
         if let Some(id) = event.grab_stolen_from {
             let mut found = false;
-            let mut iter = roots.iter_mut();
+            let mut iter = self.roots.iter_mut();
             while let (false, Some(root)) = (found, iter.next()) {
                 root.find_widget(id.clone(), |widget| {
                     found = true;
@@ -339,37 +338,23 @@ impl<P: Platform> CurrentApp<P> {
     }
 
     pub fn update(&mut self, events_state: &mut EventsState) {
-        let Self {
-            window,
-            roots,
-            pointer_grab_map,
-            ..
-        } = self;
-        Self::handle_event(
-            roots,
-            pointer_grab_map,
+        self.handle_event(
             events_state,
             Event::StartFrame(time::Instant::now()),
         );
-        while let Some(event) = window.next_event() {
-            Self::handle_event(
-                roots,
-                pointer_grab_map,
+        while let Some(event) = self.window.next_event() {
+            self.handle_event(
                 events_state,
                 Event::WindowEvent(event),
             );
         }
-        Self::handle_event(
-            roots,
-            pointer_grab_map,
+        self.handle_event(
             events_state,
             Event::Update,
         );
-        Self::handle_event(
-            roots,
-            pointer_grab_map,
+        self.handle_event(
             events_state,
-            Event::Draw(window),
+            Event::Draw,
         );
     }
 
