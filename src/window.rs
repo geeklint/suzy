@@ -92,9 +92,6 @@ pub trait Window<P: RenderPlatform> : WindowSettings + TryFrom<WindowBuilder> {
     /// Get the pixel density of the window as displayed
     fn pixels_per_dp(&self) -> f32;
 
-    /// Clear the screen
-    fn clear(&mut self);
-
     /// Do some sort of synchonization - this function is expected to block
     /// for some period of time. In a double buffered context, this will
     /// usually cause the back buffer to be displayed.

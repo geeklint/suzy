@@ -214,7 +214,6 @@ impl<P: Platform> App<P> {
                 drying_paint::WatchContext::update_current();
             },
             Event::Draw(window) => {
-                window.clear();
                 let mut ctx = window.prepare_draw();
                 let mut loop_count = 0;
                 while DrawContext::draw(&mut ctx, roots.iter_mut()) {

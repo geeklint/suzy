@@ -239,16 +239,13 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         self.info.pixel_info.pixels_per_dp
     }
 
-    fn clear(&mut self) {
-		self.info.gl_win.clear();
-    }
-
     fn flip(&mut self) {
         self.info.gl_win.flip();
         self.info.window.gl_swap_window();
     }
 
     fn prepare_draw(&mut self) -> DrawContext<opengl::OpenGlRenderPlatform> {
+        self.info.gl_win.clear();
         self.info.gl_win.prepare_draw(self.size())
     }
 
