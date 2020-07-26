@@ -133,7 +133,7 @@ impl window::WindowSettings for AppBuilder {
     }
 }
 
-struct EventsState {
+pub struct EventsState {
     quit: bool,
 }
 
@@ -147,7 +147,7 @@ pub struct App<P = DefaultPlatform>
 where
     P: Platform,
 {
-    watch_ctx: Option<drying_paint::WatchContext>,
+    watch_ctx: drying_paint::WatchContext,
     window: P::Window,
     roots: Vec<OwnedWidgetProxy<P::Renderer>>,
     values: AppValues,
@@ -156,41 +156,10 @@ where
 }
 
 impl<P: Platform> App<P> {
-    pub fn add_root<F, T>(&mut self, f: F)
-    where
-        F: FnOnce() -> Widget<T, P::Renderer>,
-        T: WidgetContent<P::Renderer>,
-    {
-        let Self { watch_ctx, roots, values, window, .. } = self;
-        let (width, height) = window.size();
-        let rect = SimpleRect::with_size(width, height);
-        let watch_ctx_inner = watch_ctx.take().unwrap();
-        let watch_ctx_inner = watch_ctx_inner.with(|| {
-            Self::with_values(values, || {
-                let mut widget = f();
-                widget.set_fill(&rect, &SimplePadding2d::zero());
-                roots.push(widget.into());
-            });
-        }).0;
-        *watch_ctx = Some(watch_ctx_inner);
-    }
-
     pub fn time() -> time::Instant {
         try_with_current(|values| {
             *values.frame_start
         }).unwrap_or_else(time::Instant::now)
-    }
-
-    pub fn sync(&mut self) {
-        self.window.flip();
-    }
-
-    pub fn run(mut self) {
-        while !self.events_state.quit {
-            self.tick();
-            self.sync();
-        }
-        self.shutdown();
     }
 
     fn with_values<F: FnOnce() -> R, R>(values: &mut AppValues, func: F) -> R {
@@ -200,6 +169,75 @@ impl<P: Platform> App<P> {
         let res = (func)();
         *values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
         res
+    }
+
+    pub fn with<F, R>(self, func: F) -> (Self, R)
+    where
+        F: FnOnce(&mut CurrentApp<P>) -> R
+    {
+        let Self {
+            watch_ctx,
+            window,
+            roots,
+            mut values,
+            events_state,
+            pointer_grab_map,
+        } = self;
+        let mut current = CurrentApp {
+            window, roots, pointer_grab_map,
+        };
+        let current_ref = &mut current;
+        let (watch_ctx, res) = watch_ctx.with(|| {
+            Self::with_values(&mut values, move || {
+                func(current_ref)
+            })
+        });
+        let CurrentApp { window, roots, pointer_grab_map } = current;
+        let new_self = Self {
+            watch_ctx,
+            window,
+            roots,
+            values,
+            events_state,
+            pointer_grab_map,
+        };
+        (new_self, res)
+    }
+}
+
+pub struct CurrentApp<P = DefaultPlatform>
+where
+    P: Platform
+{
+    window: P::Window,
+    roots: Vec<OwnedWidgetProxy<P::Renderer>>,
+    pointer_grab_map: HashMap<PointerId, WidgetId>,
+}
+
+impl<P: Platform> CurrentApp<P> {
+    pub fn add_root<F, T>(&mut self, f: F)
+    where
+        F: FnOnce() -> Widget<T, P::Renderer>,
+        T: WidgetContent<P::Renderer>,
+    {
+        let Self { roots, window, .. } = self;
+        let (width, height) = window.size();
+        let rect = SimpleRect::with_size(width, height);
+        let mut widget = f();
+        widget.set_fill(&rect, &SimplePadding2d::zero());
+        roots.push(widget.into());
+    }
+
+    pub fn sync(&mut self) {
+        self.window.flip();
+    }
+
+    pub fn run(mut self, events_state: &mut EventsState) {
+        while !events_state.quit {
+            self.update(events_state);
+            self.sync();
+        }
+        self.shutdown();
     }
 
     fn handle_event<E: EventLoopState>(
@@ -300,52 +338,39 @@ impl<P: Platform> App<P> {
         }
     }
 
-    pub fn tick(&mut self) {
-        self.update();
-    }
-
-    pub fn update(&mut self) {
+    pub fn update(&mut self, events_state: &mut EventsState) {
         let Self {
-            watch_ctx,
             window,
             roots,
-            values,
-            events_state,
             pointer_grab_map,
             ..
         } = self;
-        let watch_ctx_inner = watch_ctx.take().unwrap();
-        let watch_ctx_inner = watch_ctx_inner.with(|| {
-            Self::with_values(values, || {
-                Self::handle_event(
-                    roots,
-                    pointer_grab_map,
-                    events_state,
-                    Event::StartFrame(time::Instant::now()),
-                );
-                while let Some(event) = window.next_event() {
-                    Self::handle_event(
-                        roots,
-                        pointer_grab_map,
-                        events_state,
-                        Event::WindowEvent(event),
-                    );
-                }
-                Self::handle_event(
-                    roots,
-                    pointer_grab_map,
-                    events_state,
-                    Event::Update,
-                );
-                Self::handle_event(
-                    roots,
-                    pointer_grab_map,
-                    events_state,
-                    Event::Draw(window),
-                );
-            });
-        }).0;
-        *watch_ctx = Some(watch_ctx_inner);
+        Self::handle_event(
+            roots,
+            pointer_grab_map,
+            events_state,
+            Event::StartFrame(time::Instant::now()),
+        );
+        while let Some(event) = window.next_event() {
+            Self::handle_event(
+                roots,
+                pointer_grab_map,
+                events_state,
+                Event::WindowEvent(event),
+            );
+        }
+        Self::handle_event(
+            roots,
+            pointer_grab_map,
+            events_state,
+            Event::Update,
+        );
+        Self::handle_event(
+            roots,
+            pointer_grab_map,
+            events_state,
+            Event::Draw(window),
+        );
     }
 
     pub fn shutdown(self) {
@@ -372,7 +397,7 @@ impl Default for App {
             window_size: (width, height),
         };
         Self {
-            watch_ctx: Some(watch_ctx),
+            watch_ctx,
             window,
             roots: Vec::new(),
             values,
