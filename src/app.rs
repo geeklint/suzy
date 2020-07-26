@@ -9,6 +9,7 @@ use crate::platform::{
     DefaultPlatform,
     Platform,
     Event,
+    EventLoopState,
 };
 use crate::pointer::{
     PointerAction,
@@ -134,7 +135,12 @@ impl window::WindowSettings for AppBuilder {
 
 struct EventsState {
     quit: bool,
-    grab_map: HashMap<PointerId, WidgetId>,
+}
+
+impl EventLoopState for EventsState {
+    fn request_shutdown(&mut self) {
+        self.quit = true;
+    }
 }
 
 pub struct App<P = DefaultPlatform>
@@ -146,6 +152,7 @@ where
     roots: Vec<OwnedWidgetProxy<P::Renderer>>,
     values: AppValues,
     events_state: EventsState,
+    pointer_grab_map: HashMap<PointerId, WidgetId>,
 }
 
 impl<P: Platform> App<P> {
@@ -195,9 +202,10 @@ impl<P: Platform> App<P> {
         res
     }
 
-    fn handle_event(
+    fn handle_event<E: EventLoopState>(
         roots: &mut Vec<OwnedWidgetProxy<P::Renderer>>,
-        state: &mut EventsState,
+        pointer_grab_map: &mut HashMap<PointerId, WidgetId>,
+        state: &mut E,
         event: Event<P::Window>,
     ) {
         use self::WindowEvent::*;
@@ -226,7 +234,7 @@ impl<P: Platform> App<P> {
                 }
             },
             Event::WindowEvent(Quit) => {
-                state.quit = true;
+                state.request_shutdown();
             },
             Event::WindowEvent(Resize(x, y)) => {
                 APP_STACK.with(|cell| {
@@ -253,7 +261,7 @@ impl<P: Platform> App<P> {
             Event::WindowEvent(KeyDown(_key)) => {
             },
             Event::WindowEvent(Pointer(pointer)) => {
-                Self::pointer_event(roots, &mut state.grab_map, pointer);
+                Self::pointer_event(roots, pointer_grab_map, pointer);
             },
         }
     }
@@ -303,6 +311,7 @@ impl<P: Platform> App<P> {
             roots,
             values,
             events_state,
+            pointer_grab_map,
             ..
         } = self;
         let watch_ctx_inner = watch_ctx.take().unwrap();
@@ -310,23 +319,27 @@ impl<P: Platform> App<P> {
             Self::with_values(values, || {
                 Self::handle_event(
                     roots,
+                    pointer_grab_map,
                     events_state,
                     Event::StartFrame(time::Instant::now()),
                 );
                 while let Some(event) = window.next_event() {
                     Self::handle_event(
                         roots,
+                        pointer_grab_map,
                         events_state,
                         Event::WindowEvent(event),
                     );
                 }
                 Self::handle_event(
                     roots,
+                    pointer_grab_map,
                     events_state,
                     Event::Update,
                 );
                 Self::handle_event(
                     roots,
+                    pointer_grab_map,
                     events_state,
                     Event::Draw(window),
                 );
@@ -365,8 +378,8 @@ impl Default for App {
             values,
             events_state: EventsState {
                 quit: false,
-                grab_map: HashMap::new(),
             },
+            pointer_grab_map: HashMap::new(),
         }
     }
 }

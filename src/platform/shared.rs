@@ -15,6 +15,10 @@ pub enum Event<'a, W> {
     Draw(&'a mut W),
 }
 
+pub trait EventLoopState {
+    fn request_shutdown(&mut self);
+}
+
 pub trait Platform: 'static {
     type Renderer: RenderPlatform;
     type Window: Window<Self::Renderer>;

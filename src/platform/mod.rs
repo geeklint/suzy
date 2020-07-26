@@ -4,6 +4,7 @@ pub use shared::{
     Platform,
     RenderPlatform,
     Event,
+    EventLoopState,
 };
 
 // Platforms
