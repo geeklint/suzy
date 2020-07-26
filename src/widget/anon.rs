@@ -20,6 +20,7 @@ pub(crate) trait AnonWidget<P: RenderPlatform>: crate::dims::DynRect {
         id: WidgetId,
         func: Box<dyn FnOnce(&mut dyn AnonWidget<P>) + 'a>,
     );
+    fn as_any(&mut self) -> &mut dyn std::any::Any;
 }
 
 impl<P, T> AnonWidget<P> for Widget<T, P>
@@ -50,6 +51,8 @@ where
     ) {
         Widget::find_widget(self, id, |node| func(node));
     }
+
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
 }
 
 /// A proxy to a widget with an unspecified underlying data type.
@@ -68,6 +71,13 @@ pub struct OwnedWidgetProxy<P: RenderPlatform = DefaultRenderPlatform> {
 }
 
 impl<P: RenderPlatform> OwnedWidgetProxy<P> {
+    pub(crate) fn downcast_widget<T>(&mut self) -> Option<&mut Widget<T, P>>
+    where
+        T: WidgetContent<P>,
+    {
+        self.anon.as_any().downcast_mut()
+    }
+
     pub(crate) fn find_widget<F>(&mut self, id: WidgetId, func: F)
     where
         F: FnOnce(&mut dyn AnonWidget<P>)
