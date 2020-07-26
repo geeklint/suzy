@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::time;
-use std::convert::TryInto;
 use std::collections::HashMap;
 
 use drying_paint::Watched;
@@ -156,6 +155,7 @@ pub struct App<P = DefaultPlatform>
 where
     P: Platform,
 {
+    platform: P,
     watch_ctx: drying_paint::WatchContext,
     window: P::Window,
     roots: Vec<OwnedWidgetProxy<P::Renderer>>,
@@ -176,6 +176,7 @@ impl<P: Platform> App<P> {
         F: FnOnce(&mut CurrentApp<P>) -> R
     {
         let Self {
+            platform,
             watch_ctx,
             window,
             roots,
@@ -194,6 +195,7 @@ impl<P: Platform> App<P> {
         });
         let CurrentApp { window, roots, pointer_grab_map } = current;
         let new_self = Self {
+            platform,
             watch_ctx,
             window,
             roots,
@@ -367,10 +369,10 @@ impl<P: Platform> CurrentApp<P> {
 
 impl Default for App {
     fn default() -> Self {
-        let builder = AppBuilder::default();
-        let window: <DefaultPlatform as Platform>::Window = {
-            builder.win.try_into().unwrap()
-        };
+        //let builder = AppBuilder::default();
+        let mut platform = <DefaultPlatform as Platform>::new();
+        let window = platform.create_window(window::WindowBuilder::default())
+            .unwrap();
         let watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.size();
@@ -382,6 +384,7 @@ impl Default for App {
             window_size: (width, height),
         };
         Self {
+            platform,
             watch_ctx,
             window,
             roots: Vec::new(),

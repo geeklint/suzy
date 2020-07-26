@@ -1,6 +1,7 @@
 use crate::window::{
     Window,
     WindowEvent,
+    WindowBuilder,
 };
 
 pub trait RenderPlatform: 'static {
@@ -22,5 +23,10 @@ pub trait EventLoopState {
 pub trait Platform: 'static {
     type Renderer: RenderPlatform;
     type Window: Window<Self::Renderer>;
+
+    fn new() -> Self;
+
+    fn create_window(&mut self, settings: WindowBuilder)
+        -> Result<Self::Window, String>;
 }
 

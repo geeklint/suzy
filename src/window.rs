@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use crate::math::Color;
 use crate::graphics::DrawContext;
 use crate::platform::RenderPlatform;
@@ -88,7 +86,7 @@ impl WindowSettings for WindowBuilder {
     }
 }
 
-pub trait Window<P: RenderPlatform> : WindowSettings + TryFrom<WindowBuilder> {
+pub trait Window<P: RenderPlatform> : WindowSettings {
     /// Get the pixel density of the window as displayed
     fn pixels_per_dp(&self) -> f32;
 
