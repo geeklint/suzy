@@ -1,4 +1,5 @@
 use crate::window::{
+    Window,
     WindowEvent,
 };
 
@@ -7,15 +8,15 @@ pub trait RenderPlatform: 'static {
     type DrawParams: crate::graphics::DrawParams<Self::Context>;
 }
 
-pub enum Event {
+pub enum Event<'a, W> {
     WindowEvent(WindowEvent),
     StartFrame(std::time::Instant),
     Update,
-    Draw,
+    Draw(&'a mut W),
 }
 
 pub trait Platform: 'static {
-    type Window: crate::window::Window<Self::Renderer>;
     type Renderer: RenderPlatform;
+    type Window: Window<Self::Renderer>;
 }
 

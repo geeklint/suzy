@@ -198,7 +198,7 @@ impl<P: Platform> App<P> {
     fn handle_event(
         roots: &mut Vec<OwnedWidgetProxy<P::Renderer>>,
         state: &mut EventsState,
-        event: Event,
+        event: Event<P::Window>,
     ) {
         use self::WindowEvent::*;
 
@@ -213,7 +213,18 @@ impl<P: Platform> App<P> {
             Event::Update => {
                 drying_paint::WatchContext::update_current();
             },
-            Event::Draw => {
+            Event::Draw(window) => {
+                window.clear();
+                let mut ctx = window.prepare_draw();
+                let mut loop_count = 0;
+                while DrawContext::draw(&mut ctx, roots.iter_mut()) {
+                    debug_assert!(
+                        loop_count < 1024,
+                        "render exceeded its loop count (possible infinite loop)",
+                    );
+                    drying_paint::WatchContext::update_current();
+                    loop_count += 1;
+                }
             },
             Event::WindowEvent(Quit) => {
                 state.quit = true;
@@ -284,7 +295,6 @@ impl<P: Platform> App<P> {
 
     pub fn tick(&mut self) {
         self.update();
-        self.render();
     }
 
     pub fn update(&mut self) {
@@ -316,26 +326,12 @@ impl<P: Platform> App<P> {
                     events_state,
                     Event::Update,
                 );
-            });
-        }).0;
-        *watch_ctx = Some(watch_ctx_inner);
-    }
-
-    pub fn render(&mut self) {
-        let Self { watch_ctx, window, roots, ..  } = self;
-        window.clear();
-        let watch_ctx_inner = watch_ctx.take().unwrap();
-        let watch_ctx_inner = watch_ctx_inner.with(|| {
-            let mut ctx = window.prepare_draw();
-            let mut loop_count = 0;
-            while DrawContext::draw(&mut ctx, roots.iter_mut()) {
-                debug_assert!(
-                    loop_count < 1024,
-                    "render exceeded its loop count (possible infinite loop)",
+                Self::handle_event(
+                    roots,
+                    events_state,
+                    Event::Draw(window),
                 );
-                drying_paint::WatchContext::update_current();
-                loop_count += 1;
-            }
+            });
         }).0;
         *watch_ctx = Some(watch_ctx_inner);
     }
