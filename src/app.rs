@@ -40,6 +40,15 @@ pub(crate) struct AppValues {
     pub window_size: (f32, f32),
 }
 
+impl AppValues {
+    fn with<F: FnOnce() -> R, R>(self, func: F) -> (Self, R) {
+        APP_STACK.with(|cell| cell.borrow_mut().push(self));
+        let res = (func)();
+        let values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
+        (values, res)
+    }
+}
+
 pub(crate) fn try_with_current<F, R>(func: F) -> Option<R>
 where
     F: FnOnce(&AppValues) -> R
@@ -162,15 +171,6 @@ impl<P: Platform> App<P> {
         }).unwrap_or_else(time::Instant::now)
     }
 
-    fn with_values<F: FnOnce() -> R, R>(values: &mut AppValues, func: F) -> R {
-        let mut local = values.clone();
-        std::mem::swap(&mut local, values);
-        APP_STACK.with(|cell| cell.borrow_mut().push(local));
-        let res = (func)();
-        *values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
-        res
-    }
-
     pub fn with<F, R>(self, func: F) -> (Self, R)
     where
         F: FnOnce(&mut CurrentApp<P>) -> R
@@ -179,7 +179,7 @@ impl<P: Platform> App<P> {
             watch_ctx,
             window,
             roots,
-            mut values,
+            values,
             events_state,
             pointer_grab_map,
         } = self;
@@ -187,8 +187,8 @@ impl<P: Platform> App<P> {
             window, roots, pointer_grab_map,
         };
         let current_ref = &mut current;
-        let (watch_ctx, res) = watch_ctx.with(|| {
-            Self::with_values(&mut values, move || {
+        let (watch_ctx, (values, res)) = watch_ctx.with(|| {
+            values.with(move || {
                 func(current_ref)
             })
         });
