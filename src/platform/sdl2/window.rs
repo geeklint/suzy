@@ -9,6 +9,10 @@ use crate::graphics::DrawContext;
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
+use crate::pointer::{
+    PointerAction,
+    PointerEventData,
+};
 
 //use super::texture_loader::load_texture;
 
@@ -20,24 +24,6 @@ struct PixelInfo {
     pixel_size: (u32, u32),
     screen_size: (u32, u32),
     size: (f32, f32),
-}
-
-impl PixelInfo {
-    fn diff_to_event(&mut self, other: &Self) -> Option<WindowEvent> {
-        let size_change = self.size != other.size;
-        #[allow(clippy::float_cmp)]
-        let dp_change = self.pixels_per_dp != other.pixels_per_dp;
-
-        if size_change {
-            self.size = other.size;
-            Some(WindowEvent::Resize)
-        } else if dp_change {
-            self.pixels_per_dp = other.pixels_per_dp;
-            Some(WindowEvent::DpScaleChange)
-        } else {
-            None
-        }
-    }
 }
 
 impl TryFrom<&sdl2::video::Window> for PixelInfo {
@@ -238,6 +224,23 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         info.pixels_per_dp
     }
 
+    fn normalize_pointer_event(&self, event: &mut PointerEventData) {
+        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        event.x *= info.dp_per_screen_unit;
+        event.y *= info.dp_per_screen_unit;
+        match event.action {
+            PointerAction::Move(ref mut x, ref mut y) => {
+                *x *= info.dp_per_screen_unit;
+                *y *= info.dp_per_screen_unit;
+            },
+            PointerAction::Wheel(ref mut x, ref mut y) => {
+                *x *= info.dp_per_screen_unit;
+                *y *= info.dp_per_screen_unit;
+            },
+            _ => (),
+        }
+    }
+
     fn flip(&mut self) {
         self.info.gl_win.flip();
         self.info.window.gl_swap_window();
@@ -254,7 +257,7 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
             events: sdl.event_pump().unwrap(),
             send_dp: false,
         });
-        if let Some(event) = events.next(&mut self.info) {
+        if let Some(event) = events.next() {
             Some(event)
         } else {
             self.events = None;
@@ -285,7 +288,7 @@ impl Events {
         })
     }
 
-    fn next(&mut self, window: &mut WindowInfo) -> Option<WindowEvent> {
+    fn next(&mut self) -> Option<WindowEvent> {
         if self.send_dp {
             self.send_dp = false;
             return Some(WindowEvent::DpScaleChange);
@@ -303,9 +306,6 @@ impl Events {
                     use sdl2::mouse::MouseButton::*;
                     use crate::pointer::*;
                     let (x, y) = (x as f32, y as f32);
-                    let info: PixelInfo = (&window.window).try_into().unwrap();
-                    let x = x * info.dp_per_screen_unit;
-                    let y = y * info.dp_per_screen_unit;
                     let action = match mouse_btn {
                         Left => PointerAction::Down,
                         X1 => PointerAction::AltDown(AltMouseButton::X1),
@@ -330,9 +330,6 @@ impl Events {
                     use sdl2::mouse::MouseButton::*;
                     use crate::pointer::*;
                     let (x, y) = (x as f32, y as f32);
-                    let info: PixelInfo = (&window.window).try_into().unwrap();
-                    let x = x * info.dp_per_screen_unit;
-                    let y = y * info.dp_per_screen_unit;
                     let action = match mouse_btn {
                         Left => PointerAction::Up,
                         X1 => PointerAction::AltUp(AltMouseButton::X1),

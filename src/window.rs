@@ -90,6 +90,8 @@ pub trait Window<P: RenderPlatform> : WindowSettings {
     /// Get the pixel density of the window as displayed
     fn pixels_per_dp(&self) -> f32;
 
+    fn normalize_pointer_event(&self, event: &mut PointerEventData);
+
     /// Do some sort of synchonization - this function is expected to block
     /// for some period of time. In a double buffered context, this will
     /// usually cause the back buffer to be displayed.
