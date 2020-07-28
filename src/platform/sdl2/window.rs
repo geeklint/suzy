@@ -30,10 +30,10 @@ impl PixelInfo {
 
         if size_change {
             self.size = other.size;
-            Some(WindowEvent::Resize(self.size.0, self.size.1))
+            Some(WindowEvent::Resize)
         } else if dp_change {
             self.pixels_per_dp = other.pixels_per_dp;
-            Some(WindowEvent::DpScaleChange(self.pixels_per_dp))
+            Some(WindowEvent::DpScaleChange)
         } else {
             None
         }

@@ -4,8 +4,8 @@ use crate::platform::RenderPlatform;
 use crate::pointer::PointerEventData;
 
 pub enum WindowEvent {
-    Resize(f32, f32),
-    DpScaleChange(f32),
+    Resize,
+    DpScaleChange,
     KeyDown(i32),
     Quit,
     Pointer(PointerEventData),

@@ -275,7 +275,8 @@ impl<P: Platform> CurrentApp<P> {
             Event::WindowEvent(Quit) => {
                 state.request_shutdown();
             },
-            Event::WindowEvent(Resize(x, y)) => {
+            Event::WindowEvent(Resize) => {
+                let (x, y) = self.window.size();
                 APP_STACK.with(|cell| {
                     let mut handle = cell.borrow_mut();
                     let values = handle.last_mut().unwrap();
@@ -290,7 +291,8 @@ impl<P: Platform> CurrentApp<P> {
                     root.set_fill(&rect, &SimplePadding2d::zero());
                 }
             },
-            Event::WindowEvent(DpScaleChange(ppd)) => {
+            Event::WindowEvent(DpScaleChange) => {
+                let ppd = self.window.pixels_per_dp();
                 APP_STACK.with(|cell| {
                     let mut handle = cell.borrow_mut();
                     let values = handle.last_mut().unwrap();
