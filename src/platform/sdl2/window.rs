@@ -69,7 +69,6 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
 }
 
 struct WindowInfo {
-    pixel_info: PixelInfo,
     window: sdl2::video::Window,
     gl_win: opengl::Window,
 }
@@ -130,13 +129,11 @@ impl TryFrom<WindowBuilder> for Window {
         })?;
         // ensure we made it at the correct size - tricky because display
         // units might be anything (vs what we care about, dp and px)
-        let pixel_info: PixelInfo = {
+        {
             let pixel_info: PixelInfo = (&window).try_into()?;
-            if (width - pixel_info.size.0).abs() < 1.0
-                && (height - pixel_info.size.1).abs() < 1.0
+            if (width - pixel_info.size.0).abs() >= 1.0
+                || (height - pixel_info.size.1).abs() >= 1.0
             {
-                pixel_info
-            } else {
                 let dp_per_su = pixel_info.dp_per_screen_unit;
                 let calc_width = (width / dp_per_su) as u32;
                 let calc_height = (height / dp_per_su) as u32;
@@ -146,7 +143,6 @@ impl TryFrom<WindowBuilder> for Window {
                         _ => panic!("Unexpected error resizing window!"),
                     }
                 })?;
-                (&window).try_into()?
             }
         };
         // setup opengl stuff
@@ -163,7 +159,6 @@ impl TryFrom<WindowBuilder> for Window {
             title: builder.into_title(),
             info: WindowInfo {
                 window,
-                pixel_info,
                 gl_win,
             },
             _video: video,
@@ -176,14 +171,17 @@ impl TryFrom<WindowBuilder> for Window {
 }
 
 impl WindowSettings for Window {
-    fn size(&self) -> (f32, f32) { self.info.pixel_info.size }
+    fn size(&self) -> (f32, f32) {
+        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        info.size
+    }
     
     fn set_size(&mut self, size: (f32, f32)) {
-        let dp_per_su = self.info.pixel_info.dp_per_screen_unit;
+        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        let dp_per_su = info.dp_per_screen_unit;
         let calc_width = (size.0 / dp_per_su) as u32;
         let calc_height = (size.1 / dp_per_su) as u32;
         let _res = self.info.window.set_size(calc_width, calc_height);
-        self.info.pixel_info = (&self.info.window).try_into().unwrap();
     }
 
     fn title(&self) -> &str { &self.title }
@@ -236,7 +234,8 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     */
 
     fn pixels_per_dp(&self) -> f32 {
-        self.info.pixel_info.pixels_per_dp
+        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        info.pixels_per_dp
     }
 
     fn flip(&mut self) {
@@ -253,7 +252,7 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         let sdl = &self.sdl;
         let events = self.events.get_or_insert_with(|| Events {
             events: sdl.event_pump().unwrap(),
-            new_pixel_info: None,
+            send_dp: false,
         });
         if let Some(event) = events.next(&mut self.info) {
             Some(event)
@@ -266,29 +265,18 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
 
 pub struct Events {
     events: sdl2::EventPump,
-    new_pixel_info: Option<PixelInfo>,
+    send_dp: bool,
 }
 
 impl Events {
-    fn win_event(&mut self, window: &mut WindowInfo, win_event: sdl_WindowEvent)
+    fn win_event(&mut self, win_event: sdl_WindowEvent)
         -> Option<WindowEvent>
     {
         Some(match win_event {
             sdl_WindowEvent::SizeChanged(_, _)
             | sdl_WindowEvent::Moved { .. } => {
-                let new: PixelInfo = (&window.window).try_into().unwrap();
-                window.gl_win.viewport(
-                    0, 0,
-                    new.pixel_size.0,
-                    new.pixel_size.1,
-                );
-                let diff = window.pixel_info.diff_to_event(&new);
-                if let Some(event) = diff {
-                    self.new_pixel_info = Some(new);
-                    event
-                } else {
-                    return None
-                }
+                self.send_dp = true;
+                WindowEvent::Resize
             }
             sdl_WindowEvent::Close => {
                 WindowEvent::Quit
@@ -298,18 +286,15 @@ impl Events {
     }
 
     fn next(&mut self, window: &mut WindowInfo) -> Option<WindowEvent> {
-        if let Some(new) = self.new_pixel_info.as_ref() {
-            if let Some(event) = window.pixel_info.diff_to_event(new) {
-                return Some(event);
-            } else {
-                self.new_pixel_info = None;
-            }
+        if self.send_dp {
+            self.send_dp = false;
+            return Some(WindowEvent::DpScaleChange);
         }
         while let Some(event) = self.events.poll_event() {
             return Some(match event {
                 Event::Quit { .. } => WindowEvent::Quit,
                 Event::Window { win_event, .. } => {
-                    match self.win_event(window, win_event) {
+                    match self.win_event(win_event) {
                         Some(ev) => ev,
                         None => continue,
                     }
@@ -318,8 +303,9 @@ impl Events {
                     use sdl2::mouse::MouseButton::*;
                     use crate::pointer::*;
                     let (x, y) = (x as f32, y as f32);
-                    let x = x * window.pixel_info.dp_per_screen_unit;
-                    let y = y * window.pixel_info.dp_per_screen_unit;
+                    let info: PixelInfo = (&window.window).try_into().unwrap();
+                    let x = x * info.dp_per_screen_unit;
+                    let y = y * info.dp_per_screen_unit;
                     let action = match mouse_btn {
                         Left => PointerAction::Down,
                         X1 => PointerAction::AltDown(AltMouseButton::X1),
@@ -344,8 +330,9 @@ impl Events {
                     use sdl2::mouse::MouseButton::*;
                     use crate::pointer::*;
                     let (x, y) = (x as f32, y as f32);
-                    let x = x * window.pixel_info.dp_per_screen_unit;
-                    let y = y * window.pixel_info.dp_per_screen_unit;
+                    let info: PixelInfo = (&window.window).try_into().unwrap();
+                    let x = x * info.dp_per_screen_unit;
+                    let y = y * info.dp_per_screen_unit;
                     let action = match mouse_btn {
                         Left => PointerAction::Up,
                         X1 => PointerAction::AltUp(AltMouseButton::X1),
