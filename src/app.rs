@@ -141,16 +141,6 @@ impl window::WindowSettings for AppBuilder {
     }
 }
 
-pub struct EventsState {
-    quit: bool,
-}
-
-impl EventLoopState for EventsState {
-    fn request_shutdown(&mut self) {
-        self.quit = true;
-    }
-}
-
 pub struct App<P = DefaultPlatform>
 where
     P: Platform,
@@ -160,7 +150,6 @@ where
     window: P::Window,
     roots: Vec<OwnedWidgetProxy<P::Renderer>>,
     values: AppValues,
-    events_state: EventsState,
     pointer_grab_map: HashMap<PointerId, WidgetId>,
 }
 
@@ -181,7 +170,6 @@ impl<P: Platform> App<P> {
             window,
             roots,
             values,
-            events_state,
             pointer_grab_map,
         } = self;
         let mut current = CurrentApp {
@@ -200,10 +188,31 @@ impl<P: Platform> App<P> {
             window,
             roots,
             values,
-            events_state,
             pointer_grab_map,
         };
         (new_self, res)
+    }
+
+    pub fn run(self) -> ! {
+        let Self {
+            platform,
+            watch_ctx,
+            window,
+            roots,
+            values,
+            pointer_grab_map,
+        } = self;
+        let mut current = CurrentApp::<P> {
+            window, roots, pointer_grab_map,
+        };
+        let _res = watch_ctx.with(|| {
+            values.with(|| {
+                platform.run(move |state, event| {
+                    current.handle_event(state, event);
+                })
+            })
+        });
+        (_res.1).1
     }
 }
 
@@ -228,18 +237,6 @@ impl<P: Platform> CurrentApp<P> {
         let mut widget = f();
         widget.set_fill(&rect, &SimplePadding2d::zero());
         roots.push(widget.into());
-    }
-
-    pub fn sync(&mut self) {
-        self.window.flip();
-    }
-
-    pub fn run(mut self, events_state: &mut EventsState) {
-        while !events_state.quit {
-            self.update(events_state);
-            self.sync();
-        }
-        self.shutdown();
     }
 
     fn handle_event<E: EventLoopState>(
@@ -343,27 +340,6 @@ impl<P: Platform> CurrentApp<P> {
         }
     }
 
-    pub fn update(&mut self, events_state: &mut EventsState) {
-        self.handle_event(
-            events_state,
-            Event::StartFrame(time::Instant::now()),
-        );
-        while let Some(event) = self.window.next_event() {
-            self.handle_event(
-                events_state,
-                Event::WindowEvent(event),
-            );
-        }
-        self.handle_event(
-            events_state,
-            Event::Update,
-        );
-        self.handle_event(
-            events_state,
-            Event::Draw,
-        );
-    }
-
     pub fn shutdown(self) {
         let Self { window, roots, ..  } = self;
         std::mem::drop(roots);
@@ -393,9 +369,6 @@ impl Default for App {
             window,
             roots: Vec::new(),
             values,
-            events_state: EventsState {
-                quit: false,
-            },
             pointer_grab_map: HashMap::new(),
         }
     }

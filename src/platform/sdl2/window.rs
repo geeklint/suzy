@@ -65,16 +65,14 @@ pub struct Window {
     _context: sdl2::video::GLContext,
     _video: sdl2::VideoSubsystem,
     _image: sdl2::image::Sdl2ImageContext,
-    sdl: sdl2::Sdl,
     events: Option<Events>,
 }
 
-impl TryFrom<WindowBuilder> for Window {
-    type Error = String;
-
-    fn try_from(builder: WindowBuilder) -> Result<Self, Self::Error> {
+impl Window {
+    pub fn new_window(sdl: &sdl2::Sdl, builder: WindowBuilder)
+        -> Result<Self, String>
+    {
         // initialize systems
-        let sdl = sdl2::init()?;
         let video = sdl.video()?;
         let image = sdl2::image::init(sdl2::image::InitFlag::all())?;
         // setup window parameters
@@ -150,7 +148,6 @@ impl TryFrom<WindowBuilder> for Window {
             _video: video,
             _image: image,
             _context: context,
-            sdl,
             events: None,
         })
     }
@@ -250,25 +247,11 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         self.info.gl_win.clear();
         self.info.gl_win.prepare_draw(self.size())
     }
-
-    fn next_event(&mut self) -> Option<WindowEvent> {
-        let sdl = &self.sdl;
-        let events = self.events.get_or_insert_with(|| Events {
-            events: sdl.event_pump().unwrap(),
-            send_dp: false,
-        });
-        if let Some(event) = events.next() {
-            Some(event)
-        } else {
-            self.events = None;
-            None
-        }
-    }
 }
 
 pub struct Events {
-    events: sdl2::EventPump,
-    send_dp: bool,
+    pub(super) events: sdl2::EventPump,
+    pub(super) send_dp: bool,
 }
 
 impl Events {
@@ -288,7 +271,7 @@ impl Events {
         })
     }
 
-    fn next(&mut self) -> Option<WindowEvent> {
+    pub fn next(&mut self) -> Option<WindowEvent> {
         if self.send_dp {
             self.send_dp = false;
             return Some(WindowEvent::DpScaleChange);

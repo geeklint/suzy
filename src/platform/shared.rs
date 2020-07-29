@@ -21,6 +21,7 @@ pub trait EventLoopState {
 }
 
 pub trait Platform: 'static {
+    type State: EventLoopState;
     type Renderer: RenderPlatform;
     type Window: Window<Self::Renderer>;
 
@@ -28,5 +29,9 @@ pub trait Platform: 'static {
 
     fn create_window(&mut self, settings: WindowBuilder)
         -> Result<Self::Window, String>;
+
+    fn run<F>(self, event_handler: F) -> !
+    where
+        F: 'static + FnMut(&mut Self::State, Event);
 }
 

@@ -98,7 +98,4 @@ pub trait Window<P: RenderPlatform> : WindowSettings {
     fn flip(&mut self);
 
     fn prepare_draw(&mut self) -> DrawContext<P>;
-
-    /// Check for a new event on the window
-    fn next_event(&mut self) -> Option<WindowEvent>;
 }
