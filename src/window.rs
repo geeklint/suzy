@@ -92,6 +92,8 @@ pub trait Window<P: RenderPlatform> : WindowSettings {
 
     fn normalize_pointer_event(&self, event: &mut PointerEventData);
 
+    fn recalculate_viewport(&mut self);
+
     /// Do some sort of synchonization - this function is expected to block
     /// for some period of time. In a double buffered context, this will
     /// usually cause the back buffer to be displayed.

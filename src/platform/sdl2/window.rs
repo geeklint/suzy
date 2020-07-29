@@ -238,6 +238,16 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         }
     }
 
+    fn recalculate_viewport(&mut self) {
+        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        self.info.gl_win.viewport(
+            0,
+            0,
+            info.pixel_size.0,
+            info.pixel_size.1,
+        );
+    }
+
     fn flip(&mut self) {
         self.info.gl_win.flip();
         self.info.window.gl_swap_window();

@@ -288,6 +288,7 @@ impl<P: Platform> CurrentApp<P> {
                 for root in self.roots.iter_mut() {
                     root.set_fill(&rect, &SimplePadding2d::zero());
                 }
+                self.window.recalculate_viewport();
             },
             Event::WindowEvent(DpScaleChange) => {
                 let ppd = self.window.pixels_per_dp();
