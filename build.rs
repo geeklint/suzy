@@ -25,28 +25,8 @@ fn tui(out_dir: impl AsRef<Path>) {
         .expect(&format!("Couldn't write {}!", &debug));
 }
 
-#[cfg(feature = "opengl")]
-fn opengl(out_dir: impl AsRef<Path>) {
-    use gl_generator::{Registry, Api, Profile, Fallbacks, StructGenerator};
-
-    let path = out_dir.as_ref().join("opengl_bindings.rs");
-    let debug = path.to_string_lossy();
-    let mut file = OpenOptions::new()
-        .create(true)
-        .truncate(true)
-        .write(true)
-        .open(&path)
-        .expect(&format!("Couldn't open {}!", &debug));
-
-    let ext = ["GL_KHR_debug"];
-    Registry::new(Api::Gles2, (2, 0), Profile::Core, Fallbacks::All, ext)
-        .write_bindings(StructGenerator, &mut file)
-        .expect(&format!("Couldn't write {}!", &debug));
-}
-
 fn main() {
     let out_dir = env::var("OUT_DIR").expect("expected cargo to set OUT_DIR");
 
     #[cfg(feature="tui")] { tui(&out_dir) };
-    #[cfg(feature="opengl")] { opengl(&out_dir) };
 }
