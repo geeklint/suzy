@@ -4,7 +4,6 @@ use crate::platform::RenderPlatform;
 use super::{WidgetId, WidgetContent, WidgetRect};
 
 
-#[derive(Default)]
 pub(super) struct WidgetInternal<P, T>
 where
     P: RenderPlatform,
@@ -13,6 +12,20 @@ where
     pub(super) rect: WidgetRect,
     pub(super) _platform: std::marker::PhantomData<P>,
     pub(super) content: T,
+}
+
+impl<P, T> Default for WidgetInternal<P, T>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P> + Default + ?Sized,
+{
+    fn default() -> Self {
+        Self {
+            rect: WidgetRect::default(),
+            _platform: std::marker::PhantomData,
+            content: T::default(),
+        }
+    }
 }
 
 pub struct WidgetExtra<'a> {

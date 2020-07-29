@@ -46,13 +46,22 @@ pub use receivers::{
 
 
 /// A basic structure to wrap some data and turn it into a widget.
-#[derive(Default)]
 pub struct Widget<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
     T: WidgetContent<P> + ?Sized,
 {
     watcher: Watcher<WidgetInternal<P, T>>,
+}
+
+impl<T, P> Default for Widget<T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P> + Default + ?Sized,
+{
+    fn default() -> Self {
+        Self { watcher: Default::default() }
+    }
 }
 
 impl<P, T> Widget<T, P>
