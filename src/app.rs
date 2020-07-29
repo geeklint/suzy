@@ -271,6 +271,7 @@ impl<P: Platform> CurrentApp<P> {
                     drying_paint::WatchContext::update_current();
                     loop_count += 1;
                 }
+                self.window.flip();
             },
             Event::WindowEvent(Quit) => {
                 state.request_shutdown();
