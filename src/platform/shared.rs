@@ -14,6 +14,7 @@ pub enum Event<'a> {
     StartFrame(std::time::Instant),
     Update,
     Draw,
+    FinishDraw,
     TakeScreenshot(&'a mut Box<[u8]>),
 }
 

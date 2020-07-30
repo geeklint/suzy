@@ -59,6 +59,10 @@ impl crate::platform::Platform for SDLPlatform {
                 &mut state,
                 Event::Draw,
             );
+            event_handler(
+                &mut state,
+                Event::FinishDraw,
+            );
         }
         std::process::exit(0)
     }

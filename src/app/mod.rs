@@ -164,6 +164,8 @@ impl<P: Platform> CurrentApp<P> {
                     drying_paint::WatchContext::update_current();
                     loop_count += 1;
                 }
+            },
+            Event::FinishDraw => {
                 self.window.flip();
             },
             Event::WindowEvent(Quit) => {
