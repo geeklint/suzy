@@ -257,6 +257,10 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         self.info.gl_win.clear();
         self.info.gl_win.prepare_draw(self.size())
     }
+
+    fn take_screenshot(&self) -> Box<[u8]> {
+        self.info.gl_win.take_screenshot()
+    }
 }
 
 pub struct Events {

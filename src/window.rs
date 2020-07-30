@@ -100,4 +100,6 @@ pub trait Window<P: RenderPlatform> : WindowSettings {
     fn flip(&mut self);
 
     fn prepare_draw(&mut self) -> DrawContext<P>;
+
+    fn take_screenshot(&self) -> Box<[u8]>;
 }

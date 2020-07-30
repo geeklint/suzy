@@ -257,6 +257,9 @@ impl<P: Platform> CurrentApp<P> {
             Event::Update => {
                 drying_paint::WatchContext::update_current();
             },
+            Event::TakeScreenshot(dest) => {
+                *dest = self.window.take_screenshot();
+            },
             Event::Draw => {
                 let mut ctx = self.window.prepare_draw();
                 let mut loop_count = 0;

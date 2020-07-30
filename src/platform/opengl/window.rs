@@ -13,6 +13,10 @@ use super::context::bindings::{
     SRC_ALPHA,
     ONE_MINUS_SRC_ALPHA,
     COLOR_CLEAR_VALUE,
+    PACK_ALIGNMENT,
+    VIEWPORT,
+    RGB,
+    UNSIGNED_SHORT_5_6_5,
 };
 use super::drawparams::DrawParams;
 
@@ -84,5 +88,30 @@ impl Window {
 
     /// This function does not block like window::Window requires.
     pub fn flip(&mut self) {
+    }
+
+    pub fn take_screenshot(&self) -> Box<[u8]> {
+        let mut answer: [GLint; 4] = [0; 4];
+        unsafe {
+            self.ctx.bindings.GetIntegerv(VIEWPORT, answer.as_mut_ptr());
+            self.ctx.bindings.PixelStorei(PACK_ALIGNMENT, 1);
+        }
+        let x = answer[0];
+        let y = answer[1];
+        let width = answer[2] as GLsizei;
+        let height = answer[3] as GLsizei;
+        let pixel_size = 2;
+        let buflen = pixel_size * (width as usize) * (height as usize);
+        let mut buffer = vec![0u8; buflen].into_boxed_slice();
+        unsafe {
+            self.ctx.bindings.ReadPixels(
+                x, y,
+                width, height, 
+                RGB,
+                UNSIGNED_SHORT_5_6_5,
+                buffer.as_mut_ptr() as *mut _,
+            );
+        }
+        buffer
     }
 }

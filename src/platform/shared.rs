@@ -9,11 +9,12 @@ pub trait RenderPlatform: 'static {
     type DrawParams: crate::graphics::DrawParams<Self::Context>;
 }
 
-pub enum Event {
+pub enum Event<'a> {
     WindowEvent(WindowEvent),
     StartFrame(std::time::Instant),
     Update,
     Draw,
+    TakeScreenshot(&'a mut Box<[u8]>),
 }
 
 pub trait EventLoopState {
