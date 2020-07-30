@@ -28,9 +28,11 @@ use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
 use window::{Window, WindowEvent, WindowSettings};
 
 mod builder;
+mod tester;
 mod values;
 
 pub use builder::AppBuilder;
+pub use tester::AppTesterInterface;
 pub(crate) use values::{
     AppValues,
     get_cell_size,
@@ -108,6 +110,25 @@ impl<P: Platform> App<P> {
             })
         });
         (_res.1).1
+    }
+
+    pub fn test<F: FnOnce(AppTesterInterface<P>)>(self, func: F) {
+        let Self {
+            platform,
+            watch_ctx,
+            window,
+            roots,
+            values,
+            pointer_grab_map,
+        } = self;
+        let mut current = CurrentApp::<P> {
+            window, roots, pointer_grab_map,
+        };
+        watch_ctx.with(|| {
+            values.with(|| {
+                func(AppTesterInterface::new(&mut current));
+            });
+        });
     }
 }
 
