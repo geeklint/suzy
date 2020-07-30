@@ -15,8 +15,8 @@ use super::context::bindings::{
     COLOR_CLEAR_VALUE,
     PACK_ALIGNMENT,
     VIEWPORT,
-    RGB,
-    UNSIGNED_SHORT_5_6_5,
+    RGBA,
+    UNSIGNED_BYTE,
 };
 use super::drawparams::DrawParams;
 
@@ -100,15 +100,15 @@ impl Window {
         let y = answer[1];
         let width = answer[2] as GLsizei;
         let height = answer[3] as GLsizei;
-        let pixel_size = 2;
+        let pixel_size = 4;
         let buflen = pixel_size * (width as usize) * (height as usize);
         let mut buffer = vec![0u8; buflen].into_boxed_slice();
         unsafe {
             self.ctx.bindings.ReadPixels(
                 x, y,
                 width, height, 
-                RGB,
-                UNSIGNED_SHORT_5_6_5,
+                RGBA,
+                UNSIGNED_BYTE,
                 buffer.as_mut_ptr() as *mut _,
             );
         }
