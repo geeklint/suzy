@@ -1,7 +1,7 @@
 
 use super::Lerp;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color {
     r: f32,
     g: f32,
