@@ -113,6 +113,31 @@ pub struct AppBuilder {
     win: window::WindowBuilder,
 }
 
+impl AppBuilder {
+    pub fn build<P: Platform>(self) -> App<P> {
+        let mut platform = P::new();
+        let window = platform.create_window(self.win).unwrap();
+        let watch_ctx = drying_paint::WatchContext::new();
+
+        let (width, height) = window.size();
+
+        let values = AppValues {
+            frame_start: Watched::new(time::Instant::now()),
+            cell_size: Watched::new(get_cell_size(width, height)),
+            px_per_dp: Watched::new(1.0),
+            window_size: (width, height),
+        };
+        App {
+            platform,
+            watch_ctx,
+            window,
+            roots: Vec::new(),
+            values,
+            pointer_grab_map: HashMap::new(),
+        }
+    }
+}
+
 impl window::WindowSettings for AppBuilder {
     fn size(&self) -> (f32, f32) { self.win.size() }
     
@@ -353,27 +378,6 @@ impl<P: Platform> CurrentApp<P> {
 
 impl Default for App {
     fn default() -> Self {
-        //let builder = AppBuilder::default();
-        let mut platform = <DefaultPlatform as Platform>::new();
-        let window = platform.create_window(window::WindowBuilder::default())
-            .unwrap();
-        let watch_ctx = drying_paint::WatchContext::new();
-
-        let (width, height) = window.size();
-        
-        let mut values = AppValues {
-            frame_start: Watched::new(time::Instant::now()),
-            cell_size: Watched::new(get_cell_size(width, height)),
-            px_per_dp: Watched::new(1.0),
-            window_size: (width, height),
-        };
-        Self {
-            platform,
-            watch_ctx,
-            window,
-            roots: Vec::new(),
-            values,
-            pointer_grab_map: HashMap::new(),
-        }
+        AppBuilder::default().build()
     }
 }
