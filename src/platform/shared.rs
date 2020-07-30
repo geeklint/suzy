@@ -36,3 +36,17 @@ pub trait Platform: 'static {
         F: 'static + FnMut(&mut Self::State, Event);
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct SimpleEventLoopState {
+    pub running: bool,
+}
+
+impl Default for SimpleEventLoopState {
+    fn default() -> Self { Self { running: true } }
+}
+
+impl EventLoopState for SimpleEventLoopState {
+    fn request_shutdown(&mut self) {
+        self.running = false;
+    }
+}

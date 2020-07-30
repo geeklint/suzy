@@ -2,6 +2,7 @@ use std::convert::TryInto;
 
 use super::{
     Event,
+    SimpleEventLoopState,
 };
 
 use crate::platform::opengl::OpenGlRenderPlatform;
@@ -13,18 +14,8 @@ pub struct SDLPlatform {
     sdl: sdl2::Sdl,
 }
 
-pub struct EventLoopState {
-    running: bool,
-}
-
-impl super::EventLoopState for EventLoopState {
-    fn request_shutdown(&mut self) {
-        self.running = false;
-    }
-}
-
 impl crate::platform::Platform for SDLPlatform {
-    type State = EventLoopState;
+    type State = SimpleEventLoopState;
     type Window = window::Window;
     type Renderer = OpenGlRenderPlatform;
 
@@ -44,7 +35,7 @@ impl crate::platform::Platform for SDLPlatform {
     where
         F: 'static + FnMut(&mut Self::State, Event)
     {
-        let mut state = EventLoopState { running: true };
+        let mut state = SimpleEventLoopState::default();
         let mut events = window::Events {
             events: self.sdl.event_pump().unwrap(),
             send_dp: false,
