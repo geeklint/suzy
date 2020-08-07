@@ -5,6 +5,7 @@ use drying_paint::{
     WatchedEvent,
 };
 
+use crate::dims::Rect;
 use crate::pointer::{
     PointerEvent,
     PointerAction,
@@ -139,6 +140,17 @@ where
     }
 }
 
+impl<T: Default> Default for ButtonContent<T> {
+    fn default() -> Self {
+        Self {
+            on_click: WatchedEvent::default(),
+            state: Watched::default(),
+            interactable: Watched::new(true),
+            pointers_down: 0,
+            content: T::default(),
+        }
+    }
+}
 
 pub struct Button<T, P = DefaultRenderPlatform>
 where
@@ -153,26 +165,56 @@ where
     P: RenderPlatform,
     T: Selectable + WidgetContent<P>,
 {
-    pub fn content(&self) -> Ref<T> {
-        Ref::map(
-            self.widget.content(),
-            |button| &button.content,
-        )
+    pub fn content(&self) -> &T {
+        &self.widget.content().content
     }
 
-    pub fn content_mut(&self) -> Ref<T> {
-        Ref::map(
-            self.widget.content(),
-            |button| &button.content,
-        )
+    pub fn content_mut(&mut self) -> &mut T {
+        &mut self.widget.content_mut().content
     }
 
-    pub fn on_click<F: FnOnce()>(&mut self, handler: F) {
-        let borrow = self.widget.content_mut();
-        borrow.on_click.bind(move |()| handler());
+    pub fn on_click(&mut self) -> bool {
+        self.widget.content_mut().on_click.bind().is_some()
     }
 
     pub fn state(&self) -> SelectionState {
         *self.widget.content().state
     }
 }
+
+impl<T, P> Rect for Button<T, P>
+where
+    P: RenderPlatform,
+    T: Selectable + WidgetContent<P>,
+{
+    fn x(&self) -> crate::dims::Dim {
+        self.widget.x()
+    }
+
+    fn y(&self) -> crate::dims::Dim {
+        self.widget.y()
+    }
+
+    fn x_mut<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R
+    {
+        self.widget.x_mut(f)
+    }
+
+    fn y_mut<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R
+    {
+        self.widget.y_mut(f)
+    }
+}
+
+impl<T, P> Default for Button<T, P>
+where
+    P: RenderPlatform,
+    T: Default + Selectable + WidgetContent<P>,
+{
+    fn default() -> Self { Self { widget: Default::default() } }
+}
+

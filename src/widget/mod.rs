@@ -87,17 +87,17 @@ where
         WidgetProxyMut { anon: self }
     }
 
-    fn internal(&self) -> Ref<WidgetInternal<P, T>> { self.watcher.data() }
-    fn internal_mut(&mut self) -> RefMut<WidgetInternal<P, T>> {
+    fn internal(&self) -> &WidgetInternal<P, T> { self.watcher.data() }
+    fn internal_mut(&mut self) -> &mut WidgetInternal<P, T> {
         self.watcher.data_mut()
     }
 
-    pub fn content(&self) -> Ref<T> {
-        Ref::map(self.internal(), |w| &w.content)
+    pub fn content(&self) -> &T {
+        &self.internal().content
     }
 
-    pub fn content_mut(&mut self) -> RefMut<T> {
-        RefMut::map(self.internal_mut(), |w| &mut w.content)
+    pub fn content_mut(&mut self) -> &mut T {
+        &mut self.internal_mut().content
     }
 
     pub(crate) fn draw(&mut self, ctx: &mut DrawContext<P>) {

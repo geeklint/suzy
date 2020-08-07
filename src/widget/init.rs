@@ -36,18 +36,18 @@ where
     ;
 }
 
-struct WidgetInitImpl<'a, O, T, G, P>
+struct WidgetInitImpl<'a, 'b, O, T, G, P>
 where
     P: RenderPlatform,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: WidgetContent<P>,
     T: WidgetContent<P>,
 {
-    watcher: &'a mut WatcherMeta<WidgetInternal<P, O>>,
+    watcher: &'a mut WatcherMeta<'b, WidgetInternal<P, O>>,
     getter: G,
 }
 
-impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, O, T, G, P>
+impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
 where
     P: RenderPlatform,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
