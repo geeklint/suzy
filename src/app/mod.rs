@@ -1,8 +1,10 @@
-use std::cell::RefCell;
 use std::time;
 use std::collections::HashMap;
 
-use drying_paint::Watched;
+use drying_paint::{
+    Watched,
+    WatchContext,
+};
 
 use crate::platform::{
     DefaultPlatform,
@@ -43,7 +45,7 @@ where
     P: Platform,
 {
     platform: P,
-    watch_ctx: drying_paint::WatchContext,
+    watch_ctx: WatchContext,
     window: P::Window,
     roots: Vec<OwnedWidgetProxy<P::Renderer>>,
     values: AppValues,
@@ -69,6 +71,7 @@ impl<P: Platform> App<P> {
             values,
             pointer_grab_map,
         } = self;
+        let window = Some(window);
         let mut current = CurrentApp {
             window, roots, pointer_grab_map,
         };
@@ -79,6 +82,7 @@ impl<P: Platform> App<P> {
             })
         });
         let CurrentApp { window, roots, pointer_grab_map } = current;
+        let window = window.expect("CurrentApp lost its Window");
         let new_self = Self {
             platform,
             watch_ctx,
@@ -99,6 +103,7 @@ impl<P: Platform> App<P> {
             values,
             pointer_grab_map,
         } = self;
+        let window = Some(window);
         let mut current = CurrentApp::<P> {
             window, roots, pointer_grab_map,
         };
@@ -121,6 +126,7 @@ impl<P: Platform> App<P> {
             values,
             pointer_grab_map,
         } = self;
+        let window = Some(window);
         let mut current = CurrentApp::<P> {
             window, roots, pointer_grab_map,
         };
@@ -136,23 +142,45 @@ pub struct CurrentApp<P = DefaultPlatform>
 where
     P: Platform
 {
-    window: P::Window,
+    window: Option<P::Window>,
     roots: Vec<OwnedWidgetProxy<P::Renderer>>,
     pointer_grab_map: HashMap<PointerId, WidgetId>,
 }
 
 impl<P: Platform> CurrentApp<P> {
+    fn window(&mut self) -> &mut P::Window {
+        self.window.as_mut().expect("CurrentApp lost its Window")
+    }
+
     pub fn add_root<F, T>(&mut self, f: F)
     where
-        F: FnOnce() -> Widget<T, P::Renderer>,
+        F: 'static + FnOnce() -> Widget<T, P::Renderer>,
         T: WidgetContent<P::Renderer>,
     {
-        let Self { roots, window, .. } = self;
-        let (width, height) = window.size();
+        let (width, height) = self.window().size();
         let rect = SimpleRect::with_size(width, height);
-        let mut widget = f();
-        widget.set_fill(&rect, &SimplePadding2d::zero());
-        roots.push(widget.into());
+        self.access_roots(move |roots| {
+            let mut widget = f();
+            widget.set_fill(&rect, &SimplePadding2d::zero());
+            roots.push(widget.into());
+        });
+    }
+
+    fn access_roots<F, R>(&mut self, func: F) -> R
+    where
+        F: 'static + FnOnce(&mut Vec<OwnedWidgetProxy<P::Renderer>>) -> R,
+        R: 'static
+    {
+        let roots = std::mem::take(&mut self.roots);
+        let (roots, ret) = WatchContext::allow_watcher_access(
+            roots,
+            move |mut roots| {
+                let ret = func(&mut roots);
+                (roots, ret)
+            }
+        );
+        self.roots = roots;
+        ret
     }
 
     fn handle_event<E: EventLoopState>(
@@ -169,31 +197,22 @@ impl<P: Platform> CurrentApp<P> {
                 });
             },
             Event::Update => {
-                drying_paint::WatchContext::update_current();
+                WatchContext::update_current();
             },
             Event::TakeScreenshot(dest) => {
-                *dest = self.window.take_screenshot();
+                *dest = self.window().take_screenshot();
             },
             Event::Draw => {
-                let mut ctx = self.window.prepare_draw(true);
-                let mut loop_count = 0;
-                while DrawContext::draw(&mut ctx, self.roots.iter_mut()) {
-                    debug_assert!(
-                        loop_count < 1024,
-                        "render exceeded its loop count (possible infinite loop)",
-                    );
-                    drying_paint::WatchContext::update_current();
-                    loop_count += 1;
-                }
+                self.draw();
             },
             Event::FinishDraw => {
-                self.window.flip();
+                self.window().flip();
             },
             Event::WindowEvent(Quit) => {
                 state.request_shutdown();
             },
             Event::WindowEvent(Resize) => {
-                let (x, y) = self.window.size();
+                let (x, y) = self.window().size();
                 AppValues::expect_current_mut(|values| {
                     *values.cell_size = get_cell_size(x, y);
                     values.window_size.0 = x;
@@ -205,10 +224,10 @@ impl<P: Platform> CurrentApp<P> {
                 for root in self.roots.iter_mut() {
                     root.set_fill(&rect, &SimplePadding2d::zero());
                 }
-                self.window.recalculate_viewport();
+                self.window().recalculate_viewport();
             },
             Event::WindowEvent(DpScaleChange) => {
-                let ppd = self.window.pixels_per_dp();
+                let ppd = self.window().pixels_per_dp();
                 AppValues::expect_current_mut(|values| {
                     *values.px_per_dp = ppd;
                 });
@@ -216,9 +235,37 @@ impl<P: Platform> CurrentApp<P> {
             Event::WindowEvent(KeyDown(_key)) => {
             },
             Event::WindowEvent(Pointer(mut pointer)) => {
-                self.window.normalize_pointer_event(&mut pointer);
+                self.window().normalize_pointer_event(&mut pointer);
                 self.pointer_event(pointer);
             },
+        }
+    }
+
+    fn draw(&mut self) {
+        let mut loop_count = 0;
+        let mut first_pass = false;
+        loop {
+            let mut window = self.window.take()
+                .expect("CurrentApp lost its Window");
+            let (window, need_loop) = self.access_roots(move |roots| {
+                let mut ctx = window.prepare_draw(first_pass);
+                let need_loop = DrawContext::draw(
+                    &mut ctx,
+                    roots.iter_mut(),
+                );
+                (window, need_loop)
+            });
+            self.window = Some(window);
+            if !need_loop {
+                break;
+            }
+            first_pass = false;
+            debug_assert!(
+                loop_count < 1024,
+                "render exceeded its loop count (possible infinite loop)",
+            );
+            WatchContext::update_current();
+            loop_count += 1;
         }
     }
 
@@ -226,34 +273,40 @@ impl<P: Platform> CurrentApp<P> {
         &mut self,
         pointer: PointerEventData,
     ) {
-        let grab_map = &mut self.pointer_grab_map;
-        let mut event = PointerEvent::new(
-            pointer,
-            grab_map,
-        );
-        {
+        let mut grab_map = std::mem::take(&mut self.pointer_grab_map);
+        let (stolen_from, mut grab_map) = self.access_roots(move |roots| {
+            let mut event = PointerEvent::new(
+                pointer,
+                &mut grab_map,
+            );
             let mut handled = false;
-            let mut iter = self.roots.iter_mut().rev();
+            let mut iter = roots.iter_mut().rev();
             while let (false, Some(root)) = (handled, iter.next()) {
                 handled = root.pointer_event(&mut event);
             }
-        }
-        if let Some(id) = event.grab_stolen_from {
-            let mut found = false;
-            let mut iter = self.roots.iter_mut();
-            while let (false, Some(root)) = (found, iter.next()) {
-                root.find_widget(id.clone(), |widget| {
-                    found = true;
-                    widget.pointer_event_self(&mut PointerEvent::new(
-                        PointerEventData {
-                            action: PointerAction::GrabStolen,
-                            ..pointer
-                        },
-                        grab_map,
-                    ));
-                });
-            }
-        }
+            (event.grab_stolen_from, grab_map)
+        });
+        self.pointer_grab_map = if let Some(id) = stolen_from {
+            self.access_roots(move |roots| {
+                let mut found = false;
+                let mut iter = roots.iter_mut();
+                while let (false, Some(root)) = (found, iter.next()) {
+                    root.find_widget(id.clone(), |widget| {
+                        found = true;
+                        widget.pointer_event_self(&mut PointerEvent::new(
+                            PointerEventData {
+                                action: PointerAction::GrabStolen,
+                                ..pointer
+                            },
+                            &mut grab_map,
+                        ));
+                    });
+                }
+                grab_map
+            })
+        } else {
+            grab_map
+        };
     }
 
     pub fn shutdown(self) {
