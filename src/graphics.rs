@@ -2,7 +2,6 @@ use crate::platform::{
     DefaultRenderPlatform,
     RenderPlatform,
 };
-use crate::widget::{Widget, WidgetContent};
 
 pub trait Graphic<P: RenderPlatform = DefaultRenderPlatform> {
     fn draw(&mut self, ctx: &mut DrawContext<P>);

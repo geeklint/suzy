@@ -65,7 +65,6 @@ pub struct Window {
     _context: sdl2::video::GLContext,
     _video: sdl2::VideoSubsystem,
     _image: sdl2::image::Sdl2ImageContext,
-    events: Option<Events>,
 }
 
 impl Window {
@@ -148,7 +147,6 @@ impl Window {
             _video: video,
             _image: image,
             _context: context,
-            events: None,
         })
     }
 }

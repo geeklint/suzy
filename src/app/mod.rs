@@ -2,7 +2,6 @@ use std::time;
 use std::collections::HashMap;
 
 use drying_paint::{
-    Watched,
     WatchContext,
 };
 
@@ -135,6 +134,9 @@ impl<P: Platform> App<P> {
                 func(AppTesterInterface::new(&mut current));
             });
         });
+        std::mem::drop(current.roots);
+        std::mem::drop(current.window);
+        std::mem::drop(platform);
     }
 }
 

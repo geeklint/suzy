@@ -230,6 +230,9 @@ impl Mul<Vec4> for Mat4 {
 
 #[cfg(test)]
 mod test {
+    // TODO: clippy is probably right
+    #![allow(clippy::excessive_precision)]
+
     use super::*;
 
     const SOME_VEC: Vec4 = (
@@ -285,7 +288,10 @@ mod test {
         let result = Mat4::rotate(std::f32::consts::PI) * SOME_VEC;
         assert!(result.0 + SOME_VEC.0 <= f32::EPSILON);
         assert!(result.1 + SOME_VEC.1 <= f32::EPSILON);
-        assert_eq!(result.2, SOME_VEC.2);
-        assert_eq!(result.3, SOME_VEC.3);
+        #[allow(clippy::float_cmp)]
+        {
+            assert_eq!(result.2, SOME_VEC.2);
+            assert_eq!(result.3, SOME_VEC.3);
+        }
     }
 }

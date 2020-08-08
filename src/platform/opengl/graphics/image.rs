@@ -71,7 +71,7 @@ impl SlicedImage {
     fn update_image(&mut self) {
         let mut uvs = [0f32; 32];
         let Self { buffers, texture, padding, .. } = self;
-        buffers.set_data_1(|gl| {
+        buffers.set_data_1(|_gl| {
             texture.size().map(|(tex_width, tex_height)| {
                 let left = padding.left() / tex_width;
                 let right = 1.0 - (padding.right() / tex_width);
