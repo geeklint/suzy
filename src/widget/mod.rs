@@ -1,4 +1,7 @@
-use std::cell::{Ref, RefMut};
+use std::ops::{
+    Deref,
+    DerefMut,
+};
 
 use drying_paint::{Watcher, WatcherId};
 pub use drying_paint::Watched;
@@ -64,91 +67,100 @@ where
     }
 }
 
+impl<T, P> Deref for Widget<T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.watcher.data().content
+    }
+}
+
+impl<T, P> DerefMut for Widget<T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P>,
+{
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.watcher.data_mut().content
+    }
+}
+
 impl<P, T> Widget<T, P>
 where
     P: RenderPlatform,
     T: WidgetContent<P>,
 {
-    pub fn id(&self) -> WidgetId {
+    pub fn id(this: &Self) -> WidgetId {
         WidgetId {
-            id: self.watcher.id(),
+            id: this.watcher.id(),
         }
     }
 
     /// Get an anonymous reference to this widget. This is required by
     /// WidgetContent::children(), for example.
-    pub fn proxy(&self) -> WidgetProxy<P> {
-        WidgetProxy { anon: self }
+    pub fn proxy(this: &Self) -> WidgetProxy<P> {
+        WidgetProxy { anon: this }
     }
 
     /// Get an mutable anonymous reference to this widget. This is required
     /// by WidgetContent::children_mut(), for example.
-    pub fn proxy_mut(&mut self) -> WidgetProxyMut<P> {
-        WidgetProxyMut { anon: self }
+    pub fn proxy_mut(this: &mut Self) -> WidgetProxyMut<P> {
+        WidgetProxyMut { anon: this }
     }
 
-    fn internal(&self) -> &WidgetInternal<P, T> { self.watcher.data() }
-    fn internal_mut(&mut self) -> &mut WidgetInternal<P, T> {
-        self.watcher.data_mut()
-    }
-
-    pub fn content(&self) -> &T {
-        &self.internal().content
-    }
-
-    pub fn content_mut(&mut self) -> &mut T {
-        &mut self.internal_mut().content
-    }
-
-    pub(crate) fn draw(&mut self, ctx: &mut DrawContext<P>) {
-        let mut wid_int = self.internal_mut();
+    pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
+        let wid_int = this.watcher.data_mut();
         let content = &mut wid_int.content;
         content.graphics(DrawGraphicBeforeReceiver { ctx });
         content.children_mut(DrawChildReceiver { ctx });
         content.graphics(DrawGraphicAfterReceiver { ctx });
     }
 
-    pub(crate) fn find_widget<F>(&mut self, id: WidgetId, func: F)
+    pub(crate) fn find_widget<F>(this: &mut Self, id: WidgetId, func: F)
     where
         F: FnOnce(&mut dyn AnonWidget<P>)
     {
-        self.find_widget_internal(&id, &mut Some(func));
+        Self::find_widget_internal(this, &id, &mut Some(func));
     }
 
     fn find_widget_internal(
-        &mut self,
+        this: &mut Self,
         id: &WidgetId,
         func: &mut Option<impl FnOnce(&mut dyn AnonWidget<P>)>,
     ) {
         if let Some(f) = func.take() {
-            if self.id() == *id {
-                f(self);
+            if Widget::id(this) == *id {
+                f(this);
             } else {
                 *func = Some(f);
-                let content = &mut self.internal_mut().content;
+                let content: &mut T = this;
                 content.children_mut(FindWidgetReceiver { id, func });
             }
         }
     }
 
-    pub(crate) fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
+    pub(crate) fn pointer_event(this: &mut Self, event: &mut PointerEvent)
+        -> bool
+    {
         let mut handled_by_child = false;
         {
-            let content = &mut self.internal_mut().content;
+            let content: &mut T = this;
             content.children_mut(PointerEventChildReceiver {
                 event,
                 handled: &mut handled_by_child,
             });
         }
-        handled_by_child || self.pointer_event_self(event)
+        handled_by_child || Self::pointer_event_self(this, event)
     }
 
-    pub(crate) fn pointer_event_self(&mut self, event: &mut PointerEvent)
+    pub(crate) fn pointer_event_self(this: &mut Self, event: &mut PointerEvent)
         -> bool
     {
-        let id = self.id();
-        let mut borrow = self.internal_mut();
-        let wid_int: &mut WidgetInternal<P, T> = &mut borrow;
+        let id = Widget::id(this);
+        let wid_int = this.watcher.data_mut();
         let mut extra = WidgetExtra {
             id,
             rect: &mut wid_int.rect,
@@ -179,19 +191,19 @@ where
     P: RenderPlatform,
     T: WidgetContent<P>,
 {
-    fn x(&self) -> Dim { self.internal().rect.x() }
-    fn y(&self) -> Dim { self.internal().rect.y() }
+    fn x(&self) -> Dim { self.watcher.data().rect.x() }
+    fn y(&self) -> Dim { self.watcher.data().rect.y() }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.internal_mut().rect.external_x_mut(f)
+        self.watcher.data_mut().rect.external_x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R
     {
-        self.internal_mut().rect.external_y_mut(f)
+        self.watcher.data_mut().rect.external_y_mut(f)
     }
 }
 

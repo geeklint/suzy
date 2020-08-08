@@ -33,7 +33,7 @@ impl<'a, 'b, P> WidgetMutChildReceiver<P> for DrawChildReceiver<'a, 'b, P>
 where P: RenderPlatform
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
-        child.draw(self.ctx);
+        Widget::draw(child, self.ctx);
     }
 }
 
@@ -49,7 +49,7 @@ where
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
         if !*self.handled {
-            *self.handled = child.pointer_event(self.event);
+            *self.handled = Widget::pointer_event(child, self.event);
         }
     }
 }
@@ -91,6 +91,6 @@ where
     P: RenderPlatform,
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
-        child.find_widget_internal(self.id, self.func);
+        Widget::find_widget_internal(child, self.id, self.func);
     }
 }

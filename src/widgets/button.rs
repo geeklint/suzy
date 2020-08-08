@@ -1,11 +1,9 @@
-use std::cell::Ref;
 
 use drying_paint::{
     Watched,
     WatchedEvent,
 };
 
-use crate::dims::Rect;
 use crate::pointer::{
     PointerEvent,
     PointerAction,
@@ -29,12 +27,22 @@ use crate::selectable::{
     SelectionStateV1,
 };
 
-struct ButtonContent<T> {
+pub struct ButtonContent<T> {
     on_click: WatchedEvent<()>,
     state: Watched<SelectionState>,
     interactable: Watched<bool>,
     pointers_down: usize,
     content: T,
+}
+
+impl<T> ButtonContent<T> {
+    pub fn content(&self) -> &T { &self.content }
+
+    pub fn content_mut(&mut self) -> &mut T { &mut self.content }
+
+    pub fn state(&self) -> SelectionState { *self.state }
+
+    pub fn on_click(&self) -> Option<()> { self.on_click.bind().copied() }
 }
 
 impl<T, P> WidgetContent<P> for ButtonContent<T>
@@ -152,69 +160,5 @@ impl<T: Default> Default for ButtonContent<T> {
     }
 }
 
-pub struct Button<T, P = DefaultRenderPlatform>
-where
-    P: RenderPlatform,
-    T: Selectable + WidgetContent<P>,
-{
-    widget: Widget<ButtonContent<T>, P>,
-}
-
-impl<T, P> Button<T, P>
-where
-    P: RenderPlatform,
-    T: Selectable + WidgetContent<P>,
-{
-    pub fn content(&self) -> &T {
-        &self.widget.content().content
-    }
-
-    pub fn content_mut(&mut self) -> &mut T {
-        &mut self.widget.content_mut().content
-    }
-
-    pub fn on_click(&mut self) -> bool {
-        self.widget.content_mut().on_click.bind().is_some()
-    }
-
-    pub fn state(&self) -> SelectionState {
-        *self.widget.content().state
-    }
-}
-
-impl<T, P> Rect for Button<T, P>
-where
-    P: RenderPlatform,
-    T: Selectable + WidgetContent<P>,
-{
-    fn x(&self) -> crate::dims::Dim {
-        self.widget.x()
-    }
-
-    fn y(&self) -> crate::dims::Dim {
-        self.widget.y()
-    }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut crate::dims::Dim) -> R
-    {
-        self.widget.x_mut(f)
-    }
-
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut crate::dims::Dim) -> R
-    {
-        self.widget.y_mut(f)
-    }
-}
-
-impl<T, P> Default for Button<T, P>
-where
-    P: RenderPlatform,
-    T: Default + Selectable + WidgetContent<P>,
-{
-    fn default() -> Self { Self { widget: Default::default() } }
-}
+pub type Button<T, P = DefaultRenderPlatform> = Widget<ButtonContent<T>, P>;
 
