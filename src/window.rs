@@ -99,7 +99,7 @@ pub trait Window<P: RenderPlatform> : WindowSettings {
     /// usually cause the back buffer to be displayed.
     fn flip(&mut self);
 
-    fn prepare_draw(&mut self) -> DrawContext<P>;
+    fn prepare_draw(&mut self, first_pass: bool) -> DrawContext<P>;
 
     fn take_screenshot(&self) -> Box<[u8]>;
 }

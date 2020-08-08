@@ -175,7 +175,7 @@ impl<P: Platform> CurrentApp<P> {
                 *dest = self.window.take_screenshot();
             },
             Event::Draw => {
-                let mut ctx = self.window.prepare_draw();
+                let mut ctx = self.window.prepare_draw(true);
                 let mut loop_count = 0;
                 while DrawContext::draw(&mut ctx, self.roots.iter_mut()) {
                     debug_assert!(

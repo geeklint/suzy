@@ -253,9 +253,11 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         self.info.window.gl_swap_window();
     }
 
-    fn prepare_draw(&mut self) -> DrawContext<opengl::OpenGlRenderPlatform> {
+    fn prepare_draw(&mut self, first_pass: bool)
+        -> DrawContext<opengl::OpenGlRenderPlatform>
+    {
         self.info.gl_win.clear();
-        self.info.gl_win.prepare_draw(self.size())
+        self.info.gl_win.prepare_draw(self.size(), first_pass)
     }
 
     fn take_screenshot(&self) -> Box<[u8]> {

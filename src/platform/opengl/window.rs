@@ -64,7 +64,7 @@ impl Window {
         }
     }
 
-    pub fn prepare_draw(&mut self, screen_size: (f32, f32))
+    pub fn prepare_draw(&mut self, screen_size: (f32, f32), first_pass: bool)
         -> DrawContext<OpenGlRenderPlatform>
     {
         unsafe {
@@ -76,7 +76,7 @@ impl Window {
             Mat4::translate(-1.0, -1.0)
             * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1)
         );
-        DrawContext::new(&mut self.ctx, params)
+        DrawContext::new(&mut self.ctx, params, first_pass)
     }
 
     /// Issue opengl call to clear the screen.

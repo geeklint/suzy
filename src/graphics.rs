@@ -59,13 +59,22 @@ pub struct DrawContext<'a, P: RenderPlatform = DefaultRenderPlatform> {
 }
 
 impl<'a, P: RenderPlatform> DrawContext<'a, P> {
-    pub fn new(ctx: &'a mut P::Context, starting: P::DrawParams) -> Self {
+    pub fn new(
+        ctx: &'a mut P::Context,
+        starting: P::DrawParams,
+        first_pass: bool,
+    ) -> Self {
+        let pass = if first_pass {
+            DrawPass::DrawAll
+        } else {
+            DrawPass::DrawRemaining
+        };
         Self {
             context: ctx,
             current: starting,
             history: Vec::new(),
             last_applied: LastApplied::None,
-            pass: DrawPass::DrawAll,
+            pass,
         }
     }
 
