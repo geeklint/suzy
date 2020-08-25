@@ -4,6 +4,7 @@ enum SelectionStateAll {
     Normal,
     Hover,
     Focus,
+    Pressed,
     Active,
 }
 
@@ -18,6 +19,7 @@ impl SelectionState {
     pub const fn normal() -> Self { Self(SelectionStateAll::Normal) }
     pub const fn hover() -> Self { Self(SelectionStateAll::Hover) }
     pub const fn focus() -> Self { Self(SelectionStateAll::Focus) }
+    pub const fn pressed() -> Self { Self(SelectionStateAll::Pressed) }
     pub const fn active() -> Self { Self(SelectionStateAll::Active) }
 
     pub fn v0(self) -> SelectionStateV0 {
@@ -25,6 +27,7 @@ impl SelectionState {
             SelectionStateAll::Normal => SelectionStateV0::Normal,
             SelectionStateAll::Hover => SelectionStateV0::Normal,
             SelectionStateAll::Focus => SelectionStateV0::Focus,
+            SelectionStateAll::Pressed => SelectionStateV0::Focus,
             SelectionStateAll::Active => SelectionStateV0::Active,
         }
     }
@@ -33,7 +36,18 @@ impl SelectionState {
             SelectionStateAll::Normal => SelectionStateV1::Normal,
             SelectionStateAll::Hover => SelectionStateV1::Hover,
             SelectionStateAll::Focus => SelectionStateV1::Focus,
+            SelectionStateAll::Pressed => SelectionStateV1::Focus,
             SelectionStateAll::Active => SelectionStateV1::Active,
+        }
+    }
+
+    pub fn v2(self) -> SelectionStateV2 {
+        match self.0 {
+            SelectionStateAll::Normal => SelectionStateV2::Normal,
+            SelectionStateAll::Hover => SelectionStateV2::Hover,
+            SelectionStateAll::Focus => SelectionStateV2::Focus,
+            SelectionStateAll::Pressed => SelectionStateV2::Pressed,
+            SelectionStateAll::Active => SelectionStateV2::Active,
         }
     }
 }
@@ -69,6 +83,23 @@ impl Default for SelectionStateV1 {
     fn default() -> Self { SelectionState::default().into() }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum SelectionStateV2 {
+    Normal,
+    Hover,
+    Focus,
+    Pressed,
+    Active,
+}
+
+impl From<SelectionState> for SelectionStateV2 {
+    fn from(all: SelectionState) -> Self { all.v2() }
+}
+
+impl Default for SelectionStateV2 {
+    fn default() -> Self { SelectionState::default().into() }
+}
+
 pub trait Selectable {
     fn selection_changed(&mut self, state: SelectionState);
 }
@@ -79,6 +110,7 @@ pub struct SelectableData<T> {
     normal: T,
     hover: Option<T>,
     focus: Option<T>,
+    pressed: Option<T>,
     active: Option<T>,
 }
 
@@ -90,6 +122,7 @@ impl<T> SelectableData<T> {
                 normal,
                 hover: None,
                 focus: None,
+                pressed: None,
                 active: None,
             }
         }
@@ -107,6 +140,11 @@ impl<T> std::ops::Deref for SelectableData<T> {
             SelectionStateAll::Focus => {
                 self.focus.as_ref().unwrap_or(&self.normal)
             },
+            SelectionStateAll::Pressed => {
+                self.pressed.as_ref()
+                    .or(self.focus.as_ref())
+                    .unwrap_or(&self.normal)
+            },
             SelectionStateAll::Active => {
                 self.active.as_ref().unwrap_or(&self.normal)
             },
@@ -123,6 +161,11 @@ impl<T> std::ops::DerefMut for SelectableData<T> {
             },
             SelectionStateAll::Focus => {
                 self.focus.as_mut().unwrap_or(&mut self.normal)
+            },
+            SelectionStateAll::Pressed => {
+                self.pressed.as_mut()
+                    .or(self.focus.as_mut())
+                    .unwrap_or(&mut self.normal)
             },
             SelectionStateAll::Active => {
                 self.active.as_mut().unwrap_or(&mut self.normal)
@@ -144,6 +187,11 @@ impl<T> SelectableDataBuilder<T> {
 
     pub fn focus(mut self, item: T) -> Self {
         self.content.focus = Some(item);
+        self
+    }
+
+    pub fn pressed(mut self, item: T) -> Self {
+        self.content.pressed = Some(item);
         self
     }
 
