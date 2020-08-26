@@ -12,7 +12,7 @@ opengl = []
 sdl = ["sdl2", "opengl"]
 
 [dependencies]
-drying_paint = "0.4.2"
+drying_paint = "0.4.3"
 gag = { version = "0.1.10", optional = true }
 gl = { version = "0.14.0", optional = true }
 lazy_static = { version = "^1.4.0", optional = true }
