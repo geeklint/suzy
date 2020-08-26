@@ -223,9 +223,11 @@ impl<P: Platform> CurrentApp<P> {
                 let xdim = Dim::with_length(x);
                 let ydim = Dim::with_length(y);
                 let rect = SimpleRect::new(xdim, ydim);
-                for root in self.roots.iter_mut() {
-                    root.set_fill(&rect, &SimplePadding2d::zero());
-                }
+                self.access_roots(move |roots| {
+                    for root in roots.iter_mut() {
+                        root.set_fill(&rect, &SimplePadding2d::zero());
+                    }
+                });
                 self.window().recalculate_viewport();
             },
             Event::WindowEvent(DpScaleChange) => {
