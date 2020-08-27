@@ -247,7 +247,7 @@ impl<P: Platform> CurrentApp<P> {
 
     fn draw(&mut self) {
         let mut loop_count = 0;
-        let mut first_pass = false;
+        let mut first_pass = true;
         loop {
             let mut window = self.window.take()
                 .expect("CurrentApp lost its Window");
