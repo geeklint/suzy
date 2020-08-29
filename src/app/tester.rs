@@ -99,4 +99,22 @@ impl<P: Platform> AppTesterInterface<'_, P> {
         );
         data
     }
+
+    pub fn mouse_click(&mut self, pos: (f32, f32)) {
+        self.pointer(PointerEventData {
+            id: crate::pointer::PointerId::Mouse,
+            action: crate::pointer::PointerAction::Down,
+            x: pos.0,
+            y: pos.1,
+            normalized: true,
+        });
+        self.next_frame_60fps();
+        self.pointer(PointerEventData {
+            id: crate::pointer::PointerId::Mouse,
+            action: crate::pointer::PointerAction::Up,
+            x: pos.0,
+            y: pos.1,
+            normalized: true,
+        });
+    }
 }
