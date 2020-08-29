@@ -239,7 +239,9 @@ impl<P: Platform> CurrentApp<P> {
             Event::WindowEvent(KeyDown(_key)) => {
             },
             Event::WindowEvent(Pointer(mut pointer)) => {
-                self.window().normalize_pointer_event(&mut pointer);
+                if !pointer.normalized {
+                    self.window().normalize_pointer_event(&mut pointer);
+                }
                 self.pointer_event(pointer);
             },
         }

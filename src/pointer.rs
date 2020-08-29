@@ -36,6 +36,7 @@ mod internal {
         pub action: super::PointerAction,
         pub x: f32,
         pub y: f32,
+        pub normalized: bool,
     }
 
     impl PointerEvent {
@@ -45,7 +46,7 @@ mod internal {
             x: f32, y: f32,
         ) -> Self {
             Self {
-                id, action, x, y,
+                id, action, x, y, normalized: false,
             }
         }
     }

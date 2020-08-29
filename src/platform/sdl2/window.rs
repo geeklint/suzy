@@ -234,6 +234,7 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
             },
             _ => (),
         }
+        event.normalized = true;
     }
 
     fn recalculate_viewport(&mut self) {
