@@ -141,6 +141,7 @@ impl<T> std::ops::Deref for SelectableData<T> {
                 self.focus.as_ref().unwrap_or(&self.normal)
             },
             SelectionStateAll::Pressed => {
+                #[allow(clippy::or_fun_call)]
                 self.pressed.as_ref()
                     .or(self.focus.as_ref())
                     .unwrap_or(&self.normal)
@@ -163,6 +164,7 @@ impl<T> std::ops::DerefMut for SelectableData<T> {
                 self.focus.as_mut().unwrap_or(&mut self.normal)
             },
             SelectionStateAll::Pressed => {
+                #[allow(clippy::or_fun_call)]
                 self.pressed.as_mut()
                     .or(self.focus.as_mut())
                     .unwrap_or(&mut self.normal)
