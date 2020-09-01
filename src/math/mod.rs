@@ -8,6 +8,6 @@ mod lerp;
 pub mod consts;
 
 pub use lerp::Lerp;
-pub use easing::{Easing, CubicBezier};
+pub use easing::{Easing, CubicPoly};
 pub use color::Color;
 

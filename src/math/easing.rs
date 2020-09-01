@@ -8,19 +8,17 @@ pub trait Easing {
 
 
 #[derive(Copy, Clone)]
-pub struct CubicBezier(pub f32, pub f32, pub f32, pub f32);
+pub struct CubicPoly(pub f32, pub f32, pub f32, pub f32);
 
-impl Easing for CubicBezier {
+impl Easing for CubicPoly {
     fn ease(&self, t: f32) -> f32 {
-        let invt = 1.0 - t;
-        let part0 = invt.powi(3) * self.0;
-        let part1 = 3.0 * invt.powi(2) * t * self.1;
-        let part2 = 3.0 * invt * t.powi(2) * self.2;
-        let part3 = t.powi(3) * self.3;
-        part0 + part1 + part2 + part3
+        (self.0 * t.powi(3))
+        + (self.1 * t.powi(2))
+        + (self.2 * t.powi(1))
+        + (self.3 * t)
     }
 }
 
-impl Default for CubicBezier {
-    fn default() -> Self { CubicBezier(0.0, 0.0, 1.0, 1.0) }
+impl Default for CubicPoly {
+    fn default() -> Self { CubicPoly(0.0, 0.0, 1.0, 0.0) }
 }
