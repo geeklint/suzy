@@ -13,6 +13,7 @@ pub mod units;
 pub mod widget;
 pub mod window;
 pub mod platform;
+pub mod watch;
 pub mod widgets;
 
 
