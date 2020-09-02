@@ -53,24 +53,12 @@ impl Color {
 
 impl Lerp for Color {
     type Output = Color;
-    fn lerp(from: Self, to: Self, t: f32) -> Self::Output {
+    fn lerp(from: &Self, to: &Self, t: f32) -> Self::Output {
         Color {
-            r: Lerp::lerp(from.r, to.r, t),
-            g: Lerp::lerp(from.g, to.g, t),
-            b: Lerp::lerp(from.b, to.b, t),
-            a: Lerp::lerp(from.a, to.a, t),
-        }
-    }
-}
-
-impl Lerp for &Color {
-    type Output = Color;
-    fn lerp(from: Self, to: Self, t: f32) -> Self::Output {
-        Color {
-            r: Lerp::lerp(from.r, to.r, t),
-            g: Lerp::lerp(from.g, to.g, t),
-            b: Lerp::lerp(from.b, to.b, t),
-            a: Lerp::lerp(from.a, to.a, t),
+            r: Lerp::lerp(&from.r, &to.r, t),
+            g: Lerp::lerp(&from.g, &to.g, t),
+            b: Lerp::lerp(&from.b, &to.b, t),
+            a: Lerp::lerp(&from.a, &to.a, t),
         }
     }
 }
