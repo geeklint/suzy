@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 pub mod adapter;
+pub mod animation;
 pub mod app;
 pub mod dims;
 pub mod graphics;
