@@ -7,7 +7,10 @@ mod easing;
 mod lerp;
 pub mod consts;
 
-pub use lerp::Lerp;
+pub use lerp::{
+    Lerp,
+    LerpDistance,
+};
 pub use easing::{Easing, CubicPoly};
 pub use color::Color;
 

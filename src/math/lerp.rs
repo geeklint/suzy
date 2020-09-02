@@ -47,3 +47,13 @@ impl Lerp for &f64 {
         <f64 as Lerp>::lerp(*from, *to, t)
     }
 }
+
+pub trait LerpDistance {
+    fn lerp_distance(a: &Self, b: &Self) -> f32;
+}
+
+impl LerpDistance for f32 {
+    fn lerp_distance(a: &Self, b: &Self) -> f32 {
+        (a - b).abs()
+    }
+}

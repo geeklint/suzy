@@ -2,7 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use super::Lerp;
+use super::{
+    Lerp,
+    LerpDistance,
+};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color {
@@ -69,6 +72,17 @@ impl Lerp for &Color {
             b: Lerp::lerp(from.b, to.b, t),
             a: Lerp::lerp(from.a, to.a, t),
         }
+    }
+}
+
+impl LerpDistance for Color {
+    fn lerp_distance(a: &Self, b: &Self) -> f32 {
+        f32::sqrt(
+            (a.r - b.r).powi(2)
+            + (a.g - b.g).powi(2)
+            + (a.b - b.b).powi(2)
+            + (a.a - b.a).powi(2)
+        )
     }
 }
 
