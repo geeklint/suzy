@@ -51,7 +51,7 @@ impl<P: Platform> AppTesterInterface<'_, P> {
         }
     }
 
-    fn draw_if_needed(&mut self) {
+    pub fn draw_if_needed(&mut self) {
         if self.needs_draw {
             self.app.handle_event(
                 &mut self.state,
