@@ -12,6 +12,7 @@ use crate::platform::DefaultPlatform;
 use crate::math::{
     Lerp,
     LerpDistance,
+    Easing,
 };
 use crate::watch::{
     Watched,
@@ -42,6 +43,7 @@ pub struct Animation<T> {
     speed: Speed<T>,
     start_value: Option<T>,
     current: Watched<Option<(Instant, T)>>,
+    easing: Option<Box<dyn Easing>>,
 }
 
 impl<T> Default for Animation<T> {
@@ -50,6 +52,7 @@ impl<T> Default for Animation<T> {
             speed: Speed::default(),
             start_value: None,
             current: Watched::new(None),
+            easing: None,
         }
     }
 }
@@ -65,6 +68,12 @@ impl Animation<(f32, f32)> {
         self.speed = Speed::Speed(speed, |a, b| {
             ((b.0 - a.0).powi(2) + (b.1 - a.1).powi(2)).sqrt()
         });
+    }
+}
+
+impl<T> Animation<T> {
+    pub fn set_ease(&mut self, easing: Box<dyn Easing>) {
+        self.easing = Some(easing);
     }
 }
 
@@ -92,6 +101,10 @@ impl<T: Lerp<Output = T>> Animation<T> {
             (1.0, true)
         } else {
             (t, false)
+        };
+        let t = match self.easing {
+            None => t,
+            Some(ref easing) => easing.ease(t),
         };
         let value = T::lerp(start_value, end_value, t);
         let prev = std::mem::replace(target, value);
