@@ -317,10 +317,14 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
             new.tint_color,
             &ctx,
         );
+        let uniforms = match &new.shader_exclusive {
+            ShaderExclusive::Standard => ctx.shaders.std_uniforms.common,
+            ShaderExclusive::Sdf { .. } => ctx.shaders.sdf_uniforms.common,
+        };
         if shader_changed || new.transform != current.transform {
             Shader::set_mat4(
                 &ctx.bindings,
-                ctx.shaders.std_uniforms.common.transform, 
+                uniforms.transform,
                 new.transform.as_ref(),
             );
         }
@@ -329,7 +333,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
             let tex_trans = new.texture.bind(ctx);
             Shader::set_vec4(
                 &ctx.bindings,
-                ctx.shaders.std_uniforms.common.tex_transform,
+                uniforms.tex_transform,
                 tex_trans,
             );
         }

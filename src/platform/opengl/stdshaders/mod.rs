@@ -19,13 +19,13 @@ const SDF_FRAGMENT_SOURCE: &[u8] = include_bytes!(
     "sdf.frag.glsl");
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct VertUniforms {
+pub(super) struct SharedUniforms {
     pub(super) transform: UniformLoc,
     pub(super) tex_transform: UniformLoc,
 }
 
-fn common(gl: &OpenGlBindings, shader: &Shader) -> VertUniforms {
-    VertUniforms {
+fn common(gl: &OpenGlBindings, shader: &Shader) -> SharedUniforms {
+    SharedUniforms {
         transform: shader.uniform(gl, "TRANSFORM"),
         tex_transform: shader.uniform(gl, "TEX_TRANSFORM"),
     }
@@ -33,14 +33,14 @@ fn common(gl: &OpenGlBindings, shader: &Shader) -> VertUniforms {
     
 #[derive(Clone, Copy, Debug)]
 pub(super) struct StdUniforms {
-    pub(super) common: VertUniforms,
+    pub(super) common: SharedUniforms,
     pub(super) tex_id: UniformLoc,
     pub(super) tint_color: UniformLoc,
 }
 
 #[derive(Clone, Copy, Debug)]
 pub(super) struct SdfUniforms {
-    pub(super) common: VertUniforms,
+    pub(super) common: SharedUniforms,
     pub(super) text_color: UniformLoc,
     pub(super) outline_color: UniformLoc,
     pub(super) distance_edges: UniformLoc,
