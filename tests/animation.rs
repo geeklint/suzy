@@ -5,24 +5,13 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use suzy::animation::Animation;
-use suzy::dims::{
-    Rect,
-    SimplePadding2d,
-    Padding2dNew,
-};
 use suzy::window::WindowSettings;
-use suzy::math::Color;
 use suzy::math::consts::{
     BLACK,
-    WHITE,
 };
 use suzy::app::{
     App,
     AppBuilder,
-};
-use suzy::selectable::{
-    Selectable,
-    SelectionState,
 };
 use suzy::widget::{
     Widget,
@@ -34,7 +23,6 @@ use suzy::widget::{
 };
 use suzy::platform::opengl::{
     OpenGlRenderPlatform,
-    SlicedImage,
 };
 use suzy::platform::sdl2::SDLPlatform;
 
