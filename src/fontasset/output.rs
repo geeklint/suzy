@@ -164,6 +164,7 @@ impl FontOutput {
             "pub const FONT: FontFamilySource = FontFamilySource {{
                 image_width: {},
                 image_height: {},
+                image_row_alignment: 1,
                 image_channels: {},
                 atlas_image: include_bytes!({:?}),
             ",
