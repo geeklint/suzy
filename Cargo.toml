@@ -1,9 +1,4 @@
-[package]
-name = "suzy_build_tools"
-version = "0.1.0"
-authors = ["Violet <violet@geeklint.com>"]
-edition = "2018"
-
-[dependencies]
-rusttype = "0.9.1"
-rect_packer = "0.2.1"
+[workspace]
+members = [
+    "suzy_build_tools",
+]
