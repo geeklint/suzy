@@ -9,6 +9,7 @@ mod texture;
 mod context;
 mod drawparams;
 mod graphics;
+mod mask;
 mod matrix;
 mod shader;
 mod stdshaders;

@@ -66,6 +66,7 @@ impl Window {
                 height as GLsizei,
             );
         }
+        self.ctx.mask.mask_size(&self.ctx.bindings, width, height);
     }
 
     pub fn prepare_draw(&mut self, screen_size: (f32, f32), first_pass: bool)

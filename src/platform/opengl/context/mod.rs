@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use super::stdshaders::Shaders;
 use super::texture::TextureCache;
+use super::mask::Mask;
 
 pub mod bindings {
     #![allow(bare_trait_objects)]
@@ -25,6 +26,7 @@ pub struct OpenGlContext {
     pub(super) bindings: Rc<OpenGlBindings>,
     pub(super) shaders: Shaders,
     pub(super) texture_cache: TextureCache,
+    pub(super) mask: Mask,
 }
 
 impl OpenGlContext {
@@ -47,6 +49,7 @@ impl OpenGlContext {
             bindings: ptr,
             shaders,
             texture_cache: HashMap::new(),
+            mask: Mask::new(),
         }
     }
 

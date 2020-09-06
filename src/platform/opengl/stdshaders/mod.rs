@@ -22,12 +22,16 @@ const SDF_FRAGMENT_SOURCE: &[u8] = include_bytes!(
 pub(super) struct SharedUniforms {
     pub(super) transform: UniformLoc,
     pub(super) tex_transform: UniformLoc,
+    pub(super) mask_id: UniformLoc,
+    pub(super) mask_bounds: UniformLoc,
 }
 
 fn common(gl: &OpenGlBindings, shader: &Shader) -> SharedUniforms {
     SharedUniforms {
         transform: shader.uniform(gl, "TRANSFORM"),
         tex_transform: shader.uniform(gl, "TEX_TRANSFORM"),
+        mask_id: shader.uniform(gl, "MASK_ID"),
+        mask_bounds: shader.uniform(gl, "MASK_BOUNDS"),
     }
 }
     

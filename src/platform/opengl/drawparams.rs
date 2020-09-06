@@ -11,7 +11,19 @@ use super::OpenGlContext;
 use super::texture::Texture;
 use super::shader::Shader;
 use super::context::bindings::types::GLuint;
-use super::context::bindings::TEXTURE0;
+use super::context::bindings::{
+    CONSTANT_COLOR,
+    FUNC_ADD,
+    FUNC_REVERSE_SUBTRACT,
+    ONE,
+    ONE_MINUS_SRC_ALPHA,
+    SRC_ALPHA,
+    TEXTURE0,
+    TEXTURE1,
+    TEXTURE_2D,
+};
+
+pub(super) const MASK_LEVELS: u8 = 4;
 
 #[derive(Clone)]
 enum ShaderExclusive {
@@ -180,12 +192,137 @@ impl ShaderExclusive {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum MaskMode {
+    Push,
+    Pop,
+    Masked,
+}
+
+impl MaskMode {
+    fn apply_all(
+        &self,
+        uniforms: &super::stdshaders::SharedUniforms,
+        mask_level: u8,
+        ctx: &mut OpenGlContext,
+    ){
+        Shader::set_opaque(
+            &ctx.bindings,
+            uniforms.mask_id,
+            1,
+        );
+        Shader::set_vec4(
+            &ctx.bindings,
+            uniforms.mask_bounds,
+            (-1.0, 1.0, ctx.mask.width, ctx.mask.height),
+        );
+        Self::apply_change(&Self::Masked, self, uniforms, mask_level, ctx);
+    }
+
+    fn apply_change(
+        current: &Self,
+        new: &Self,
+        uniforms: &super::stdshaders::SharedUniforms,
+        mask_level: u8,
+        ctx: &mut OpenGlContext,
+    ) {
+        let mask_bounds_zero = (-1.0, 1.0, ctx.mask.width, ctx.mask.height);
+        match (current, new) {
+            (Self::Masked, Self::Masked)
+            | (Self::Push, Self::Push)
+            | (Self::Pop, Self::Pop)
+                => (),
+            (Self::Push, Self::Pop) => {
+                unsafe {
+                    ctx.bindings.BlendEquation(FUNC_REVERSE_SUBTRACT);
+                }
+            },
+            (Self::Pop, Self::Push) => {
+                unsafe {
+                    ctx.bindings.BlendEquation(FUNC_ADD);
+                }
+            },
+            (Self::Masked, Self::Push) => {
+                Shader::set_opaque(
+                    &ctx.bindings,
+                    uniforms.mask_id,
+                    1,
+                );
+                Shader::set_vec4(
+                    &ctx.bindings,
+                    uniforms.mask_bounds,
+                    mask_bounds_zero,
+                );
+                ctx.mask.bind_fbo(&ctx.bindings);
+                unsafe {
+                    ctx.bindings.ActiveTexture(TEXTURE1);
+                    ctx.bindings.BindTexture(TEXTURE_2D, 0);
+                    ctx.bindings.BlendEquation(FUNC_ADD);
+                    ctx.bindings.BlendFunc(CONSTANT_COLOR, ONE);
+                }
+            },
+            (Self::Masked, Self::Pop) => {
+                Shader::set_opaque(
+                    &ctx.bindings,
+                    uniforms.mask_id,
+                    1,
+                );
+                Shader::set_vec4(
+                    &ctx.bindings,
+                    uniforms.mask_bounds,
+                    mask_bounds_zero,
+                );
+                ctx.mask.bind_fbo(&ctx.bindings);
+                unsafe {
+                    ctx.bindings.ActiveTexture(TEXTURE1);
+                    ctx.bindings.BindTexture(TEXTURE_2D, 0);
+                    ctx.bindings.BlendEquation(FUNC_REVERSE_SUBTRACT);
+                    ctx.bindings.BlendFunc(CONSTANT_COLOR, ONE);
+                }
+            },
+            (_, Self::Masked) =>  {
+                ctx.mask.restore_fbo(&ctx.bindings);
+                Shader::set_opaque(
+                    &ctx.bindings,
+                    uniforms.mask_id,
+                    1,
+                );
+                let mask_bounds = if mask_level == 0 {
+                    mask_bounds_zero
+                } else {
+                    let num_layers = f32::from(MASK_LEVELS);
+                    let prev_layer = f32::from(mask_level - 1) / num_layers;
+                    (
+                        prev_layer,
+                        num_layers,
+                        mask_bounds_zero.2,
+                        mask_bounds_zero.3,
+                    )
+                };
+                Shader::set_vec4(
+                    &ctx.bindings,
+                    uniforms.mask_bounds,
+                    mask_bounds,
+                );
+                unsafe {
+                    ctx.bindings.ActiveTexture(TEXTURE1);
+                    ctx.bindings.BindTexture(TEXTURE_2D, ctx.mask.tex_id());
+                    ctx.bindings.BlendEquation(FUNC_ADD);
+                    ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
+                }
+            },
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct DrawParams {
     transform: Mat4,
     tint_color: Color,
     texture: Texture,
     shader_exclusive: ShaderExclusive,
+    mask_mode: MaskMode,
+    mask_level: u8,
 }
 
 impl DrawParams {
@@ -195,6 +332,8 @@ impl DrawParams {
             tint_color: WHITE,
             texture: Texture::default(),
             shader_exclusive: ShaderExclusive::Standard,
+            mask_mode: MaskMode::Masked,
+            mask_level: 0,
         }
     }
 
@@ -216,6 +355,20 @@ impl DrawParams {
 
     pub fn sdf_mode(&mut self) {
         self.shader_exclusive.make_sdf();
+    }
+
+    pub fn push_mask(&mut self) {
+        self.mask_mode = MaskMode::Push;
+        self.mask_level += 1;
+    }
+
+    pub fn pop_mask(&mut self) {
+        self.mask_mode = MaskMode::Pop;
+        self.mask_level -= 1;
+    }
+
+    pub fn commit_mask(&mut self) {
+        self.mask_mode = MaskMode::Masked;
     }
 
     pub fn text_color(&mut self, color: Color) {
@@ -307,6 +460,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
             uniforms.tex_transform,
             tex_trans,
         );
+        self.mask_mode.apply_all(&uniforms, self.mask_level, ctx);
     }
 
     fn apply_change(current: &Self, new: &mut Self, ctx: &mut OpenGlContext) {
@@ -337,5 +491,12 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
                 tex_trans,
             );
         }
+        MaskMode::apply_change(
+            &current.mask_mode,
+            &new.mask_mode,
+            &uniforms,
+            new.mask_level,
+            ctx,
+        );
     }
 }
