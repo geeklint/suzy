@@ -264,6 +264,7 @@ impl<P: Platform> CurrentApp<P> {
                     &mut ctx,
                     roots.iter_mut(),
                 );
+                std::mem::drop(ctx);
                 (window, need_loop)
             });
             self.window = Some(window);

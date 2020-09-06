@@ -181,3 +181,11 @@ impl<P: RenderPlatform> std::ops::Deref for DrawContext<'_, P> {
 impl<P: RenderPlatform> std::ops::DerefMut for DrawContext<'_, P> {
     fn deref_mut(&mut self) -> &mut P::DrawParams { &mut self.current }
 }
+
+impl<P: RenderPlatform> Drop for DrawContext<'_, P> {
+    fn drop(&mut self) {
+        if self.pass != DrawPass::UpdateContext {
+            Self::prepare_draw(self);
+        }
+    }
+}
