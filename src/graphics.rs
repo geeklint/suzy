@@ -113,6 +113,23 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
         }
     }
 
+    pub fn force_redraw<F, R>(ctx: &mut Self, f: F) -> R
+    where
+        F: FnOnce(&mut Self) -> R
+    {
+        let restore = if ctx.pass == DrawPass::DrawRemaining {
+            ctx.pass = DrawPass::DrawAll;
+            true
+        } else {
+            false
+        };
+        let ret = f(ctx);
+        if restore && ctx.pass != DrawPass::UpdateContext {
+            ctx.pass = DrawPass::DrawRemaining;
+        }
+        ret
+    }
+
     pub(crate) fn draw<'b, I>(ctx: &mut Self, roots: I) -> bool
     where
         I: 'b + Iterator<Item = &'b mut crate::widget::OwnedWidgetProxy<P>>,
