@@ -1,4 +1,5 @@
 [workspace]
 members = [
     "suzy",
+    "suzy_build_tools",
 ]
