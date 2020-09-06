@@ -124,11 +124,12 @@ impl<P: Platform> App<P> {
         let Self {
             platform,
             watch_ctx,
-            window,
+            mut window,
             roots,
             values,
             pointer_grab_map,
         } = self;
+        window.recalculate_viewport();
         let window = Some(window);
         let mut current = CurrentApp::<P> {
             window, roots, pointer_grab_map,
