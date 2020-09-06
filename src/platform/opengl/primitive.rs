@@ -3,20 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 macro_rules! gl_object {
-    ($name:ident, $create:ident, $delete:ident, $count:expr) => {
-        struct $name {
-            pub(crate) ids: [
-                $crate::platform::opengl::context::bindings::types::GLuint;
-                $count
-            ],
-            pub(crate) ready: Option<bool>,
-            pub(crate) gl:
-                ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
-        }
-        gl_object! {impl $name, $create, $delete, $count}
-    };
-    (pub $name:ident, $create:ident, $delete:ident, $count:expr) => {
-        pub struct $name {
+    ($vis:vis $name:ident, $create:ident, $delete:ident, $count:expr) => {
+        $vis struct $name {
             pub(crate) ids: [
                 $crate::platform::opengl::context::bindings::types::GLuint;
                 $count

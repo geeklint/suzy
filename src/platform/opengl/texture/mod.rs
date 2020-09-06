@@ -19,7 +19,7 @@ pub use populate::*;
 
 pub(super) type TextureCache = HashMap<TextureCacheKey, Rc<SharedTexture>>;
 
-gl_object! { TextureData, GenTextures, DeleteTextures, 1 }
+gl_object! { pub(super) TextureData, GenTextures, DeleteTextures, 1 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct TextureSize {
