@@ -22,6 +22,9 @@ pub mod opengl;
 #[cfg(feature = "sdl")]
 pub mod sdl2;
 
+#[cfg(feature = "platform_osmesa")]
+pub mod osmesa;
+
 #[cfg(feature = "opengl")]
 pub use opengl::OpenGlRenderPlatform as DefaultRenderPlatform;
 

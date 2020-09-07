@@ -11,11 +11,12 @@ keywords = ["gui", "kivy", "widgets"]
 license = "MPL-2.0"
 
 [features]
-default = ["lookup_consts", "sdl"]
+default = ["lookup_consts", "sdl", "platform_osmesa"]
 lookup_consts = ["lazy_static"]
 tui = ["libc", "gag", "widestring", "bindgen"]
 opengl = []
 sdl = ["sdl2", "opengl"]
+platform_osmesa = ["opengl"]
 
 [dependencies]
 drying_paint = "0.4.3"
