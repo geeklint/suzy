@@ -24,7 +24,7 @@ use suzy::widget::{
 use suzy::platform::opengl::{
     OpenGlRenderPlatform,
 };
-use suzy::platform::sdl2::SDLPlatform;
+use suzy::platform::osmesa::OSMesaPlatform;
 
 
 #[derive(Default)]
@@ -66,7 +66,7 @@ fn animation() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(BLACK);
-    let app: App<SDLPlatform> = builder.build();
+    let app: App<OSMesaPlatform> = builder.build();
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
     let app = app.with(|app| {
