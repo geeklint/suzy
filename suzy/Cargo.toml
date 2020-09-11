@@ -11,8 +11,7 @@ keywords = ["gui", "kivy", "widgets"]
 license = "MPL-2.0"
 
 [features]
-default = ["lookup_consts", "sdl", "platform_osmesa"]
-lookup_consts = ["lazy_static"]
+default = ["sdl", "platform_osmesa"]
 opengl = []
 sdl = ["sdl2", "opengl"]
 platform_osmesa = ["opengl"]
@@ -20,7 +19,6 @@ platform_osmesa = ["opengl"]
 [dependencies]
 drying_paint = "0.4.3"
 gl = { version = "0.14.0", optional = true }
-lazy_static = { version = "^1.4.0", optional = true }
 
 [dependencies.sdl2]
 version = "0.33"

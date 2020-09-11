@@ -75,6 +75,7 @@ impl LerpDistance for Color {
 }
 
 impl From<u32> for Color {
+    #[inline]
     fn from(code: u32) -> Self {
         let array = code.to_be_bytes();
         Color::create_rgba8(array[1], array[2], array[3], array[0])
@@ -88,18 +89,13 @@ impl From<std::num::ParseIntError> for ParseColorError {
     fn from(_orig: std::num::ParseIntError) -> Self { Self }
 }
 
-#[cfg(feature = "lookup_consts")]
-pub use super::consts::COLOR_NAMES;
-
 impl std::str::FromStr for Color {
     type Err = ParseColorError;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with('#') {  // TODO: replace with strip_prefix
-            let hex_part = s.split_at(1).1;
-            if (hex_part.len() == 6 || hex_part.len() == 8)
-                && hex_part.chars().all(|c| c.is_ascii_hexdigit())
-            {
+        if let Some(hex_part) = s.strip_prefix('#') {
+            if hex_part.len() == 6 || hex_part.len() == 8 {
                 let mut int = u32::from_str_radix(hex_part, 16)?;
                 if hex_part.len() == 6 {
                     int <<= 8;
@@ -108,15 +104,8 @@ impl std::str::FromStr for Color {
             } else {
                 Err(ParseColorError {})
             }
-        } else if cfg!(feature = "lookup_consts") {
-            let lower = s.to_ascii_lowercase();
-            if let Some(color) = COLOR_NAMES.get(lower.as_str()) {
-                Ok(*color)
-            } else {
-                Err(ParseColorError {})
-            }
         } else {
-            Err(ParseColorError {})
+            super::consts::name_to_color(s).ok_or(ParseColorError {})
         }
     }
 }
