@@ -190,7 +190,7 @@ impl TextureInstance {
                     let cached = entry.or_insert_with(move || {
                         SharedTexture::new(populator)
                     });
-                    let clone = cached.clone();
+                    let clone = Rc::clone(cached);
                     let success = clone.bind(&ctx.bindings);
                     *self = Self::Existing(clone);
                     success
@@ -202,7 +202,7 @@ impl TextureInstance {
             let cached = entry.or_insert_with(move || {
                 SharedTexture::new(Box::new(ErrorTexturePopulator))
             });
-            let clone = cached.clone();
+            let clone = Rc::clone(cached);
             assert!(
                 clone.bind(&ctx.bindings),
                 "Failed to bind error texture",

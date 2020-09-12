@@ -58,7 +58,7 @@ impl<V> ToggleButtonGroup<V> {
 
     fn private_clone(&self) -> Self {
         Self {
-            ptr: self.ptr.clone(),
+            ptr: Rc::clone(&self.ptr),
         }
     }
 }
