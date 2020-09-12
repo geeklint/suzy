@@ -145,6 +145,6 @@ impl<P: RenderPlatform> Rect for dyn AnonWidget<P> {
     fn set_height(&mut self, value: f32) { (*self).set_height(value) }
     fn set_pivot(&mut self, value: (f32, f32)) { (*self).set_pivot(value) }
     fn set_pivot_pos(&mut self, value: (f32, f32)) { (*self).set_pivot_pos(value) }
-    fn set_fit_aspect(&mut self, aspect: f32) { (*self).set_fit_aspect(aspect) }
-    fn set_fill_aspect(&mut self, aspect: f32) { (*self).set_fill_aspect(aspect) }
+    fn shrink_to_aspect(&mut self, aspect: f32) { (*self).shrink_to_aspect(aspect) }
+    fn grow_to_aspect(&mut self, aspect: f32) { (*self).grow_to_aspect(aspect) }
 }

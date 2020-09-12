@@ -438,7 +438,7 @@ pub trait Rect {
 
     /// Shink one of the lengths of this rect so that the rect's aspect ratio
     /// becomes the one provided
-    fn set_fit_aspect(&mut self, aspect: f32) {
+    fn shrink_to_aspect(&mut self, aspect: f32) {
         let self_aspect = self.aspect();
         if self_aspect < aspect {  // we are relatively taller
             let new = self.x().length / aspect;
@@ -451,7 +451,7 @@ pub trait Rect {
 
     /// Expand one of the lengths of this rect so that the rect's aspect ratio
     /// becomes the one provided
-    fn set_fill_aspect(&mut self, aspect: f32) {
+    fn grow_to_aspect(&mut self, aspect: f32) {
         let self_aspect = self.aspect();
         if self_aspect < aspect {  // we are relatively taller
             let new = self.y().length * aspect;
@@ -580,8 +580,8 @@ pub trait DynRect {
     fn set_height(&mut self, value: f32);
     fn set_pivot(&mut self, value: (f32, f32));
     fn set_pivot_pos(&mut self, value: (f32, f32));
-    fn set_fit_aspect(&mut self, aspect: f32);
-    fn set_fill_aspect(&mut self, aspect: f32);
+    fn shrink_to_aspect(&mut self, aspect: f32);
+    fn grow_to_aspect(&mut self, aspect: f32);
 }
 
 impl<T: Rect> DynRect for T {
@@ -605,8 +605,8 @@ impl<T: Rect> DynRect for T {
     fn set_height(&mut self, value: f32) { Rect::set_height(self, value) }
     fn set_pivot(&mut self, value: (f32, f32)) { Rect::set_pivot(self, value) }
     fn set_pivot_pos(&mut self, value: (f32, f32)) { Rect::set_pivot_pos(self, value) }
-    fn set_fit_aspect(&mut self, aspect: f32) { Rect::set_fit_aspect(self, aspect) }
-    fn set_fill_aspect(&mut self, aspect: f32) { Rect::set_fill_aspect(self, aspect) }
+    fn shrink_to_aspect(&mut self, aspect: f32) { Rect::shrink_to_aspect(self, aspect) }
+    fn grow_to_aspect(&mut self, aspect: f32) { Rect::grow_to_aspect(self, aspect) }
 }
 
 impl Rect for dyn DynRect {
@@ -648,6 +648,6 @@ impl Rect for dyn DynRect {
     fn set_height(&mut self, value: f32) { (*self).set_height(value) }
     fn set_pivot(&mut self, value: (f32, f32)) { (*self).set_pivot(value) }
     fn set_pivot_pos(&mut self, value: (f32, f32)) { (*self).set_pivot_pos(value) }
-    fn set_fit_aspect(&mut self, aspect: f32) { (*self).set_fit_aspect(aspect) }
-    fn set_fill_aspect(&mut self, aspect: f32) { (*self).set_fill_aspect(aspect) }
+    fn shrink_to_aspect(&mut self, aspect: f32) { (*self).shrink_to_aspect(aspect) }
+    fn grow_to_aspect(&mut self, aspect: f32) { (*self).grow_to_aspect(aspect) }
 }
