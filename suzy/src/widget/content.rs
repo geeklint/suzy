@@ -13,8 +13,68 @@ use super::{
     WidgetExtra,
 };
 
-/// This trait should be implemented for the types you provide as data for
-/// Widget implementations.
+/// This trait provides the "glue" between the data you define in custom
+/// widgets and the behavior suzy defines for widgets.  There are three
+/// required methods: `init`, `children`, and `graphics`.
+///
+/// The `init` method is the primary point for registering the `watch`
+/// functions that define the behavior of a widget. See the
+/// [watch](../watch/index.html) module for more information.
+///
+/// The methods `children` and `graphics` should be fairly straightforward
+/// to implement: they provide a simple "internal iterator" format which
+/// allows suzy to iterate over the children and graphics a custom widget
+/// contains.
+///
+/// Custom widgets may contain any number of graphics and child widgets, or
+/// none of either.
+///
+/// For example, if a custom widget contains two buttons as children:
+///
+/// ```rust
+/// # use suzy::widget::*;
+/// # use suzy::selectable::SelectableIgnored;
+/// # type ButtonContent = SelectableIgnored<()>;
+/// use suzy::widgets::Button;
+///
+/// struct MyWidgetData {
+///     button_one: Button<ButtonContent>,
+///     button_two: Button<ButtonContent>,
+/// }
+///
+/// impl WidgetContent for MyWidgetData {
+///     // ...
+/// #   fn init<I: WidgetInit<Self>>(_init: I) {}
+/// #   fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+///
+///     fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+///         receiver.child(&mut self.button_one);
+///         receiver.child(&mut self.button_two);
+///     }
+/// }
+/// ```
+///
+/// Or, if the custom widget only has a single graphic:
+///
+/// ```rust
+/// # use suzy::widget::*;
+/// # type MyGraphic = ();
+///
+/// struct MyWidgetData {
+///     graphic: MyGraphic,
+/// }
+///
+/// impl WidgetContent for MyWidgetData {
+///     // ...
+/// #   fn init<I: WidgetInit<Self>>(_init: I) {}
+/// #   fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {}
+///
+///     fn graphics<R: WidgetGraphicReceiver>(&mut self, mut receiver: R) {
+///         receiver.graphic(&mut self.graphic);
+///     }
+/// }
+/// ```
+///
 pub trait WidgetContent<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
@@ -34,7 +94,7 @@ where
     /// Call `receiver.graphic` for each graphic.
     fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R);
 
-    /// Override this method to define a custom shape for your widget.
+    /// Override this method to define a custom shape for the widget.
     ///
     /// This is used by e.g. Button to test if it should handle a pointer
     /// event.  The default is a standard rectangular test.
@@ -45,7 +105,7 @@ where
     /// Override this method to handle pointer events directly by a custom
     /// widget.
     ///
-    /// Return true if you successfully handled the event.
+    /// Return true if this successfully handled the event.
     fn pointer_event(
         &mut self,
         extra: &mut WidgetExtra<'_>,

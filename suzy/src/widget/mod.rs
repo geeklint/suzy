@@ -2,6 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! This module contains all the types associated with defining custom
+//! widgets.
+
 use std::ops::{
     Deref,
     DerefMut,
@@ -91,6 +94,9 @@ where
     P: RenderPlatform,
     T: WidgetContent<P>,
 {
+    /// Get a value representing a unique id for this Widget.  This value may
+    /// outlive the widget, and will never compare equal to a value returned
+    /// by the id method of a Widget other than this one.
     pub fn id(this: &Self) -> WidgetId {
         WidgetId {
             id: this.watcher.id(),
@@ -161,6 +167,7 @@ where
     P: RenderPlatform,
     T: WidgetContent<P> + Default,
 {
+    /// Create a Widget with a specified initial position and size
     pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
         Widget {
             watcher: Watcher::create(WidgetInternal {

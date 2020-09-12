@@ -13,8 +13,6 @@ use super::{
     WidgetRect,
 };
 
-/// This will get passed to a widget's initializer. It provides functions to
-/// watch values for changes and run code when those values change
 pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
@@ -26,13 +24,14 @@ where
     /// than this one.
     fn widget_id(&self) -> WidgetId;
 
-    /// Register a simple watch which will get re-run whenever a value it
-    /// references changes.
+    /// Register a watch function associated with this widget.  See the
+    /// [watch](../watch/index.html) module for more information.
     fn watch<F>(&mut self, func: F)
     where
         F: Fn(&mut T, &mut WidgetRect) + 'static
     ;
 
+    #[doc(hidden)]
     fn init_child_inline<F, C>(&mut self, getter: F)
     where
         C: WidgetContent<P>,
