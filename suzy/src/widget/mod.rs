@@ -24,7 +24,6 @@ mod newwidget;
 mod receivers;
 mod rect;
 
-use anon::AnonWidget;
 use internal::WidgetInternal;
 use rect::WidgetRect;
 use receivers::{
@@ -35,11 +34,7 @@ use receivers::{
     FindWidgetReceiver,
 };
 
-pub use anon::{
-    OwnedWidgetProxy,
-    WidgetProxy,
-    WidgetProxyMut,
-};
+pub use anon::AnonWidget;
 pub use content::WidgetContent;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
@@ -101,18 +96,6 @@ where
         WidgetId {
             id: this.watcher.id(),
         }
-    }
-
-    /// Get an anonymous reference to this widget. This is required by
-    /// WidgetContent::children(), for example.
-    pub fn proxy(this: &Self) -> WidgetProxy<P> {
-        WidgetProxy { anon: this }
-    }
-
-    /// Get an mutable anonymous reference to this widget. This is required
-    /// by WidgetContent::children_mut(), for example.
-    pub fn proxy_mut(this: &mut Self) -> WidgetProxyMut<P> {
-        WidgetProxyMut { anon: this }
     }
 
     pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {

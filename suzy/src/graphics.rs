@@ -132,7 +132,7 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
 
     pub(crate) fn draw<'b, I>(ctx: &mut Self, roots: I) -> bool
     where
-        I: 'b + Iterator<Item = &'b mut crate::widget::OwnedWidgetProxy<P>>,
+        I: 'b + Iterator<Item = &'b mut dyn crate::widget::AnonWidget<P>>,
     {
         if ctx.pass == DrawPass::UpdateContext {
             ctx.pass = DrawPass::DrawRemaining;

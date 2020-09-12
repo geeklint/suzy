@@ -22,10 +22,10 @@ use crate::pointer::{
     PointerEventData,
 };
 use crate::widget::{
+    AnonWidget,
     Widget,
     WidgetContent,
     WidgetId,
-    OwnedWidgetProxy,
 };
 use crate::window;
 use crate::graphics::DrawContext;
@@ -50,7 +50,7 @@ where
     platform: P,
     watch_ctx: WatchContext,
     window: P::Window,
-    roots: Vec<OwnedWidgetProxy<P::Renderer>>,
+    roots: Vec<Box<dyn AnonWidget<P::Renderer>>>,
     values: AppValues,
     pointer_grab_map: HashMap<PointerId, WidgetId>,
 }
@@ -150,7 +150,7 @@ where
     P: Platform
 {
     window: Option<P::Window>,
-    roots: Vec<OwnedWidgetProxy<P::Renderer>>,
+    roots: Vec<Box<dyn AnonWidget<P::Renderer>>>,
     pointer_grab_map: HashMap<PointerId, WidgetId>,
 }
 
@@ -169,13 +169,13 @@ impl<P: Platform> CurrentApp<P> {
         self.access_roots(move |roots| {
             let mut widget = f();
             widget.set_fill(&rect, &SimplePadding2d::zero());
-            roots.push(widget.into());
+            roots.push(Box::new(widget));
         });
     }
 
     fn access_roots<F, R>(&mut self, func: F) -> R
     where
-        F: 'static + FnOnce(&mut Vec<OwnedWidgetProxy<P::Renderer>>) -> R,
+        F: 'static + FnOnce(&mut Vec<Box<dyn AnonWidget<P::Renderer>>>) -> R,
         R: 'static
     {
         let roots = std::mem::take(&mut self.roots);
@@ -260,10 +260,12 @@ impl<P: Platform> CurrentApp<P> {
                 .expect("CurrentApp lost its Window");
             let (window, need_loop) = self.access_roots(move |roots| {
                 let mut ctx = window.prepare_draw(first_pass);
-                let need_loop = DrawContext::draw(
-                    &mut ctx,
-                    roots.iter_mut(),
-                );
+                let iter = roots.iter_mut();
+                let iter = iter.map(|boxed| {
+                    let as_ref: &mut dyn AnonWidget<_> = &mut **boxed;
+                    as_ref
+                });
+                let need_loop = DrawContext::draw(&mut ctx, iter);
                 std::mem::drop(ctx);
                 (window, need_loop)
             });
@@ -303,7 +305,7 @@ impl<P: Platform> CurrentApp<P> {
                 let mut found = false;
                 let mut iter = roots.iter_mut();
                 while let (false, Some(root)) = (found, iter.next()) {
-                    root.find_widget(id.clone(), |widget| {
+                    root.find_widget(id.clone(), Box::new(|widget| {
                         found = true;
                         widget.pointer_event_self(&mut PointerEvent::new(
                             PointerEventData {
@@ -312,7 +314,7 @@ impl<P: Platform> CurrentApp<P> {
                             },
                             &mut grab_map,
                         ));
-                    });
+                    }));
                 }
                 grab_map
             })
