@@ -4,7 +4,6 @@
 
 extern crate suzy;
 
-use suzy::app::App;
 use suzy::math::{Rect, SimplePadding2d, Padding2dNew};
 use suzy::widget::*;
 use suzy::platform::opengl::Texture;
@@ -51,9 +50,5 @@ impl WidgetContent for ImageViewer {
 }
 
 fn main() {
-    let app = App::default();
-    let app = app.with(|current| {
-        current.add_root(Widget::<ImageViewer>::default);
-    }).0;
-    app.run();
+    ImageViewer::run_as_app();
 }
