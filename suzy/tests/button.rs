@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+#![cfg(feature = "opengl")]
+
 extern crate suzy;
 
 use suzy::dims::{
@@ -37,7 +39,7 @@ use suzy::platform::opengl::{
     OpenGlRenderPlatform,
     SlicedImage,
 };
-use suzy::platform::osmesa::OSMesaPlatform;
+use suzy::platform::TestPlatform;
 
 #[derive(Default)]
 struct ButtonContent {
@@ -103,7 +105,7 @@ fn button() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(BLACK);
-    let app: App<OSMesaPlatform> = builder.build();
+    let app: App<TestPlatform> = builder.build();
     let app = app.with(|app| {
         app.add_root(Widget::<Root>::default);
     }).0;

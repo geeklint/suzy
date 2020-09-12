@@ -25,10 +25,10 @@ use suzy::widget::{
     WidgetMutChildReceiver,
     WidgetGraphicReceiver,
 };
-use suzy::platform::opengl::{
-    OpenGlRenderPlatform,
+use suzy::platform::{
+    TestPlatform,
+    TestRenderPlatform,
 };
-use suzy::platform::osmesa::OSMesaPlatform;
 
 
 #[derive(Default)]
@@ -38,8 +38,8 @@ struct Root {
     started: bool,
 }
 
-impl WidgetContent<OpenGlRenderPlatform> for Root {
-    fn init<I: WidgetInit<Self, OpenGlRenderPlatform>>(mut init: I) {
+impl WidgetContent<TestRenderPlatform> for Root {
+    fn init<I: WidgetInit<Self, TestRenderPlatform>>(mut init: I) {
         init.watch(|root, _rect| {
             let mut value = root.value_feedback.get();
             root.anim.apply(&mut value);
@@ -54,13 +54,13 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children<R: WidgetChildReceiver<OpenGlRenderPlatform>>(&self, _receiver: R) {
+    fn children<R: WidgetChildReceiver<TestRenderPlatform>>(&self, _receiver: R) {
     }
 
-    fn children_mut<R: WidgetMutChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn children_mut<R: WidgetMutChildReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
     }
 
-    fn graphics<R: WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn graphics<R: WidgetGraphicReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
     }
 
 }
@@ -70,7 +70,7 @@ fn animation() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(BLACK);
-    let app: App<OSMesaPlatform> = builder.build();
+    let app: App<TestPlatform> = builder.build();
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
     let app = app.with(|app| {

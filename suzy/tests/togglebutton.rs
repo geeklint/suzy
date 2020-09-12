@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+#![cfg(feature = "opengl")]
+
 extern crate suzy;
 
 use suzy::dims::{
@@ -36,7 +38,7 @@ use suzy::platform::opengl::{
     OpenGlRenderPlatform,
     SlicedImage,
 };
-use suzy::platform::osmesa::OSMesaPlatform;
+use suzy::platform::TestPlatform;
 
 mod utils;
 use utils::*;
@@ -149,7 +151,7 @@ fn togglebutton_group() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(BLACK);
-    let app: App<OSMesaPlatform> = builder.build();
+    let app: App<TestPlatform> = builder.build();
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
     let app = app.with(|app| {

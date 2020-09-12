@@ -13,6 +13,10 @@ pub use shared::{
 
 // Platforms
 
+// stub types are used in case no other defaults are available - all their
+// methods panic
+mod stub;
+
 #[cfg(feature = "opengl")]
 pub mod opengl;
 
@@ -22,18 +26,30 @@ pub mod sdl2;
 #[cfg(feature = "platform_osmesa")]
 pub mod osmesa;
 
-#[cfg(feature = "opengl")]
-pub use opengl::OpenGlRenderPlatform as DefaultRenderPlatform;
+// Default Platform
 
+#[cfg(not(feature = "opengl"))]
+pub use self::stub::StubPlatform as DefaultPlatform;
+#[cfg(all(feature = "opengl", not(feature = "sdl")))]
+pub use self::stub::StubOpenglPlatform as DefaultPlatform;
 #[cfg(feature = "sdl")]
 pub use self::sdl2::SDLPlatform as DefaultPlatform;
 
-/*
-#[cfg(feature = "opengl")]
-pub use opengl::{
-    graphics,
-    Text,
-    Font,
-};
-*/
+// Platform used for tests
+
+#[cfg(not(feature = "opengl"))]
+pub use self::stub::StubPlatform as TestPlatform;
+#[cfg(all(
+    feature = "opengl",
+    not(feature = "sdl"),
+    not(feature = "platform_osmesa"),
+))]
+pub use self::stub::StubOpenglPlatform as TestPlatform;
+#[cfg(all(feature = "sdl", not(feature = "platform_osmesa")))]
+pub use self::sdl2::SDLPlatform as TestPlatform;
+#[cfg(feature = "platform_osmesa")]
+pub use self::osmesa::OSMesaPlatform as TestPlatform;
+
+pub type DefaultRenderPlatform = <DefaultPlatform as Platform>::Renderer;
+pub type TestRenderPlatform = <TestPlatform as Platform>::Renderer;
 
