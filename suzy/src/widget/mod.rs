@@ -42,7 +42,6 @@ pub use internal::WidgetExtra;
 pub use newwidget::NewWidget;
 pub use receivers::{
     WidgetChildReceiver,
-    WidgetMutChildReceiver,
     WidgetGraphicReceiver,
 };
 
@@ -102,7 +101,7 @@ where
         let wid_int = this.watcher.data_mut();
         let content = &mut wid_int.content;
         content.graphics(DrawGraphicBeforeReceiver { ctx });
-        content.children_mut(DrawChildReceiver { ctx });
+        content.children(DrawChildReceiver { ctx });
         content.graphics(DrawGraphicAfterReceiver { ctx });
     }
 
@@ -124,7 +123,7 @@ where
             } else {
                 *func = Some(f);
                 let content: &mut T = this;
-                content.children_mut(FindWidgetReceiver { id, func });
+                content.children(FindWidgetReceiver { id, func });
             }
         }
     }
@@ -135,7 +134,7 @@ where
         let mut handled_by_child = false;
         {
             let content: &mut T = this;
-            content.children_mut(PointerEventChildReceiver {
+            content.children(PointerEventChildReceiver {
                 event,
                 handled: &mut handled_by_child,
             });

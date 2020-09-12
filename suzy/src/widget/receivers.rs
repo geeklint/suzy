@@ -12,13 +12,6 @@ pub trait WidgetChildReceiver<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
 {
-    fn child<T: WidgetContent<P>>(&mut self, child: &Widget<T, P>);
-}
-
-pub trait WidgetMutChildReceiver<P = DefaultRenderPlatform>
-where
-    P: RenderPlatform,
-{
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>);
 }
 
@@ -33,7 +26,7 @@ pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform> {
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, P> WidgetMutChildReceiver<P> for DrawChildReceiver<'a, 'b, P>
+impl<'a, 'b, P> WidgetChildReceiver<P> for DrawChildReceiver<'a, 'b, P>
 where P: RenderPlatform
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
@@ -46,7 +39,7 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
     pub handled: &'b mut bool,
 }
 
-impl<'a, 'b, 'c, P> WidgetMutChildReceiver<P>
+impl<'a, 'b, 'c, P> WidgetChildReceiver<P>
 for PointerEventChildReceiver<'a, 'b, 'c>
 where
     P: RenderPlatform,
@@ -89,7 +82,7 @@ pub(super) struct FindWidgetReceiver<'a, F> {
     pub func: &'a mut Option<F>,
 }
 
-impl<'a, F, P> WidgetMutChildReceiver<P> for FindWidgetReceiver<'a, F>
+impl<'a, F, P> WidgetChildReceiver<P> for FindWidgetReceiver<'a, F>
 where
     F: FnOnce(&mut dyn super::AnonWidget<P>),
     P: RenderPlatform,

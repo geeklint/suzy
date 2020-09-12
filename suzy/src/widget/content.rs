@@ -10,7 +10,6 @@ use super::{
     WidgetChildReceiver,
     WidgetGraphicReceiver,
     WidgetInit,
-    WidgetMutChildReceiver,
     WidgetExtra,
 };
 
@@ -28,12 +27,7 @@ where
     /// Use this method to specify the children a custom widget contains.
     ///
     /// Call `receiver.child` for each child.
-    fn children<R: WidgetChildReceiver<P>>(&self, receiver: R);
-
-    /// Use this method to specify the children a custom widget contains.
-    ///
-    /// Call `receiver.child` for each child.
-    fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R);
+    fn children<R: WidgetChildReceiver<P>>(&mut self, receiver: R);
 
     /// Use this method to specify the graphics a custom widget contains.
     ///
@@ -73,8 +67,7 @@ where
 
 impl<P: RenderPlatform> WidgetContent<P> for () {
     fn init<I: WidgetInit<Self, P>>(_init: I) {}
-    fn children<R: WidgetChildReceiver<P>>(&self, _receiver: R) {}
-    fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, _receiver: R) {}
+    fn children<R: WidgetChildReceiver<P>>(&mut self, _receiver: R) {}
     fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, _receiver: R) {}
 }
 

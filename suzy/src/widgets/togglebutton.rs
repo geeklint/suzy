@@ -23,7 +23,6 @@ use crate::widget::{
     WidgetContent,
     WidgetInit,
     WidgetChildReceiver,
-    WidgetMutChildReceiver,
     WidgetGraphicReceiver,
     WidgetExtra,
 };
@@ -158,12 +157,8 @@ where
         });
     }
 
-    fn children<R: WidgetChildReceiver<P>>(&self, receiver: R) {
+    fn children<R: WidgetChildReceiver<P>>(&mut self, receiver: R) {
         self.content.children(receiver);
-    }
-
-    fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R) {
-        self.content.children_mut(receiver);
     }
 
     fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {

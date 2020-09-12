@@ -53,10 +53,7 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&self, _receiver: R) {
-    }
-
-    fn children_mut<R: suzy::widget::WidgetMutChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
     }
 
     fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {

@@ -22,7 +22,6 @@ use suzy::widget::{
     WidgetContent,
     WidgetInit,
     WidgetChildReceiver,
-    WidgetMutChildReceiver,
     WidgetGraphicReceiver,
 };
 use suzy::platform::{
@@ -54,10 +53,7 @@ impl WidgetContent<TestRenderPlatform> for Root {
         });
     }
 
-    fn children<R: WidgetChildReceiver<TestRenderPlatform>>(&self, _receiver: R) {
-    }
-
-    fn children_mut<R: WidgetMutChildReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
+    fn children<R: WidgetChildReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
     }
 
     fn graphics<R: WidgetGraphicReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {

@@ -246,7 +246,6 @@ mod extra_impls {
         WidgetContent,
         WidgetInit,
         WidgetChildReceiver,
-        WidgetMutChildReceiver,
         WidgetGraphicReceiver,
         WidgetExtra,
     };
@@ -261,12 +260,8 @@ mod extra_impls {
             init.init_child_inline(|x| &mut x.data);
         }
 
-        fn children<R: WidgetChildReceiver<P>>(&self, receiver: R) {
+        fn children<R: WidgetChildReceiver<P>>(&mut self, receiver: R) {
             self.data.children(receiver);
-        }
-
-        fn children_mut<R: WidgetMutChildReceiver<P>>(&mut self, receiver: R) {
-            self.data.children_mut(receiver);
         }
 
         fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {

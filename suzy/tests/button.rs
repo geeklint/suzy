@@ -60,10 +60,7 @@ impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&self, _receiver: R) {
-    }
-
-    fn children_mut<R: suzy::widget::WidgetMutChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
     }
 
     fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
@@ -87,11 +84,7 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&self, mut receiver: R) {
-        receiver.child(&self.button);
-    }
-
-    fn children_mut<R: suzy::widget::WidgetMutChildReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
+    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
         receiver.child(&mut self.button);
     }
 
