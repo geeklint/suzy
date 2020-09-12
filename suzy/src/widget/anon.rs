@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::dims::{
+use crate::math::{
     Dim,
     Rect,
 };
@@ -14,7 +14,7 @@ use super::{Widget, WidgetId};
 use super::WidgetContent;
 
 
-pub(crate) trait AnonWidget<P: RenderPlatform>: crate::dims::DynRect {
+pub(crate) trait AnonWidget<P: RenderPlatform>: crate::math::DynRect {
     fn id(&self) -> WidgetId;
     fn draw(&mut self, ctx: &mut DrawContext<P>);
     fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;

@@ -29,7 +29,7 @@ use crate::widget::{
 };
 use crate::window;
 use crate::graphics::DrawContext;
-use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
+use crate::math::{Dim, SimpleRect, Rect, SimplePadding2d, Padding2dNew};
 use window::{Window, WindowEvent, WindowSettings};
 
 mod builder;

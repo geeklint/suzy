@@ -6,7 +6,7 @@
 
 extern crate suzy;
 
-use suzy::dims::{
+use suzy::math::{
     Rect,
     SimplePadding2d,
     Padding2dNew,

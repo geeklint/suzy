@@ -10,7 +10,7 @@ use std::ops::{
 use drying_paint::{Watcher, WatcherId};
 pub use drying_paint::Watched;
 
-use crate::dims::{Rect, Dim};
+use crate::math::{Rect, Dim};
 use crate::graphics::DrawContext;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;

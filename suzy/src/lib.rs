@@ -5,7 +5,6 @@
 pub mod adapter;
 pub mod animation;
 pub mod app;
-pub mod dims;
 pub mod graphics;
 pub mod math;
 pub mod pointer;
