@@ -16,7 +16,7 @@ pub struct StubWindow;
 pub struct StubRenderPlatform;
 pub struct StubDrawParams;
 
-#[cfg(feature = "opengl")]
+#[cfg(feature = "platform_opengl")]
 pub struct StubOpenglPlatform;
 
 impl crate::platform::RenderPlatform for StubRenderPlatform {
@@ -50,7 +50,7 @@ impl crate::platform::Platform for StubPlatform {
     }
 }
 
-#[cfg(feature = "opengl")]
+#[cfg(feature = "platform_opengl")]
 impl crate::platform::Platform for StubOpenglPlatform {
     type State = SimpleEventLoopState;
     type Window = StubWindow;
@@ -110,7 +110,7 @@ impl crate::window::Window<StubRenderPlatform> for StubWindow {
     fn take_screenshot(&self) -> Box<[u8]> { stub!() }
 }
 
-#[cfg(feature = "opengl")]
+#[cfg(feature = "platform_opengl")]
 impl crate::window::Window<super::opengl::OpenGlRenderPlatform> for StubWindow {
     fn pixels_per_dp(&self) -> f32 { stub!() }
 

@@ -17,7 +17,7 @@ pub use shared::{
 // methods panic
 mod stub;
 
-#[cfg(feature = "opengl")]
+#[cfg(feature = "platform_opengl")]
 pub mod opengl;
 
 #[cfg(feature = "sdl")]
@@ -28,19 +28,19 @@ pub mod osmesa;
 
 // Default Platform
 
-#[cfg(not(feature = "opengl"))]
+#[cfg(not(feature = "platform_opengl"))]
 pub use self::stub::StubPlatform as DefaultPlatform;
-#[cfg(all(feature = "opengl", not(feature = "sdl")))]
+#[cfg(all(feature = "platform_opengl", not(feature = "sdl")))]
 pub use self::stub::StubOpenglPlatform as DefaultPlatform;
 #[cfg(feature = "sdl")]
 pub use self::sdl2::SDLPlatform as DefaultPlatform;
 
 // Platform used for tests
 
-#[cfg(not(feature = "opengl"))]
+#[cfg(not(feature = "platform_opengl"))]
 pub use self::stub::StubPlatform as TestPlatform;
 #[cfg(all(
-    feature = "opengl",
+    feature = "platform_opengl",
     not(feature = "sdl"),
     not(feature = "platform_osmesa"),
 ))]
