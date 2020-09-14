@@ -2,6 +2,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! This module provides types associated with a Widget's "Selection State".
+//!
+//! Widgets like Button require their content implement the trait `Selectable`
+//! so that they can update their graphics in response to a change in the
+//! button's state.
+//!
+//! The type `SelectableData` provides a simple way to select between values.
+//!
+//! The type `SelectableIgnored` provides a no-op implementation of
+//! `Selectable`, in case a particular Widget has no need to respond to a
+//! change in selection state.
+//!
+//! Selectable implementations are provided with an opaque struct
+//! `SelectionState`.  This can be converted into a number of "versioned"
+//! enums.  This pattern allows additional states to be added in the future
+//! with reasonable fallbacks for backwards-compatibility.
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum SelectionStateAll {
     Normal,

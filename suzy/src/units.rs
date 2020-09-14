@@ -2,6 +2,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! This module provides convience functions to convert between mesurable
+//! units of visible size.
+//!
+//! The default unit in Suzy is defined to be a 'dp' (1/160 inches, or a best
+//! approximation based on a user's scaling factor.
+//!
+//! The units `inches`, `mm`, `cm` are standard physical sizes.
+//!
+//! The `px` unit represents a "real" pixel, regardless of scaling.
+//!
+//! The `cell` unit represents some larger size (close to 16dp), which evenly
+//! divides the screen.  This is intended for compatibility with character
+//! cell based interfaces, like a text-based terminal.
+
 use crate::app::AppValues;
 
 #[inline]

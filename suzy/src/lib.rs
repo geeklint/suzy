@@ -11,7 +11,7 @@
 //!
 //! An application made with Suzy is comprised of widgets.  The typical
 //! process will involve the following:
-//! * Create a struct to hold the data associated with your widget
+//! * Create a struct to hold the data associated with a custom widget
 //! * Implement the trait [WidgetContent](widget/trait.WidgetContent.html)
 //! * Add that widget to an [App](app/struct.App.html) as a "root" widget.
 //!
@@ -34,6 +34,9 @@
 //! ```
 //!
 //! See the provided examples for examples of specific functionality.
+//!
+//! See the [watch](watch/index.html) module documentation for more
+//! information about the observer patterns used in suzy.
 //!
 //! See the [WidgetContent](widget/trait.WidgetContent.html) documentation
 //! for more information on the three required methods of that trait.

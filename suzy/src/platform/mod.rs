@@ -2,6 +2,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! This module offers a flexible interface for the low-level aspects of
+//! the GUI system.
+//!
+//! One render platform is currently included, based on OpenGL ES 2.0
+//!
+//! Two windowing platforms are currently included; the primary is based on
+//! SDL2.  A windowless OSMesa interface is also included, intended for
+//! automated testing.
+//!
+//! If no platforms are enabled (using features) the default platform is
+//! a "stub" platform which has no functionality (all methods panic).
+
 mod shared;
 pub use shared::{
     Platform,

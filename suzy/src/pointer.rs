@@ -2,6 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! This module contains types associated with pointer events, which are
+//! considered the primary input mechanism.
+//!
+//! Pointer events may originate from a mouse or touchscreen.
+//!
+//! Each unique pointer has a concept of being "grabbed" by a widget, in which
+//! case other widgets should generally ignore it.
+
 use std::collections::HashMap;
 
 use crate::widget::WidgetId;

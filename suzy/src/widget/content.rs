@@ -81,7 +81,7 @@ where
     Self: 'static,
 {
     /// This method provides a convient place to register functions which
-    /// watch values and update parts of your widget when they change.
+    /// watch values and update parts of the widget when they change.
     fn init<I: WidgetInit<Self, P>>(init: I);
 
     /// Use this method to specify the children a custom widget contains.
