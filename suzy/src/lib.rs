@@ -9,11 +9,7 @@
 
 //! ## Create an application with Suzy
 //!
-//! An application made with Suzy is comprised of widgets.  The typical
-//! process will involve the following:
-//! * Create a struct to hold the data associated with a custom widget
-//! * Implement the trait [WidgetContent](widget/trait.WidgetContent.html)
-//! * Add that widget to an [App](app/struct.App.html) as a "root" widget.
+//! Suzy allows you to create a GUI comprised of widgets.
 //!
 //! The most basic app template will look something like this:
 //!
@@ -33,13 +29,35 @@
 //! }
 //! ```
 //!
-//! See the provided examples for examples of specific functionality.
+//! ## Watch System
+//!
+//! Suzy's watch system provides the main way to define functionality within
+//! the framework.  It enables you to describe the relationships between
+//! widgets in a declarative way.
+//!
+//! For example, if you wanted to make a widget half the width of its
+//! parent:
+//!
+//! ```rust
+//! # use suzy::widget::*;
+//! # use suzy::math::Rect;
+//! # struct Data { child: Widget<()> }
+//! # impl WidgetContent for Data {
+//! #     fn init<I: WidgetInit<Self>>(mut init: I) {
+//! init.watch(|this, rect| {
+//!     this.child.set_width(rect.width() / 2.0);
+//! });
+//! #     }
+//! #     fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {}
+//! #     fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//! # }
+//! ```
+//!
+//! When the parent changes size, the closure will be re-run and update the
+//! size of the child.
 //!
 //! See the [watch](watch/index.html) module documentation for more
-//! information about the observer patterns used in suzy.
-//!
-//! See the [WidgetContent](widget/trait.WidgetContent.html) documentation
-//! for more information on the three required methods of that trait.
+//! information about the watch system.
 
 pub mod adapter;
 pub mod animation;

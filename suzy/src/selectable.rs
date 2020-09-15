@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-//! This module provides types associated with a Widget's "Selection State".
+//! An interface for Widgets to respond to interaction.
 //!
 //! Widgets like Button require their content implement the trait `Selectable`
 //! so that they can update their graphics in response to a change in the

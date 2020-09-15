@@ -3,14 +3,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 //! Suzy's watch system provides the main way to define functionality within
-//! the framework.  It is based off an "automatic" observer pattern, inspired
+//! the framework.  It enables you to describe the relationships between
+//! widgets in a declaritive way.
+//!
+//! The watch system is based off an "automatic" observer pattern, inspired
 //! by Kivy's "[Kv Language](https://kivy.org/doc/stable/guide/lang.html)".
 //!
 //! Rather than define a new language and do syntatical parsing to figure out
 //! which values need to be observed, Suzy tracks which values are accessed
-//! at runtime, and automatically binds to them.  This requires more
-//! boilerplate for users of the framework than the Kv Language approach, but
-//! has some other advantages.
+//! at runtime, and automatically binds to them.
 //!
 //! The watch system is defined in terms of relationships between two API
 //! surfaces: [Watched](struct.Watched.html) represents some data which will
@@ -24,10 +25,6 @@
 //! to [dispatch](struct.WatchedEvent.html#method.dispatch).
 //!
 //! Other utilities for less common situations are provided in this module.
-//!
-//! The watch system allows you to define the relationships between widgets
-//! by writing declaritive code statements.  This includes all kinds of data;
-//! e.g. user input, colors, layout, etc.
 //!
 //! # Examples
 //! Place a fixed sized button at the bottom-left of a custom widget, with

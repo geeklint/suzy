@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-//! This module provides the primary types associated with the App context.
+//! An App describes the context in which widgets exist.
 //!
 //! Apps have an associated window and "root" widgets, which are assigned
 //! to fill the whole window area.

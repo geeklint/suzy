@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-//! This module provides a set of built-in widgets and associated types.
+//! Suzy comes with a set of built-in widgets.
 
 mod button;
 mod togglebutton;

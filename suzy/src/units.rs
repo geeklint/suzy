@@ -2,8 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-//! This module provides convience functions to convert between mesurable
-//! units of visible size.
+//! Convenience functions to convert between measurable units of visible size.
 //!
 //! The default unit in Suzy is defined to be a 'dp' (1/160 inches, or a best
 //! approximation based on a user's scaling factor.

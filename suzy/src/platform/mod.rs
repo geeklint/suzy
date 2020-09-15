@@ -2,8 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-//! This module offers a flexible interface for the low-level aspects of
-//! the GUI system.
+//! A flexible interface for the low-level aspects of the GUI system.
 //!
 //! One render platform is currently included, based on OpenGL ES 2.0
 //!
