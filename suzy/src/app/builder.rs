@@ -70,11 +70,11 @@ impl WindowSettings for AppBuilder {
         self.win.set_fullscreen(fullscreen);
     }
 
-    fn background_color(&self) -> crate::math::Color {
+    fn background_color(&self) -> crate::graphics::Color {
         self.win.background_color()
     }
 
-    fn set_background_color(&mut self, color: crate::math::Color) {
+    fn set_background_color(&mut self, color: crate::graphics::Color) {
         self.win.set_background_color(color);
     }
 }

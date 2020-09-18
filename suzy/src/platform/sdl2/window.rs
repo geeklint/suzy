@@ -8,7 +8,7 @@ use sdl2::event::Event;
 use sdl2::event::WindowEvent as sdl_WindowEvent;
 use sdl2::video::WindowBuildError;
 
-use crate::math::Color;
+use crate::graphics::Color;
 use crate::graphics::DrawContext;
 use crate::window;
 use crate::window::{WindowEvent, WindowSettings, WindowBuilder};

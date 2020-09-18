@@ -7,7 +7,7 @@
 extern crate suzy;
 
 use suzy::window::WindowSettings;
-use suzy::math::Color;
+use suzy::graphics::Color;
 use suzy::math::consts::BLACK;
 use suzy::app::{
     App,

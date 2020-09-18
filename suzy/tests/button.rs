@@ -12,7 +12,7 @@ use suzy::dims::{
     Padding2dNew,
 };
 use suzy::window::WindowSettings;
-use suzy::math::Color;
+use suzy::graphics::Color;
 use suzy::math::consts::{
     BLACK,
     WHITE,

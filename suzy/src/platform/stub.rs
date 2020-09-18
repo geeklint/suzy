@@ -79,8 +79,8 @@ impl crate::window::WindowSettings for StubWindow {
     fn set_title(&mut self, _title: String) { stub!() }
     fn fullscreen(&self) -> bool { stub!() }
     fn set_fullscreen(&mut self, _fullscreen: bool) { stub!() }
-    fn background_color(&self) -> crate::math::Color { stub!() }
-    fn set_background_color(&mut self, _color: crate::math::Color) { stub!() }
+    fn background_color(&self) -> crate::graphics::Color { stub!() }
+    fn set_background_color(&mut self, _color: crate::graphics::Color) { stub!() }
 }
 
 impl crate::window::Window<StubRenderPlatform> for StubWindow {

@@ -116,7 +116,7 @@ impl std::str::FromStr for Color {
                 Err(ParseColorError {})
             }
         } else {
-            super::consts::name_to_color(s).ok_or(ParseColorError {})
+            crate::math::consts::name_to_color(s).ok_or(ParseColorError {})
         }
     }
 }

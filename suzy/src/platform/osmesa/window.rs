@@ -1,5 +1,5 @@
 
-use crate::math::Color;
+use crate::graphics::Color;
 use crate::graphics::DrawContext;
 use crate::pointer::PointerEventData;
 use crate::window::{WindowSettings, Window, WindowBuilder};

@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::math::consts::WHITE;
-use crate::math::Color;
+use crate::graphics::Color;
 use crate::graphics;
 
 use super::Mat4;

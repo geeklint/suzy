@@ -6,7 +6,7 @@
 #![allow(clippy::excessive_precision)]
 
 use super::CubicPoly;
-use super::Color;
+use crate::graphics::Color;
 
 pub const EASE_LINEAR: CubicPoly = CubicPoly(0.0, 0.0, 1.0, 0.0);
 pub const EASE_IN_SINE: CubicPoly = CubicPoly(-0.78008673, 2.0375746, -0.2556811, 0.01346003);
@@ -183,7 +183,7 @@ pub const WHITE_SMOKE: Color = Color::create_rgb(0.9607843137254902, 0.960784313
 pub const YELLOW: Color = Color::create_rgb(1.0, 1.0, 0.0);
 pub const YELLOW_GREEN: Color = Color::create_rgb(0.6039215686274509, 0.803921568627451, 0.19607843137254902);
 
-pub(super) fn name_to_color(name: &str) -> Option<Color> {
+pub(crate) fn name_to_color(name: &str) -> Option<Color> {
     Some(match name {
         "aliceblue" => ALICE_BLUE,
         "antiquewhite" => ANTIQUE_WHITE,
