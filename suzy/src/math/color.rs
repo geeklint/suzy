@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+use std::fmt::{self, LowerHex, UpperHex};
+
 use super::{
     Lerp,
     LerpDistance,
@@ -41,6 +43,15 @@ impl Color {
 
     pub fn rgba(&self) -> (f32, f32, f32, f32) {
         (self.r, self.g, self.b, self.a)
+    }
+
+    pub fn rgba8(&self) -> (u8, u8, u8, u8) {
+        (
+            (self.r * MAX8) as u8,
+            (self.g * MAX8) as u8,
+            (self.b * MAX8) as u8,
+            (self.a * MAX8) as u8,
+        )
     }
 
     pub fn tint(&mut self, other: Self) {
@@ -107,5 +118,23 @@ impl std::str::FromStr for Color {
         } else {
             super::consts::name_to_color(s).ok_or(ParseColorError {})
         }
+    }
+}
+
+impl LowerHex for Color {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let rgba = self.rgba8();
+        let bytes = [rgba.0, rgba.1, rgba.2, rgba.3];
+        write!(f, "#{:08x}", u32::from_be_bytes(bytes))
+    }
+}
+
+impl UpperHex for Color {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let rgba = self.rgba8();
+        let bytes = [rgba.0, rgba.1, rgba.2, rgba.3];
+        f.write_str("#")?;
+        UpperHex::fmt(&u32::from_be_bytes(bytes), f)?;
+        Ok(())
     }
 }
