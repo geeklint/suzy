@@ -8,7 +8,6 @@ extern crate suzy;
 
 use suzy::window::WindowSettings;
 use suzy::graphics::Color;
-use suzy::math::consts::BLACK;
 use suzy::app::{
     App,
     AppBuilder,
@@ -19,7 +18,7 @@ use suzy::platform::TestPlatform;
 fn smoke() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
-    builder.set_background_color(BLACK);
+    builder.set_background_color(Color::BLACK);
     let app: App<TestPlatform> = builder.build();
     app.test(|mut app| {
         let capture = app.take_screenshot();
@@ -27,7 +26,7 @@ fn smoke() {
             let color = Color::create_rgba8(
                 chunk[0], chunk[1], chunk[2], chunk[3]
             );
-            assert_eq!(color, BLACK);
+            assert_eq!(color, Color::BLACK);
         }
     });
 }

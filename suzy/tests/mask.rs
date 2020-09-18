@@ -13,10 +13,7 @@ use suzy::dims::{
     Padding,
 };
 use suzy::window::WindowSettings;
-use suzy::math::consts::{
-    BLACK,
-    WHITE,
-};
+use suzy::graphics::Color;
 use suzy::app::{
     App,
     AppBuilder,
@@ -66,7 +63,7 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
 fn mask_right_half() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
-    builder.set_background_color(BLACK);
+    builder.set_background_color(Color::BLACK);
     let app: App<TestPlatform> = builder.build();
     let app = app.with(|app| {
         app.add_root(Widget::<Root>::default);
@@ -77,7 +74,7 @@ fn mask_right_half() {
         let (bottom, top) = capture.split_at(index);
         let bottom = round_back(bottom);
         let top = round_front(top);
-        assert!(is_color(bottom, BLACK));
-        assert!(is_color(top, WHITE));
+        assert!(is_color(bottom, Color::BLACK));
+        assert!(is_color(top, Color::WHITE));
     });
 }

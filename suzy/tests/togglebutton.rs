@@ -12,10 +12,7 @@ use suzy::dims::{
     Padding2dNew,
 };
 use suzy::window::WindowSettings;
-use suzy::math::consts::{
-    BLACK,
-    WHITE,
-};
+use suzy::graphics::Color;
 use suzy::widgets::{
     ToggleButton,
     ToggleButtonGroup,
@@ -141,7 +138,7 @@ impl WidgetContent<OpenGlRenderPlatform> for GroupRoot {
 fn togglebutton_group() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
-    builder.set_background_color(BLACK);
+    builder.set_background_color(Color::BLACK);
     let app: App<TestPlatform> = builder.build();
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
@@ -155,7 +152,7 @@ fn togglebutton_group() {
     app.test(|mut app| {
         let capture = app.take_screenshot();
         assert_eq!(group_value_output.get(), None);
-        assert!(is_color(&capture, BLACK));
+        assert!(is_color(&capture, Color::BLACK));
         // click the bottom button
         app.mouse_click((240.0, 60.0));
         let capture = app.take_screenshot();
@@ -164,8 +161,8 @@ fn togglebutton_group() {
         let bottom_3rd = round_back(bottom_3rd);
         let top = round_front(top);
         assert_eq!(group_value_output.get(), Some(3));
-        assert!(is_color(bottom_3rd, WHITE));
-        assert!(is_color(top, BLACK));
+        assert!(is_color(bottom_3rd, Color::WHITE));
+        assert!(is_color(top, Color::BLACK));
         // click the top button
         app.mouse_click((240.0, 300.0));
         let capture = app.take_screenshot();
@@ -174,8 +171,8 @@ fn togglebutton_group() {
         let bottom = round_back(bottom);
         let top_3rd = round_front(top_3rd);
         assert_eq!(group_value_output.get(), Some(1));
-        assert!(is_color(bottom, BLACK));
-        assert!(is_color(top_3rd, WHITE));
+        assert!(is_color(bottom, Color::BLACK));
+        assert!(is_color(top_3rd, Color::WHITE));
         // click the middle button
         app.mouse_click((240.0, 180.0));
         let capture = app.take_screenshot();
@@ -187,13 +184,13 @@ fn togglebutton_group() {
         let middle_3rd = round_both(middle_3rd);
         let top_3rd = round_front(top_3rd);
         assert_eq!(group_value_output.get(), Some(2));
-        assert!(is_color(bottom_3rd, BLACK));
-        assert!(is_color(middle_3rd, WHITE));
-        assert!(is_color(top_3rd, BLACK));
+        assert!(is_color(bottom_3rd, Color::BLACK));
+        assert!(is_color(middle_3rd, Color::WHITE));
+        assert!(is_color(top_3rd, Color::BLACK));
         // click the middle button again
         app.mouse_click((240.0, 180.0));
         let capture = app.take_screenshot();
         assert_eq!(group_value_output.get(), None);
-        assert!(is_color(&capture, BLACK));
+        assert!(is_color(&capture, Color::BLACK));
     });
 }

@@ -13,10 +13,6 @@ use suzy::dims::{
 };
 use suzy::window::WindowSettings;
 use suzy::graphics::Color;
-use suzy::math::consts::{
-    BLACK,
-    WHITE,
-};
 use suzy::widgets::Button;
 use suzy::app::{
     App,
@@ -97,7 +93,7 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
 fn button() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
-    builder.set_background_color(BLACK);
+    builder.set_background_color(Color::BLACK);
     let app: App<TestPlatform> = builder.build();
     let app = app.with(|app| {
         app.add_root(Widget::<Root>::default);
@@ -108,7 +104,7 @@ fn button() {
             let color = Color::create_rgba8(
                 chunk[0], chunk[1], chunk[2], chunk[3]
             );
-            assert_eq!(color, BLACK);
+            assert_eq!(color, Color::BLACK);
         }
         app.pointer(PointerEventData {
             id: PointerId::Other(1),
@@ -122,7 +118,7 @@ fn button() {
             let color = Color::create_rgba8(
                 chunk[0], chunk[1], chunk[2], chunk[3]
             );
-            assert_eq!(color, WHITE);
+            assert_eq!(color, Color::WHITE);
         }
         app.pointer(PointerEventData {
             id: PointerId::Other(1),
@@ -136,7 +132,7 @@ fn button() {
             let color = Color::create_rgba8(
                 chunk[0], chunk[1], chunk[2], chunk[3]
             );
-            assert_eq!(color, BLACK);
+            assert_eq!(color, Color::BLACK);
         }
     });
 }

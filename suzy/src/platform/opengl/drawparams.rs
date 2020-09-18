@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::math::consts::WHITE;
 use crate::graphics::Color;
 use crate::graphics;
 
@@ -44,7 +43,7 @@ impl ShaderExclusive {
     fn make_sdf(&mut self) {
         if let Self::Standard = self {
             *self = Self::Sdf {
-                text_color: WHITE,
+                text_color: Color::WHITE,
                 outline_color: Color::create_rgba8(0xff, 0xff, 0xff, 0),
                 distance_edges: (0.49, 0.51, 0.0, 0.0),
                 tex_chan_mask: (0.0, 0.0, 0.0, 0.0),
@@ -329,7 +328,7 @@ impl DrawParams {
     pub(crate) fn new() -> Self {
         Self {
             transform: Mat4::default(),
-            tint_color: WHITE,
+            tint_color: Color::WHITE,
             texture: Texture::default(),
             shader_exclusive: ShaderExclusive::Standard,
             mask_mode: MaskMode::Masked,

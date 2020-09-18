@@ -10,9 +10,7 @@ use std::time::Duration;
 
 use suzy::animation::Animation;
 use suzy::window::WindowSettings;
-use suzy::math::consts::{
-    BLACK,
-};
+use suzy::graphics::Color;
 use suzy::app::{
     App,
     AppBuilder,
@@ -61,7 +59,7 @@ impl WidgetContent<TestRenderPlatform> for Root {
 fn animation() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
-    builder.set_background_color(BLACK);
+    builder.set_background_color(Color::BLACK);
     let app: App<TestPlatform> = builder.build();
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
