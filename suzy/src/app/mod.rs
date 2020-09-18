@@ -310,7 +310,7 @@ impl<P: Platform> CurrentApp<P> {
                 let mut found = false;
                 let mut iter = roots.iter_mut();
                 while let (false, Some(root)) = (found, iter.next()) {
-                    root.find_widget(id.clone(), Box::new(|widget| {
+                    root.find_widget(&id, &mut Some(Box::new(|widget| {
                         found = true;
                         widget.pointer_event_self(&mut PointerEvent::new(
                             PointerEventData {
@@ -319,7 +319,7 @@ impl<P: Platform> CurrentApp<P> {
                             },
                             &mut grab_map,
                         ));
-                    }));
+                    })));
                 }
                 grab_map
             })

@@ -46,6 +46,8 @@ pub use receivers::{
     WidgetGraphicReceiver,
 };
 
+pub(crate) type FindWidgetCallback<'a, P> =
+    Option<Box<dyn FnOnce(&mut dyn AnonWidget<P>) + 'a>>;
 
 /// A basic structure to wrap some data and turn it into a widget.
 pub struct Widget<T, P = DefaultRenderPlatform>
@@ -109,17 +111,10 @@ where
         content.graphics(DrawGraphicAfterReceiver { ctx });
     }
 
-    pub(crate) fn find_widget<F>(this: &mut Self, id: WidgetId, func: F)
-    where
-        F: FnOnce(&mut dyn AnonWidget<P>)
-    {
-        Self::find_widget_internal(this, &id, &mut Some(func));
-    }
-
-    fn find_widget_internal(
+    pub(crate) fn find_widget(
         this: &mut Self,
         id: &WidgetId,
-        func: &mut Option<impl FnOnce(&mut dyn AnonWidget<P>)>,
+        func: &mut FindWidgetCallback<P>,
     ) {
         if let Some(f) = func.take() {
             if Widget::id(this) == *id {

@@ -17,16 +17,17 @@ mod private {
     use crate::graphics::DrawContext;
     use crate::pointer::PointerEvent;
     use super::{WidgetId, WidgetContent};
+    use super::super::FindWidgetCallback;
 
     pub trait Widget<P: RenderPlatform>: DynRect {
         fn id(&self) -> WidgetId;
         fn draw(&mut self, ctx: &mut DrawContext<P>);
         fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
         fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
-        fn find_widget<'a>(
+        fn find_widget(
             &mut self,
-            id: WidgetId,
-            func: Box<dyn FnOnce(&mut dyn super::AnonWidget<P>) + 'a>,
+            id: &WidgetId,
+            func: &mut FindWidgetCallback<P>,
         );
         fn as_any(self: Box<Self>) -> Box<dyn std::any::Any>;
         fn as_any_ref(&self) -> &dyn std::any::Any;
@@ -54,12 +55,12 @@ mod private {
             super::Widget::pointer_event_self(self, event)
         }
 
-        fn find_widget<'a>(
+        fn find_widget(
             &mut self,
-            id: WidgetId,
-            func: Box<dyn FnOnce(&mut dyn super::AnonWidget<P>) + 'a>,
+            id: &WidgetId,
+            func: &mut FindWidgetCallback<P>,
         ) {
-            super::Widget::find_widget(self, id, |node| func(node));
+            super::Widget::find_widget(self, id, func);
         }
 
         fn as_any(self: Box<Self>) -> Box<dyn std::any::Any> { self }
@@ -69,6 +70,10 @@ mod private {
 }
 
 
+/// A trait which represents a Widget with an unknown content type.
+///
+/// This can be used for the same patterns trait-objects usually are, e.g.
+/// a heterogeneous collection of Widgets.
 pub trait AnonWidget<P: RenderPlatform = DefaultRenderPlatform>
     : private::Widget<P>
 {
