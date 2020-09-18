@@ -35,7 +35,7 @@
 //!
 //! ```rust
 //! # use suzy::widget::*;
-//! # use suzy::math::Rect;
+//! # use suzy::dims::Rect;
 //! # use suzy::selectable::SelectableIgnored;
 //! # type ButtonContent = SelectableIgnored<()>;
 //! use suzy::widgets::Button;

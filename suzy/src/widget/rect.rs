@@ -4,7 +4,7 @@
 
 use drying_paint::Watched;
 
-use crate::math::{Rect, Dim};
+use crate::dims::{Rect, Dim};
 
 fn nan_dim() -> Dim {
     let mut dim = Dim::with_length(std::f32::NAN);

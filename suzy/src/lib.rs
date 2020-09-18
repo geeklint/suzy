@@ -40,7 +40,7 @@
 //!
 //! ```rust
 //! # use suzy::widget::*;
-//! # use suzy::math::Rect;
+//! # use suzy::dims::Rect;
 //! # struct Data { child: Widget<()> }
 //! # impl WidgetContent for Data {
 //! #     fn init<I: WidgetInit<Self>>(mut init: I) {
@@ -62,6 +62,7 @@
 pub mod adapter;
 pub mod animation;
 pub mod app;
+pub mod dims;
 pub mod graphics;
 pub mod math;
 pub mod pointer;

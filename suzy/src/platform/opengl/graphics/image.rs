@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::graphics::{DrawContext, Graphic};
-use crate::math::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
+use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
 
 use crate::platform::opengl;
 use opengl::context::bindings::{

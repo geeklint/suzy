@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::math::{
+use crate::dims::{
     Dim,
     Rect,
 };
@@ -12,7 +12,7 @@ use super::{Widget, WidgetId};
 use super::WidgetContent;
 
 mod private {
-    use crate::math::DynRect;
+    use crate::dims::DynRect;
     use crate::platform::RenderPlatform;
     use crate::graphics::DrawContext;
     use crate::pointer::PointerEvent;

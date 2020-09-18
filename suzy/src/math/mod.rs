@@ -3,13 +3,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 mod color;
-mod dims;
 mod easing;
 mod lerp;
 pub mod consts;
 
 pub use color::Color;
-pub use dims::*;
 pub use easing::{Easing, CubicPoly};
 pub use lerp::{
     Lerp,

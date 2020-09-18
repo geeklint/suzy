@@ -1,4 +1,4 @@
-use crate::math::Rect;
+use crate::dims::Rect;
 use crate::widget::WidgetGraphic;
 use crate::graphics::{
     Graphic,
@@ -97,19 +97,19 @@ where
 }
 
 impl<T: Rect> Rect for Masker<T> {
-    fn x(&self) -> crate::math::Dim {
+    fn x(&self) -> crate::dims::Dim {
         self.inner.item.x()
     }
-    fn y(&self) -> crate::math::Dim {
+    fn y(&self) -> crate::dims::Dim {
         self.inner.item.y()
     }
     fn x_mut<F, R>(&mut self, f: F) -> R
-    where F: FnOnce(&mut crate::math::Dim) -> R
+    where F: FnOnce(&mut crate::dims::Dim) -> R
     {
         self.inner.item.x_mut(f)
     }
     fn y_mut<F, R>(&mut self, f: F) -> R
-    where F: FnOnce(&mut crate::math::Dim) -> R
+    where F: FnOnce(&mut crate::dims::Dim) -> R
     {
         self.inner.item.y_mut(f)
     }
