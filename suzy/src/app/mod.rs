@@ -67,6 +67,12 @@ impl<P: Platform> App<P> {
         }).unwrap_or_else(time::Instant::now)
     }
 
+    pub fn time_unwatched() -> time::Instant {
+        AppValues::try_with_current(|values| {
+            *drying_paint::Watched::get_unwatched(&values.frame_start)
+        }).unwrap_or_else(time::Instant::now)
+    }
+
     pub fn with<F, R>(self, func: F) -> (Self, R)
     where
         F: FnOnce(&mut CurrentApp<P>) -> R

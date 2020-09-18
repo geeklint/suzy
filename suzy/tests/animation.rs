@@ -34,7 +34,6 @@ use suzy::platform::{
 struct Root {
     anim: Animation<f32>,
     value_feedback: Rc<Cell<f32>>,
-    started: bool,
 }
 
 impl WidgetContent<TestRenderPlatform> for Root {
@@ -45,11 +44,8 @@ impl WidgetContent<TestRenderPlatform> for Root {
             root.value_feedback.set(value);
         });
         init.watch(|root, _rect| {
-            if !root.started {
-                root.anim.set_duration(Duration::from_secs(1));
-                root.anim.animate_to(261.0);
-                root.started = true;
-            }
+            root.anim.set_duration(Duration::from_secs(1));
+            root.anim.animate_to(261.0);
         });
     }
 

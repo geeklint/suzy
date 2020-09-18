@@ -49,6 +49,10 @@ pub struct Animation<T> {
     easing: Option<Box<dyn Easing>>,
 }
 
+impl<T> Animation<T> {
+    pub fn new() -> Self { Self::default() }
+}
+
 impl<T> Default for Animation<T> {
     fn default() -> Self {
         Self {
@@ -82,7 +86,7 @@ impl<T> Animation<T> {
 
 impl<T: Lerp<Output = T>> Animation<T> {
     pub fn animate_to(&mut self, value: T) {
-        let start_time = App::<DefaultPlatform>::time();
+        let start_time = App::<DefaultPlatform>::time_unwatched();
         *self.current = Some((start_time, value));
         self.start_value = None;
     }
