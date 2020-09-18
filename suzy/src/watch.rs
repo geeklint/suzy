@@ -69,4 +69,7 @@ pub use drying_paint::{
     Watcher,
     WatcherId,
     WatcherMeta,
+    watched_channel,
+    WatchedReceiver,
+    WatchedSender,
 };

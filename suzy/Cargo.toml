@@ -17,7 +17,7 @@ platform_osmesa = ["platform_opengl"]
 sdl = ["sdl2", "platform_opengl"]
 
 [dependencies]
-drying_paint = "0.4.3"
+drying_paint = "0.4.5"
 
 [dependencies.sdl2]
 version = "0.33"
