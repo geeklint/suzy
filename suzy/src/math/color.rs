@@ -4,7 +4,7 @@
 
 use std::fmt::{self, LowerHex, UpperHex};
 
-use super::{
+use crate::animation::{
     Lerp,
     LerpDistance,
 };
