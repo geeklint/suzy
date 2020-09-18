@@ -23,7 +23,6 @@ mod content;
 mod graphic;
 mod init;
 mod internal;
-mod newwidget;
 mod receivers;
 mod rect;
 
@@ -42,7 +41,6 @@ pub use content::WidgetContent;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
 pub use internal::WidgetExtra;
-pub use newwidget::NewWidget;
 pub use receivers::{
     WidgetChildReceiver,
     WidgetGraphicReceiver,
