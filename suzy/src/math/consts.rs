@@ -5,7 +5,7 @@
 // TODO: clippy is probably right
 #![allow(clippy::excessive_precision)]
 
-use super::CubicPoly;
+use crate::animation::CubicPoly;
 use crate::graphics::Color;
 
 pub const EASE_LINEAR: CubicPoly = CubicPoly(0.0, 0.0, 1.0, 0.0);
