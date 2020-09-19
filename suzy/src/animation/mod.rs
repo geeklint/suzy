@@ -55,10 +55,27 @@ use crate::watch::{
 
 mod easing;
 
-pub use easing::{Easing, CubicPoly, EASES};
+pub use easing::{Easing, CubicPoly, eases};
 
+/// A trait with describes how to linearly interpolate between two values
+/// of the type.
+///
+/// A trivial example with floats:
+/// ```rust
+/// # use suzy::animation::Lerp;
+/// let (start, end) = (2.0, 9.0);
+/// let value = f32::lerp(&start, &end, 0.7);
+/// // 70% of the distance between 2 and 9 is 6.9.
+/// assert!((value - 6.9) < f32::EPSILON);
+/// ```
 pub trait Lerp {
+    /// The result of the linear interpolation, typically the same type (Self)
     type Output;
+
+    /// Linearly interpolate between two values.
+    ///
+    /// A t-value of 0.0 should generally return `from`,
+    /// and a t-value of 1.0 should generally return `to`.
     fn lerp(from: &Self, to: &Self, t: f32) -> Self::Output;
 }
 

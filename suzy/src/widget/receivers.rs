@@ -20,7 +20,10 @@ pub trait WidgetChildReceiver<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
 {
+    /// Receive a child.
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>);
+
+    /// Receive a child with an anonymous type.
     fn anon_child(&mut self, child: &mut dyn AnonWidget<P>);
 }
 
@@ -30,6 +33,7 @@ pub trait WidgetGraphicReceiver<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
 {
+    /// Receive a graphic.
     fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T);
 }
 

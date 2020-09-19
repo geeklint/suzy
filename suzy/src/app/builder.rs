@@ -21,12 +21,14 @@ use super::{
     get_cell_size,
 };
 
+/// Enables customizing an app before it is run.
 #[derive(Default)]
 pub struct AppBuilder {
     win: WindowBuilder,
 }
 
 impl AppBuilder {
+    /// Build the app
     pub fn build<P: Platform>(self) -> App<P> {
         let mut platform = P::new();
         let window = platform.create_window(self.win).unwrap();

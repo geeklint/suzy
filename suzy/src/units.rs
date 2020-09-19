@@ -17,42 +17,64 @@
 
 use crate::app::AppValues;
 
+/// This function is an identity function, for API symetry.
 #[inline]
 pub fn to_dp(value: f32) -> f32 { value }
+
+/// This function is an identity function, for API symetry.
 #[inline]
 pub fn dp(dp: f32) -> f32 { dp }
 
 const DPI: f32 = 160.0;
 
+/// Convert dp to inches
 #[inline]
 pub fn to_inches(value: f32) -> f32 { value / DPI }
+
+/// Convert inches to dp
 #[inline]
 pub fn inches(inches: f32) -> f32 { inches * DPI }
 
 const MM_PER_INCH: f32 = 25.4;
 
+/// Convert dp to millimeters
 #[inline]
 pub fn to_mm(value: f32) -> f32 { to_inches(value) * MM_PER_INCH }
+
+/// Convert millimeters to dp
 #[inline]
 pub fn mm(mm: f32) -> f32 { inches(mm / MM_PER_INCH) }
 
+/// Convert dp to centimeters
 #[inline]
 pub fn to_cm(value: f32) -> f32 { to_mm(value) / 10.0 }
+
+/// Convert centimeters to dp
 #[inline]
 pub fn cm(cm: f32) -> f32 { mm(cm * 10.0) }
 
+/// Convert dp to real physical pixels
 pub fn to_px(value: f32) -> f32 {
     value * AppValues::px_per_dp()
 }
 
+/// Convert real physical pixels to dp
 pub fn px(px: f32) -> f32 {
     px / AppValues::px_per_dp()
 }
 
+/// Round dp to a cell boundry
+///
+/// See the [module-level documentation](./index.html) for an explanation of
+/// the `cell` unit.
 pub fn to_cells(value: f32) -> i32 {
     (value / AppValues::cell_size()).round() as i32
 }
 
+/// Convert a number of cells to a size in dp
+///
+/// See the [module-level documentation](./index.html) for an explanation of
+/// the `cell` unit.
 pub fn cells(cells: i32) -> f32 {
     (cells as f32) * AppValues::cell_size()
 }

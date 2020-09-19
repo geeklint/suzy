@@ -11,11 +11,24 @@ macro_rules! stub {
     () => { unimplemented!("StubPlatform used at runtime") };
 }
 
+/// The stub platform is used as a placeholder when no other platforms are
+/// enabled.  All its methods will panic.
 pub struct StubPlatform;
+
+/// The stub platform is used as a placeholder when no other platforms are
+/// enabled.  All its methods will panic.
 pub struct StubWindow;
+
+/// The stub platform is used as a placeholder when no other platforms are
+/// enabled.  All its methods will panic.
 pub struct StubRenderPlatform;
+
+/// The stub platform is used as a placeholder when no other platforms are
+/// enabled.  All its methods will panic.
 pub struct StubDrawParams;
 
+/// The stub platform is used as a placeholder when no other platforms are
+/// enabled.  All its methods will panic.
 #[cfg(feature = "platform_opengl")]
 pub struct StubOpenglPlatform;
 

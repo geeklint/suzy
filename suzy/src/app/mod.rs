@@ -48,6 +48,9 @@ pub(crate) use values::{
     get_cell_size,
 };
 
+/// A type which contains the context in which widgets run.
+///
+/// See the [module-level documentation](./index.html) for more details.
 pub struct App<P = DefaultPlatform>
 where
     P: Platform,
@@ -61,18 +64,24 @@ where
 }
 
 impl<P: Platform> App<P> {
+    /// Get the time recorded at the start of the frame.
+    ///
+    /// This will bind watch closures it is called in, and can be used to
+    /// intentionally cause a watch closure to re-run every frame.
     pub fn time() -> time::Instant {
         AppValues::try_with_current(|values| {
             *values.frame_start
         }).unwrap_or_else(time::Instant::now)
     }
 
+    /// A version of `time` which will not bind watch closures.
     pub fn time_unwatched() -> time::Instant {
         AppValues::try_with_current(|values| {
             *drying_paint::Watched::get_unwatched(&values.frame_start)
         }).unwrap_or_else(time::Instant::now)
     }
 
+    /// Make this app context "current".
     pub fn with<F, R>(self, func: F) -> (Self, R)
     where
         F: FnOnce(&mut CurrentApp<P>) -> R
@@ -108,6 +117,10 @@ impl<P: Platform> App<P> {
         (new_self, res)
     }
 
+    /// Start running the app.
+    ///
+    /// Because of platform-specific requirements, this requires control
+    /// of the current thread.
     pub fn run(self) -> ! {
         let Self {
             platform,
@@ -131,6 +144,8 @@ impl<P: Platform> App<P> {
         (_res.1).1
     }
 
+    /// Create a test interface for this app, which allows simulating
+    /// behavior.
     pub fn test<F: FnOnce(AppTesterInterface<P>)>(self, func: F) {
         let Self {
             platform,
@@ -156,6 +171,7 @@ impl<P: Platform> App<P> {
     }
 }
 
+/// A type which represents an App which is currently available as a context.
 pub struct CurrentApp<P = DefaultPlatform>
 where
     P: Platform
@@ -170,6 +186,12 @@ impl<P: Platform> CurrentApp<P> {
         self.window.as_mut().expect("CurrentApp lost its Window")
     }
 
+    /// Add a root widget to the app.
+    ///
+    /// Root widgets are assigned a Rect representing the whole window.
+    /// They are drawn in the order they are added to the app.
+    /// They recieve pointer events in reverse order of when they are added to
+    /// the app.
     pub fn add_root<F, T>(&mut self, f: F)
     where
         F: 'static + FnOnce() -> Widget<T, P::Renderer>,
@@ -334,6 +356,7 @@ impl<P: Platform> CurrentApp<P> {
         };
     }
 
+    /// Consume the current app, cleaning up its resources immediately.
     pub fn shutdown(self) {
         let Self { window, roots, ..  } = self;
         std::mem::drop(roots);
