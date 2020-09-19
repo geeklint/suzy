@@ -6,7 +6,6 @@
 #![allow(clippy::excessive_precision)]
 
 use crate::animation::CubicPoly;
-use crate::graphics::Color;
 
 pub const EASE_LINEAR: CubicPoly = CubicPoly(0.0, 0.0, 1.0, 0.0);
 pub const EASE_IN_SINE: CubicPoly = CubicPoly(-0.78008673, 2.0375746, -0.2556811, 0.01346003);
