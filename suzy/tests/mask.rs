@@ -9,7 +9,6 @@ extern crate suzy;
 use suzy::dims::{
     Rect,
     SimplePadding2d,
-    Padding2dNew,
     Padding,
 };
 use suzy::window::WindowSettings;

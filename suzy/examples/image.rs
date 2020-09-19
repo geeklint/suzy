@@ -4,7 +4,7 @@
 
 extern crate suzy;
 
-use suzy::dims::{Rect, SimplePadding2d, Padding2dNew};
+use suzy::dims::{Rect, SimplePadding2d};
 use suzy::widget::*;
 use suzy::platform::opengl::Texture;
 use suzy::platform::opengl::SlicedImage;

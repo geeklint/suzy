@@ -64,41 +64,6 @@ pub trait Padding2d {
     fn set_left(&mut self, amount: f32) { self.x_mut().before = amount }
 }
 
-pub trait Padding2dNew
-where Self: Padding2d + Sized
-{
-    /// Create a new 2D padding with the provided amounts
-    fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self;
-
-    /// Create a new 2D padding with zero amount
-    fn zero() -> Self {
-        Self::uniform(0.0)
-    }
-
-    /// Create a new 2D padding with the same amount on all edges
-    fn uniform(value: f32) -> Self {
-        Self::new(value, value, value, value)
-    }
-
-    /// Create a new 2D padding with the same amount on left and right, and
-    /// zero on top and bottom
-    fn pillarbox(value: f32) -> Self {
-        Self::new(0.0, value, 0.0, value)
-    }
-
-    /// Create a new 2D padding with the same amount on top and bottom, and
-    /// zero on left and right
-    fn letterbox(value: f32) -> Self {
-        Self::new(value, 0.0, value, 0.0)
-    }
-
-    /// Create a new 2D padding with the same amount on top as on bottom, and
-    /// the same amount on left as on right
-    fn windowbox(y: f32, x: f32) -> Self {
-        Self::new(y, x, y, x)
-    }
-}
-
 /// Representation of two dimensions of padding
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct SimplePadding2d {
@@ -106,12 +71,40 @@ pub struct SimplePadding2d {
     y: Padding,
 }
 
-impl Padding2dNew for SimplePadding2d {
-    fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self {
+impl SimplePadding2d {
+    pub fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self {
         Self {
             x: Padding::new(left, right),
             y: Padding::new(bottom, top),
         }
+    }
+
+    /// Create a new 2D padding with zero amount
+    pub fn zero() -> Self {
+        Self::uniform(0.0)
+    }
+
+    /// Create a new 2D padding with the same amount on all edges
+    pub fn uniform(value: f32) -> Self {
+        Self::new(value, value, value, value)
+    }
+
+    /// Create a new 2D padding with the same amount on left and right, and
+    /// zero on top and bottom
+    pub fn pillarbox(value: f32) -> Self {
+        Self::new(0.0, value, 0.0, value)
+    }
+
+    /// Create a new 2D padding with the same amount on top and bottom, and
+    /// zero on left and right
+    pub fn letterbox(value: f32) -> Self {
+        Self::new(value, 0.0, value, 0.0)
+    }
+
+    /// Create a new 2D padding with the same amount on top as on bottom, and
+    /// the same amount on left as on right
+    pub fn windowbox(y: f32, x: f32) -> Self {
+        Self::new(y, x, y, x)
     }
 }
 
