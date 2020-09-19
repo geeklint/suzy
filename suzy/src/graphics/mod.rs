@@ -4,7 +4,7 @@
 
 mod color;
 
-pub use color::Color;
+pub use color::{Color, ParseColorError};
 
 use crate::platform::{
     DefaultRenderPlatform,

@@ -9,6 +9,26 @@ use crate::animation::{
     LerpDistance,
 };
 
+/// A type which represents a color with 32 bit floating point components.
+///
+/// Colors can be crated a number of ways:
+///
+/// ```rust
+/// # use suzy::graphics::Color;
+/// let color0 = Color::create_rgb(0.93333334, 0.50980395, 0.93333334);
+/// let color1 = Color::create_rgb8(238, 130, 238);
+/// let color2: Color = "#EE82EE".parse().unwrap();
+/// assert_eq!(color0, color1);
+/// assert_eq!(color1, color2);
+/// ```
+///
+/// Colors can be formatted with hex style to get familar results:
+/// ```rust
+/// # use suzy::graphics::Color;
+/// let color = Color::create_rgb8(238, 130, 238);
+/// let string = format!("{:X}", color);
+/// assert_eq!(string, "#EE82EEFF");
+/// ```
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color {
     r: f32,
@@ -20,10 +40,14 @@ pub struct Color {
 const MAX8: f32 = std::u8::MAX as f32;
 
 impl Color {
+    /// Create a new color with the specified RGBA components, where 1.0
+    /// represents the maximum for that component.
     pub const fn create_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
         Color { r, g, b, a }
     }
 
+    /// Create a new color with the specified RGBA components, where 255
+    /// represents the maximum for that component.
     pub fn create_rgba8(r: u8, g: u8, b: u8, a: u8) -> Self {
         Color {
             r: (r as f32) / MAX8,
@@ -33,27 +57,38 @@ impl Color {
         }
     }
 
+    /// Create a new color with the specified RGB components, where 1.0
+    /// represents the maximum for that component.  The alpha is assumed to
+    /// be fully opaque.
     pub const fn create_rgb(r: f32, g: f32, b: f32) -> Self {
         Self::create_rgba(r, g, b, 1.0)
     }
 
+    /// Create a new color with the specified RGB components, where 255
+    /// represents the maximum for that component.  The alpha is assumed to
+    /// be fully opaque.
     pub fn create_rgb8(r: u8, g: u8, b: u8) -> Self {
         Self::create_rgba8(r, g, b, u8::max_value())
     }
 
+    /// Get the RGBA components of this color, as floats, where 1.0
+    /// represents the maximum for that component.
     pub fn rgba(&self) -> (f32, f32, f32, f32) {
         (self.r, self.g, self.b, self.a)
     }
 
+    /// Get the RGBA components of this color, as integers, where 255
+    /// represents the maximum for that component.
     pub fn rgba8(&self) -> (u8, u8, u8, u8) {
         (
-            (self.r * MAX8) as u8,
-            (self.g * MAX8) as u8,
-            (self.b * MAX8) as u8,
-            (self.a * MAX8) as u8,
+            (self.r * MAX8).round() as u8,
+            (self.g * MAX8).round() as u8,
+            (self.b * MAX8).round() as u8,
+            (self.a * MAX8).round() as u8,
         )
     }
 
+    /// Apply a tint to this color based on another color.
     pub fn tint(&mut self, other: Self) {
         self.r *= other.r;
         self.g *= other.g;
@@ -93,6 +128,7 @@ impl From<u32> for Color {
     }
 }
 
+/// An error returned from a failed attempt to parse a string as a color.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct ParseColorError;
 
@@ -109,9 +145,10 @@ impl std::str::FromStr for Color {
             if hex_part.len() == 6 || hex_part.len() == 8 {
                 let mut int = u32::from_str_radix(hex_part, 16)?;
                 if hex_part.len() == 6 {
-                    int <<= 8;
+                    int = (int << 8) | 0xFF;
                 }
-                Ok(int.into())
+                let bytes = int.to_be_bytes();
+                Ok(Self::create_rgba8(bytes[0], bytes[1], bytes[2], bytes[3]))
             } else {
                 Err(ParseColorError {})
             }
@@ -282,7 +319,7 @@ impl Color {
     pub const THISTLE: Color = Color::create_rgb(0.8470588, 0.7490196, 0.8470588);
     pub const TOMATO: Color = Color::create_rgb(1.0, 0.3882353, 0.2784314);
     pub const TURQUOISE: Color = Color::create_rgb(0.2509804, 0.8784314, 0.8156863);
-    pub const VIOLET: Color = Color::create_rgb(0.9333333, 0.5098039, 0.9333333);
+    pub const VIOLET: Color = Color::create_rgb(0.93333334, 0.50980395, 0.93333334);
     pub const WHEAT: Color = Color::create_rgb(0.9607843, 0.8705882, 0.7019608);
     pub const WHITE: Color = Color::create_rgb(1.0, 1.0, 1.0);
     pub const WHITE_SMOKE: Color = Color::create_rgb(0.9607843, 0.9607843, 0.9607843);
