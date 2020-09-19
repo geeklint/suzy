@@ -64,7 +64,6 @@ pub mod animation;
 pub mod app;
 pub mod dims;
 pub mod graphics;
-pub mod math;
 pub mod pointer;
 pub mod selectable;
 pub mod units;
