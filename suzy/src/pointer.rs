@@ -36,7 +36,7 @@ pub enum PointerAction {
     Wheel(f32, f32),
     AltDown(AltMouseButton),
     AltUp(AltMouseButton),
-    Hover,
+    Hover(f32, f32),
     GrabStolen,
 }
 

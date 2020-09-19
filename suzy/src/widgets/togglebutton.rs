@@ -227,7 +227,7 @@ where
                 }
                 ungrabbed
             },
-            PointerAction::Hover => {
+            PointerAction::Hover(_, _) => {
                 match (self.state.v1(), self.hittest(extra, event.pos())) {
                     (SelectionStateV1::Normal, true) => {
                         let grabbed = event.try_grab(extra);

@@ -239,6 +239,11 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
                 *y *= info.dp_per_screen_unit;
                 *y = info.size.1 - *y;
             },
+            PointerAction::Hover(ref mut x, ref mut y) => {
+                *x *= info.dp_per_screen_unit;
+                *y *= info.dp_per_screen_unit;
+                *y = info.size.1 - *y;
+            },
             _ => (),
         }
         event.normalized = true;
@@ -356,19 +361,26 @@ impl Events {
                     )
                 }
                 Event::MouseMotion { mousestate, x, y, xrel, yrel, .. } => {
-                    if !mousestate.left() {
-                        continue;
-                    }
                     use crate::pointer::*;
                     let (x, y) = (x as f32, y as f32);
                     let (xrel, yrel) = (xrel as f32, yrel as f32);
-                    WindowEvent::Pointer(
-                        PointerEventData::new(
-                            PointerId::Mouse,
-                            PointerAction::Move(xrel, yrel),
-                            x, y,
+                    if mousestate.left() {
+                        WindowEvent::Pointer(
+                            PointerEventData::new(
+                                PointerId::Mouse,
+                                PointerAction::Move(xrel, yrel),
+                                x, y,
+                            )
                         )
-                    )
+                    } else {
+                        WindowEvent::Pointer(
+                            PointerEventData::new(
+                                PointerId::Mouse,
+                                PointerAction::Hover(xrel, yrel),
+                                x, y,
+                            )
+                        )
+                    }
                 }
                 _ => continue,
             })
