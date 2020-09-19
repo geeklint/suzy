@@ -32,17 +32,27 @@ use crate::selectable::{
     SelectionStateV1,
 };
 
+/// A group of toggle buttons make members of the group mutually exclusive.
+///
+/// Toggle buttons may also relate to a value, in which case the group
+/// reference can be used to retrieve the value of the currently-selected
+/// ToggleButton.
 pub struct ToggleButtonGroup<V = ()> {
     ptr: Rc<WatchedCell<Option<V>>>,
 }
 
 impl<V> ToggleButtonGroup<V> {
+    /// Create a new toggle button group
     pub fn new() -> Self {
         Self {
             ptr: Rc::new(WatchedCell::new(None)),
         }
     }
 
+    /// Fetch the value from the toggle group, and reset the group so that
+    /// nothing is selected.
+    ///
+    /// This will bind a current watch function to the value of the group.
     pub fn take(&self) -> Option<V> {
         self.ptr.take()
     }
@@ -63,6 +73,10 @@ impl<V> ToggleButtonGroup<V> {
 }
 
 impl<V: Copy> ToggleButtonGroup<V> {
+    /// Copy the value of the currently selected toggle button which belongs
+    /// to this group.
+    ///
+    /// This will bind a current watch function to the value of the group.
     pub fn value(&self) -> Option<V> {
         self.ptr.get()
     }
@@ -72,6 +86,8 @@ impl<V> Default for ToggleButtonGroup<V> {
     fn default() -> Self { Self::new() }
 }
 
+/// Custom toggle button content can implement this trait to describe
+/// what value is associated with which content.
 pub trait ToggleButtonValue<V> {
     fn get_value(&self, extra: &WidgetExtra) -> V;
 }
@@ -266,6 +282,7 @@ impl<T: Default, V> Default for ToggleButtonContent<T, V> {
     }
 }
 
+/// A button which remains in an active state after being selected.
 pub type ToggleButton<T, V = (), P = DefaultRenderPlatform>
     = Widget<ToggleButtonContent<T, V>, P>;
 

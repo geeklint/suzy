@@ -4,6 +4,43 @@
 
 //! Animations integrate with Suzy's watch system to interpolate values over
 //! time.
+//!
+//! [`watch`](../widget/trait.WidgetInit.html#tymethod.watch)
+//! closures which contain
+//! [`Animation::apply`](struct.Animation.html#method.apply) will be re-run
+//! every frame while the animation is in progress.
+//!
+//! ## Examples
+//!
+//! Animate a color to green with a speed of 1.
+//!
+//! ```rust
+//! # use suzy::animation::Animation;
+//! # use suzy::widget::*;
+//! # use suzy::graphics::Color;
+//! struct MyWidgetData {
+//!     current_color: Color,
+//!     animation: Animation<Color>,
+//! }
+//!
+//! impl WidgetContent for MyWidgetData {
+//!     fn init<I: WidgetInit<Self>>(mut init: I) {
+//!         init.watch(|this, rect| {
+//!             this.animation.set_speed(1.0);
+//!             this.animation.animate_to(Color::GREEN);
+//!         });
+//!         init.watch(|this, rect| {
+//!             this.animation.apply(&mut this.current_color);
+//!             println!("current color value: {:x}", this.current_color);
+//!         });
+//!     }
+//!
+//!     // ...
+//! #   fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {
+//! #   }
+//! #   fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//! }
+//! ```
 
 use std::time::{
     Duration,
@@ -107,12 +144,22 @@ impl<T> Default for Animation<T> {
 }
 
 impl<T: LerpDistance> Animation<T> {
+    /// The preferred way to set the speed of an animation is to use this
+    /// method.
+    ///
+    /// This calculates the duration of the animation based on the "distance"
+    /// between the starting and ending values.  If the type to be animated
+    /// does not have a measurable "distance", use `set_duration`.
     pub fn set_speed(&mut self, speed: f32) {
         self.speed = Speed::Speed(speed, T::lerp_distance);
     }
 }
 
 impl Animation<(f32, f32)> {
+    /// `LerpDistance` is intentionally not implemented for tuples, because
+    /// tuples may be used to implement more than just a position.
+    /// This function is the same as `set_speed`, but explicitly treats
+    /// tuples as a position.
     pub fn set_position_speed(&mut self, speed: f32) {
         self.speed = Speed::Speed(speed, |a, b| {
             ((b.0 - a.0).powi(2) + (b.1 - a.1).powi(2)).sqrt()
@@ -121,6 +168,7 @@ impl Animation<(f32, f32)> {
 }
 
 impl<T> Animation<T> {
+    /// Set the easing curve applied to this animation.
     pub fn set_ease(&mut self, easing: Box<dyn Easing>) {
         self.easing = Some(easing);
     }
@@ -164,6 +212,9 @@ impl<T: Lerp<Output = T>> Animation<T> {
         }
     }
 
+    /// Manually set the duration of the animation.
+    ///
+    /// Prefer `set_speed` over this function, when appropriate.
     pub fn set_duration(&mut self, duration: Duration) {
         self.speed = Speed::Duration(duration);
     }

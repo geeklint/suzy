@@ -13,6 +13,7 @@ use std::collections::HashMap;
 
 use crate::widget::WidgetId;
 
+/// A unique id for a particular pointer
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum PointerId {
     Mouse,
@@ -20,6 +21,7 @@ pub enum PointerId {
     Other(i64),
 }
 
+/// An enum for possible mouse buttons used besides the primary (left).
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum AltMouseButton {
     Middle,
@@ -28,25 +30,54 @@ pub enum AltMouseButton {
     X2,
 }
 
+/// An enum describing the activity that generated a particular pointer event
 #[derive(Debug, Copy, Clone)]
 pub enum PointerAction {
+    /// The pointer was pressed.
     Down,
+
+    /// The pointer moved while it was held down.
+    ///
+    /// The parameters indicate the relative change in position.
     Move(f32, f32),
+
+    /// The pointer was released.
     Up,
+
+    /// For mice, the scroll wheel was moved.
+    ///
+    /// The parameters describe the amount scrolled.
     Wheel(f32, f32),
+
+    /// For mice, an alterntive button (besides the left) was pressed.
     AltDown(AltMouseButton),
+
+    /// For mice, an alterntive button (besides the left) was released.
     AltUp(AltMouseButton),
+
+    /// The pointer moved while not considered held down.
+    ///
+    /// The parameters indicate the relative change in position.
     Hover(f32, f32),
+
+    /// A different widget forcefully grabbed this pointer.
     GrabStolen,
 }
 
 mod internal {
+    /// The data associated with a particular pointer event.
     #[derive(Copy, Clone, Debug)]
     pub struct PointerEvent {
+        /// The pointer involved in this event
         pub id: super::PointerId,
+        /// The activity that caused this event
         pub action: super::PointerAction,
+        /// The horizontal position of the pointer
         pub x: f32,
+        /// The vertical position of the pointer
         pub y: f32,
+        /// If the coordinates in this event are correctly in Suzy's
+        /// coordinate system
         pub normalized: bool,
     }
 
@@ -65,6 +96,7 @@ mod internal {
 
 pub use internal::PointerEvent as PointerEventData;
 
+/// This struct will get passed to the pointer_event method of widget content.
 pub struct PointerEvent<'a> {
     data: PointerEventData,
     grab_map: &'a mut HashMap<PointerId, WidgetId>,
@@ -92,16 +124,25 @@ impl<'a> PointerEvent<'a> {
 
 impl PointerEvent<'_> {
 
+    /// Get the pointer involved in this event
     pub fn id(&self) -> PointerId { self.data.id }
 
+    /// Get the activity which triggered this event
     pub fn action(&self) -> &PointerAction { &self.data.action }
 
+    /// Get the horizontal position of the pointer during this event
     pub fn x(&self) -> f32 { self.data.x }
 
+    /// Get the vertical position of the pointer during this event
     pub fn y(&self) -> f32 { self.data.y }
 
+    /// Get the position of the pointer during this event
     pub fn pos(&self) -> (f32, f32) { (self.data.x, self.data.y) }
 
+    /// Try to "grab" the pointer, indicating that the identified widget
+    /// should be the primary handler of this pointer.
+    ///
+    /// Returns false if a different widget has already grabbed the pointer.
     pub fn try_grab<I>(&mut self, holder: I) -> bool
         where I: Into<WidgetId>
     {
@@ -117,12 +158,18 @@ impl PointerEvent<'_> {
         }
     }
 
+    /// Check if this event is grabbed by the identified widget.
     pub fn is_grabbed_by<I>(&self, holder: I) -> bool
         where I: Into<WidgetId>
     {
         self.grab_map.get(&self.id()).map_or(false, |v| v == &holder.into())
     }
 
+    /// Try to stop grabbing this pointer, indicating that the identified
+    /// widget should no longer be considered the primary handler.
+    ///
+    /// Returns false if the grab was not previously held by the
+    /// identified widget.
     pub fn try_ungrab<I>(&mut self, holder: I) -> bool
         where I: Into<WidgetId>
     {

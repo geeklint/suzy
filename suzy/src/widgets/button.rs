@@ -158,5 +158,8 @@ impl<T: Default> Default for ButtonContent<T> {
     }
 }
 
+/// A simple button.
+///
+/// Use `Button::on_click` like a WatchedEvent to handle button clicks
 pub type Button<T, P = DefaultRenderPlatform> = Widget<ButtonContent<T>, P>;
 

@@ -2,6 +2,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! Types dealing with the dimensions of widgets.
+//!
+//! The coordinate system in Suzy sets the origin at the lower-left
+//! of the screen, with positive X (+X) to the right, and +Y up.
+//!
+//! Types `Dim` and `Padding` represent single-dimension quantities of their
+//! mesurements: Position+Size for `Dim`, and padding before and after for
+//! `Padding`.
+//!
+//! `Rect` and `Padding2d` are traits which describe the 2-dimensional
+//! versions of `Dim` and `Padding` respectively.
+//!
+//! As a trait, `Rect` is implemented by Widgets and most Graphics.
+//!
+//! This module provides the types `SimpleRect` and `SimplePadding2d`, which
+//! are simple value types that implement their respective traits.
+
+
 /// Representation of a single dimension of padding.
 #[derive(Debug, Default, PartialEq, Copy, Clone)]
 pub struct Padding {
@@ -26,6 +44,8 @@ impl Padding {
     }
 }
 
+/// Methods associated with retrieving and changing values of two dimensions
+/// of padding.
 pub trait Padding2d {
     /// Get the padding on the left and right
     fn x(&self) -> Padding;
@@ -123,18 +143,27 @@ impl<P: Padding2d> From<&P> for SimplePadding2d {
 
 /// A struct representing span of a single dimension.
 ///
-/// The authoritative representation of a Dim is based on a "pivot" which is
-/// a ratio generally from 0 (start) to 1 (end) which indicates the point
-/// around which, when changing the length of the span, it will grow from.
+/// The authoritative representation of a Dim is based on three values:
+/// a position, a length, and a pivot.  The position describes a point on the
+/// the screen.  The pivot is a ratio, generally from 0 (start) to 1 (end),
+/// which indicates how much of the length is distributed on each side of
+/// the position.
+///
+/// For example, a pivot of 0.1 indicates that 10% of the length is 'before'
+/// the position point, and 90% is after.  Changing the length will maintain
+/// this distribution.
+///
+/// Methods like `set_start` and `set_end` update the pivot to 0 and 1
+/// respectively.
 /// 
 /// # Examples
 /// ```rust
 /// use suzy::dims::Dim;
 /// let assert_feq = |a: f32, b: f32| {
-///     assert!(
-///         a.is_finite(), "assert_feq: argument `a` was NaN or infinite");
-///     assert!(
-///         b.is_finite(), "assert_feq: argument `b` was NaN or infinite");
+/// #     assert!(
+/// #         a.is_finite(), "assert_feq: argument `a` was NaN or infinite");
+/// #     assert!(
+/// #         b.is_finite(), "assert_feq: argument `b` was NaN or infinite");
 ///     assert!(
 ///         (a-b).abs() < 0.0001,
 ///         "assert_feq: greater than threshold: {} != {}", a, b);
@@ -292,6 +321,8 @@ impl Dim {
     }
 }
 
+/// Methods associated with controlling the dimensions of a Rectangular
+/// visual element.
 pub trait Rect {
     fn x(&self) -> Dim;
     fn y(&self) -> Dim;
@@ -556,6 +587,7 @@ impl From<SimpleRect> for FixedSizeRect {
     }
 }
 
+/// An object-safe version of the Rect trait
 pub trait DynRect {
     fn x(&self) -> Dim;
     fn y(&self) -> Dim;

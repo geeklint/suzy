@@ -14,6 +14,8 @@ use super::{
     FindWidgetCallback,
 };
 
+/// An internal iterator style receiver.  Types of this trait are passed to
+/// [`WidgetContent::children`](trait.WidgetContent.html#tymethod.children).
 pub trait WidgetChildReceiver<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
@@ -22,6 +24,8 @@ where
     fn anon_child(&mut self, child: &mut dyn AnonWidget<P>);
 }
 
+/// An internal iterator style receiver.  Types of this trait are passed to
+/// [`WidgetContent::graphics`](trait.WidgetContent.html#tymethod.graphics).
 pub trait WidgetGraphicReceiver<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,

@@ -9,20 +9,20 @@
 //! The watch system is based off an "automatic" observer pattern, inspired
 //! by Kivy's "[Kv Language](https://kivy.org/doc/stable/guide/lang.html)".
 //!
-//! Rather than define a new language and do syntatical parsing to figure out
-//! which values need to be observed, Suzy tracks which values are accessed
-//! at runtime, and automatically binds to them.
+//! Inside a "watch" closure Suzy tracks which values are accessed at
+//! runtime and automatically binds to them.  The closure is re-run when
+//! the bound values change.
 //!
 //! The watch system is defined in terms of relationships between two API
-//! surfaces: [Watched](struct.Watched.html) represents some data which will
+//! surfaces: [`Watched`](struct.Watched.html) represents some data which will
 //! be interesting to observe, and
-//! [WidgetInit::watch](../widget/trait.WidgetInit.html#tymethod.watch)
+//! [`WidgetInit::watch`](../widget/trait.WidgetInit.html#tymethod.watch)
 //! is used to submit a closure which observes values.
 //!
-//! A [WatchedEvent](stuct.WatchedEvent.html) is similar to a Watched value.
+//! A [`WatchedEvent`](stuct.WatchedEvent.html) is similar to a Watched value.
 //! Instead of representing a "current state" however, it provides a system
 //! where each watch closure will be run exactly once with each value provided
-//! to [dispatch](struct.WatchedEvent.html#method.dispatch).
+//! to [`dispatch`](struct.WatchedEvent.html#method.dispatch).
 //!
 //! Other utilities for less common situations are provided in this module.
 //!

@@ -193,6 +193,10 @@ where
     }
 }
 
+/// A unique id for a widget
+///
+/// This value may outlive the widget, and will never compare equal to a
+/// value obtained from a different widget.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WidgetId {
     id: WatcherId,

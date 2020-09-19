@@ -5,6 +5,15 @@
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::graphics::Graphic;
 
+/// A trait which represents a graphic a widget might contain.
+///
+/// Automatically implemented for anything which implements
+/// [`Graphic`](../graphics/trait.Graphic.html).
+///
+/// Widget graphics are rendered in two passes: one before the widget's
+/// children, and one after.  The typical behavior is to ignore the second
+/// pass, however some functionality may require it, for instance to revert
+/// a state-change applied in the first pass.
 pub trait WidgetGraphic<P = DefaultRenderPlatform>
 where
     P: RenderPlatform,

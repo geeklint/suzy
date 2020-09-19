@@ -13,6 +13,11 @@ use super::{
     WidgetRect,
 };
 
+/// Instances of this trait are provided to
+/// [`WidgetContent::init`](trait.WidgetContent.html#tymethod.init).
+///
+/// It's primary use is to provide the `watch` method, which custom widgets
+/// use to submit watch closures.
 pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
