@@ -1,0 +1,15 @@
+[package]
+name = "suzy_build_tools"
+version = "0.0.1"
+authors = ["Violet <violet@geeklint.com>"]
+edition = "2018"
+description = "Build tools for Suzy"
+homepage = "https://github.com/geeklint/suzy"
+repository = "https://github.com/geeklint/suzy"
+readme = "README.md"
+keywords = ["suzy"]
+license = "MPL-2.0"
+
+[dependencies]
+rusttype = "0.9.1"
+rect_packer = "0.2.1"
