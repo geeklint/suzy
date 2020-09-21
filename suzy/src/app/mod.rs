@@ -12,6 +12,7 @@ use std::collections::HashMap;
 
 use drying_paint::{
     WatchContext,
+    Watched,
 };
 
 use crate::platform::{
@@ -69,16 +70,29 @@ impl<P: Platform> App<P> {
     /// This will bind watch closures it is called in, and can be used to
     /// intentionally cause a watch closure to re-run every frame.
     pub fn time() -> time::Instant {
-        AppValues::try_with_current(|values| {
+        AppValues::expect_current(|values| {
             *values.frame_start
-        }).unwrap_or_else(time::Instant::now)
+        })
     }
 
     /// A version of `time` which will not bind watch closures.
     pub fn time_unwatched() -> time::Instant {
         AppValues::try_with_current(|values| {
-            *drying_paint::Watched::get_unwatched(&values.frame_start)
+            *Watched::get_unwatched(&values.frame_start)
         }).unwrap_or_else(time::Instant::now)
+    }
+
+    /// This is similar to `time`, however it updates much less frequently.
+    ///
+    /// You may bind to this in a watch closure to cause it to re-run
+    /// periodically.
+    ///
+    /// Current precision is 1 second, however this should not be relied
+    /// upon and may change in the future.
+    pub fn coarse_time() -> time::Instant {
+        AppValues::expect_current(|values| {
+            *values.coarse_time
+        })
     }
 
     /// Make this app context "current".
@@ -234,6 +248,12 @@ impl<P: Platform> CurrentApp<P> {
             Event::StartFrame(frame_time) => {
                 AppValues::expect_current_mut(|values| {
                     *values.frame_start = frame_time;
+                    let duration = frame_time.duration_since(
+                        *Watched::get_unwatched(&values.coarse_time)
+                    );
+                    if duration >= AppValues::COARSE_STEP {
+                        *values.coarse_time = frame_time;
+                    }
                 });
             },
             Event::Update => {
