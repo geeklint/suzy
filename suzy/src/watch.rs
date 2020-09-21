@@ -73,3 +73,7 @@ pub use drying_paint::{
     WatchedReceiver,
     WatchedSender,
 };
+
+#[cfg(feature = "inline_tweak")]
+#[doc(hidden)]
+pub use inline_tweak::inline_tweak;
