@@ -28,11 +28,11 @@ where
     T: Graphic<OpenGlRenderPlatform>,
 {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        DrawContext::manually_push(ctx);
-        ctx.push_mask();
+        ctx.manually_push();
+        ctx.params().push_mask();
         self.inner.item.draw(ctx);
-        DrawContext::manually_push(ctx);
-        ctx.commit_mask();
+        ctx.manually_push();
+        ctx.params().commit_mask();
     }
 }
 
@@ -46,21 +46,21 @@ where
     T: Graphic<OpenGlRenderPlatform>,
 {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        DrawContext::manually_push(ctx);
-        ctx.pop_mask();
-        let draw = match (DrawContext::pass(ctx), self.inner.popped) {
+        ctx.manually_push();
+        ctx.params().pop_mask();
+        let draw = match (ctx.pass(), self.inner.popped) {
             (DrawPass::DrawRemaining, true) => false,
             _ => true,
         };
         if draw {
-            self.inner.popped = DrawContext::force_redraw(ctx, |ctx| {
+            self.inner.popped = ctx.force_redraw(|ctx| {
                 self.inner.item.draw(ctx);
-                DrawContext::pass(ctx) != DrawPass::UpdateContext
+                ctx.pass() != DrawPass::UpdateContext
             });
         }
-        DrawContext::manually_pop(ctx);
-        DrawContext::manually_pop(ctx);
-        DrawContext::manually_pop(ctx);
+        ctx.manually_pop();
+        ctx.manually_pop();
+        ctx.manually_pop();
     }
 }
 

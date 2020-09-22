@@ -61,66 +61,68 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
         }
     }
 
-    pub fn pass(ctx: &Self) -> DrawPass { ctx.pass }
+    pub fn pass(&self) -> DrawPass { self.pass }
 
-    pub fn render_ctx(ctx: &Self) -> &P::Context { &ctx.context }
+    pub fn render_ctx(&self) -> &P::Context { &self.context }
 
-    pub fn render_ctx_mut(ctx: &mut Self) -> &mut P::Context { &mut ctx.context }
+    pub fn render_ctx_mut(&mut self) -> &mut P::Context { &mut self.context }
 
-    pub fn graphic_not_ready(ctx: &mut Self) {
-        ctx.pass = DrawPass::UpdateContext;
+    pub fn params(&mut self) -> &mut P::DrawParams { &mut self.current }
+
+    pub fn graphic_not_ready(&mut self) {
+        self.pass = DrawPass::UpdateContext;
     }
 
-    pub fn prepare_draw(ctx: &mut Self) {
+    pub fn prepare_draw(&mut self) {
         assert_ne!(
-            ctx.pass, 
+            self.pass, 
             DrawPass::UpdateContext,
             "prepare_draw called during an UpdateContext pass",
         );
-        match std::mem::replace(&mut ctx.last_applied, LastApplied::Current) {
+        match std::mem::replace(&mut self.last_applied, LastApplied::Current) {
             LastApplied::Current => (),
-            LastApplied::None => ctx.current.apply_all(ctx.context),
+            LastApplied::None => self.current.apply_all(self.context),
             LastApplied::Removed(old) => {
-                DrawParams::apply_change(&old, &mut ctx.current, ctx.context);
+                DrawParams::apply_change(&old, &mut self.current, self.context);
             },
             LastApplied::History(index) => {
                 DrawParams::apply_change(
-                    &ctx.history[index],
-                    &mut ctx.current,
-                    ctx.context,
+                    &self.history[index],
+                    &mut self.current,
+                    self.context,
                 );
             }
         }
     }
 
-    pub fn force_redraw<F, R>(ctx: &mut Self, f: F) -> R
+    pub fn force_redraw<F, R>(&mut self, f: F) -> R
     where
         F: FnOnce(&mut Self) -> R
     {
-        let restore = if ctx.pass == DrawPass::DrawRemaining {
-            ctx.pass = DrawPass::DrawAll;
+        let restore = if self.pass == DrawPass::DrawRemaining {
+            self.pass = DrawPass::DrawAll;
             true
         } else {
             false
         };
-        let ret = f(ctx);
-        if restore && ctx.pass != DrawPass::UpdateContext {
-            ctx.pass = DrawPass::DrawRemaining;
+        let ret = f(self);
+        if restore && self.pass != DrawPass::UpdateContext {
+            self.pass = DrawPass::DrawRemaining;
         }
         ret
     }
 
-    pub(crate) fn draw<'b, I>(ctx: &mut Self, roots: I) -> bool
+    pub(crate) fn draw<'b, I>(&mut self, roots: I) -> bool
     where
         I: 'b + Iterator<Item = &'b mut dyn crate::widget::AnonWidget<P>>,
     {
-        if ctx.pass == DrawPass::UpdateContext {
-            ctx.pass = DrawPass::DrawRemaining;
+        if self.pass == DrawPass::UpdateContext {
+            self.pass = DrawPass::DrawRemaining;
         }
         for widget in roots {
-            widget.draw(ctx);
+            widget.draw(self);
         }
-        ctx.pass == DrawPass::UpdateContext
+        self.pass == DrawPass::UpdateContext
     }
 }
 
@@ -129,31 +131,31 @@ where
     P: RenderPlatform,
     P::DrawParams: Clone
 {
-    pub fn push<R, F: FnOnce(&mut Self) -> R>(ctx: &mut Self, func: F) -> R {
-        Self::manually_push(ctx);
-        let ret = func(ctx);
-        Self::manually_pop(ctx);
+    pub fn push<R, F: FnOnce(&mut Self) -> R>(&mut self, func: F) -> R {
+        self.manually_push();
+        let ret = func(self);
+        self.manually_pop();
         ret
     }
 
-    pub fn manually_push(ctx: &mut Self) {
-        let new = ctx.current.clone();
-        let old = std::mem::replace(&mut ctx.current, new);
-        ctx.history.push(old);
-        if let LastApplied::Current = ctx.last_applied {
-            ctx.last_applied = LastApplied::History(ctx.history.len() - 1);
+    pub fn manually_push(&mut self) {
+        let new = self.current.clone();
+        let old = std::mem::replace(&mut self.current, new);
+        self.history.push(old);
+        if let LastApplied::Current = self.last_applied {
+            self.last_applied = LastApplied::History(self.history.len() - 1);
         }
     }
 
-    pub fn manually_pop(ctx: &mut Self) {
-        let new = ctx.history.pop().expect(
+    pub fn manually_pop(&mut self) {
+        let new = self.history.pop().expect(
             "DrawContext::pop called more times than push!"
         );
-        let old = std::mem::replace(&mut ctx.current, new);
-        match &ctx.last_applied {
+        let old = std::mem::replace(&mut self.current, new);
+        match &self.last_applied {
             LastApplied::History(index) => {
                 use std::cmp::Ordering;
-                ctx.last_applied = match index.cmp(&ctx.history.len()) {
+                self.last_applied = match index.cmp(&self.history.len()) {
                     Ordering::Less => LastApplied::History(*index),
                     Ordering::Equal => LastApplied::Current,
                     Ordering::Greater => {
@@ -163,20 +165,11 @@ where
                 };
             },
             LastApplied::Current => {
-                ctx.last_applied = LastApplied::Removed(old);
+                self.last_applied = LastApplied::Removed(old);
             }
             _ => (),
         };
     }
-}
-
-impl<P: RenderPlatform> std::ops::Deref for DrawContext<'_, P> {
-    type Target = P::DrawParams;
-    fn deref(&self) -> &P::DrawParams { &self.current }
-}
-
-impl<P: RenderPlatform> std::ops::DerefMut for DrawContext<'_, P> {
-    fn deref_mut(&mut self) -> &mut P::DrawParams { &mut self.current }
 }
 
 impl<P: RenderPlatform> Drop for DrawContext<'_, P> {

@@ -45,15 +45,15 @@ impl<T> SingleVertexBuffer<T> {
         &mut self,
         draw_ctx: &mut DrawContext<OpenGlRenderPlatform>,
     ) -> bool {
-        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+        let gl = &draw_ctx.render_ctx().bindings;
         match self.obj.check_ready(gl) {
             Some(true) => {
-                match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
+                match (draw_ctx.pass(), self.remaining_to_draw) {
                     (DrawPass::DrawRemaining, false) => false,
                     (DrawPass::DrawAll, _)
                     | (DrawPass::DrawRemaining, true) => {
-                        DrawContext::prepare_draw(draw_ctx);
-                        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+                        draw_ctx.prepare_draw();
+                        let gl = &draw_ctx.render_ctx().bindings;
                         unsafe {
                             gl.BindBuffer(ARRAY_BUFFER, self.obj.ids[0]);
                         }
@@ -67,7 +67,7 @@ impl<T> SingleVertexBuffer<T> {
                 }
             },
             Some(false) => {
-                DrawContext::graphic_not_ready(draw_ctx);
+                draw_ctx.graphic_not_ready();
                 self.tracker.trigger();
                 false
             },
@@ -128,16 +128,16 @@ impl<T> DualVertexBuffer<T> {
         &'a mut self,
         draw_ctx: &'a mut DrawContext<OpenGlRenderPlatform>,
     ) -> Option<ReadyDualVertexBuffer<'a>> {
-        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+        let gl = &draw_ctx.render_ctx().bindings;
         match (self.ready[0], self.ready[1], self.obj.check_ready(gl)) {
             (true, true, Some(true)) => {
-                match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
+                match (draw_ctx.pass(), self.remaining_to_draw) {
                     (DrawPass::DrawRemaining, false) => None,
                     (DrawPass::DrawAll, _)
                     | (DrawPass::DrawRemaining, true) => {
-                        DrawContext::prepare_draw(draw_ctx);
+                        draw_ctx.prepare_draw();
                         self.remaining_to_draw = false;
-                        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+                        let gl = &draw_ctx.render_ctx().bindings;
                         Some(ReadyDualVertexBuffer {
                             ids: &self.obj.ids,
                             gl,
@@ -150,13 +150,13 @@ impl<T> DualVertexBuffer<T> {
                 }
             },
             (_, _, Some(true)) => {
-                DrawContext::graphic_not_ready(draw_ctx);
+                draw_ctx.graphic_not_ready();
                 self.tracker.trigger();
                 None
             },
             (_, _, Some(false)) => {
                 self.ready = [false, false];
-                DrawContext::graphic_not_ready(draw_ctx);
+                draw_ctx.graphic_not_ready();
                 self.tracker.trigger();
                 None
             },
@@ -261,16 +261,16 @@ impl<T> DualVertexBufferIndexed<T> {
         &'a mut self,
         draw_ctx: &'a mut DrawContext<OpenGlRenderPlatform>,
     ) -> Option<ReadyDualVertexBufferIndexed<'a>> {
-        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+        let gl = &draw_ctx.render_ctx().bindings;
         match (self.ready[0], self.ready[1], self.obj.check_ready(gl)) {
             (true, true, Some(true)) => {
-                match (DrawContext::pass(draw_ctx), self.remaining_to_draw) {
+                match (draw_ctx.pass(), self.remaining_to_draw) {
                     (DrawPass::DrawRemaining, false) => None,
                     (DrawPass::DrawAll, _)
                     | (DrawPass::DrawRemaining, true) => {
-                        DrawContext::prepare_draw(draw_ctx);
+                        draw_ctx.prepare_draw();
                         self.remaining_to_draw = false;
-                        let gl = &DrawContext::render_ctx(draw_ctx).bindings;
+                        let gl = &draw_ctx.render_ctx().bindings;
                         Some(ReadyDualVertexBufferIndexed {
                             ids: &self.obj.ids,
                             gl,
@@ -283,13 +283,13 @@ impl<T> DualVertexBufferIndexed<T> {
                 }
             },
             (_, _, Some(true)) => {
-                DrawContext::graphic_not_ready(draw_ctx);
+                draw_ctx.graphic_not_ready();
                 self.tracker.trigger();
                 None
             },
             (_, _, Some(false)) => {
                 self.ready = [false, false, false];
-                DrawContext::graphic_not_ready(draw_ctx);
+                draw_ctx.graphic_not_ready();
                 self.tracker.trigger();
                 None
             },

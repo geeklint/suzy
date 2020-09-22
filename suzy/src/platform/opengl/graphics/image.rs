@@ -161,9 +161,9 @@ impl Rect for SlicedImage {
 
 impl Graphic<OpenGlRenderPlatform> for SlicedImage {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        DrawContext::push(ctx, |ctx| {
-            ctx.standard_mode();
-            ctx.use_texture(self.texture.clone());
+        ctx.push(|ctx| {
+            ctx.params().standard_mode();
+            ctx.params().use_texture(self.texture.clone());
             if let Some(ready) = self.buffers.check_ready(ctx) {
                 let gl = ready.gl;
                 ready.bind_0();
@@ -191,7 +191,7 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
                 self.update();
                 self.update_image();
                 self.buffers.set_indices(|_gl| &SLICED_INDICES[..]);
-                self.texture.bind(DrawContext::render_ctx_mut(ctx));
+                self.texture.bind(ctx.render_ctx_mut());
             }
         });
     }

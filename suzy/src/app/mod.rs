@@ -318,7 +318,7 @@ impl<P: Platform> CurrentApp<P> {
                     let as_ref: &mut dyn AnonWidget<_> = &mut **boxed;
                     as_ref
                 });
-                let need_loop = DrawContext::draw(&mut ctx, iter);
+                let need_loop = ctx.draw(iter);
                 std::mem::drop(ctx);
                 (window, need_loop)
             });
