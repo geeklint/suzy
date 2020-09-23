@@ -13,18 +13,6 @@ pub trait DrawParams<Ctx> {
     fn apply_change(current: &Self, new: &mut Self, ctx: &mut Ctx);
 }
 
-#[derive(Clone, Copy, Debug)]
-enum LastApplied<T> {
-    History(usize),
-    Current,
-    None,
-    Removed(T),
-}
-
-impl<T> Default for LastApplied<T> {
-    fn default() -> Self { Self::None }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DrawPass {
     DrawAll,
@@ -36,8 +24,7 @@ pub enum DrawPass {
 pub struct DrawContext<'a, P: RenderPlatform = DefaultRenderPlatform> {
     context: &'a mut P::Context,
     current: P::DrawParams,
-    history: Vec<P::DrawParams>,
-    last_applied: LastApplied<P::DrawParams>,
+    last_applied: Option<P::DrawParams>,
     pass: DrawPass,
 }
 
@@ -55,8 +42,7 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
         Self {
             context: ctx,
             current: starting,
-            history: Vec::new(),
-            last_applied: LastApplied::None,
+            last_applied: None,
             pass,
         }
     }
@@ -71,28 +57,6 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
 
     pub fn graphic_not_ready(&mut self) {
         self.pass = DrawPass::UpdateContext;
-    }
-
-    pub fn prepare_draw(&mut self) {
-        assert_ne!(
-            self.pass, 
-            DrawPass::UpdateContext,
-            "prepare_draw called during an UpdateContext pass",
-        );
-        match std::mem::replace(&mut self.last_applied, LastApplied::Current) {
-            LastApplied::Current => (),
-            LastApplied::None => self.current.apply_all(self.context),
-            LastApplied::Removed(old) => {
-                DrawParams::apply_change(&old, &mut self.current, self.context);
-            },
-            LastApplied::History(index) => {
-                DrawParams::apply_change(
-                    &self.history[index],
-                    &mut self.current,
-                    self.context,
-                );
-            }
-        }
     }
 
     pub fn force_redraw<F, R>(&mut self, f: F) -> R
@@ -131,51 +95,52 @@ where
     P: RenderPlatform,
     P::DrawParams: Clone
 {
+    pub fn prepare_draw(&mut self) {
+        assert_ne!(
+            self.pass, 
+            DrawPass::UpdateContext,
+            "prepare_draw called during an UpdateContext pass",
+        );
+        match self.last_applied.take() {
+            Some(old) => {
+                DrawParams::apply_change(
+                    &old,
+                    &mut self.current,
+                    self.context,
+                );
+            },
+            None => self.current.apply_all(self.context),
+        }
+        self.last_applied = Some(self.current.clone());
+    }
+
     pub fn push<R, F: FnOnce(&mut Self) -> R>(&mut self, func: F) -> R {
-        self.manually_push();
+        let backup = self.manually_push();
         let ret = func(self);
-        self.manually_pop();
+        self.manually_pop(backup);
         ret
     }
 
-    pub fn manually_push(&mut self) {
-        let new = self.current.clone();
-        let old = std::mem::replace(&mut self.current, new);
-        self.history.push(old);
-        if let LastApplied::Current = self.last_applied {
-            self.last_applied = LastApplied::History(self.history.len() - 1);
-        }
+    #[must_use]
+    pub fn manually_push(&mut self) -> P::DrawParams {
+        self.current.clone()
     }
 
-    pub fn manually_pop(&mut self) {
-        let new = self.history.pop().expect(
-            "DrawContext::pop called more times than push!"
-        );
-        let old = std::mem::replace(&mut self.current, new);
-        match &self.last_applied {
-            LastApplied::History(index) => {
-                use std::cmp::Ordering;
-                self.last_applied = match index.cmp(&self.history.len()) {
-                    Ordering::Less => LastApplied::History(*index),
-                    Ordering::Equal => LastApplied::Current,
-                    Ordering::Greater => {
-                        debug_assert!(false, "DrawContext corrupted");
-                        LastApplied::None
-                    },
-                };
-            },
-            LastApplied::Current => {
-                self.last_applied = LastApplied::Removed(old);
-            }
-            _ => (),
-        };
+    pub fn manually_pop(&mut self, restore: P::DrawParams) {
+        self.current = restore;
     }
 }
 
 impl<P: RenderPlatform> Drop for DrawContext<'_, P> {
     fn drop(&mut self) {
         if self.pass != DrawPass::UpdateContext {
-            Self::prepare_draw(self);
+            if let Some(old) = self.last_applied.take() {
+                DrawParams::apply_change(
+                    &old,
+                    &mut self.current,
+                    self.context,
+                );
+            }
         }
     }
 }

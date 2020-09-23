@@ -16,6 +16,7 @@ use super::super::OpenGlRenderPlatform;
 pub struct MaskerInner<T> {
     item: T,
     popped: bool,
+    backup_params: Option<super::super::DrawParams>,
 }
 
 #[repr(transparent)]
@@ -28,10 +29,9 @@ where
     T: Graphic<OpenGlRenderPlatform>,
 {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        ctx.manually_push();
+        self.inner.backup_params = Some(ctx.manually_push());
         ctx.params().push_mask();
         self.inner.item.draw(ctx);
-        ctx.manually_push();
         ctx.params().commit_mask();
     }
 }
@@ -46,7 +46,6 @@ where
     T: Graphic<OpenGlRenderPlatform>,
 {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        ctx.manually_push();
         ctx.params().pop_mask();
         let draw = match (ctx.pass(), self.inner.popped) {
             (DrawPass::DrawRemaining, true) => false,
@@ -58,9 +57,9 @@ where
                 ctx.pass() != DrawPass::UpdateContext
             });
         }
-        ctx.manually_pop();
-        ctx.manually_pop();
-        ctx.manually_pop();
+        if let Some(params) = self.inner.backup_params.take() {
+            ctx.manually_pop(params);
+        }
     }
 }
 
