@@ -14,23 +14,45 @@ use crate::graphics::Graphic;
 /// children, and one after.  The typical behavior is to ignore the second
 /// pass, however some functionality may require it, for instance to revert
 /// a state-change applied in the first pass.
-pub trait WidgetGraphic<P = DefaultRenderPlatform>
+pub trait WidgetGraphic<'a, 'b, P = DefaultRenderPlatform>
 where
     P: RenderPlatform,
 {
-    type Before: Graphic<P>;
-    type After: Graphic<P>;
+    type Before: Graphic<P> + 'b;
+    type After: Graphic<P> + 'a;
 
-    fn before_children(&mut self) -> &mut Self::Before;
-    fn after_children(&mut self) -> &mut Self::After;
+    fn before_children(&'b mut self) -> Self::Before;
+    fn after_children(&'a mut self) -> Self::After;
 }
 
-impl<T: Graphic<P>, P: RenderPlatform> WidgetGraphic<P> for T
-where Self: Sized
+impl<'a, 'b, P, T> WidgetGraphic<'a, 'b, P> for T
+where
+    Self: Sized,
+    T: Graphic<P> + 'b,
+    P: RenderPlatform,
 {
-    type Before = Self;
-    type After = [(); 0];
+    type Before = WidgetGraphicProxy<'b, T>;
+    type After = WidgetGraphicProxy<'a, [(); 0]>;
 
-    fn before_children(&mut self) -> &mut Self { self }
-    fn after_children(&mut self) -> &mut [(); 0] { &mut [] }
+    fn before_children(&'b mut self) -> Self::Before {
+        WidgetGraphicProxy { graphic: self }
+    }
+
+    fn after_children(&'a mut self) -> Self::After {
+        WidgetGraphicProxy { graphic: &mut [] }
+    }
+}
+
+pub struct WidgetGraphicProxy<'a, T> {
+    graphic: &'a mut T,
+}
+
+impl<'a, P, T> Graphic<P> for WidgetGraphicProxy<'a, T>
+where
+    P: RenderPlatform,
+    T: Graphic<P>,
+{
+    fn draw(&mut self, ctx: &mut crate::graphics::DrawContext<P>) {
+        self.graphic.draw(ctx);
+    }
 }

@@ -34,7 +34,7 @@ where
     P: RenderPlatform,
 {
     /// Receive a graphic.
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T);
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T);
 }
 
 pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform> {
@@ -84,7 +84,7 @@ impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicBeforeReceiver<'a, 'b, P
 where
     P: RenderPlatform,
 {
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
         graphic.before_children().draw(self.ctx);
     }
 }
@@ -97,7 +97,7 @@ impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicAfterReceiver<'a, 'b, P>
 where
     P: RenderPlatform,
 {
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
         graphic.after_children().draw(self.ctx);
     }
 }

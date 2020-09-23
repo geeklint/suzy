@@ -20,11 +20,11 @@ pub struct MaskerInner<T> {
 }
 
 #[repr(transparent)]
-pub struct MaskerPush<T> {
-    inner: MaskerInner<T>,
+pub struct MaskerPush<'a, T> {
+    inner: &'a mut MaskerInner<T>,
 }
 
-impl<T> Graphic<OpenGlRenderPlatform> for MaskerPush<T>
+impl<'a, T> Graphic<OpenGlRenderPlatform> for MaskerPush<'a, T>
 where
     T: Graphic<OpenGlRenderPlatform>,
 {
@@ -37,11 +37,11 @@ where
 }
 
 #[repr(transparent)]
-pub struct MaskerPop<T> {
-    inner: MaskerInner<T>,
+pub struct MaskerPop<'a, T> {
+    inner: &'a mut MaskerInner<T>,
 }
 
-impl<T> Graphic<OpenGlRenderPlatform> for MaskerPop<T>
+impl<'a, T> Graphic<OpenGlRenderPlatform> for MaskerPop<'a, T>
 where
     T: Graphic<OpenGlRenderPlatform>,
 {
@@ -74,27 +74,19 @@ impl<T> Masker<T> {
 }
 
 
-impl<T> WidgetGraphic<OpenGlRenderPlatform> for Masker<T>
+impl<'a, 'b, T> WidgetGraphic<'a, 'b, OpenGlRenderPlatform> for Masker<T>
 where
-    T: Graphic<OpenGlRenderPlatform>,
+    T: Graphic<OpenGlRenderPlatform> + 'a + 'b,
 {
-    type Before = MaskerPush<T>;
-    type After = MaskerPop<T>;
+    type Before = MaskerPush<'b, T>;
+    type After = MaskerPop<'a, T>;
 
-    fn before_children(&mut self) -> &mut Self::Before {
-        let ptr = (&mut self.inner) as *mut MaskerInner<T> as *mut MaskerPush<T>;
-        // TODO: remove unsafe
-        unsafe {
-            &mut *ptr
-        }
+    fn before_children(&'b mut self) -> Self::Before {
+        MaskerPush { inner: &mut self.inner }
     }
 
-    fn after_children(&mut self) -> &mut Self::After {
-        let ptr = (&mut self.inner) as *mut MaskerInner<T> as *mut MaskerPop<T>;
-        // TODO: remove unsafe
-        unsafe {
-            &mut *ptr
-        }
+    fn after_children(&'a mut self) -> Self::After {
+        MaskerPop { inner: &mut self.inner }
     }
     
 }
