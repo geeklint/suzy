@@ -453,12 +453,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
             self.transform.as_ref(),
         );
         unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
-        let tex_trans = self.texture.bind(ctx);
-        Shader::set_vec4(
-            &ctx.bindings,
-            uniforms.tex_transform,
-            tex_trans,
-        );
+        self.texture.bind(ctx);
         self.mask_mode.apply_all(&uniforms, self.mask_level, ctx);
     }
 
@@ -483,12 +478,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
         }
         if shader_changed || new.texture != current.texture {
             unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
-            let tex_trans = new.texture.bind(ctx);
-            Shader::set_vec4(
-                &ctx.bindings,
-                uniforms.tex_transform,
-                tex_trans,
-            );
+            new.texture.bind(ctx);
         }
         MaskMode::apply_change(
             &current.mask_mode,

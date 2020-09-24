@@ -75,30 +75,33 @@ impl SlicedImage {
         let mut uvs = [0f32; 32];
         let Self { buffers, texture, padding, .. } = self;
         buffers.set_data_1(|_gl| {
-            texture.size().map(|(tex_width, tex_height)| {
-                let left = padding.left() / tex_width;
-                let right = 1.0 - (padding.right() / tex_width);
-                let bottom = padding.bottom() / tex_height;
-                let top = 1.0 - (padding.top() / tex_height);
-                uvs = [
-                    0.0, 0.0,
-                    1.0, 0.0,
-                    1.0, 1.0,
-                    0.0, 1.0,
-                    left, 0.0,
-                    right, 0.0,
-                    1.0, bottom,
-                    1.0, top,
-                    right, 1.0,
-                    left, 1.0,
-                    0.0, top,
-                    0.0, bottom,
-                    left, bottom,
-                    right, bottom,
-                    right, top,
-                    left, top,
-                ];
-                &uvs[..]
+            texture.size().and_then(|(tex_width, tex_height)| {
+                let uvs = &mut uvs;
+                texture.transform_uvs(move || {
+                    let left = padding.left() / tex_width;
+                    let right = 1.0 - (padding.right() / tex_width);
+                    let bottom = padding.bottom() / tex_height;
+                    let top = 1.0 - (padding.top() / tex_height);
+                    *uvs = [
+                        0.0, 0.0,
+                        1.0, 0.0,
+                        1.0, 1.0,
+                        0.0, 1.0,
+                        left, 0.0,
+                        right, 0.0,
+                        1.0, bottom,
+                        1.0, top,
+                        right, 1.0,
+                        left, 1.0,
+                        0.0, top,
+                        0.0, bottom,
+                        left, bottom,
+                        right, bottom,
+                        right, top,
+                        left, top,
+                    ];
+                    &mut uvs[..]
+                })
             })
         });
     }
@@ -189,9 +192,9 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
                 }
             } else {
                 self.update();
+                self.texture.bind(ctx.render_ctx_mut());
                 self.update_image();
                 self.buffers.set_indices(|_gl| &SLICED_INDICES[..]);
-                self.texture.bind(ctx.render_ctx_mut());
             }
         });
     }

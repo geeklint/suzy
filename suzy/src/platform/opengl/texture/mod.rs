@@ -341,6 +341,29 @@ impl Texture {
             self.size.1,
         )
     }
+
+    pub fn transform_uvs<'a, F>(&self, make_uvs: F) -> Option<&'a [f32]>
+    where
+        F: 'a + FnOnce() -> &'a mut [f32],
+    {
+        self.ins.size().map(|size| {
+            let (offset_x, offset_y, scale_x, scale_y) = size
+                .get_crop_transform(
+                    self.offset.0,
+                    self.offset.1,
+                    self.size.0,
+                    self.size.1,
+                );
+            let uvs = make_uvs();
+
+            for pair in uvs.chunks_exact_mut(2) {
+                pair[0] = (pair[0] / scale_x) + offset_x;
+                pair[1] = (pair[1] / scale_y) + offset_y;
+            }
+
+            &uvs[..]
+        })
+    }
 }
 
 impl Default for Texture {

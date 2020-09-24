@@ -61,15 +61,18 @@ impl Text {
         self.texture = font.texture.clone();
         let mut verts = vec![];
         let channels = &mut self.channels;
+        let texture = &self.texture;
         self.vertices.set_data(|_gl| {
-            let mut calc = FontCharCalc::new(font, settings);
-            let parser = RichTextParser::new(text);
-            for rich_text_cmd in parser {
-                calc.push(rich_text_cmd);
-            }
-            channels.clear();
-            calc.merge_verts(&mut verts, channels);
-            &verts[..]
+            texture.transform_uvs(|| {
+                let mut calc = FontCharCalc::new(font, settings);
+                let parser = RichTextParser::new(text);
+                for rich_text_cmd in parser {
+                    calc.push(rich_text_cmd);
+                }
+                channels.clear();
+                calc.merge_verts(&mut verts, channels);
+                &mut verts[..]
+            })
         });
     }
 }
@@ -98,19 +101,24 @@ impl Graphic<OpenGlRenderPlatform> for Text {
                     );
                 }
                 for (mask, range) in self.channels.iter() {
-                    ctx.push(|ctx| {
-                        ctx.params().tex_chan_mask(*mask);
-                        ctx.prepare_draw();
-                        let gl = &ctx.render_ctx().bindings;
-                        unsafe {
-                            gl.DrawArrays(
-                                TRIANGLES,
-                                range.start as GLsizei,
-                                range.len() as GLsizei,
-                            );
-                        }
-                    });
+                    #[allow(clippy::len_zero)]
+                    if range.len() > 0 {
+                        ctx.push(|ctx| {
+                            ctx.params().tex_chan_mask(*mask);
+                            ctx.prepare_draw();
+                            let gl = &ctx.render_ctx().bindings;
+                            unsafe {
+                                gl.DrawArrays(
+                                    TRIANGLES,
+                                    range.start as GLsizei,
+                                    range.len() as GLsizei,
+                                );
+                            }
+                        });
+                    }
                 }
+            } else {
+                self.texture.bind(ctx.render_ctx_mut());
             }
         });
     }
