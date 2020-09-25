@@ -34,7 +34,6 @@ use crate::widget::{
     WidgetId,
 };
 use crate::window;
-use crate::graphics::DrawContext;
 use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d};
 use window::{Window, WindowEvent, WindowSettings};
 

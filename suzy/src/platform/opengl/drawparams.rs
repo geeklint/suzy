@@ -215,7 +215,14 @@ impl MaskMode {
             uniforms.mask_bounds,
             (-1.0, 1.0, ctx.mask.width, ctx.mask.height),
         );
-        Self::apply_change(&Self::Masked, self, uniforms, mask_level, ctx);
+        Self::apply_change(
+            &Self::Masked,
+            self,
+            uniforms,
+            mask_level,
+            ctx,
+            false,
+        );
     }
 
     fn apply_change(
@@ -224,10 +231,11 @@ impl MaskMode {
         uniforms: &super::stdshaders::SharedUniforms,
         mask_level: u8,
         ctx: &mut OpenGlContext,
+        shader_changed: bool,
     ) {
         let mask_bounds_zero = (-1.0, 1.0, ctx.mask.width, ctx.mask.height);
         match (current, new) {
-            (Self::Masked, Self::Masked)
+            (Self::Masked, Self::Masked) if !shader_changed => (),
             | (Self::Push, Self::Push)
             | (Self::Pop, Self::Pop)
                 => (),
@@ -486,6 +494,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
             &uniforms,
             new.mask_level,
             ctx,
+            shader_changed,
         );
     }
 }
