@@ -89,16 +89,43 @@ where
     }
 }
 
-pub(super) struct DrawGraphicAfterReceiver<'a, 'b, P: RenderPlatform> {
+pub(super) struct DrawGraphicUnorderedReceiver<'a, 'b, P: RenderPlatform> {
     pub ctx: &'a mut DrawContext<'b, P>,
+    pub num_ordered: &'a mut u32,
 }
 
-impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicAfterReceiver<'a, 'b, P>
+impl<'a, 'b, P> WidgetGraphicReceiver<P>
+for DrawGraphicUnorderedReceiver<'a, 'b, P>
 where
     P: RenderPlatform,
 {
     fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
-        graphic.after_children().draw(self.ctx);
+        if T::ordered() {
+            *self.num_ordered += 1;
+        } else {
+            graphic.after_children().draw(self.ctx);
+        }
+    }
+}
+
+pub(super) struct DrawGraphicOrderedReceiver<'a, 'b, P: RenderPlatform> {
+    pub ctx: &'a mut DrawContext<'b, P>,
+    pub target: u32,
+    pub current: u32,
+}
+
+impl<'a, 'b, P> WidgetGraphicReceiver<P>
+for DrawGraphicOrderedReceiver<'a, 'b, P>
+where
+    P: RenderPlatform,
+{
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
+        if T::ordered() {
+            if self.current == self.target {
+                graphic.after_children().draw(self.ctx);
+            }
+            self.current += 1;
+        }
     }
 }
 

@@ -23,6 +23,8 @@ where
 
     fn before_children(&'b mut self) -> Self::Before;
     fn after_children(&'a mut self) -> Self::After;
+
+    fn ordered() -> bool { true }
 }
 
 impl<'a, 'b, P, T> WidgetGraphic<'a, 'b, P> for T
@@ -41,6 +43,8 @@ where
     fn after_children(&'a mut self) -> Self::After {
         WidgetGraphicProxy { graphic: &mut [] }
     }
+
+    fn ordered() -> bool { false }
 }
 
 pub struct WidgetGraphicProxy<'a, T> {

@@ -32,7 +32,8 @@ use receivers::{
     DrawChildReceiver,
     PointerEventChildReceiver,
     DrawGraphicBeforeReceiver,
-    DrawGraphicAfterReceiver,
+    DrawGraphicUnorderedReceiver,
+    DrawGraphicOrderedReceiver,
     FindWidgetReceiver,
 };
 
@@ -108,7 +109,15 @@ where
         let content = &mut wid_int.content;
         content.graphics(DrawGraphicBeforeReceiver { ctx });
         content.children(DrawChildReceiver { ctx });
-        content.graphics(DrawGraphicAfterReceiver { ctx });
+        let mut num_ordered = 0;
+        content.graphics(DrawGraphicUnorderedReceiver {
+            ctx, num_ordered: &mut num_ordered,
+        });
+        for target in (0..num_ordered).rev() {
+            content.graphics(DrawGraphicOrderedReceiver {
+                ctx, target, current: 0,
+            });
+        }
     }
 
     pub(crate) fn find_widget(
