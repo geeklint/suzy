@@ -275,7 +275,6 @@ impl SelectableSlicedImage {
                 let uvs = &mut uvs;
                 texture.transform_uvs(move || {
                     let state_frac = 1.0 / (states.len() as f32);
-                    let tex_width = tex_width * state_frac;
                     let left = padding.left() / tex_width;
                     let bottom = padding.bottom() / tex_height;
                     let top = 1.0 - (padding.top() / tex_height);
