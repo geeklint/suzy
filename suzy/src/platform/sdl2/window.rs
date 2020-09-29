@@ -294,6 +294,15 @@ impl Events {
             sdl_WindowEvent::Close => {
                 WindowEvent::Quit
             }
+            sdl_WindowEvent::Leave => {
+                WindowEvent::Pointer(
+                    PointerEventData::new(
+                        crate::pointer::PointerId::Mouse,
+                        PointerAction::Hover(f32::NAN, f32::NAN),
+                        f32::NAN, f32::NAN,
+                    )
+                )
+            }
             _ => return None,
         })
     }
