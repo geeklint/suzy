@@ -45,7 +45,7 @@ impl ShaderExclusive {
             *self = Self::Sdf {
                 text_color: Color::WHITE,
                 outline_color: Color::create_rgba8(0xff, 0xff, 0xff, 0),
-                distance_edges: (0.49, 0.51, 0.0, 0.0),
+                distance_edges: (0.465, 0.535, 0.0, 0.0),
                 tex_chan_mask: (0.0, 0.0, 0.0, 0.0),
             };
         }
@@ -422,8 +422,8 @@ impl DrawParams {
     pub fn body_edge(&mut self, edge: f32, smoothing: f32) {
         use ShaderExclusive::*;
         if let Sdf { ref mut distance_edges, .. } = self.shader_exclusive {
-            let smoothing = smoothing / 2.0;
-            distance_edges.0 = edge - smoothing;
+            let smoothing = smoothing.max(0.0) / 2.0;
+            distance_edges.0 = (edge - smoothing).max(0.0);
             distance_edges.1 = edge + smoothing;
         } else {
             debug_assert!(
@@ -436,8 +436,8 @@ impl DrawParams {
     pub fn outline_edge(&mut self, edge: f32, smoothing: f32) {
         use ShaderExclusive::*;
         if let Sdf { ref mut distance_edges, .. } = self.shader_exclusive {
-            let smoothing = smoothing / 2.0;
-            distance_edges.2 = edge - smoothing;
+            let smoothing = smoothing.max(0.0) / 2.0;
+            distance_edges.2 = (edge - smoothing).max(0.0);
             distance_edges.3 = edge + smoothing;
         } else {
             debug_assert!(
