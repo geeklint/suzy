@@ -4,7 +4,7 @@
 
 //! Convenience functions to convert between measurable units of visible size.
 //!
-//! The default unit in Suzy is defined to be a 'dp' (1/160 inches, or a best
+//! The default unit in Suzy is defined to be a 'dp' (1/96 inches, or a best
 //! approximation based on a user's scaling factor.
 //!
 //! The units `inches`, `mm`, `cm` are standard physical sizes.
@@ -25,7 +25,7 @@ pub fn to_dp(value: f32) -> f32 { value }
 #[inline]
 pub fn dp(dp: f32) -> f32 { dp }
 
-const DPI: f32 = 160.0;
+pub const DPI: f32 = 96.0;
 
 /// Convert dp to inches
 #[inline]

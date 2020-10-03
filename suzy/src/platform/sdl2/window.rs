@@ -39,7 +39,7 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
             window.subsystem().display_dpi(display_index)?
         };
         let dpi = ((hdpi + vdpi) / 2.0) as f32;
-        let pixels_per_dp = dpi / 160.0;
+        let pixels_per_dp = dpi / crate::units::DPI;
         let screen_size = window.size();
         let pixel_size = window.drawable_size();
         let x_px_per_su = (pixel_size.0 as f32) / (screen_size.0 as f32);
@@ -97,7 +97,7 @@ impl Window {
                 video.display_dpi(0)?
             };
             let dpi = ((hdpi + vdpi) / 2.0) as f32;
-            dpi / 160.0
+            dpi / crate::units::DPI
         };
         let guess_width = width * guess_px_per_dp;
         let guess_height = height * guess_px_per_dp;
