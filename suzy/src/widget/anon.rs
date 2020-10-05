@@ -19,7 +19,7 @@ mod private {
     use super::{WidgetId, WidgetContent};
     use super::super::FindWidgetCallback;
 
-    pub trait Widget<P: RenderPlatform>: DynRect {
+    pub trait Widget<P: RenderPlatform + ?Sized>: DynRect {
         fn id(&self) -> WidgetId;
         fn draw(&mut self, ctx: &mut DrawContext<P>);
         fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
@@ -36,7 +36,7 @@ mod private {
 
     impl<P, T> Widget<P> for super::Widget<T, P>
     where
-        P: RenderPlatform,
+        P: RenderPlatform + ?Sized,
         T: WidgetContent<P>,
     {
         fn id(&self) -> WidgetId {
@@ -74,20 +74,22 @@ mod private {
 ///
 /// This can be used for the same patterns trait-objects usually are, e.g.
 /// a heterogeneous collection of Widgets.
-pub trait AnonWidget<P: RenderPlatform = DefaultRenderPlatform>
+pub trait AnonWidget<P = DefaultRenderPlatform>
     : private::Widget<P>
+where
+    P: RenderPlatform + ?Sized,
 {
     fn id(&self) -> WidgetId { private::Widget::id(self) }
 }
 
 impl<P, T> AnonWidget<P> for Widget<T, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
 }
 
-impl<P: RenderPlatform> dyn AnonWidget<P> {
+impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
     pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T, P>>
     where
         T: WidgetContent<P>,

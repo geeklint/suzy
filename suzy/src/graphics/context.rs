@@ -21,7 +21,10 @@ pub enum DrawPass {
 }
 
 #[derive(Debug)]
-pub struct DrawContext<'a, P: RenderPlatform = DefaultRenderPlatform> {
+pub struct DrawContext<'a, P = DefaultRenderPlatform>
+where
+    P: RenderPlatform + ?Sized,
+{
     context: &'a mut P::Context,
     current: P::DrawParams,
     last_applied: Option<P::DrawParams>,
@@ -131,7 +134,7 @@ where
     }
 }
 
-impl<P: RenderPlatform> Drop for DrawContext<'_, P> {
+impl<P: RenderPlatform + ?Sized> Drop for DrawContext<'_, P> {
     fn drop(&mut self) {
         if self.pass != DrawPass::UpdateContext {
             if let Some(old) = self.last_applied.take() {

@@ -13,19 +13,22 @@ use crate::platform::{
     RenderPlatform,
 };
 
-pub trait Graphic<P: RenderPlatform = DefaultRenderPlatform> {
+pub trait Graphic<P = DefaultRenderPlatform>
+where
+    P: RenderPlatform + ?Sized,
+{
     fn draw(&mut self, ctx: &mut DrawContext<P>);
 }
 
-impl<P: RenderPlatform> Graphic<P> for () {
+impl<P: RenderPlatform + ?Sized> Graphic<P> for () {
     fn draw(&mut self, _ctx: &mut DrawContext<P>) {}
 }
 
-impl<P: RenderPlatform> Graphic<P> for [(); 0] {
+impl<P: RenderPlatform + ?Sized> Graphic<P> for [(); 0] {
     fn draw(&mut self, _ctx: &mut DrawContext<P>) {}
 }
 
-impl<P: RenderPlatform, T: Graphic<P>> Graphic<P> for [T] {
+impl<P: RenderPlatform + ?Sized, T: Graphic<P>> Graphic<P> for [T] {
     fn draw(&mut self, ctx: &mut DrawContext<P>) {
         for graphic in self {
             graphic.draw(ctx);

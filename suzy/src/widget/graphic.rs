@@ -16,7 +16,7 @@ use crate::graphics::Graphic;
 /// a state-change applied in the first pass.
 pub trait WidgetGraphic<'a, 'b, P = DefaultRenderPlatform>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
 {
     type Before: Graphic<P> + 'b;
     type After: Graphic<P> + 'a;

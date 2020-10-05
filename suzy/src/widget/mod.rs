@@ -53,7 +53,7 @@ pub(crate) type FindWidgetCallback<'a, P> =
 /// A basic structure to wrap some data and turn it into a widget.
 pub struct Widget<T, P = DefaultRenderPlatform>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P> + ?Sized,
 {
     watcher: Watcher<WidgetInternal<P, T>>,
@@ -71,7 +71,7 @@ where
 
 impl<T, P> Deref for Widget<T, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
     type Target = T;
@@ -82,7 +82,7 @@ where
 
 impl<T, P> DerefMut for Widget<T, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
     fn deref_mut(&mut self) -> &mut T {
@@ -92,7 +92,7 @@ where
 
 impl<P, T> Widget<T, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
     /// Get a value representing a unique id for this Widget.  This value may
@@ -183,7 +183,7 @@ where
 
 impl<P, T> Rect for Widget<T, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
     fn x(&self) -> Dim { self.watcher.data().rect.x() }

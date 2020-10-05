@@ -20,7 +20,7 @@ use super::{
 /// use to submit watch closures.
 pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P> + ?Sized,
 {
     /// Get a value representing a unique id for the widget this WidgetInit
@@ -46,7 +46,7 @@ where
 
 struct WidgetInitImpl<'a, 'b, O, T, G, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: WidgetContent<P>,
     T: WidgetContent<P>,
@@ -57,7 +57,7 @@ where
 
 impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: WidgetContent<P>,
     T: WidgetContent<P>,
@@ -91,7 +91,7 @@ where
 
 impl<P, T> WatcherInit for WidgetInternal<P, T>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
     fn init(watcher: &mut WatcherMeta<Self>) {
