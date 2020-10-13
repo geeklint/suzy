@@ -103,6 +103,7 @@ impl SharedTexture {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum KeyVariants {
     Path(Cow<'static, Path>),
+    Buffer(*const u8),
     Default,
     Error,
 }
@@ -117,6 +118,10 @@ pub struct TextureCacheKey {
 }
 
 impl TextureCacheKey {
+    fn buffer(buf: &'static [u8]) -> Self {
+        Self { inner: KeyVariants::Buffer(buf.as_ptr()) }
+    }
+
     fn error() -> Self {
         Self { inner: KeyVariants::Error }
     }
@@ -256,6 +261,20 @@ impl Texture {
         }
     }
 
+    pub fn new_cached<T, U>(key: TextureCacheKey, populator: T) -> Self
+    where
+        T: Into<Box<U>>,
+        U: PopulateTexture + 'static,
+    {
+        let populator = populator.into();
+        let size = populator.get_known_size().unwrap_or((f32::NAN, f32::NAN));
+        Self {
+            ins: TextureInstance::ToCache(key, populator),
+            offset: (0.0, 0.0),
+            size,
+        }
+    }
+
     pub fn size(&self) -> Option<(f32, f32)> {
         if !self.size.0.is_nan() {
             Some(self.size)
@@ -321,6 +340,26 @@ impl Texture {
         })
     }
 
+    pub fn from_rgba_cached(
+        width: u16,
+        height: u16,
+        alignment: u16,
+        pixels: &'static [u8],
+    ) -> Self {
+        assert_eq!(
+            pixels.len(),
+            PopulateTextureUtil::data_len(width, height, alignment, 4),
+            "Invalid pixel data for given width/height/alignment",
+        );
+        let key = TextureCacheKey::buffer(pixels);
+        Self::new_cached(key, RGBATexturePopulator {
+            width,
+            height,
+            alignment,
+            pixels: pixels.into(),
+        })
+    }
+
     pub fn crop(self, x: f32, y: f32, height: f32, width: f32) -> Self {
         Self {
             ins: self.ins,
@@ -340,6 +379,29 @@ impl Texture {
             self.size.0,
             self.size.1,
         )
+    }
+
+    pub fn transform_uvs<'a, F>(&self, make_uvs: F) -> Option<&'a [f32]>
+    where
+        F: 'a + FnOnce() -> &'a mut [f32],
+    {
+        self.ins.size().map(|size| {
+            let (offset_x, offset_y, scale_x, scale_y) = size
+                .get_crop_transform(
+                    self.offset.0,
+                    self.offset.1,
+                    self.size.0,
+                    self.size.1,
+                );
+            let uvs = make_uvs();
+
+            for pair in uvs.chunks_exact_mut(2) {
+                pair[0] = (pair[0] / scale_x) + offset_x;
+                pair[1] = (pair[1] / scale_y) + offset_y;
+            }
+
+            &uvs[..]
+        })
     }
 }
 

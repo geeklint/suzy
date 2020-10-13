@@ -2,15 +2,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+use crate::selectable::Selectable;
 use crate::window::{
     Window,
     WindowEvent,
     WindowBuilder,
 };
+use crate::widget::WidgetContent;
+use crate::widgets::TextContent;
 
 pub trait RenderPlatform: 'static {
     type Context: 'static;
     type DrawParams: crate::graphics::DrawParams<Self::Context>;
+
+    type DefaultButtonContent:
+        Default + Selectable + WidgetContent<Self> + TextContent;
 }
 
 pub enum Event<'a> {

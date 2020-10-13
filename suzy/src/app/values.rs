@@ -13,12 +13,15 @@ thread_local! {
 #[derive(Clone, Debug)]
 pub(crate) struct AppValues {
     pub frame_start: Watched<time::Instant>,
+    pub coarse_time: Watched<time::Instant>,
     pub cell_size: Watched<f32>,
     pub px_per_dp: Watched<f32>,
     pub window_size: (f32, f32),
 }
 
 impl AppValues {
+    pub const COARSE_STEP: time::Duration = time::Duration::from_secs(1);
+
     pub(super) fn with<F: FnOnce() -> R, R>(self, func: F) -> (Self, R) {
         APP_STACK.with(|cell| cell.borrow_mut().push(self));
         let res = (func)();

@@ -72,3 +72,43 @@ pub mod window;
 pub mod platform;
 pub mod watch;
 pub mod widgets;
+
+
+/// A version of the tweak! macro from the crate
+/// [`inline_tweak`](https://crates.io/crates/inline_tweak), but designed to
+/// work within Suzy's watch system.
+///
+/// Using this macro in a watch closure will cause the closure to be re-run
+/// periodically, so that a tweaked value in the parsed source code can
+/// be observed.
+///
+/// This macro is available if the `inline_tweak` feature is enabled for Suzy.
+#[cfg(feature = "inline_tweak")]
+#[cfg(debug_assertions)]
+#[macro_export]
+macro_rules! tweak {
+    // this macro adapted from crate `inline_tweak`, version 1.0.8
+    ($default:expr) => {{
+        $crate::app::App::<$crate::platform::DefaultPlatform>::coarse_time();
+        $crate::watch::inline_tweak(None, file!(), line!(), column!())
+            .unwrap_or_else(|| $default)
+    }};
+    ($value:literal; $default:expr) => {{
+        $crate::app::App::<$crate::platform::DefaultPlatform>::coarse_time();
+        $crate::watch::inline_tweak(Some($value), file!(), line!(), column!())
+            .unwrap_or_else(|| $default)
+    }};
+}
+
+#[cfg(feature = "inline_tweak")]
+#[cfg(not(debug_assertions))]
+#[macro_export]
+macro_rules! tweak {
+    // this macro adapted from crate `inline_tweak`, version 1.0.8
+    ($default:expr) => {
+        $default
+    };
+    ($value:literal; $default:expr) => {
+        $default
+    };
+}

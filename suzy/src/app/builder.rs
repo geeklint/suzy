@@ -36,8 +36,11 @@ impl AppBuilder {
 
         let (width, height) = window.size();
 
+        let now = time::Instant::now();
+
         let values = AppValues {
-            frame_start: Watched::new(time::Instant::now()),
+            frame_start: Watched::new(now),
+            coarse_time: Watched::new(now),
             cell_size: Watched::new(get_cell_size(width, height)),
             px_per_dp: Watched::new(1.0),
             window_size: (width, height),

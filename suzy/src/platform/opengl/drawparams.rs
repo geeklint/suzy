@@ -45,7 +45,7 @@ impl ShaderExclusive {
             *self = Self::Sdf {
                 text_color: Color::WHITE,
                 outline_color: Color::create_rgba8(0xff, 0xff, 0xff, 0),
-                distance_edges: (0.49, 0.51, 0.0, 0.0),
+                distance_edges: (0.465, 0.535, 0.0, 0.0),
                 tex_chan_mask: (0.0, 0.0, 0.0, 0.0),
             };
         }
@@ -215,7 +215,14 @@ impl MaskMode {
             uniforms.mask_bounds,
             (-1.0, 1.0, ctx.mask.width, ctx.mask.height),
         );
-        Self::apply_change(&Self::Masked, self, uniforms, mask_level, ctx);
+        Self::apply_change(
+            &Self::Masked,
+            self,
+            uniforms,
+            mask_level,
+            ctx,
+            false,
+        );
     }
 
     fn apply_change(
@@ -224,10 +231,11 @@ impl MaskMode {
         uniforms: &super::stdshaders::SharedUniforms,
         mask_level: u8,
         ctx: &mut OpenGlContext,
+        shader_changed: bool,
     ) {
         let mask_bounds_zero = (-1.0, 1.0, ctx.mask.width, ctx.mask.height);
         match (current, new) {
-            (Self::Masked, Self::Masked)
+            (Self::Masked, Self::Masked) if !shader_changed => (),
             | (Self::Push, Self::Push)
             | (Self::Pop, Self::Pop)
                 => (),
@@ -414,8 +422,8 @@ impl DrawParams {
     pub fn body_edge(&mut self, edge: f32, smoothing: f32) {
         use ShaderExclusive::*;
         if let Sdf { ref mut distance_edges, .. } = self.shader_exclusive {
-            let smoothing = smoothing / 2.0;
-            distance_edges.0 = edge - smoothing;
+            let smoothing = smoothing.max(0.0) / 2.0;
+            distance_edges.0 = (edge - smoothing).max(0.0);
             distance_edges.1 = edge + smoothing;
         } else {
             debug_assert!(
@@ -428,8 +436,8 @@ impl DrawParams {
     pub fn outline_edge(&mut self, edge: f32, smoothing: f32) {
         use ShaderExclusive::*;
         if let Sdf { ref mut distance_edges, .. } = self.shader_exclusive {
-            let smoothing = smoothing / 2.0;
-            distance_edges.2 = edge - smoothing;
+            let smoothing = smoothing.max(0.0) / 2.0;
+            distance_edges.2 = (edge - smoothing).max(0.0);
             distance_edges.3 = edge + smoothing;
         } else {
             debug_assert!(
@@ -453,12 +461,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
             self.transform.as_ref(),
         );
         unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
-        let tex_trans = self.texture.bind(ctx);
-        Shader::set_vec4(
-            &ctx.bindings,
-            uniforms.tex_transform,
-            tex_trans,
-        );
+        self.texture.bind(ctx);
         self.mask_mode.apply_all(&uniforms, self.mask_level, ctx);
     }
 
@@ -483,12 +486,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
         }
         if shader_changed || new.texture != current.texture {
             unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
-            let tex_trans = new.texture.bind(ctx);
-            Shader::set_vec4(
-                &ctx.bindings,
-                uniforms.tex_transform,
-                tex_trans,
-            );
+            new.texture.bind(ctx);
         }
         MaskMode::apply_change(
             &current.mask_mode,
@@ -496,6 +494,7 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
             &uniforms,
             new.mask_level,
             ctx,
+            shader_changed,
         );
     }
 }

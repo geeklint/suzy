@@ -70,6 +70,16 @@ impl SelectionState {
             SelectionStateAll::Active => SelectionStateV2::Active,
         }
     }
+
+    pub fn reduce(self) -> Self {
+        Self(match self.0 {
+            SelectionStateAll::Normal => SelectionStateAll::Normal,
+            SelectionStateAll::Hover => SelectionStateAll::Normal,
+            SelectionStateAll::Focus => SelectionStateAll::Normal,
+            SelectionStateAll::Pressed => SelectionStateAll::Focus,
+            SelectionStateAll::Active => SelectionStateAll::Normal,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

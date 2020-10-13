@@ -97,6 +97,7 @@ impl<'a> FontFamilySourceDynamic<'a> {
     }
 }
 
+#[derive(Clone)]
 pub struct FontFamilyDynamic<'a> {
     pub(super) texture: Texture,
     pub(super) channel_masks: &'static [ChannelMask],

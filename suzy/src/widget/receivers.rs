@@ -18,7 +18,7 @@ use super::{
 /// [`WidgetContent::children`](trait.WidgetContent.html#tymethod.children).
 pub trait WidgetChildReceiver<P = DefaultRenderPlatform>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
 {
     /// Receive a child.
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>);
@@ -31,18 +31,18 @@ where
 /// [`WidgetContent::graphics`](trait.WidgetContent.html#tymethod.graphics).
 pub trait WidgetGraphicReceiver<P = DefaultRenderPlatform>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
 {
     /// Receive a graphic.
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T);
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T);
 }
 
-pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform> {
+pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform + ?Sized> {
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
 impl<'a, 'b, P> WidgetChildReceiver<P> for DrawChildReceiver<'a, 'b, P>
-where P: RenderPlatform
+where P: RenderPlatform + ?Sized
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
         Widget::draw(child, self.ctx);
@@ -61,7 +61,7 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
 impl<'a, 'b, 'c, P> WidgetChildReceiver<P>
 for PointerEventChildReceiver<'a, 'b, 'c>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
         if !*self.handled {
@@ -76,40 +76,76 @@ where
     }
 }
 
-pub(super) struct DrawGraphicBeforeReceiver<'a, 'b, P: RenderPlatform> {
+pub(super) struct DrawGraphicBeforeReceiver<'a, 'b, P>
+where
+    P: RenderPlatform + ?Sized,
+{
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
 impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicBeforeReceiver<'a, 'b, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
 {
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
         graphic.before_children().draw(self.ctx);
     }
 }
 
-pub(super) struct DrawGraphicAfterReceiver<'a, 'b, P: RenderPlatform> {
+pub(super) struct DrawGraphicUnorderedReceiver<'a, 'b, P>
+where
+    P: RenderPlatform + ?Sized,
+{
     pub ctx: &'a mut DrawContext<'b, P>,
+    pub num_ordered: &'a mut u32,
 }
 
-impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicAfterReceiver<'a, 'b, P>
+impl<'a, 'b, P> WidgetGraphicReceiver<P>
+for DrawGraphicUnorderedReceiver<'a, 'b, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
 {
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
-        graphic.after_children().draw(self.ctx);
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
+        if T::ordered() {
+            *self.num_ordered += 1;
+        } else {
+            graphic.after_children().draw(self.ctx);
+        }
     }
 }
 
-pub(super) struct FindWidgetReceiver<'a, 'b, P> {
+pub(super) struct DrawGraphicOrderedReceiver<'a, 'b, P>
+where
+    P: RenderPlatform + ?Sized,
+{
+    pub ctx: &'a mut DrawContext<'b, P>,
+    pub target: u32,
+    pub current: u32,
+}
+
+impl<'a, 'b, P> WidgetGraphicReceiver<P>
+for DrawGraphicOrderedReceiver<'a, 'b, P>
+where
+    P: RenderPlatform + ?Sized,
+{
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
+        if T::ordered() {
+            if self.current == self.target {
+                graphic.after_children().draw(self.ctx);
+            }
+            self.current += 1;
+        }
+    }
+}
+
+pub(super) struct FindWidgetReceiver<'a, 'b, P: ?Sized> {
     pub id: &'a super::WidgetId,
     pub func: &'a mut FindWidgetCallback<'b, P>,
 }
 
 impl<'a, 'b, P> WidgetChildReceiver<P> for FindWidgetReceiver<'a, 'b, P>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
         Widget::find_widget(child, self.id, self.func);

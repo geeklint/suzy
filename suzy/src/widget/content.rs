@@ -77,7 +77,7 @@ use super::{
 ///
 pub trait WidgetContent<P = DefaultRenderPlatform>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     Self: 'static,
 {
     /// This method provides a convient place to register functions which

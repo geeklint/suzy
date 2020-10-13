@@ -7,6 +7,7 @@ mod masker;
 
 pub use image::{
     SlicedImage,
+    SelectableSlicedImage,
 };
 
 pub use masker::Masker;

@@ -4,6 +4,7 @@
 
 use crate::graphics::{DrawContext, Graphic};
 use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
+use crate::selectable::{Selectable, SelectionState, SelectionStateV2};
 
 use crate::platform::opengl;
 use opengl::context::bindings::{
@@ -17,13 +18,6 @@ use opengl::{
     DualVertexBufferIndexed,
     Texture,
 };
-
-pub struct SlicedImage {
-    rect: SimpleRect,
-    padding: SimplePadding2d,
-    texture: Texture,
-    buffers: DualVertexBufferIndexed<f32>,
-}
 
 static SLICED_INDICES: [u8; 18 * 3] = [
     0, 4, 11,
@@ -45,6 +39,13 @@ static SLICED_INDICES: [u8; 18 * 3] = [
     14, 7, 8,
     7, 2, 8,
 ];
+
+pub struct SlicedImage {
+    rect: SimpleRect,
+    padding: SimplePadding2d,
+    texture: Texture,
+    buffers: DualVertexBufferIndexed<f32>,
+}
 
 impl Default for SlicedImage {
     fn default() -> Self {
@@ -75,30 +76,33 @@ impl SlicedImage {
         let mut uvs = [0f32; 32];
         let Self { buffers, texture, padding, .. } = self;
         buffers.set_data_1(|_gl| {
-            texture.size().map(|(tex_width, tex_height)| {
-                let left = padding.left() / tex_width;
-                let right = 1.0 - (padding.right() / tex_width);
-                let bottom = padding.bottom() / tex_height;
-                let top = 1.0 - (padding.top() / tex_height);
-                uvs = [
-                    0.0, 0.0,
-                    1.0, 0.0,
-                    1.0, 1.0,
-                    0.0, 1.0,
-                    left, 0.0,
-                    right, 0.0,
-                    1.0, bottom,
-                    1.0, top,
-                    right, 1.0,
-                    left, 1.0,
-                    0.0, top,
-                    0.0, bottom,
-                    left, bottom,
-                    right, bottom,
-                    right, top,
-                    left, top,
-                ];
-                &uvs[..]
+            texture.size().and_then(|(tex_width, tex_height)| {
+                let uvs = &mut uvs;
+                texture.transform_uvs(move || {
+                    let left = padding.left() / tex_width;
+                    let right = 1.0 - (padding.right() / tex_width);
+                    let bottom = padding.bottom() / tex_height;
+                    let top = 1.0 - (padding.top() / tex_height);
+                    *uvs = [
+                        0.0, 0.0,
+                        1.0, 0.0,
+                        1.0, 1.0,
+                        0.0, 1.0,
+                        left, 0.0,
+                        right, 0.0,
+                        1.0, bottom,
+                        1.0, top,
+                        right, 1.0,
+                        left, 1.0,
+                        0.0, top,
+                        0.0, bottom,
+                        left, bottom,
+                        right, bottom,
+                        right, top,
+                        left, top,
+                    ];
+                    &mut uvs[..]
+                })
             })
         });
     }
@@ -161,9 +165,9 @@ impl Rect for SlicedImage {
 
 impl Graphic<OpenGlRenderPlatform> for SlicedImage {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        DrawContext::push(ctx, |ctx| {
-            ctx.standard_mode();
-            ctx.use_texture(self.texture.clone());
+        ctx.push(|ctx| {
+            ctx.params().standard_mode();
+            ctx.params().use_texture(self.texture.clone());
             if let Some(ready) = self.buffers.check_ready(ctx) {
                 let gl = ready.gl;
                 ready.bind_0();
@@ -189,9 +193,174 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
                 }
             } else {
                 self.update();
+                self.texture.bind(ctx.render_ctx_mut());
                 self.update_image();
                 self.buffers.set_indices(|_gl| &SLICED_INDICES[..]);
-                self.texture.bind(DrawContext::render_ctx_mut(ctx));
+            }
+        });
+    }
+}
+
+#[derive(Default)]
+pub struct SelectableSlicedImage {
+    inner: SlicedImage,
+    states: std::borrow::Cow<'static, [SelectionState]>,
+    current_state: SelectionState,
+}
+
+impl Rect for SelectableSlicedImage {
+    fn x(&self) -> Dim { self.inner.x() }
+    fn y(&self) -> Dim { self.inner.y() }
+
+    fn x_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        self.inner.x_mut(f)
+    }
+
+    fn y_mut<F, R>(&mut self, f: F) -> R
+        where F: FnOnce(&mut Dim) -> R
+    {
+        self.inner.y_mut(f)
+    }
+}
+
+impl Selectable for SelectableSlicedImage {
+    fn selection_changed(&mut self, state: SelectionState) {
+        self.current_state = state;
+    }
+}
+
+impl SelectableSlicedImage {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn set_image<P, S>(
+        &mut self,
+        texture: Texture,
+        padding: &P,
+        states: S,
+    )
+    where
+        P: Padding2d,
+        S: Into<std::borrow::Cow<'static, [SelectionState]>>,
+    {
+        self.inner.texture = texture;
+        self.inner.padding = padding.into();
+        let states = states.into();
+        assert!(
+            states.contains(&SelectionState::normal()),
+            "SelectableSlicedImage must have a variant for Normal",
+        );
+        self.states = states;
+        self.update_image();
+    }
+
+    fn update_image(&mut self) {
+        const NUM_STATES: usize = 5;
+        const COORDS_PER_STATE: usize = 32;
+        let all_states: [_; NUM_STATES] = [
+            SelectionState::normal(),
+            SelectionState::hover(),
+            SelectionState::focus(),
+            SelectionState::pressed(),
+            SelectionState::active(),
+        ];
+        let mut uvs = [0f32; NUM_STATES * COORDS_PER_STATE];
+        let states = &self.states;
+        let SlicedImage { buffers, texture, padding, .. } = &mut self.inner;
+        buffers.set_data_1(|_gl| {
+            texture.size().and_then(|(tex_width, tex_height)| {
+                let uvs = &mut uvs;
+                texture.transform_uvs(move || {
+                    let state_frac = 1.0 / (states.len() as f32);
+                    let left = padding.left() / tex_width;
+                    let bottom = padding.bottom() / tex_height;
+                    let top = 1.0 - (padding.top() / tex_height);
+                    for (i, state) in all_states.iter().enumerate() {
+                        let data_start = i * COORDS_PER_STATE;
+                        let data_end = data_start + COORDS_PER_STATE;
+                        let mut find_state = *state;
+                        let state_index: usize = loop {
+                            if let Some(idx) = states.iter()
+                                .position(|item| *item == find_state)
+                            {
+                                break idx;
+                            }
+                            find_state = find_state.reduce();
+                        };
+                        let offset = (state_index as f32) * state_frac;
+                        let left = offset + left;
+                        let end = offset + state_frac;
+                        let right = end - (padding.right() / tex_width);
+                        uvs[data_start..data_end].copy_from_slice(&[
+                            offset, 0.0,
+                            end, 0.0,
+                            end, 1.0,
+                            offset, 1.0,
+                            left, 0.0,
+                            right, 0.0,
+                            end, bottom,
+                            end, top,
+                            right, 1.0,
+                            left, 1.0,
+                            offset, top,
+                            offset, bottom,
+                            left, bottom,
+                            right, bottom,
+                            right, top,
+                            left, top,
+                        ]);
+                    }
+                    &mut uvs[..]
+                })
+            })
+        });
+    }
+}
+
+impl Graphic<OpenGlRenderPlatform> for SelectableSlicedImage {
+    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+        const UV_STATE_SIZE: usize = 32 * std::mem::size_of::<f32>();
+        let uv_offset = match self.current_state.v2() {
+            SelectionStateV2::Normal => 0,
+            SelectionStateV2::Hover => UV_STATE_SIZE,
+            SelectionStateV2::Focus => UV_STATE_SIZE * 2,
+            SelectionStateV2::Pressed => UV_STATE_SIZE * 3,
+            SelectionStateV2::Active => UV_STATE_SIZE * 4,
+        };
+        ctx.push(|ctx| {
+            ctx.params().standard_mode();
+            ctx.params().use_texture(self.inner.texture.clone());
+            if let Some(ready) = self.inner.buffers.check_ready(ctx) {
+                let gl = ready.gl;
+                ready.bind_0();
+                unsafe {
+                    gl.VertexAttribPointer(
+                        0, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                    );
+                }
+                ready.bind_1();
+                unsafe {
+                    gl.VertexAttribPointer(
+                        1, 2, FLOAT, FALSE, 0, uv_offset as _,
+                    );
+                }
+                ready.bind_indices();
+                unsafe {
+                    gl.DrawElements(
+                        TRIANGLES,
+                        SLICED_INDICES.len() as _,
+                        UNSIGNED_BYTE,
+                        std::ptr::null(),
+                    );
+                }
+            } else {
+                self.inner.update();
+                self.inner.texture.bind(ctx.render_ctx_mut());
+                self.update_image();
+                self.inner.buffers.set_indices(|_gl| &SLICED_INDICES[..]);
             }
         });
     }

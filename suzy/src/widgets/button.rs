@@ -10,6 +10,7 @@ use drying_paint::{
 use crate::pointer::{
     PointerEvent,
     PointerAction,
+    PointerId,
 };
 use crate::platform::{
     RenderPlatform,
@@ -112,11 +113,15 @@ where
                 true
             },
             PointerAction::Up => {
-                let ungrabbed = event.try_ungrab(extra);
+                let ungrabbed = event.try_ungrab(extra.id());
                 if ungrabbed {
                     self.pointers_down -= 1;
                     if self.pointers_down == 0 {
-                        *self.state = SelectionState::normal();
+                        *self.state = if event.id() == PointerId::Mouse {
+                            SelectionState::hover()
+                        } else {
+                            SelectionState::normal()
+                        };
                         self.on_click.dispatch(());
                     }
                 }
@@ -125,18 +130,14 @@ where
             PointerAction::Hover(_, _) => {
                 match (self.state.v1(), self.hittest(extra, event.pos())) {
                     (SelectionStateV1::Normal, true) => {
-                        let grabbed = event.try_grab(extra);
-                        if grabbed && *self.interactable {
+                        if *self.interactable {
                             *self.state = SelectionState::hover();
                         }
-                        grabbed
+                        true
                     }
                     (SelectionStateV1::Hover, false) => {
-                        let ungrabbed = event.try_ungrab(extra);
-                        if ungrabbed {
-                            *self.state = SelectionState::normal();
-                        }
-                        ungrabbed
+                        *self.state = SelectionState::normal();
+                        true
                     }
                     _ => false,
                 }
@@ -161,5 +162,8 @@ impl<T: Default> Default for ButtonContent<T> {
 /// A simple button.
 ///
 /// Use `Button::on_click` like a WatchedEvent to handle button clicks
-pub type Button<T, P = DefaultRenderPlatform> = Widget<ButtonContent<T>, P>;
+pub type Button<
+    T = <DefaultRenderPlatform as RenderPlatform>::DefaultButtonContent,
+    P = DefaultRenderPlatform,
+> = Widget<ButtonContent<T>, P>;
 

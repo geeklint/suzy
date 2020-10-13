@@ -2,6 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+use crate::widget::{
+    WidgetContent,
+    WidgetInit,
+    WidgetChildReceiver,
+    WidgetGraphicReceiver,
+};
+
 use super::{
     Event,
     SimpleEventLoopState,
@@ -13,28 +20,40 @@ macro_rules! stub {
 
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
+#[derive(Default)]
 pub struct StubPlatform;
 
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
+#[derive(Default)]
 pub struct StubWindow;
 
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
+#[derive(Default)]
 pub struct StubRenderPlatform;
 
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
+#[derive(Default)]
 pub struct StubDrawParams;
 
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
+#[derive(Default)]
+pub struct StubButtonContent;
+
+/// The stub platform is used as a placeholder when no other platforms are
+/// enabled.  All its methods will panic.
 #[cfg(feature = "platform_opengl")]
+#[derive(Default)]
 pub struct StubOpenglPlatform;
 
 impl crate::platform::RenderPlatform for StubRenderPlatform {
     type Context = ();
     type DrawParams = StubDrawParams;
+
+    type DefaultButtonContent = StubButtonContent;
 }
 
 impl crate::graphics::DrawParams<()> for StubDrawParams {
@@ -149,4 +168,24 @@ impl crate::window::Window<super::opengl::OpenGlRenderPlatform> for StubWindow {
     }
 
     fn take_screenshot(&self) -> Box<[u8]> { stub!() }
+}
+
+impl crate::widgets::TextContent for StubButtonContent {
+    fn set_text(&mut self, _text: &str) { stub!() }
+}
+
+impl<P: super::RenderPlatform> WidgetContent<P> for StubButtonContent {
+    fn init<I: WidgetInit<Self, P>>(_init: I) { stub!() }
+
+    fn children<R: WidgetChildReceiver<P>>(&mut self, _receiver: R) { stub!() }
+
+    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, _receiver: R) {
+        stub!()
+    }
+}
+
+impl crate::selectable::Selectable for StubButtonContent {
+    fn selection_changed(&mut self, _state: crate::selectable::SelectionState) {
+        stub!()
+    }
 }

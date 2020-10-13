@@ -15,6 +15,7 @@ mod shader;
 mod stdshaders;
 mod text;
 mod window;
+mod widgets;
 
 pub use buffer::{
     SingleVertexBuffer,
@@ -55,4 +56,6 @@ pub struct OpenGlRenderPlatform;
 impl super::RenderPlatform for OpenGlRenderPlatform {
     type Context = OpenGlContext;
     type DrawParams = drawparams::DrawParams;
+
+    type DefaultButtonContent = widgets::DefaultOpenGlButton;
 }

@@ -10,7 +10,7 @@ use super::{WidgetId, WidgetContent, WidgetRect};
 
 pub(super) struct WidgetInternal<P, T>
 where
-    P: RenderPlatform,
+    P: RenderPlatform + ?Sized,
     T: WidgetContent<P> + ?Sized,
 {
     pub(super) rect: WidgetRect,

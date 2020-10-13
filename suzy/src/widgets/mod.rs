@@ -14,3 +14,7 @@ pub use togglebutton::{
     ToggleButton,
     ToggleButtonValue,
 };
+
+pub trait TextContent {
+    fn set_text(&mut self, text: &str);
+}
