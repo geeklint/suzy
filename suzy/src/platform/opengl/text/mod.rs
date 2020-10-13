@@ -8,6 +8,7 @@ use crate::watch::{Watched};
 use crate::graphics::{Color, DrawContext, Graphic};
 
 use super::OpenGlRenderPlatform;
+use super::Mat4;
 use super::context::bindings::types::*;
 use super::context::bindings::{
     FALSE,
@@ -169,6 +170,10 @@ impl Graphic<OpenGlRenderPlatform> for Text {
                 self.render_settings.outline_width,
                 self.render_settings.outline_smoothing,
             );
+            ctx.params().transform(Mat4::translate(
+                self.render_settings.x,
+                self.render_settings.y,
+            ));
             if self.vertices.bind_if_ready(ctx) {
                 let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
                 let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
@@ -214,6 +219,8 @@ pub struct TextRenderSettings {
     pub outline_width: f32,
     pub smoothing: f32,
     pub outline_smoothing: f32,
+    pub x: f32,
+    pub y: f32,
 }
 
 impl Default for TextRenderSettings {
@@ -225,6 +232,8 @@ impl Default for TextRenderSettings {
             outline_width: 0.0,
             smoothing: 0.07,
             outline_smoothing: 0.07,
+            x: 0.0,
+            y: 0.0,
         }
     }
 }

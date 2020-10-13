@@ -112,22 +112,27 @@ impl Default for TextLayoutSettings {
 }
 
 impl TextLayoutSettings {
+    #[must_use]
     pub fn font_size(self, font_size: f32) -> Self {
         Self { font_size, ..self }
     }
 
+    #[must_use]
     pub fn wrap_width(self, wrap_width: f32) -> Self {
         Self { wrap_width, ..self }
     }
 
+    #[must_use]
     pub fn alignment(self, alignment: TextAlignment) -> Self {
         Self { alignment, ..self }
     }
 
+    #[must_use]
     pub fn tab_stop(self, tab_stop: f32) -> Self {
         Self { tab_stop, ..self }
     }
 
+    #[must_use]
     pub fn y_offset(self, y_offset: f32) -> Self {
         Self { y_offset, ..self }
     }

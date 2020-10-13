@@ -103,6 +103,7 @@ impl SharedTexture {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum KeyVariants {
     Path(Cow<'static, Path>),
+    Buffer(*const u8),
     Default,
     Error,
 }
@@ -117,6 +118,10 @@ pub struct TextureCacheKey {
 }
 
 impl TextureCacheKey {
+    fn buffer(buf: &'static [u8]) -> Self {
+        Self { inner: KeyVariants::Buffer(buf.as_ptr()) }
+    }
+
     fn error() -> Self {
         Self { inner: KeyVariants::Error }
     }
@@ -256,6 +261,20 @@ impl Texture {
         }
     }
 
+    pub fn new_cached<T, U>(key: TextureCacheKey, populator: T) -> Self
+    where
+        T: Into<Box<U>>,
+        U: PopulateTexture + 'static,
+    {
+        let populator = populator.into();
+        let size = populator.get_known_size().unwrap_or((f32::NAN, f32::NAN));
+        Self {
+            ins: TextureInstance::ToCache(key, populator),
+            offset: (0.0, 0.0),
+            size,
+        }
+    }
+
     pub fn size(&self) -> Option<(f32, f32)> {
         if !self.size.0.is_nan() {
             Some(self.size)
@@ -318,6 +337,26 @@ impl Texture {
             height,
             alignment,
             pixels,
+        })
+    }
+
+    pub fn from_rgba_cached(
+        width: u16,
+        height: u16,
+        alignment: u16,
+        pixels: &'static [u8],
+    ) -> Self {
+        assert_eq!(
+            pixels.len(),
+            PopulateTextureUtil::data_len(width, height, alignment, 4),
+            "Invalid pixel data for given width/height/alignment",
+        );
+        let key = TextureCacheKey::buffer(pixels);
+        Self::new_cached(key, RGBATexturePopulator {
+            width,
+            height,
+            alignment,
+            pixels: pixels.into(),
         })
     }
 
