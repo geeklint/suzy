@@ -1,6 +1,6 @@
 [package]
 name = "suzy"
-version = "0.0.3-dev"
+version = "0.0.3"
 authors = ["Violet <violet@geeklint.com>"]
 edition = "2018"
 description = "GUI framework based on observer pattern"
