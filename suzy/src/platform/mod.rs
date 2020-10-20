@@ -34,7 +34,10 @@ pub mod opengl;
 #[cfg(feature = "sdl")]
 pub mod sdl2;
 
-#[cfg(feature = "platform_osmesa")]
+#[cfg(any(
+    feature = "platform_osmesa",
+    all(test, feature = "platform_osmesa_test"),
+))]
 pub mod osmesa;
 
 // Default Platform
@@ -54,11 +57,19 @@ pub use self::stub::StubPlatform as TestPlatform;
     feature = "platform_opengl",
     not(feature = "sdl"),
     not(feature = "platform_osmesa"),
+    not(all(test, feature = "platform_osmesa_test")),
 ))]
 pub use self::stub::StubOpenglPlatform as TestPlatform;
-#[cfg(all(feature = "sdl", not(feature = "platform_osmesa")))]
+#[cfg(all(
+    feature = "sdl",
+    not(feature = "platform_osmesa"),
+    not(all(test, feature = "platform_osmesa_test")),
+))]
 pub use self::sdl2::SDLPlatform as TestPlatform;
-#[cfg(feature = "platform_osmesa")]
+#[cfg(any(
+    feature = "platform_osmesa",
+    all(test, feature = "platform_osmesa_test"),
+))]
 pub use self::osmesa::OSMesaPlatform as TestPlatform;
 
 pub type DefaultRenderPlatform = <DefaultPlatform as Platform>::Renderer;

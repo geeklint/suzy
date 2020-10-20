@@ -2,6 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! This module provides Suzy's default, built-in render platform, based on
+//! OpenGL ES 2.0.
+//!
+//! In this module are a number of important Graphics implementations for
+//! the platform.
+
 #[macro_use] mod primitive;
 mod buffer;
 mod texture;

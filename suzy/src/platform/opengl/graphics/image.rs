@@ -40,6 +40,12 @@ static SLICED_INDICES: [u8; 18 * 3] = [
     7, 2, 8,
 ];
 
+/// A common graphic used for user interfaces, a sliced image is defined by
+/// fixed-sized corners and an inner area which stretches to fill the
+/// graphic area.
+///
+/// See the [Wikipedia article](https://en.wikipedia.org/wiki/9-slice_scaling)
+/// on 9-slice scaling for more information.
 pub struct SlicedImage {
     rect: SimpleRect,
     padding: SimplePadding2d,
@@ -59,10 +65,13 @@ impl Default for SlicedImage {
 }
 
 impl SlicedImage {
+    /// Create a new SlicedImage.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Set the texture used by this graphic.  The given padding describes
+    /// the sliced area.
     pub fn set_image<P>(&mut self, texture: Texture, padding: &P)
     where
         P: Padding2d
@@ -201,6 +210,10 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
     }
 }
 
+/// A version of SliceImage which assumes multiple images are layed out in
+/// the same texture corosponding to different "selection states".
+///
+/// See the selectable module for more information on selection states.
 #[derive(Default)]
 pub struct SelectableSlicedImage {
     inner: SlicedImage,
@@ -232,10 +245,20 @@ impl Selectable for SelectableSlicedImage {
 }
 
 impl SelectableSlicedImage {
+    /// Create a new SelectableSlicedImage
     pub fn new() -> Self {
         Self::default()
     }
 
+
+    /// Set the texture used by this graphic.
+    ///
+    /// The given slice of states defines the number and varients of the
+    /// sub-images in the texture.  Note: the states must contain
+    /// `SelectionState::normal()` as a possible fallback for other,
+    /// unincluded states.
+    ///
+    /// The given padding describes the sliced area of each sub-image.
     pub fn set_image<P, S>(
         &mut self,
         texture: Texture,

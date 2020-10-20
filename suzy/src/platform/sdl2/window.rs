@@ -68,7 +68,6 @@ pub struct Window {
     info: WindowInfo,
     _context: sdl2::video::GLContext,
     _video: sdl2::VideoSubsystem,
-    _image: sdl2::image::Sdl2ImageContext,
 }
 
 impl Window {
@@ -77,7 +76,6 @@ impl Window {
     {
         // initialize systems
         let video = sdl.video()?;
-        let image = sdl2::image::init(sdl2::image::InitFlag::all())?;
         // setup window parameters
         let gl_attr = video.gl_attr();
         gl_attr.set_red_size(5);
@@ -149,7 +147,6 @@ impl Window {
                 gl_win,
             },
             _video: video,
-            _image: image,
             _context: context,
         })
     }
