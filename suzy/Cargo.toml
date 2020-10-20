@@ -26,7 +26,6 @@ inline_tweak = { version = "1.0.8", optional = true }
 version = "0.33"
 optional = true
 default-features = false
-features = ["image"]
 
 [[example]]
 name = "image"
