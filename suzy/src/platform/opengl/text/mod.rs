@@ -63,6 +63,18 @@ fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(_f: F) -> R {
 }
 
 
+/// Default Graphic for displaying Text.
+///
+/// This implementation is based on a signed distance field font atlas, these
+/// fonts can be generated using the crate `suzy_build_tools`.
+///
+/// Text is done in two stages, and there are two settings types for each
+/// stage:
+///
+/// 1. `TextLayoutSettings` controls the generation of the text vertices, and
+/// contains settings like alignment and wrap width.
+/// 2. `TextRenderSettings` controls the rendering of the text, and contains
+/// settings such as text color and position.
 pub struct Text {
     vertices: SingleVertexBuffer<GLfloat>,
     channels: HashMap<ChannelMask, std::ops::Range<usize>>,

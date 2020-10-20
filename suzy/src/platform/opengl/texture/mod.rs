@@ -239,6 +239,7 @@ impl PartialEq<Self> for TextureInstance {
     }
 }
 
+/// A Texture provides a reference to image data on the GPU.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Texture {
     ins: TextureInstance,
@@ -247,6 +248,7 @@ pub struct Texture {
 }
 
 impl Texture {
+    /// Create a new texture with a custom populator.
     pub fn new<T, U>(populator: T) -> Self
     where
         T: Into<Box<U>>,
@@ -261,6 +263,10 @@ impl Texture {
         }
     }
 
+    /// Create a new texture which will be entered into the texture cache.
+    ///
+    /// Multiple textures created with this function and equal keys will share
+    /// the texture resource.
     pub fn new_cached<T, U>(key: TextureCacheKey, populator: T) -> Self
     where
         T: Into<Box<U>>,
@@ -283,6 +289,7 @@ impl Texture {
         }
     }
 
+    /// Create a texture from some single-channel pixel data
     pub fn from_alpha<T>(width: u16, height: u16, alignment: u16, pixels: T)
         -> Self
     where
@@ -302,6 +309,7 @@ impl Texture {
         })
     }
 
+    /// Create a texture from some RGB pixel data
     pub fn from_rgb<T>(width: u16, height: u16, alignment: u16, pixels: T)
         -> Self
     where
@@ -321,6 +329,7 @@ impl Texture {
         })
     }
 
+    /// Create a texture from some RGBA pixel data
     pub fn from_rgba<T>(width: u16, height: u16, alignment: u16, pixels: T)
         -> Self
     where
@@ -340,6 +349,9 @@ impl Texture {
         })
     }
 
+    /// Create a texture from some static RGBA pixel data, sharing a
+    /// texture resource if this function is called multiple times with the
+    /// same buffer.
     pub fn from_rgba_cached(
         width: u16,
         height: u16,
