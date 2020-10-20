@@ -1,3 +1,4 @@
+dist: bionic
 language: rust
 before_install:
   - sudo apt-get -y install libosmesa-dev
