@@ -1,6 +1,7 @@
 language: rust
 before_install:
-  - sudo apt-get -y install libosmesa-dev libsdl2-dev
+  - sudo apt-get -y install libosmesa-dev
 script:
   - cargo build --verbose --workspace
-  - cargo test --verbose --workspace
+  - cargo test --verbose --manifest-path suzy/Cargo.toml --no-default-features --features platform_osmesa
+  - cargo test --verbose --manifest-path suzy_build_tools/Cargo.toml
