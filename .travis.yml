@@ -1,6 +1,6 @@
 language: rust
 before_install:
-  - sudo apt-get -y install libosmesa-dev
+  - sudo apt-get -y install libosmesa-dev libsdl2-dev
 script:
   - cargo build --verbose --workspace
   - cargo test --verbose --workspace
