@@ -2,6 +2,7 @@
 [![crates.io](https://img.shields.io/crates/v/suzy.svg)](https://crates.io/crates/suzy)
 [![docs.rs](https://docs.rs/suzy/badge.svg)](https://docs.rs/suzy/)
 [![Build Status](https://travis-ci.com/geeklint/suzy.svg?branch=master)](https://travis-ci.com/geeklint/suzy)
+![MPL-2.0 License](https://img.shields.io/crates/l/suzy?color=blueviolet)
 
 Suzy is a GUI framework in Rust based on the observer pattern.
 Inspired heavily by the [kivy](https://kivy.org/#home) framework for Python.
