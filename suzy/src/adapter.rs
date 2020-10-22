@@ -9,8 +9,10 @@
 /// external data.
 ///
 /// See the [module-level documentation](./index.html) for more details.
-pub trait Adaptable<T: ?Sized>: for<'a> From<&'a T> {
-
+pub trait Adaptable<T: ?Sized> {
     /// Update `self` in acordance with the provided `data`
     fn adapt(&mut self, data: &T);
+
+    /// Create a new instance from provided `data`
+    fn from(data: &T) -> Self;
 }
