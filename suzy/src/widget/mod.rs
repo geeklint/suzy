@@ -13,6 +13,7 @@ use std::ops::{
 use drying_paint::{Watcher, WatcherId};
 pub use drying_paint::Watched;
 
+use crate::adapter::Adaptable;
 use crate::dims::{Rect, Dim};
 use crate::graphics::DrawContext;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
@@ -59,6 +60,20 @@ where
     watcher: Watcher<WidgetInternal<P, T>>,
 }
 
+impl<T, P, Data> Adaptable<Data> for Widget<T, P>
+where
+    P: RenderPlatform,
+    T: WidgetContent<P> + Adaptable<Data>,
+{
+    fn adapt(&mut self, data: &Data) {
+        self.watcher.data_mut().content.adapt(data);
+    }
+
+    fn from(data: &Data) -> Self {
+        Widget::create_from(data)
+    }
+}
+
 impl<T, P> Default for Widget<T, P>
 where
     P: RenderPlatform,
@@ -95,6 +110,37 @@ where
     P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
+    /// Create a new widget, populating it's content using the adaptable
+    /// trait.
+    pub fn create_from<Data>(data: &Data) -> Self
+    where
+        T: Adaptable<Data>,
+    {
+        Widget {
+            watcher: Watcher::create(WidgetInternal {
+                rect: WidgetRect::default(),
+                content: Adaptable::from(data),
+                _platform: Default::default(),
+            }),
+        }
+    }
+
+    /// Create a new widget, populating it's content using the adaptable
+    /// trait and with a specific initial position and size
+    pub fn create_with_rect<Data, R>(data: &Data, rect: &R) -> Self
+    where
+        T: Adaptable<Data>,
+        R: Rect,
+    {
+        Widget {
+            watcher: Watcher::create(WidgetInternal {
+                rect: WidgetRect::external_from(rect),
+                content: Adaptable::from(data),
+                _platform: Default::default(),
+            }),
+        }
+    }
+
     /// Get a value representing a unique id for this Widget.  This value may
     /// outlive the widget, and will never compare equal to a value returned
     /// by the id method of a Widget other than this one.
