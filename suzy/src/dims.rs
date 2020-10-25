@@ -278,7 +278,7 @@ impl Dim {
     pub fn center(&self) -> f32 {
         let half_length = 0.5 * self.length;
         let distance_before_pivot = self.pivot * self.length;
-        let distance_to_pivot = distance_before_pivot - half_length;
+        let distance_to_pivot = half_length - distance_before_pivot;
         self.pos + distance_to_pivot
     }
 
