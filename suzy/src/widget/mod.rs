@@ -24,6 +24,7 @@ mod content;
 mod graphic;
 mod init;
 mod internal;
+pub mod layout;
 mod receivers;
 mod rect;
 
