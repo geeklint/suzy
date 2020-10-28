@@ -7,6 +7,7 @@ use drying_paint::{WatcherMeta, WatcherInit};
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
 use super::{
+    layout,
     WidgetContent,
     WidgetId,
     WidgetInternal,
@@ -35,6 +36,12 @@ where
     where
         F: Fn(&mut T, &mut WidgetRect) + 'static
     ;
+
+    /// Create a layout group which a provides a shorthand for organizing
+    /// widgets in common configurations.
+    fn create_layout_group(&mut self) -> layout::LayoutTypes<Self, T, P> {
+        layout::LayoutTypes::new(self)
+    }
 
     #[doc(hidden)]
     fn init_child_inline<F, C>(&mut self, getter: F)
