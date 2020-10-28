@@ -2,13 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::dims::Rect;
 use crate::widget::WidgetGraphic;
 use crate::graphics::{
     Color,
     Graphic,
     DrawContext,
-    DrawPass,
 };
 
 use super::super::OpenGlRenderPlatform;

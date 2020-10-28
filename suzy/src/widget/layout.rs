@@ -10,6 +10,15 @@
 //! different layout types.
 //!
 //! ```rust
+//! use suzy::dims::Rect;
+//! use suzy::widget::{
+//!     WidgetContent,
+//!     WidgetInit,
+//!     WidgetChildReceiver,
+//!     WidgetGraphicReceiver,
+//! };
+//! use suzy::widgets::{Button, TextContent};
+//!
 //! struct CustomWidget {
 //!     one: Button,
 //!     two: Button,
