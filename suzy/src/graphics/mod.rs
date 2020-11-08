@@ -2,16 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/// Graphics control the visual appearance of Widgets.
-///
-/// Some widgets will simply contain other widgets (their "children"), but
-/// in order to have visuals, widgets need a way to interface with the
-/// renderer.  The Graphic trait in this module provides this interface.
-///
-/// Because Graphic implementations are tightly coupled with the renderer,
-/// there are no actual implementations in this module; Suzy's "built-in"
-/// graphics can be found in the
-/// [module for the opengl platform](../platform/opengl/index.html)
+//! Graphics control the visual appearance of Widgets.
+//!
+//! Some widgets will simply contain other widgets (their "children"), but
+//! in order to have visuals, widgets need a way to interface with the
+//! renderer.  The Graphic trait in this module provides this interface.
+//!
+//! Because Graphic implementations are tightly coupled with the renderer,
+//! there are no actual implementations in this module; Suzy's "built-in"
+//! graphics can be found in the
+//! [module for the opengl platform](../platform/opengl/index.html)
 
 mod color;
 mod context;
@@ -31,6 +31,7 @@ pub trait Graphic<P = DefaultRenderPlatform>
 where
     P: RenderPlatform + ?Sized,
 {
+    /// Draw this graphic.
     fn draw(&mut self, ctx: &mut DrawContext<P>);
 }
 

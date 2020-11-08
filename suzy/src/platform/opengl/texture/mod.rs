@@ -21,11 +21,23 @@ pub(super) type TextureCache = HashMap<TextureCacheKey, Rc<SharedTexture>>;
 
 gl_object! { pub(super) TextureData, GenTextures, DeleteTextures, 1 }
 
+/// A type indicating the size of a texture.
+///
+/// When loaded, textures may be rounded-up to the nearest power of two.
+/// This distingueshes between "image size" (the size of the meaninful content)
+/// and "texture size", which may be larger due to rounding.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct TextureSize {
+    /// The width of the meaninful image in this texture.
     pub image_width: f32,
+
+    /// The height of the meaninful image in this texture.
     pub image_height: f32,
+
+    /// The actual width of this texture on the GPU.
     pub texture_width: f32,
+
+    /// The actual height of this texture on the GPU.
     pub texture_height: f32,
 }
 
@@ -112,6 +124,8 @@ impl Default for KeyVariants {
     fn default() -> Self { Self::Default }
 }
 
+/// A key indicating the source of a texture, used to lookup duplicate
+/// textures in the texture cache.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct TextureCacheKey {
     inner: KeyVariants,
@@ -281,6 +295,10 @@ impl Texture {
         }
     }
 
+    /// Get the size of the texture.  
+    ///
+    /// May return None if the texture is not fully initialized, and we
+    /// cannot determine the size.
     pub fn size(&self) -> Option<(f32, f32)> {
         if !self.size.0.is_nan() {
             Some(self.size)
@@ -372,6 +390,10 @@ impl Texture {
         })
     }
 
+    /// Crop this texture.
+    ///
+    /// This, along with Texture::clone, enables patterns like sprite-sheets
+    /// where multiple images are packed into a single texture reference.
     pub fn crop(self, x: f32, y: f32, height: f32, width: f32) -> Self {
         Self {
             ins: self.ins,
@@ -393,6 +415,9 @@ impl Texture {
         )
     }
 
+    /// If this texture is ready, call the closure provided, and update
+    /// the UV coordinates it returns according to the size and crop settings
+    /// of this texture.
     pub fn transform_uvs<'a, F>(&self, make_uvs: F) -> Option<&'a [f32]>
     where
         F: 'a + FnOnce() -> &'a mut [f32],

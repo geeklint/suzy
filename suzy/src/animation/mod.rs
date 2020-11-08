@@ -106,8 +106,10 @@ impl Lerp for f64 {
     }
 }
 
-
+/// A trait for calculating the distance between two values, for the
+/// purposes of linear interpolation.
 pub trait LerpDistance {
+    /// Calculate the distance between two values
     fn lerp_distance(a: &Self, b: &Self) -> f32;
 }
 
@@ -138,6 +140,9 @@ impl<T> Default for Speed<T> {
 }
 
 
+/// An instance of an animation.
+///
+/// See the [module-level documentation](./index.html) for more details.
 pub struct Animation<T> {
     speed: Speed<T>,
     start_value: Option<T>,
@@ -146,6 +151,7 @@ pub struct Animation<T> {
 }
 
 impl<T> Animation<T> {
+    /// Create a new animation.
     pub fn new() -> Self { Self::default() }
 }
 
@@ -192,12 +198,17 @@ impl<T> Animation<T> {
 }
 
 impl<T: Lerp<Output = T>> Animation<T> {
+    /// Start the animation, with a specified value to interpolate towards.
     pub fn animate_to(&mut self, value: T) {
         let start_time = App::<DefaultPlatform>::time_unwatched();
         *self.current = Some((start_time, value));
         self.start_value = None;
     }
 
+    /// This is the primary output of the animation.  A
+    /// [`watch`](../widget/trait.WidgetInit.html#tymethod.watch)
+    /// closure which calls this method will be re-run every frame with
+    /// an interpolated value while the animation is in-progress.
     pub fn apply(&mut self, target: &mut T) {
         let (start_time, end_value) = match &*self.current {
             Some(value) => value,

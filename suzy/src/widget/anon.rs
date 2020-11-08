@@ -79,6 +79,7 @@ pub trait AnonWidget<P = DefaultRenderPlatform>
 where
     P: RenderPlatform + ?Sized,
 {
+    /// Get this widget's id.
     fn id(&self) -> WidgetId { private::Widget::id(self) }
 }
 
@@ -90,6 +91,7 @@ where
 }
 
 impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
+    /// Returns the widget if its content is of type `T`.
     pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T, P>>
     where
         T: WidgetContent<P>,
@@ -97,6 +99,7 @@ impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
         self.as_any().downcast().ok().map(|w| *w)
     }
 
+    /// Returns a reference to the widget if its content is of type `T`.
     pub fn downcast_widget_ref<T>(&self) -> Option<&Widget<T, P>>
     where
         T: WidgetContent<P>,
@@ -104,6 +107,8 @@ impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
         self.as_any_ref().downcast_ref()
     }
 
+    /// Returns a mutable reference to the widget if its content is of
+    /// type `T`.
     pub fn downcast_widget_mut<T>(&mut self) -> Option<&mut Widget<T, P>>
     where
         T: WidgetContent<P>,

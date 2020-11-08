@@ -43,13 +43,18 @@ where
     }
 }
 
+/// A Masker takes a graphic and uses it as a transparency mask, applied to
+/// the subsequent graphics of the children of the widget with the Masker.
 #[derive(Default)]
 pub struct Masker<T: ?Sized> {
     inner: super::BaseEffect<MaskEffect<T>>,
 }
 
 impl<T: ?Sized> Masker<T> {
+    /// Get a reference to the graphic used as a mask.
     pub fn graphic(&self) -> &T { &self.inner.effect.item }
+
+    /// Get a mutable reference to the graphic used as a mask.
     pub fn graphic_mut(&mut self) -> &mut T { &mut self.inner.effect.item }
 }
 

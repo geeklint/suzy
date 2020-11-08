@@ -91,6 +91,7 @@ impl<'a, T: ?Sized> Rect for ContentRef<'a, T> {
 
 /// A trait representing the current values calculated by a layout.
 pub trait LayoutValue<T: ?Sized>: 'static {
+    /// Get the current calculated value.
     fn value(&self, content: &mut T, rect: &mut WidgetRect) -> f32;
 }
 
@@ -218,8 +219,13 @@ where
 
 /// A trait representing a direction for a stack layout.
 pub trait StackLayoutDirection {
+    /// The sign of the direction.
     fn sign(value: f32) -> f32;
+
+    /// Set the start of the rect, as understood by this direction.
     fn set_start<R: Rect>(rect: &mut R, value: f32);
+
+    /// Get the end value of the rect, as understood by this direction.
     fn get_end<R: Rect>(rect: &R) -> f32;
 }
 

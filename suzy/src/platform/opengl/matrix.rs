@@ -4,12 +4,16 @@
 
 use std::ops::{Index, IndexMut, Mul, MulAssign};
 
+/// A 4x4 matrix used for vertex transformations.
+///
+/// Components are stored in column-major order.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Mat4 {
     data: [f32; 16],
 }
 
 impl Mat4 {
+    /// The identity matrix.
     pub const fn identity() -> Self {
         Self {
             data: [
@@ -19,6 +23,7 @@ impl Mat4 {
         }
     }
 
+    /// Create a translation matrix with the given offsets.
     pub const fn translate(x: f32, y: f32) -> Self {
         Self {
             data: [
@@ -28,6 +33,7 @@ impl Mat4 {
         }
     }
 
+    /// Create a scaling matrix with the given multipliers.
     pub const fn scale(x: f32, y: f32) -> Self {
         Self {
             data: [
@@ -37,6 +43,8 @@ impl Mat4 {
         }
     }
 
+    /// Create a rotation matrix that rotates a 2D element around the given
+    /// angle (in radians).
     pub fn rotate(radians: f32) -> Self {
         Self {
             data: [

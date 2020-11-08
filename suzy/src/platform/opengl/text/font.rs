@@ -23,18 +23,43 @@ pub type FontSource<'a> = (
     &'a [KerningSource],
 );
 
+/// A source for a font family.
+///
+/// This is normally created automatically using the crate `suzy_build_tools`.
 pub type FontFamilySource = FontFamilySourceDynamic<'static>;
+
+/// A font family which has been loaded.
 pub type FontFamily = FontFamilyDynamic<'static>;
 
+/// A source for a font family.
+///
+/// This is normally created automatically using the crate `suzy_build_tools`.
 pub struct FontFamilySourceDynamic<'a> {
+    /// The bytes of the SDF font atlas texture.
     pub atlas_image: &'static [u8],
+
+    /// The number of channels in the atlas texture.
     pub image_channels: GLsizei,
+
+    /// The width of the atlas texture.
     pub image_width: u16,
+
+    /// The height of the atlas texture.
     pub image_height: u16,
+
+    /// The alignment of the pixel rows in the atlas texture.
     pub image_row_alignment: u16,
+
+    /// The font source for the normal font.
     pub normal: FontSource<'a>,
+
+    /// The font source for the bold font.
     pub bold: Option<FontSource<'a>>,
+
+    /// The font source for the italic font.
     pub italic: Option<FontSource<'a>>,
+
+    /// The font source for the bold and italic font.
     pub bold_italic: Option<FontSource<'a>>,
 }
 
@@ -49,6 +74,7 @@ const RGBA_MASKS: &[ChannelMask] = &[
 ];
 
 impl<'a> FontFamilySourceDynamic<'a> {
+    /// Load a font family from this source.
     pub fn load(&self) -> FontFamilyDynamic<'a> {
         let (texture, channel_masks) = match self.image_channels {
             1 => {
@@ -97,6 +123,7 @@ impl<'a> FontFamilySourceDynamic<'a> {
     }
 }
 
+/// A font family which has been loaded.
 #[derive(Clone)]
 pub struct FontFamilyDynamic<'a> {
     pub(super) texture: Texture,
@@ -113,6 +140,7 @@ impl<'a> FontFamilyDynamic<'a> {
         self.channel_masks.get(index).copied().unwrap_or((0, 0, 0, 0))
     }
 
+    #[doc(hidden)]
     pub fn best_font_source(&self, style: FontStyle) -> &FontSource {
         match style {
             FontStyle::Normal => &self.normal,

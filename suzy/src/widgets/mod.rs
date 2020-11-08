@@ -15,6 +15,9 @@ pub use togglebutton::{
     ToggleButtonValue,
 };
 
+/// A trait for widgets which have an obvious singular text graphic associated
+/// with them.
 pub trait TextContent {
+    /// Set the text of the widget.
     fn set_text(&mut self, text: &str);
 }

@@ -25,6 +25,7 @@ pub fn to_dp(value: f32) -> f32 { value }
 #[inline]
 pub fn dp(dp: f32) -> f32 { dp }
 
+/// The ratio Suzy assumes between dp and inches.
 pub const DPI: f32 = 96.0;
 
 /// Convert dp to inches

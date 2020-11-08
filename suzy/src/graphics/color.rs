@@ -121,6 +121,7 @@ impl LerpDistance for Color {
 }
 
 impl From<u32> for Color {
+    /// Create a color from values packed in a 32 bit integer, assuming ARGB.
     #[inline]
     fn from(code: u32) -> Self {
         let array = code.to_be_bytes();

@@ -16,17 +16,30 @@ use crate::widget::WidgetId;
 /// A unique id for a particular pointer
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum PointerId {
+    /// Mouse device
     Mouse,
+
+    /// A specific touch on a touchscreen
     Touch(i64),
+
+    /// Other; for instance a simulated event not corosponding to a real
+    /// device.
     Other(i64),
 }
 
 /// An enum for possible mouse buttons used besides the primary (left).
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum AltMouseButton {
+    /// Middle mouse button.
     Middle,
+
+    /// Right mouse button.
     Right,
+
+    /// Mouse button X1.
     X1,
+
+    /// Mouse button X2.
     X2,
 }
 
@@ -82,6 +95,7 @@ mod internal {
     }
 
     impl PointerEvent {
+        /// Create new pointer event data.
         pub fn new(
             id: super::PointerId,
             action: super::PointerAction,

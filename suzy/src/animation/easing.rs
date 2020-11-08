@@ -19,7 +19,16 @@ pub trait Easing {
 /// Given the four parameters, (a, b, c, d), compute the easing to be
 /// `a*t³ + b*t² + c*t + d`.
 #[derive(Copy, Clone)]
-pub struct CubicPoly(pub f32, pub f32, pub f32, pub f32);
+pub struct CubicPoly(
+    /// The cubic coefficient.
+    pub f32,
+    /// The quadratic coefficient.
+    pub f32,
+    /// The linear coefficient.
+    pub f32,
+    /// The constant coefficient.
+    pub f32,
+);
 
 impl Easing for CubicPoly {
     fn ease(&self, t: f32) -> f32 {

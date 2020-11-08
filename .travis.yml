@@ -1,5 +1,9 @@
+os: linux
 dist: bionic
 language: rust
+branches:
+  only:
+  - master
 before_install:
   - sudo apt-get -y install libosmesa-dev
 script:
