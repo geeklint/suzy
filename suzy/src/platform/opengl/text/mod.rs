@@ -32,7 +32,8 @@ pub use calc::{
     FontStyle,
     TextAlignment,
     TextLayoutSettings,
-    RichTextCommand,
+};
+use calc::{
     RichTextParser,
 };
 
@@ -84,6 +85,7 @@ pub struct Text {
 }
 
 impl Text {
+    /// Create a new empty text graphic.
     pub fn new() -> Self {
         Text {
             vertices: SingleVertexBuffer::new(true),
@@ -94,6 +96,10 @@ impl Text {
         }
     }
 
+    /// Update the text to display, using the current font, or a default font.
+    ///
+    /// Panics if a font has not been assigned using set_font, and the
+    /// default_font feature has been disabled.
     pub fn set_text(&mut self, text: &str, settings: TextLayoutSettings) {
         let texture = &mut self.texture;
         let vertices = &mut self.vertices;
@@ -114,14 +120,18 @@ impl Text {
         };
     }
 
+    /// Set the font to be used by future calls to `set_text`.
     pub fn set_font(&mut self, font: Box<FontFamily>) {
         *self.font = Some(font);
     }
 
+    /// Get a mutable reference to this graphics render settings, so you can
+    /// change attributes like the text color.
     pub fn render_settings(&mut self) -> &mut TextRenderSettings {
         &mut self.render_settings
     }
 
+    /// Update the text to display, using the provided font.
     pub fn render(
         &mut self,
         text: &str,
@@ -222,16 +232,41 @@ impl Graphic<OpenGlRenderPlatform> for Text {
     }
 }
 
+/// Settings controlling the rendering of the text.
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub struct TextRenderSettings {
+    /// Primary text color.
     pub text_color: Color,
+
+    /// Color of outline around glyphs.
     pub outline_color: Color,
+
+    /// Allows artificially bolding or lightening the text.
+    ///
+    /// (As opposed to using a different font which was designed to be bolder).
+    /// The default is 0.5, which indicates no change.
     pub pseudo_bold_level: f32,
+
+    /// Width of the outline around glyphs.
     pub outline_width: f32,
+
+    /// Smoothing value applied to the edge of the glyph.
+    ///
+    /// Smaller values will cause text to appear more pixelated, larger
+    /// values may cause it to appear blurry.
     pub smoothing: f32,
+
+    /// Smoothing value applied to the edge of the outline around the glyph.
+    ///
+    /// Smaller values will cause text to appear more pixelated, larger
+    /// values may cause it to appear blurry.
     pub outline_smoothing: f32,
+
+    /// x position of the rendered text.
     pub x: f32,
+
+    /// y position of the rendered text.
     pub y: f32,
 }
 

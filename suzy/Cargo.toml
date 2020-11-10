@@ -12,6 +12,8 @@ license = "MPL-2.0"
 
 [features]
 default = ["sdl", "platform_osmesa_test", "inline_tweak", "default_font"]
+ci_build = ["platform_osmesa", "inline_tweak", "default_font"]
+
 platform_opengl = []
 platform_osmesa_test = ["platform_opengl"]
 platform_osmesa = ["platform_opengl"]

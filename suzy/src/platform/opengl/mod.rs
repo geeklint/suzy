@@ -49,14 +49,14 @@ pub use text::{
     FontFamilySource,
     FontFamilySourceDynamic,
     FontStyle,
-    RichTextCommand,
-    RichTextParser,
     Text,
     TextAlignment,
     TextLayoutSettings,
 };
 pub use window::Window;
 
+/// The OpenGL render platform is the default "built-in" render platform
+/// included with Suzy.
 pub struct OpenGlRenderPlatform;
 
 impl super::RenderPlatform for OpenGlRenderPlatform {

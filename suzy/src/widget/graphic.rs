@@ -18,12 +18,21 @@ pub trait WidgetGraphic<'a, 'b, P = DefaultRenderPlatform>
 where
     P: RenderPlatform + ?Sized,
 {
+    /// The type of graphic to render before the widget's children.
     type Before: Graphic<P> + 'b;
+
+    /// The type of graphic to render after the widget's children.
     type After: Graphic<P> + 'a;
 
+    /// Get the graphic to render before the widget's children.
     fn before_children(&'b mut self) -> Self::Before;
+
+    /// Get the graphic to render after the widget's children.
     fn after_children(&'a mut self) -> Self::After;
 
+    /// If this graphic is strongly ordered, such that `after_children` should
+    /// be called in reverse order as `before_children`, relative to other
+    /// graphics.
     fn ordered() -> bool { true }
 }
 

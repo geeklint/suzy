@@ -34,7 +34,9 @@ impl std::fmt::Debug for DefaultPopulateDebug {
     }
 }
 
+/// A trait which allows cloning a PopulateTexture trait object.
 pub trait PopulateTextureDynClone {
+    /// Create a clone of this texture populator, as a boxed trait object.
     fn clone_boxed(&self) -> Box<dyn PopulateTexture>;
 }
 
@@ -47,11 +49,20 @@ where
     }
 }
 
+/// A trait which describes how to populate a texture.
+///
+/// This is automatically implemented for closures which match the signature
+/// of the `populate` method, which may be considered the simplest type of
+/// texture populator.
 pub trait PopulateTexture: PopulateTextureDynClone {
+    /// Execute the necesary opengl commands to populate a texture.
     fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()>;
 
+    /// This function should return Some, if the populator can perfectly
+    /// determine the size the texture will be without loading it.
     fn get_known_size(&self) -> Option<(f32, f32)> { None }
 
+    /// An implementation may override this with a better debug implementation.
     fn debug(&self) -> &dyn std::fmt::Debug { &DEFAULT_POPULATE_DEBUG }
 }
 
@@ -77,9 +88,12 @@ impl std::fmt::Debug for Box<dyn PopulateTexture> {
     }
 }
 
+/// This type provides some helper functions for common texture populator
+/// needs.
 pub struct PopulateTextureUtil;
 
 impl PopulateTextureUtil {
+    /// Set the default texture parameters for magnification and wrapping.
     pub fn default_params(gl: &OpenGlBindings) {
         unsafe {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, LINEAR as _);
@@ -158,6 +172,7 @@ impl PopulateTextureUtil {
         }
     }
 
+    #[doc(hidden)]
     pub fn data_len(width: u16, height: u16, alignment: u16, channels: u16)
         -> usize
     {
@@ -168,6 +183,7 @@ impl PopulateTextureUtil {
         (full_row_len as usize) * (height as usize)
     }
 
+    /// Populate an image with a single channel.
     pub fn populate_alpha(
         gl: &OpenGlBindings,
         width: u16,
@@ -179,6 +195,7 @@ impl PopulateTextureUtil {
         Self::populate_format(gl, ALPHA as _, width, height, alignment, pixels)
     }
 
+    /// Populate an texture with three channels.
     pub fn populate_rgb(
         gl: &OpenGlBindings,
         width: u16,
@@ -190,6 +207,7 @@ impl PopulateTextureUtil {
         Self::populate_format(gl, RGB as _, width, height, alignment, pixels)
     }
 
+    /// Populate an texture with four channels.
     pub fn populate_rgba(
         gl: &OpenGlBindings,
         width: u16,

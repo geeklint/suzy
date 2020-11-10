@@ -23,7 +23,9 @@
 /// Representation of a single dimension of padding.
 #[derive(Debug, Default, PartialEq, Copy, Clone)]
 pub struct Padding {
+    /// The amount of padding "before" the content in a dimension.
     pub before: f32,
+    /// The amount of padding "after" the content in a dimension.
     pub after: f32,
 }
 
@@ -92,6 +94,7 @@ pub struct SimplePadding2d {
 }
 
 impl SimplePadding2d {
+    /// Create a new 2D padding with the specified values.
     pub fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self {
         Self {
             x: Padding::new(left, right),
@@ -278,7 +281,7 @@ impl Dim {
     pub fn center(&self) -> f32 {
         let half_length = 0.5 * self.length;
         let distance_before_pivot = self.pivot * self.length;
-        let distance_to_pivot = distance_before_pivot - half_length;
+        let distance_to_pivot = half_length - distance_before_pivot;
         self.pos + distance_to_pivot
     }
 
@@ -324,11 +327,15 @@ impl Dim {
 /// Methods associated with controlling the dimensions of a Rectangular
 /// visual element.
 pub trait Rect {
+    /// Get the x dimension of the rectangle.
     fn x(&self) -> Dim;
+    /// Get the y dimension of the rectangle.
     fn y(&self) -> Dim;
 
+    /// Apply a transfomation to the x dimension of the rectangle.
     fn x_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R;
+    /// Apply a transfomation to the y dimension of the rectangle.
     fn y_mut<F, R>(&mut self, f: F) -> R
         where F: FnOnce(&mut Dim) -> R;
     
@@ -505,10 +512,13 @@ pub struct SimpleRect {
 }
 
 impl SimpleRect {
+    /// Create a new SimpleRect with the specified dimensions.
     pub fn new(x: Dim, y: Dim) -> Self {
         Self { x, y }
     }
 
+    /// Create a new SimpleRect with the specified sizes, positioned at the
+    /// bottom left.
     pub fn with_size(width: f32, height: f32) -> Self {
         let xdim = Dim::with_length(width);
         let ydim = Dim::with_length(height);
@@ -547,10 +557,13 @@ pub struct FixedSizeRect {
 }
 
 impl FixedSizeRect {
+    /// Create a new FixedSizeRect with the specified dimensions.
     pub fn new(x: Dim, y: Dim) -> Self {
         Self { x, y }
     }
 
+    /// Create a new FixedSizeRect with the specified size, positioned at the
+    /// bottom left.
     pub fn default_pos(width: f32, height: f32) -> Self {
         let x = Dim::with_length(width);
         let y = Dim::with_length(height);
@@ -589,23 +602,44 @@ impl From<SimpleRect> for FixedSizeRect {
 
 /// An object-safe version of the Rect trait
 pub trait DynRect {
+    /// Get the x dimension of the rectangle.
     fn x(&self) -> Dim;
+    /// Get the y dimension of the rectangle.
     fn y(&self) -> Dim;
+    /// Apply a transfomation to the x dimension of the rectangle.
     fn x_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>);
+    /// Apply a transfomation to the y dimension of the rectangle.
     fn y_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>);
  
+    /// Set the left edge of the rect and for it to grow to the right
     fn set_left(&mut self, value: f32);
+    /// Set the right edge of the rect and for it to grow to the left
     fn set_right(&mut self, value: f32);
+    /// Set the bottom edge of the rect and for it to grow upwards
     fn set_bottom(&mut self, value: f32);
+    /// Set the top edge of the rect and for it to grow downwards
     fn set_top(&mut self, value: f32);
+    /// Set the horizontal center of the rect and for it to grow evenly wider
     fn set_center_x(&mut self, value: f32);
+    /// Set the vertical center of the rect and for it to grow evenly taller
     fn set_center_y(&mut self, value: f32);
+    /// Set the center of the rect and for it to grow evenly outwards
     fn set_center(&mut self, value: (f32, f32));
+    /// Set the width of the rectangle
     fn set_width(&mut self, value: f32);
+    /// Set the height of the rectangle
     fn set_height(&mut self, value: f32);
+    /// Set the pivot. A pivot of (0.5, 0.5) indicates that a rect will
+    /// grow from it's center, whereas a pivot of (0, 0) indicates that a
+    /// rect will grow from it's bottom left corner.
     fn set_pivot(&mut self, value: (f32, f32));
+    /// Set the global position of the pivot of the rectangle
     fn set_pivot_pos(&mut self, value: (f32, f32));
+    /// Shink one of the lengths of this rect so that the rect's aspect ratio
+    /// becomes the one provided
     fn shrink_to_aspect(&mut self, aspect: f32);
+    /// Expand one of the lengths of this rect so that the rect's aspect ratio
+    /// becomes the one provided
     fn grow_to_aspect(&mut self, aspect: f32);
 }
 

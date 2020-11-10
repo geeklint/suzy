@@ -89,6 +89,7 @@ impl<V> Default for ToggleButtonGroup<V> {
 /// Custom toggle button content can implement this trait to describe
 /// what value is associated with which content.
 pub trait ToggleButtonValue<V> {
+    /// Get the value associated with this toggle button content.
     fn get_value(&self, extra: &WidgetExtra) -> V;
 }
 

@@ -32,16 +32,34 @@ impl Default for SelectionStateAll {
     fn default() -> Self { Self::Normal }
 }
 
+/// A selection state is an opaque type which indicates the current state
+/// a selectable widget should transition to.
+///
+/// In order to account for potential future selection states, this type
+/// primarily provides "versioned" conversions, in increasing order of
+/// complexity.  Matching on a versioned type means that if a future state is
+/// added, it can "fall back" to a similar state of the version the match
+/// already handles.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct SelectionState(SelectionStateAll);
 
 impl SelectionState {
+    /// Normal selection state
     pub const fn normal() -> Self { Self(SelectionStateAll::Normal) }
+
+    /// Hover selection state
     pub const fn hover() -> Self { Self(SelectionStateAll::Hover) }
+
+    /// Focus selection state
     pub const fn focus() -> Self { Self(SelectionStateAll::Focus) }
+
+    /// Pressed selection state
     pub const fn pressed() -> Self { Self(SelectionStateAll::Pressed) }
+
+    /// Active selection state
     pub const fn active() -> Self { Self(SelectionStateAll::Active) }
 
+    /// Get version 0 selection states.
     pub fn v0(self) -> SelectionStateV0 {
         match self.0 {
             SelectionStateAll::Normal => SelectionStateV0::Normal,
@@ -51,6 +69,8 @@ impl SelectionState {
             SelectionStateAll::Active => SelectionStateV0::Active,
         }
     }
+
+    /// Get version 1 selection states.
     pub fn v1(self) -> SelectionStateV1 {
         match self.0 {
             SelectionStateAll::Normal => SelectionStateV1::Normal,
@@ -61,6 +81,7 @@ impl SelectionState {
         }
     }
 
+    /// Get version 2 selection states.
     pub fn v2(self) -> SelectionStateV2 {
         match self.0 {
             SelectionStateAll::Normal => SelectionStateV2::Normal,
@@ -71,6 +92,8 @@ impl SelectionState {
         }
     }
 
+    /// Reduce the selection state to a resonable fallback assumed to be more
+    /// widely implemented.
     pub fn reduce(self) -> Self {
         Self(match self.0 {
             SelectionStateAll::Normal => SelectionStateAll::Normal,
@@ -82,10 +105,16 @@ impl SelectionState {
     }
 }
 
+/// Version 0 selection states.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SelectionStateV0 {
+    /// Normal selection state.
     Normal,
+
+    /// Focused selection state.
     Focus,
+
+    /// Active selection state.
     Active,
 }
 
@@ -97,11 +126,19 @@ impl From<SelectionState> for SelectionStateV0 {
     fn from(all: SelectionState) -> Self { all.v0() }
 }
 
+/// Version 1 selection states.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SelectionStateV1 {
+    /// Normal selection state.
     Normal,
+
+    /// Hovered selection state.
     Hover,
+
+    /// Focused selection state.
     Focus,
+
+    /// Active selection state.
     Active,
 }
 
@@ -113,12 +150,22 @@ impl Default for SelectionStateV1 {
     fn default() -> Self { SelectionState::default().into() }
 }
 
+/// Version 2 selection states.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SelectionStateV2 {
+    /// Normal selection state.
     Normal,
+
+    /// Hovered selection state.
     Hover,
+
+    /// Focused selection state.
     Focus,
+
+    /// Pressed selection state.
     Pressed,
+
+    /// Active selection state.
     Active,
 }
 
@@ -130,10 +177,17 @@ impl Default for SelectionStateV2 {
     fn default() -> Self { SelectionState::default().into() }
 }
 
+/// A trait which enables a widget to respond to changes in selection state.
 pub trait Selectable {
+    /// Notify the selectable element of a change in state.
     fn selection_changed(&mut self, state: SelectionState);
 }
 
+/// A type which provides a simple implementation of `Selectable` which
+/// selects between a set of values.
+///
+/// This type dereferences to the the best instance of the value
+/// corosponding to the current selection state.
 #[derive(Clone, Debug, Default)]
 pub struct SelectableData<T> {
     state: drying_paint::Watched<SelectionState>,
@@ -145,6 +199,10 @@ pub struct SelectableData<T> {
 }
 
 impl<T> SelectableData<T> {
+    /// Create a builder to populate the SelectableData.
+    ///
+    /// The value provided is the only one requred: the value for the normal
+    /// state.
     pub fn builder(normal: T) -> SelectableDataBuilder<T> {
         SelectableDataBuilder {
             content: Self {
@@ -206,32 +264,38 @@ impl<T> std::ops::DerefMut for SelectableData<T> {
     }
 }
 
+/// A builder enables populating the selectable data.
 #[derive(Clone, Debug, Default)]
 pub struct SelectableDataBuilder<T> {
     content: SelectableData<T>,
 }
 
 impl<T> SelectableDataBuilder<T> {
+    /// Provide a value for the hover state.
     pub fn hover(mut self, item: T) -> Self {
         self.content.hover = Some(item);
         self
     }
 
+    /// Provide a value for the focus state.
     pub fn focus(mut self, item: T) -> Self {
         self.content.focus = Some(item);
         self
     }
 
+    /// Provide a value for the pressed state.
     pub fn pressed(mut self, item: T) -> Self {
         self.content.pressed = Some(item);
         self
     }
 
+    /// Provide a value for the active state.
     pub fn active(mut self, item: T) -> Self {
         self.content.active = Some(item);
         self
     }
 
+    /// Finish providing values and create the `SelectableData`.
     pub fn build(self) -> SelectableData<T> {
         self.content
     }
@@ -244,6 +308,12 @@ impl<T> Selectable for SelectableData<T> {
 }
 
 
+/// A type which ignores changes to selection state.
+///
+/// This type implements `Selectable`, but does nothing in response.  It can be
+/// useful if a interface (such as button) requires that a type parameter be
+/// Selectable, but you do not actually care about changes to the selection
+/// state.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SelectableIgnored<T> {
     data: T,

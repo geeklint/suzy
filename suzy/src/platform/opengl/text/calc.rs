@@ -40,9 +40,17 @@ fn conv_glyph_metrics(source: GlyphMetricsSource) -> GlyphMetrics {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+/// A font style for a block of rich text.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FontStyle {
-    Normal, Bold, Italic, BoldItalic
+    /// Normal font style.
+    Normal,
+    /// Bold font style.
+    Bold,
+    /// Italic font style.
+    Italic,
+    /// Bold and italic font style.
+    BoldItalic
 }
 
 impl Default for FontStyle {
@@ -52,6 +60,14 @@ impl Default for FontStyle {
 }
 
 impl FontStyle {
+    /// Convert the font style, applying bold (if not already present).
+    ///
+    /// ```
+    /// # use suzy::platform::opengl::FontStyle;
+    /// assert_eq!(FontStyle::Normal.bold(), FontStyle::Bold);
+    /// assert_eq!(FontStyle::Bold.bold(), FontStyle::Bold);
+    /// assert_eq!(FontStyle::Italic.bold(), FontStyle::BoldItalic);
+    /// ```
     pub fn bold(self) -> Self {
         match self {
             Self::Normal => Self::Bold,
@@ -60,6 +76,14 @@ impl FontStyle {
         }
     }
 
+    /// Convert the font style, applying italic (if not already present).
+    ///
+    /// ```
+    /// # use suzy::platform::opengl::FontStyle;
+    /// assert_eq!(FontStyle::Normal.italic(), FontStyle::Italic);
+    /// assert_eq!(FontStyle::Italic.italic(), FontStyle::Italic);
+    /// assert_eq!(FontStyle::Bold.italic(), FontStyle::BoldItalic);
+    /// ```
     pub fn italic(self) -> Self {
         match self {
             Self::Normal => Self::Italic,
@@ -68,6 +92,14 @@ impl FontStyle {
         }
     }
 
+    /// Convert the font style, removing bold (if present).
+    ///
+    /// ```
+    /// # use suzy::platform::opengl::FontStyle;
+    /// assert_eq!(FontStyle::Normal.unbold(), FontStyle::Normal);
+    /// assert_eq!(FontStyle::Bold.unbold(), FontStyle::Normal);
+    /// assert_eq!(FontStyle::BoldItalic.unbold(), FontStyle::Italic);
+    /// ```
     pub fn unbold(self) -> Self {
         match self {
             Self::Bold => Self::Normal,
@@ -76,6 +108,14 @@ impl FontStyle {
         }
     }
 
+    /// Convert the font style, removing italic (if present).
+    ///
+    /// ```
+    /// # use suzy::platform::opengl::FontStyle;
+    /// assert_eq!(FontStyle::Normal.unitalic(), FontStyle::Normal);
+    /// assert_eq!(FontStyle::Italic.unitalic(), FontStyle::Normal);
+    /// assert_eq!(FontStyle::BoldItalic.unitalic(), FontStyle::Bold);
+    /// ```
     pub fn unitalic(self) -> Self {
         match self {
             Self::Italic => Self::Normal,
@@ -85,11 +125,19 @@ impl FontStyle {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+/// An enum describing horizontal text alignment settings.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TextAlignment {
-    Left, Center, Right
+    /// Left-aligned
+    Left,
+    /// Center-aligned
+    Center,
+    /// Right-aligned
+    Right
 }
 
+/// A type which contains settings which effect the vertex generation
+/// of a text object.
 #[derive(Clone, Copy, Debug)]
 pub struct TextLayoutSettings {
     font_size: f32,
@@ -112,26 +160,31 @@ impl Default for TextLayoutSettings {
 }
 
 impl TextLayoutSettings {
+    /// Set the font size.
     #[must_use]
     pub fn font_size(self, font_size: f32) -> Self {
         Self { font_size, ..self }
     }
 
+    /// Set the width at which text will wrap.
     #[must_use]
     pub fn wrap_width(self, wrap_width: f32) -> Self {
         Self { wrap_width, ..self }
     }
 
+    /// Set the alignment of the text.
     #[must_use]
     pub fn alignment(self, alignment: TextAlignment) -> Self {
         Self { alignment, ..self }
     }
 
+    /// Set the tab-stop of the text.
     #[must_use]
     pub fn tab_stop(self, tab_stop: f32) -> Self {
         Self { tab_stop, ..self }
     }
 
+    /// Set the y-offset of the text.
     #[must_use]
     pub fn y_offset(self, y_offset: f32) -> Self {
         Self { y_offset, ..self }
@@ -159,6 +212,7 @@ impl<'a> RichTextParser<'a> {
 impl<'a> Iterator for RichTextParser<'a> {
     type Item = RichTextCommand<'a>;
     fn next(&mut self) -> Option<RichTextCommand<'a>> {
+        // TODO: can these be changed to `if let Some = text.strip_prefix` ?
         if self.text.is_empty() {
             None
         } else if self.text.starts_with("<b>") {
@@ -311,6 +365,7 @@ impl<'a> FontCharCalc<'a> {
             y_offset + metrics.bb_min_y * font_size,
             metrics.uv_y + metrics.uv_height,
         );
+        // TODO: use extend or something, rather than all these pushes.
         buf.reserve(4 * 6);
 
         buf.push(left.0);
