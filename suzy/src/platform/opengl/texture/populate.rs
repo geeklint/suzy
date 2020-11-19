@@ -176,7 +176,7 @@ impl PopulateTextureUtil {
     pub fn data_len(width: u16, height: u16, alignment: u16, channels: u16)
         -> usize
     {
-        assert!(match alignment { 1 | 2 | 4 => true, _ => false });
+        assert!(matches!(alignment, 1 | 2 | 4));
         let pixel_row_len = width * channels;
         let padding = (alignment - (pixel_row_len % alignment)) % alignment;
         let full_row_len = pixel_row_len + padding;

@@ -30,11 +30,7 @@ where
 
     fn pop(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
         ctx.params().pop_mask();
-        let draw = match (ctx.pass(), self.popped) {
-            (DrawPass::DrawRemaining, true) => false,
-            _ => true,
-        };
-        if draw {
+        if ctx.pass() != DrawPass::DrawRemaining || !self.popped {
             self.popped = ctx.force_redraw(|ctx| {
                 self.item.draw(ctx);
                 ctx.pass() != DrawPass::UpdateContext

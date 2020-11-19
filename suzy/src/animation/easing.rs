@@ -61,12 +61,24 @@ pub mod eases {
         }
     }
 
+    /// A type which represents a built-in constant easing function.
+    ///
+    /// The method `get` returns a boxed trait object for use with
+    /// `Animation::set_ease`.
+    ///
+    /// ```
+    /// use suzy::animation::{Animation, eases};
+    ///
+    /// let mut anim: Animation<f32> = Animation::new();
+    /// anim.set_ease(eases::EASE_LINEAR.get());
+    /// ```
     #[derive(Clone, Copy)]
     pub struct BuiltInEasingFunction {
         inner: &'static (dyn IntoBoxedEasing + Send + Sync),
     }
 
     impl BuiltInEasingFunction {
+        /// Get a trait object representing this easing function.
         pub fn get(&self) -> Box<dyn Easing> {
             self.inner.into_boxed_easing()
         }

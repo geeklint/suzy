@@ -178,153 +178,301 @@ impl UpperHex for Color {
 }
 
 impl Color {
+    /// Color constant 'ALICE_BLUE'
     pub const ALICE_BLUE: Color = Color::create_rgb(0.9411765, 0.972549, 1.0);
+    /// Color constant 'ANTIQUE_WHITE'
     pub const ANTIQUE_WHITE: Color = Color::create_rgb(0.9803922, 0.9215686, 0.8431373);
+    /// Color constant 'AQUA'
     pub const AQUA: Color = Color::create_rgb(0.0, 1.0, 1.0);
+    /// Color constant 'AQUAMARINE'
     pub const AQUAMARINE: Color = Color::create_rgb(0.4980392, 1.0, 0.8313725);
+    /// Color constant 'AZURE'
     pub const AZURE: Color = Color::create_rgb(0.9411765, 1.0, 1.0);
+    /// Color constant 'BEIGE'
     pub const BEIGE: Color = Color::create_rgb(0.9607843, 0.9607843, 0.8627451);
+    /// Color constant 'BISQUE'
     pub const BISQUE: Color = Color::create_rgb(1.0, 0.8941176, 0.7686275);
+    /// Color constant 'BLACK'
     pub const BLACK: Color = Color::create_rgb(0.0, 0.0, 0.0);
+    /// Color constant 'BLANCHED_ALMOND'
     pub const BLANCHED_ALMOND: Color = Color::create_rgb(1.0, 0.9215686, 0.8039216);
+    /// Color constant 'BLUE'
     pub const BLUE: Color = Color::create_rgb(0.0, 0.0, 1.0);
+    /// Color constant 'BLUE_VIOLET'
     pub const BLUE_VIOLET: Color = Color::create_rgb(0.5411765, 0.1686275, 0.8862745);
+    /// Color constant 'BROWN'
     pub const BROWN: Color = Color::create_rgb(0.6470588, 0.1647059, 0.1647059);
+    /// Color constant 'BURLY_WOOD'
     pub const BURLY_WOOD: Color = Color::create_rgb(0.8705882, 0.7215686, 0.5294118);
+    /// Color constant 'CADET_BLUE'
     pub const CADET_BLUE: Color = Color::create_rgb(0.372549, 0.6196078, 0.627451);
+    /// Color constant 'CHARTREUSE'
     pub const CHARTREUSE: Color = Color::create_rgb(0.4980392, 1.0, 0.0);
+    /// Color constant 'CHOCOLATE'
     pub const CHOCOLATE: Color = Color::create_rgb(0.8235294, 0.4117647, 0.1176471);
+    /// Color constant 'CORAL'
     pub const CORAL: Color = Color::create_rgb(1.0, 0.4980392, 0.3137255);
+    /// Color constant 'CORNFLOWER_BLUE'
     pub const CORNFLOWER_BLUE: Color = Color::create_rgb(0.3921569, 0.5843137, 0.9294118);
+    /// Color constant 'CORNSILK'
     pub const CORNSILK: Color = Color::create_rgb(1.0, 0.972549, 0.8627451);
+    /// Color constant 'CRIMSON'
     pub const CRIMSON: Color = Color::create_rgb(0.8627451, 0.0784314, 0.2352941);
+    /// Color constant 'CYAN'
     pub const CYAN: Color = Color::create_rgb(0.0, 1.0, 1.0);
+    /// Color constant 'DARK_BLUE'
     pub const DARK_BLUE: Color = Color::create_rgb(0.0, 0.0, 0.545098);
+    /// Color constant 'DARK_CYAN'
     pub const DARK_CYAN: Color = Color::create_rgb(0.0, 0.545098, 0.545098);
+    /// Color constant 'DARK_GOLDEN_ROD'
     pub const DARK_GOLDEN_ROD: Color = Color::create_rgb(0.7215686, 0.5254902, 0.0431373);
+    /// Color constant 'DARK_GRAY'
     pub const DARK_GRAY: Color = Color::create_rgb(0.6627451, 0.6627451, 0.6627451);
+    /// Color constant 'DARK_GREY'
     pub const DARK_GREY: Color = Color::create_rgb(0.6627451, 0.6627451, 0.6627451);
+    /// Color constant 'DARK_GREEN'
     pub const DARK_GREEN: Color = Color::create_rgb(0.0, 0.3921569, 0.0);
+    /// Color constant 'DARK_KHAKI'
     pub const DARK_KHAKI: Color = Color::create_rgb(0.7411765, 0.7176471, 0.4196078);
+    /// Color constant 'DARK_MAGENTA'
     pub const DARK_MAGENTA: Color = Color::create_rgb(0.545098, 0.0, 0.545098);
+    /// Color constant 'DARK_OLIVE_GREEN'
     pub const DARK_OLIVE_GREEN: Color = Color::create_rgb(0.3333333, 0.4196078, 0.1843137);
+    /// Color constant 'DARK_ORANGE'
     pub const DARK_ORANGE: Color = Color::create_rgb(1.0, 0.5490196, 0.0);
+    /// Color constant 'DARK_ORCHID'
     pub const DARK_ORCHID: Color = Color::create_rgb(0.6, 0.1960784, 0.8);
+    /// Color constant 'DARK_RED'
     pub const DARK_RED: Color = Color::create_rgb(0.545098, 0.0, 0.0);
+    /// Color constant 'DARK_SALMON'
     pub const DARK_SALMON: Color = Color::create_rgb(0.9137255, 0.5882353, 0.4784314);
+    /// Color constant 'DARK_SEA_GREEN'
     pub const DARK_SEA_GREEN: Color = Color::create_rgb(0.5607843, 0.7372549, 0.5607843);
+    /// Color constant 'DARK_SLATE_BLUE'
     pub const DARK_SLATE_BLUE: Color = Color::create_rgb(0.2823529, 0.2392157, 0.545098);
+    /// Color constant 'DARK_SLATE_GRAY'
     pub const DARK_SLATE_GRAY: Color = Color::create_rgb(0.1843137, 0.3098039, 0.3098039);
+    /// Color constant 'DARK_SLATE_GREY'
     pub const DARK_SLATE_GREY: Color = Color::create_rgb(0.1843137, 0.3098039, 0.3098039);
+    /// Color constant 'DARK_TURQUOISE'
     pub const DARK_TURQUOISE: Color = Color::create_rgb(0.0, 0.8078431, 0.8196078);
+    /// Color constant 'DARK_VIOLET'
     pub const DARK_VIOLET: Color = Color::create_rgb(0.5803922, 0.0, 0.827451);
+    /// Color constant 'DEEP_PINK'
     pub const DEEP_PINK: Color = Color::create_rgb(1.0, 0.0784314, 0.5764706);
+    /// Color constant 'DEEP_SKY_BLUE'
     pub const DEEP_SKY_BLUE: Color = Color::create_rgb(0.0, 0.7490196, 1.0);
+    /// Color constant 'DIM_GRAY'
     pub const DIM_GRAY: Color = Color::create_rgb(0.4117647, 0.4117647, 0.4117647);
+    /// Color constant 'DIM_GREY'
     pub const DIM_GREY: Color = Color::create_rgb(0.4117647, 0.4117647, 0.4117647);
+    /// Color constant 'DODGER_BLUE'
     pub const DODGER_BLUE: Color = Color::create_rgb(0.1176471, 0.5647059, 1.0);
+    /// Color constant 'FIRE_BRICK'
     pub const FIRE_BRICK: Color = Color::create_rgb(0.6980392, 0.1333333, 0.1333333);
+    /// Color constant 'FLORAL_WHITE'
     pub const FLORAL_WHITE: Color = Color::create_rgb(1.0, 0.9803922, 0.9411765);
+    /// Color constant 'FOREST_GREEN'
     pub const FOREST_GREEN: Color = Color::create_rgb(0.1333333, 0.545098, 0.1333333);
+    /// Color constant 'FUCHSIA'
     pub const FUCHSIA: Color = Color::create_rgb(1.0, 0.0, 1.0);
+    /// Color constant 'GAINSBORO'
     pub const GAINSBORO: Color = Color::create_rgb(0.8627451, 0.8627451, 0.8627451);
+    /// Color constant 'GHOST_WHITE'
     pub const GHOST_WHITE: Color = Color::create_rgb(0.972549, 0.972549, 1.0);
+    /// Color constant 'GOLD'
     pub const GOLD: Color = Color::create_rgb(1.0, 0.8431373, 0.0);
+    /// Color constant 'GOLDEN_ROD'
     pub const GOLDEN_ROD: Color = Color::create_rgb(0.854902, 0.6470588, 0.1254902);
+    /// Color constant 'GRAY'
     pub const GRAY: Color = Color::create_rgb(0.5019608, 0.5019608, 0.5019608);
+    /// Color constant 'GREY'
     pub const GREY: Color = Color::create_rgb(0.5019608, 0.5019608, 0.5019608);
+    /// Color constant 'GREEN'
     pub const GREEN: Color = Color::create_rgb(0.0, 0.5019608, 0.0);
+    /// Color constant 'GREEN_YELLOW'
     pub const GREEN_YELLOW: Color = Color::create_rgb(0.6784314, 1.0, 0.1843137);
+    /// Color constant 'HONEY_DEW'
     pub const HONEY_DEW: Color = Color::create_rgb(0.9411765, 1.0, 0.9411765);
+    /// Color constant 'HOT_PINK'
     pub const HOT_PINK: Color = Color::create_rgb(1.0, 0.4117647, 0.7058824);
+    /// Color constant 'INDIAN_RED'
     pub const INDIAN_RED: Color = Color::create_rgb(0.8039216, 0.3607843, 0.3607843);
+    /// Color constant 'INDIGO'
     pub const INDIGO: Color = Color::create_rgb(0.2941176, 0.0, 0.5098039);
+    /// Color constant 'IVORY'
     pub const IVORY: Color = Color::create_rgb(1.0, 1.0, 0.9411765);
+    /// Color constant 'KHAKI'
     pub const KHAKI: Color = Color::create_rgb(0.9411765, 0.9019608, 0.5490196);
+    /// Color constant 'LAVENDER'
     pub const LAVENDER: Color = Color::create_rgb(0.9019608, 0.9019608, 0.9803922);
+    /// Color constant 'LAVENDER_BLUSH'
     pub const LAVENDER_BLUSH: Color = Color::create_rgb(1.0, 0.9411765, 0.9607843);
+    /// Color constant 'LAWN_GREEN'
     pub const LAWN_GREEN: Color = Color::create_rgb(0.4862745, 0.9882353, 0.0);
+    /// Color constant 'LEMON_CHIFFON'
     pub const LEMON_CHIFFON: Color = Color::create_rgb(1.0, 0.9803922, 0.8039216);
+    /// Color constant 'LIGHT_BLUE'
     pub const LIGHT_BLUE: Color = Color::create_rgb(0.6784314, 0.8470588, 0.9019608);
+    /// Color constant 'LIGHT_CORAL'
     pub const LIGHT_CORAL: Color = Color::create_rgb(0.9411765, 0.5019608, 0.5019608);
+    /// Color constant 'LIGHT_CYAN'
     pub const LIGHT_CYAN: Color = Color::create_rgb(0.8784314, 1.0, 1.0);
+    /// Color constant 'LIGHT_GOLDEN_ROD_YELLOW'
     pub const LIGHT_GOLDEN_ROD_YELLOW: Color = Color::create_rgb(0.9803922, 0.9803922, 0.8235294);
+    /// Color constant 'LIGHT_GRAY'
     pub const LIGHT_GRAY: Color = Color::create_rgb(0.827451, 0.827451, 0.827451);
+    /// Color constant 'LIGHT_GREY'
     pub const LIGHT_GREY: Color = Color::create_rgb(0.827451, 0.827451, 0.827451);
+    /// Color constant 'LIGHT_GREEN'
     pub const LIGHT_GREEN: Color = Color::create_rgb(0.5647059, 0.9333333, 0.5647059);
+    /// Color constant 'LIGHT_PINK'
     pub const LIGHT_PINK: Color = Color::create_rgb(1.0, 0.7137255, 0.7568627);
+    /// Color constant 'LIGHT_SALMON'
     pub const LIGHT_SALMON: Color = Color::create_rgb(1.0, 0.627451, 0.4784314);
+    /// Color constant 'LIGHT_SEA_GREEN'
     pub const LIGHT_SEA_GREEN: Color = Color::create_rgb(0.1254902, 0.6980392, 0.6666667);
+    /// Color constant 'LIGHT_SKY_BLUE'
     pub const LIGHT_SKY_BLUE: Color = Color::create_rgb(0.5294118, 0.8078431, 0.9803922);
+    /// Color constant 'LIGHT_SLATE_GRAY'
     pub const LIGHT_SLATE_GRAY: Color = Color::create_rgb(0.4666667, 0.5333333, 0.6);
+    /// Color constant 'LIGHT_SLATE_GREY'
     pub const LIGHT_SLATE_GREY: Color = Color::create_rgb(0.4666667, 0.5333333, 0.6);
+    /// Color constant 'LIGHT_STEEL_BLUE'
     pub const LIGHT_STEEL_BLUE: Color = Color::create_rgb(0.6901961, 0.7686275, 0.8705882);
+    /// Color constant 'LIGHT_YELLOW'
     pub const LIGHT_YELLOW: Color = Color::create_rgb(1.0, 1.0, 0.8784314);
+    /// Color constant 'LIME'
     pub const LIME: Color = Color::create_rgb(0.0, 1.0, 0.0);
+    /// Color constant 'LIME_GREEN'
     pub const LIME_GREEN: Color = Color::create_rgb(0.1960784, 0.8039216, 0.1960784);
+    /// Color constant 'LINEN'
     pub const LINEN: Color = Color::create_rgb(0.9803922, 0.9411765, 0.9019608);
+    /// Color constant 'MAGENTA'
     pub const MAGENTA: Color = Color::create_rgb(1.0, 0.0, 1.0);
+    /// Color constant 'MAROON'
     pub const MAROON: Color = Color::create_rgb(0.5019608, 0.0, 0.0);
+    /// Color constant 'MEDIUM_AQUA_MARINE'
     pub const MEDIUM_AQUA_MARINE: Color = Color::create_rgb(0.4, 0.8039216, 0.6666667);
+    /// Color constant 'MEDIUM_BLUE'
     pub const MEDIUM_BLUE: Color = Color::create_rgb(0.0, 0.0, 0.8039216);
+    /// Color constant 'MEDIUM_ORCHID'
     pub const MEDIUM_ORCHID: Color = Color::create_rgb(0.7294118, 0.3333333, 0.827451);
+    /// Color constant 'MEDIUM_PURPLE'
     pub const MEDIUM_PURPLE: Color = Color::create_rgb(0.5764706, 0.4392157, 0.8588235);
+    /// Color constant 'MEDIUM_SEA_GREEN'
     pub const MEDIUM_SEA_GREEN: Color = Color::create_rgb(0.2352941, 0.7019608, 0.4431373);
+    /// Color constant 'MEDIUM_SLATE_BLUE'
     pub const MEDIUM_SLATE_BLUE: Color = Color::create_rgb(0.4823529, 0.4078431, 0.9333333);
+    /// Color constant 'MEDIUM_SPRING_GREEN'
     pub const MEDIUM_SPRING_GREEN: Color = Color::create_rgb(0.0, 0.9803922, 0.6039216);
+    /// Color constant 'MEDIUM_TURQUOISE'
     pub const MEDIUM_TURQUOISE: Color = Color::create_rgb(0.2823529, 0.8196078, 0.8);
+    /// Color constant 'MEDIUM_VIOLET_RED'
     pub const MEDIUM_VIOLET_RED: Color = Color::create_rgb(0.7803922, 0.0823529, 0.5215686);
+    /// Color constant 'MIDNIGHT_BLUE'
     pub const MIDNIGHT_BLUE: Color = Color::create_rgb(0.0980392, 0.0980392, 0.4392157);
+    /// Color constant 'MINT_CREAM'
     pub const MINT_CREAM: Color = Color::create_rgb(0.9607843, 1.0, 0.9803922);
+    /// Color constant 'MISTY_ROSE'
     pub const MISTY_ROSE: Color = Color::create_rgb(1.0, 0.8941176, 0.8823529);
+    /// Color constant 'MOCCASIN'
     pub const MOCCASIN: Color = Color::create_rgb(1.0, 0.8941176, 0.7098039);
+    /// Color constant 'NAVAJO_WHITE'
     pub const NAVAJO_WHITE: Color = Color::create_rgb(1.0, 0.8705882, 0.6784314);
+    /// Color constant 'NAVY'
     pub const NAVY: Color = Color::create_rgb(0.0, 0.0, 0.5019608);
+    /// Color constant 'OLD_LACE'
     pub const OLD_LACE: Color = Color::create_rgb(0.9921569, 0.9607843, 0.9019608);
+    /// Color constant 'OLIVE'
     pub const OLIVE: Color = Color::create_rgb(0.5019608, 0.5019608, 0.0);
+    /// Color constant 'OLIVE_DRAB'
     pub const OLIVE_DRAB: Color = Color::create_rgb(0.4196078, 0.5568627, 0.1372549);
+    /// Color constant 'ORANGE'
     pub const ORANGE: Color = Color::create_rgb(1.0, 0.6470588, 0.0);
+    /// Color constant 'ORANGE_RED'
     pub const ORANGE_RED: Color = Color::create_rgb(1.0, 0.2705882, 0.0);
+    /// Color constant 'ORCHID'
     pub const ORCHID: Color = Color::create_rgb(0.854902, 0.4392157, 0.8392157);
+    /// Color constant 'PALE_GOLDEN_ROD'
     pub const PALE_GOLDEN_ROD: Color = Color::create_rgb(0.9333333, 0.9098039, 0.6666667);
+    /// Color constant 'PALE_GREEN'
     pub const PALE_GREEN: Color = Color::create_rgb(0.5960784, 0.9843137, 0.5960784);
+    /// Color constant 'PALE_TURQUOISE'
     pub const PALE_TURQUOISE: Color = Color::create_rgb(0.6862745, 0.9333333, 0.9333333);
+    /// Color constant 'PALE_VIOLET_RED'
     pub const PALE_VIOLET_RED: Color = Color::create_rgb(0.8588235, 0.4392157, 0.5764706);
+    /// Color constant 'PAPAYA_WHIP'
     pub const PAPAYA_WHIP: Color = Color::create_rgb(1.0, 0.9372549, 0.8352941);
+    /// Color constant 'PEACH_PUFF'
     pub const PEACH_PUFF: Color = Color::create_rgb(1.0, 0.854902, 0.7254902);
+    /// Color constant 'PERU'
     pub const PERU: Color = Color::create_rgb(0.8039216, 0.5215686, 0.2470588);
+    /// Color constant 'PINK'
     pub const PINK: Color = Color::create_rgb(1.0, 0.7529412, 0.7960784);
+    /// Color constant 'PLUM'
     pub const PLUM: Color = Color::create_rgb(0.8666667, 0.627451, 0.8666667);
+    /// Color constant 'POWDER_BLUE'
     pub const POWDER_BLUE: Color = Color::create_rgb(0.6901961, 0.8784314, 0.9019608);
+    /// Color constant 'PURPLE'
     pub const PURPLE: Color = Color::create_rgb(0.5019608, 0.0, 0.5019608);
+    /// Color constant 'REBECCA_PURPLE'
     pub const REBECCA_PURPLE: Color = Color::create_rgb(0.4, 0.2, 0.6);
+    /// Color constant 'RED'
     pub const RED: Color = Color::create_rgb(1.0, 0.0, 0.0);
+    /// Color constant 'ROSY_BROWN'
     pub const ROSY_BROWN: Color = Color::create_rgb(0.7372549, 0.5607843, 0.5607843);
+    /// Color constant 'ROYAL_BLUE'
     pub const ROYAL_BLUE: Color = Color::create_rgb(0.254902, 0.4117647, 0.8823529);
+    /// Color constant 'SADDLE_BROWN'
     pub const SADDLE_BROWN: Color = Color::create_rgb(0.545098, 0.2705882, 0.0745098);
+    /// Color constant 'SALMON'
     pub const SALMON: Color = Color::create_rgb(0.9803922, 0.5019608, 0.4470588);
+    /// Color constant 'SANDY_BROWN'
     pub const SANDY_BROWN: Color = Color::create_rgb(0.9568627, 0.6431373, 0.3764706);
+    /// Color constant 'SEA_GREEN'
     pub const SEA_GREEN: Color = Color::create_rgb(0.1803922, 0.545098, 0.3411765);
+    /// Color constant 'SEA_SHELL'
     pub const SEA_SHELL: Color = Color::create_rgb(1.0, 0.9607843, 0.9333333);
+    /// Color constant 'SIENNA'
     pub const SIENNA: Color = Color::create_rgb(0.627451, 0.3215686, 0.1764706);
+    /// Color constant 'SILVER'
     pub const SILVER: Color = Color::create_rgb(0.7529412, 0.7529412, 0.7529412);
+    /// Color constant 'SKY_BLUE'
     pub const SKY_BLUE: Color = Color::create_rgb(0.5294118, 0.8078431, 0.9215686);
+    /// Color constant 'SLATE_BLUE'
     pub const SLATE_BLUE: Color = Color::create_rgb(0.4156863, 0.3529412, 0.8039216);
+    /// Color constant 'SLATE_GRAY'
     pub const SLATE_GRAY: Color = Color::create_rgb(0.4392157, 0.5019608, 0.5647059);
+    /// Color constant 'SLATE_GREY'
     pub const SLATE_GREY: Color = Color::create_rgb(0.4392157, 0.5019608, 0.5647059);
+    /// Color constant 'SNOW'
     pub const SNOW: Color = Color::create_rgb(1.0, 0.9803922, 0.9803922);
+    /// Color constant 'SPRING_GREEN'
     pub const SPRING_GREEN: Color = Color::create_rgb(0.0, 1.0, 0.4980392);
+    /// Color constant 'STEEL_BLUE'
     pub const STEEL_BLUE: Color = Color::create_rgb(0.2745098, 0.5098039, 0.7058824);
+    /// Color constant 'TAN'
     pub const TAN: Color = Color::create_rgb(0.8235294, 0.7058824, 0.5490196);
+    /// Color constant 'TEAL'
     pub const TEAL: Color = Color::create_rgb(0.0, 0.5019608, 0.5019608);
+    /// Color constant 'THISTLE'
     pub const THISTLE: Color = Color::create_rgb(0.8470588, 0.7490196, 0.8470588);
+    /// Color constant 'TOMATO'
     pub const TOMATO: Color = Color::create_rgb(1.0, 0.3882353, 0.2784314);
+    /// Color constant 'TURQUOISE'
     pub const TURQUOISE: Color = Color::create_rgb(0.2509804, 0.8784314, 0.8156863);
+    /// Color constant 'VIOLET'
     pub const VIOLET: Color = Color::create_rgb(0.93333334, 0.50980395, 0.93333334);
+    /// Color constant 'WHEAT'
     pub const WHEAT: Color = Color::create_rgb(0.9607843, 0.8705882, 0.7019608);
+    /// Color constant 'WHITE'
     pub const WHITE: Color = Color::create_rgb(1.0, 1.0, 1.0);
+    /// Color constant 'WHITE_SMOKE'
     pub const WHITE_SMOKE: Color = Color::create_rgb(0.9607843, 0.9607843, 0.9607843);
+    /// Color constant 'YELLOW'
     pub const YELLOW: Color = Color::create_rgb(1.0, 1.0, 0.0);
+    /// Color constant 'YELLOW_GREEN'
     pub const YELLOW_GREEN: Color = Color::create_rgb(0.6039216, 0.8039216, 0.1960784);
 
     pub(crate) fn name_to_color(name: &str) -> Option<Color> {
