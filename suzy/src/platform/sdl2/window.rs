@@ -228,18 +228,14 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         match event.action {
             PointerAction::Move(ref mut x, ref mut y) => {
                 *x *= info.dp_per_screen_unit;
-                *y *= info.dp_per_screen_unit;
-                *y = info.size.1 - *y;
+                *y *= -info.dp_per_screen_unit;
             },
-            PointerAction::Wheel(ref mut x, ref mut y) => {
-                *x *= info.dp_per_screen_unit;
-                *y *= info.dp_per_screen_unit;
-                *y = info.size.1 - *y;
+            PointerAction::Wheel(ref mut _x, ref mut y) => {
+                *y *= -1.0;
             },
             PointerAction::Hover(ref mut x, ref mut y) => {
                 *x *= info.dp_per_screen_unit;
-                *y *= info.dp_per_screen_unit;
-                *y = info.size.1 - *y;
+                *y *= -info.dp_per_screen_unit;
             },
             _ => (),
         }
@@ -387,6 +383,20 @@ impl Events {
                             )
                         )
                     }
+                }
+                Event::MouseWheel { x, y, .. } => {
+                    use crate::pointer::*;
+                    let state = self.events.mouse_state();
+                    let (xrel, yrel) = (x as f32, y as f32);
+                    let x = state.x() as f32;
+                    let y = state.y() as f32;
+                    WindowEvent::Pointer(
+                        PointerEventData::new(
+                            PointerId::Mouse,
+                            PointerAction::Wheel(xrel, yrel),
+                            x, y,
+                        )
+                    )
                 }
                 _ => continue,
             })
