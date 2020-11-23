@@ -29,7 +29,6 @@ mod receivers;
 mod rect;
 
 use internal::WidgetInternal;
-use rect::WidgetRect;
 use receivers::{
     DrawChildReceiver,
     PointerEventChildReceiver,
@@ -44,6 +43,7 @@ pub use content::WidgetContent;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
 pub use internal::WidgetExtra;
+pub use rect::WidgetRect;
 pub use receivers::{
     WidgetChildReceiver,
     WidgetGraphicReceiver,
