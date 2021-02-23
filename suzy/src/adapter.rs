@@ -87,7 +87,7 @@ pub trait AdapterLayout {
     type ElementKey: std::hash::Hash + Eq;
 
     /// The type of the collection the layout understands.
-    type Collection;
+    type Collection: ?Sized;
 
     /// The type of the data widgets will need to adapt to.
     type ElementData;
