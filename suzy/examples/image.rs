@@ -5,9 +5,9 @@
 extern crate suzy;
 
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::widget::*;
-use suzy::platform::opengl::Texture;
 use suzy::platform::opengl::SlicedImage;
+use suzy::platform::opengl::Texture;
+use suzy::widget::*;
 
 const IMAGE: &[u8] = include_bytes!("cute.data");
 const IMAGE_WIDTH: u16 = 384;

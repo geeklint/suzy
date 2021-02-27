@@ -16,16 +16,12 @@
 use std::collections::HashMap;
 
 use crate::dims::Rect;
-use crate::pointer::PointerId;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
 use crate::widget::{
-    Widget,
-    WidgetChildReceiver,
-    WidgetContent,
-    WidgetGraphicReceiver,
-    WidgetInit,
-    WidgetRect,
+    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
+    WidgetInit, WidgetRect,
 };
 
 /// Trait representing some view which may "adapt" to a specific change in
@@ -134,7 +130,7 @@ where
 }
 
 impl<'a, Layout, Content, Platform> AdapterLayoutInterface<Layout>
-for Interface<'a, Layout, Content, Platform>
+    for Interface<'a, Layout, Content, Platform>
 where
     Layout: AdapterLayout,
     Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
@@ -143,7 +139,9 @@ where
     type Bounds = WidgetRect;
     type Element = Widget<Content, Platform>;
 
-    fn reference_position(&self) -> (f32, f32) { self.data.position }
+    fn reference_position(&self) -> (f32, f32) {
+        self.data.position
+    }
 
     fn bounds(&self) -> &WidgetRect {
         &self.rect
@@ -173,22 +171,26 @@ where
             Entry::Vacant(bucket) => {
                 let inactive = &mut self.data.inactive;
                 // try to get from previous
-                let element = self.prev.remove(bucket.key())
+                let element = self
+                    .prev
+                    .remove(bucket.key())
                     // otherwise try to get anything existing and adapt it
                     .or_else(|| {
-                        inactive.pop().map(|mut el| { el.adapt(data); el })
+                        inactive.pop().map(|mut el| {
+                            el.adapt(data);
+                            el
+                        })
                     })
                     // otherwise, create a new widget
                     .unwrap_or_else(|| Adaptable::from(data));
                 bucket.insert(element)
-            },
+            }
         }
     }
 }
 
-
 impl<'a, Layout, Content, Platform> Drop
-for Interface<'a, Layout, Content, Platform>
+    for Interface<'a, Layout, Content, Platform>
 where
     Layout: AdapterLayout,
     Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
@@ -196,7 +198,9 @@ where
 {
     fn drop(&mut self) {
         let remaining = std::mem::take(&mut self.prev);
-        self.data.inactive.extend(remaining.into_iter().map(|(_k, v)| v));
+        self.data
+            .inactive
+            .extend(remaining.into_iter().map(|(_k, v)| v));
     }
 }
 
@@ -238,7 +242,7 @@ where
 }
 
 impl<Layout, Content, Platform> Default
-for AdapterView<Layout, Content, Platform>
+    for AdapterView<Layout, Content, Platform>
 where
     Layout: 'static + AdapterLayout + Default,
     Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
@@ -262,7 +266,7 @@ where
 }
 
 impl<Layout, Content, Platform> WidgetContent<Platform>
-for AdapterView<Layout, Content, Platform>
+    for AdapterView<Layout, Content, Platform>
 where
     Layout: 'static + AdapterLayout,
     Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
@@ -300,8 +304,8 @@ where
         use crate::pointer::PointerAction;
         match event.action() {
             PointerAction::Down => {
-                let grabbed = self.hittest(extra, event.pos())
-                    && event.try_grab(extra);
+                let grabbed =
+                    self.hittest(extra, event.pos()) && event.try_grab(extra);
                 if grabbed {
                     self.primary_pointer.get_or_insert(event.id());
                 }
@@ -334,14 +338,14 @@ where
                     self.primary_pointer = None;
                 }
                 true
-            },
+            }
             PointerAction::Up => {
                 let ungrabbed = event.try_ungrab(extra.id());
                 if ungrabbed && Some(event.id()) == self.primary_pointer {
                     self.primary_pointer = None;
                 }
                 ungrabbed
-            },
+            }
             _ => false,
         }
     }
@@ -364,9 +368,13 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
     type Collection = Vec<T>;
     type ElementData = T;
 
-    fn data(&self) -> &Vec<T> { &self.data }
+    fn data(&self) -> &Vec<T> {
+        &self.data
+    }
 
-    fn data_mut(&mut self) -> &mut Vec<T> { &mut self.data }
+    fn data_mut(&mut self) -> &mut Vec<T> {
+        &mut self.data
+    }
 
     fn layout(&mut self, mut interface: impl AdapterLayoutInterface<Self>) {
         let (top, bottom) = {
@@ -400,17 +408,21 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
             // we have nothing to go off of, so just update the rest position
             self.avg_size = 100.0;
             self.reference_index = self.data.len();
-            interface.update_positions(
-                (0.0, 0.0),
-                (0.0, bottom - top),
-            );
+            let reference_update = (0.0, 0.0);
+            let rest_update = (0.0, bottom - top);
+            interface.update_positions(reference_update, rest_update);
             return;
         }
-        let mut nearest = (
-            drawn_index,
-            cursor_back,
-            (cursor_back - middle).abs(),
-        );
+        struct Nearest {
+            index: usize,
+            pos: f32,
+            dist: f32,
+        }
+        let mut nearest = Nearest {
+            index: drawn_index,
+            pos: cursor_back,
+            dist: (cursor_back - middle).abs(),
+        };
         // draw elements before the initially drawn one
         let mut index_back = drawn_index;
         while cursor_back < top && index_back > 0 {
@@ -419,8 +431,12 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
             el.set_bottom(cursor_back);
             cursor_back = el.top();
             let dist = (cursor_back - middle).abs();
-            if dist < nearest.2 {
-                nearest = (index_back, cursor_back, dist);
+            if dist < nearest.dist {
+                nearest = Nearest {
+                    index: index_back,
+                    pos: cursor_back,
+                    dist,
+                };
             }
         }
         let mut index_fwd = drawn_index;
@@ -430,15 +446,19 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
             let el = interface.get_element(index_fwd, &self.data[index_fwd]);
             el.set_top(cursor_fwd);
             let dist = (cursor_fwd - middle).abs();
-            if dist < nearest.2 {
-                nearest = (index_fwd, cursor_fwd, dist);
+            if dist < nearest.dist {
+                nearest = Nearest {
+                    index: index_fwd,
+                    pos: cursor_fwd,
+                    dist,
+                };
             }
             cursor_fwd = el.bottom();
         }
         let count = interface.num_active_elements() as f32;
         self.avg_size = (cursor_back - cursor_fwd).abs() / count;
         let rest_pos = if cursor_back < top {
-            nearest.1 + (top - cursor_back)
+            nearest.pos + (top - cursor_back)
         } else if cursor_fwd > bottom {
             let limit = if index_back == 0 {
                 // prevent wiggling if the whole list is smaller than the view
@@ -446,15 +466,14 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
             } else {
                 f32::INFINITY
             };
-            nearest.1 - (cursor_fwd - bottom).min(limit)
+            nearest.pos - (cursor_fwd - bottom).min(limit)
         } else {
-            nearest.1
+            nearest.pos
         };
-        self.reference_index = nearest.0;
-        interface.update_positions(
-            (0.0, nearest.1 - top),
-            (0.0, rest_pos - top),
-        );
+        self.reference_index = nearest.index;
+        let reference_update = (0.0, nearest.pos - top);
+        let rest_update = (0.0, rest_pos - top);
+        interface.update_positions(reference_update, rest_update);
     }
 
     fn element_location(

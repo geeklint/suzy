@@ -65,15 +65,14 @@ pub mod animation;
 pub mod app;
 pub mod dims;
 pub mod graphics;
+pub mod platform;
 pub mod pointer;
 pub mod selectable;
 pub mod units;
-pub mod widget;
-pub mod window;
-pub mod platform;
 pub mod watch;
+pub mod widget;
 pub mod widgets;
-
+pub mod window;
 
 /// A version of the tweak! macro from the crate
 /// [`inline_tweak`](https://crates.io/crates/inline_tweak), but designed to

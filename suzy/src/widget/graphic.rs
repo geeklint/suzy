@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::graphics::Graphic;
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
 /// A trait which represents a graphic a widget might contain.
 ///
@@ -33,7 +33,9 @@ where
     /// If this graphic is strongly ordered, such that `after_children` should
     /// be called in reverse order as `before_children`, relative to other
     /// graphics.
-    fn ordered() -> bool { true }
+    fn ordered() -> bool {
+        true
+    }
 }
 
 impl<'a, 'b, P, T> WidgetGraphic<'a, 'b, P> for T
@@ -53,7 +55,9 @@ where
         WidgetGraphicProxy { graphic: &mut [] }
     }
 
-    fn ordered() -> bool { false }
+    fn ordered() -> bool {
+        false
+    }
 }
 
 pub struct WidgetGraphicProxy<'a, T> {

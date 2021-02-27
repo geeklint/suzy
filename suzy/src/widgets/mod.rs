@@ -9,11 +9,7 @@ mod togglebutton;
 
 pub use button::Button;
 
-pub use togglebutton::{
-    ToggleButtonGroup,
-    ToggleButton,
-    ToggleButtonValue,
-};
+pub use togglebutton::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
 
 /// A trait for widgets which have an obvious singular text graphic associated
 /// with them.

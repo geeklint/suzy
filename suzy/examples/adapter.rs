@@ -4,18 +4,11 @@
 
 extern crate suzy;
 
-use suzy::adapter::{
-    Adaptable,
-    DownwardVecAdapter,
-};
+use suzy::adapter::{Adaptable, DownwardVecAdapter};
 use suzy::dims::{Rect, SimplePadding2d};
+use suzy::platform::opengl::{Text, TextAlignment, TextLayoutSettings};
 use suzy::watch::Watched;
 use suzy::widget::*;
-use suzy::platform::opengl::{
-    Text,
-    TextLayoutSettings,
-    TextAlignment,
-};
 
 const WORDS: &str = include_str!("words.txt");
 

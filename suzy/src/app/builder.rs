@@ -7,19 +7,10 @@ use std::time;
 
 use drying_paint::Watched;
 
-use crate::platform::{
-    Platform,
-};
-use crate::window::{
-    WindowBuilder,
-    WindowSettings,
-};
+use crate::platform::Platform;
+use crate::window::{WindowBuilder, WindowSettings};
 
-use super::{
-    App,
-    AppValues,
-    get_cell_size,
-};
+use super::{get_cell_size, App, AppValues};
 
 /// Enables customizing an app before it is run.
 #[derive(Default)]
@@ -57,19 +48,25 @@ impl AppBuilder {
 }
 
 impl WindowSettings for AppBuilder {
-    fn size(&self) -> (f32, f32) { self.win.size() }
-    
+    fn size(&self) -> (f32, f32) {
+        self.win.size()
+    }
+
     fn set_size(&mut self, size: (f32, f32)) {
         self.win.set_size(size);
     }
 
-    fn title(&self) -> &str { self.win.title() }
+    fn title(&self) -> &str {
+        self.win.title()
+    }
 
     fn set_title(&mut self, title: String) {
         self.win.set_title(title);
     }
 
-    fn fullscreen(&self) -> bool { self.win.fullscreen() }
+    fn fullscreen(&self) -> bool {
+        self.win.fullscreen()
+    }
 
     fn set_fullscreen(&mut self, fullscreen: bool) {
         self.win.set_fullscreen(fullscreen);
@@ -83,4 +80,3 @@ impl WindowSettings for AppBuilder {
         self.win.set_background_color(color);
     }
 }
-

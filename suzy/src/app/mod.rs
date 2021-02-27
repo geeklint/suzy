@@ -7,34 +7,18 @@
 //! Apps have an associated window and "root" widgets, which are assigned
 //! to fill the whole window area.
 
-use std::time;
 use std::collections::HashMap;
+use std::time;
 
-use drying_paint::{
-    WatchContext,
-    Watched,
-};
+use drying_paint::{WatchContext, Watched};
 
-use crate::platform::{
-    DefaultPlatform,
-    Platform,
-    Event,
-    EventLoopState,
-};
+use crate::dims::{Dim, Rect, SimplePadding2d, SimpleRect};
+use crate::platform::{DefaultPlatform, Event, EventLoopState, Platform};
 use crate::pointer::{
-    PointerAction,
-    PointerEvent,
-    PointerId,
-    PointerEventData,
+    PointerAction, PointerEvent, PointerEventData, PointerId,
 };
-use crate::widget::{
-    AnonWidget,
-    Widget,
-    WidgetContent,
-    WidgetId,
-};
+use crate::widget::{AnonWidget, Widget, WidgetContent, WidgetId};
 use crate::window;
-use crate::dims::{Dim, SimpleRect, Rect, SimplePadding2d};
 use window::{Window, WindowEvent, WindowSettings};
 
 mod builder;
@@ -43,10 +27,7 @@ mod values;
 
 pub use builder::AppBuilder;
 pub use tester::AppTesterInterface;
-pub(crate) use values::{
-    AppValues,
-    get_cell_size,
-};
+pub(crate) use values::{get_cell_size, AppValues};
 
 /// A type which contains the context in which widgets run.
 ///
@@ -69,16 +50,15 @@ impl<P: Platform> App<P> {
     /// This will bind watch closures it is called in, and can be used to
     /// intentionally cause a watch closure to re-run every frame.
     pub fn time() -> time::Instant {
-        AppValues::expect_current(|values| {
-            *values.frame_start
-        })
+        AppValues::expect_current(|values| *values.frame_start)
     }
 
     /// A version of `time` which will not bind watch closures.
     pub fn time_unwatched() -> time::Instant {
         AppValues::try_with_current(|values| {
             *Watched::get_unwatched(&values.frame_start)
-        }).unwrap_or_else(time::Instant::now)
+        })
+        .unwrap_or_else(time::Instant::now)
     }
 
     /// This is similar to `time`, however it updates much less frequently.
@@ -89,15 +69,13 @@ impl<P: Platform> App<P> {
     /// Current precision is 1 second, however this should not be relied
     /// upon and may change in the future.
     pub fn coarse_time() -> time::Instant {
-        AppValues::expect_current(|values| {
-            *values.coarse_time
-        })
+        AppValues::expect_current(|values| *values.coarse_time)
     }
 
     /// Make this app context "current".
     pub fn with<F, R>(self, func: F) -> (Self, R)
     where
-        F: FnOnce(&mut CurrentApp<P>) -> R
+        F: FnOnce(&mut CurrentApp<P>) -> R,
     {
         let Self {
             platform,
@@ -109,15 +87,18 @@ impl<P: Platform> App<P> {
         } = self;
         let window = Some(window);
         let mut current = CurrentApp {
-            window, roots, pointer_grab_map,
+            window,
+            roots,
+            pointer_grab_map,
         };
         let current_ref = &mut current;
-        let (watch_ctx, (values, res)) = watch_ctx.with(|| {
-            values.with(move || {
-                func(current_ref)
-            })
-        });
-        let CurrentApp { window, roots, pointer_grab_map } = current;
+        let (watch_ctx, (values, res)) =
+            watch_ctx.with(|| values.with(move || func(current_ref)));
+        let CurrentApp {
+            window,
+            roots,
+            pointer_grab_map,
+        } = current;
         let window = window.expect("CurrentApp lost its Window");
         let new_self = Self {
             platform,
@@ -145,7 +126,9 @@ impl<P: Platform> App<P> {
         } = self;
         let window = Some(window);
         let mut current = CurrentApp::<P> {
-            window, roots, pointer_grab_map,
+            window,
+            roots,
+            pointer_grab_map,
         };
         let _res = watch_ctx.with(|| {
             values.with(|| {
@@ -171,7 +154,9 @@ impl<P: Platform> App<P> {
         window.recalculate_viewport();
         let window = Some(window);
         let mut current = CurrentApp::<P> {
-            window, roots, pointer_grab_map,
+            window,
+            roots,
+            pointer_grab_map,
         };
         watch_ctx.with(|| {
             values.with(|| {
@@ -187,7 +172,7 @@ impl<P: Platform> App<P> {
 /// A type which represents an App which is currently available as a context.
 pub struct CurrentApp<P = DefaultPlatform>
 where
-    P: Platform
+    P: Platform,
 {
     window: Option<P::Window>,
     roots: Vec<Box<dyn AnonWidget<P::Renderer>>>,
@@ -222,16 +207,14 @@ impl<P: Platform> CurrentApp<P> {
     fn access_roots<F, R>(&mut self, func: F) -> R
     where
         F: 'static + FnOnce(&mut Vec<Box<dyn AnonWidget<P::Renderer>>>) -> R,
-        R: 'static
+        R: 'static,
     {
         let roots = std::mem::take(&mut self.roots);
-        let (roots, ret) = WatchContext::allow_watcher_access(
-            roots,
-            move |mut roots| {
+        let (roots, ret) =
+            WatchContext::allow_watcher_access(roots, move |mut roots| {
                 let ret = func(&mut roots);
                 (roots, ret)
-            }
-        );
+            });
         self.roots = roots;
         ret
     }
@@ -248,28 +231,28 @@ impl<P: Platform> CurrentApp<P> {
                 AppValues::expect_current_mut(|values| {
                     *values.frame_start = frame_time;
                     let duration = frame_time.duration_since(
-                        *Watched::get_unwatched(&values.coarse_time)
+                        *Watched::get_unwatched(&values.coarse_time),
                     );
                     if duration >= AppValues::COARSE_STEP {
                         *values.coarse_time = frame_time;
                     }
                 });
-            },
+            }
             Event::Update => {
                 WatchContext::update_current();
-            },
+            }
             Event::TakeScreenshot(dest) => {
                 *dest = self.window().take_screenshot();
-            },
+            }
             Event::Draw => {
                 self.draw();
-            },
+            }
             Event::FinishDraw => {
                 self.window().flip();
-            },
+            }
             Event::WindowEvent(Quit) => {
                 state.request_shutdown();
-            },
+            }
             Event::WindowEvent(Resize) => {
                 let (x, y) = self.window().size();
                 AppValues::expect_current_mut(|values| {
@@ -286,21 +269,20 @@ impl<P: Platform> CurrentApp<P> {
                     }
                 });
                 self.window().recalculate_viewport();
-            },
+            }
             Event::WindowEvent(DpScaleChange) => {
                 let ppd = self.window().pixels_per_dp();
                 AppValues::expect_current_mut(|values| {
                     *values.px_per_dp = ppd;
                 });
-            },
-            Event::WindowEvent(KeyDown(_key)) => {
-            },
+            }
+            Event::WindowEvent(KeyDown(_key)) => {}
             Event::WindowEvent(Pointer(mut pointer)) => {
                 if !pointer.normalized {
                     self.window().normalize_pointer_event(&mut pointer);
                 }
                 self.pointer_event(pointer);
-            },
+            }
         }
     }
 
@@ -308,8 +290,8 @@ impl<P: Platform> CurrentApp<P> {
         let mut loop_count = 0;
         let mut first_pass = true;
         loop {
-            let mut window = self.window.take()
-                .expect("CurrentApp lost its Window");
+            let mut window =
+                self.window.take().expect("CurrentApp lost its Window");
             let (window, need_loop) = self.access_roots(move |roots| {
                 let mut ctx = window.prepare_draw(first_pass);
                 let iter = roots.iter_mut();
@@ -335,16 +317,10 @@ impl<P: Platform> CurrentApp<P> {
         }
     }
 
-    fn pointer_event(
-        &mut self,
-        pointer: PointerEventData,
-    ) {
+    fn pointer_event(&mut self, pointer: PointerEventData) {
         let mut grab_map = std::mem::take(&mut self.pointer_grab_map);
         let (stolen_from, mut grab_map) = self.access_roots(move |roots| {
-            let mut event = PointerEvent::new(
-                pointer,
-                &mut grab_map,
-            );
+            let mut event = PointerEvent::new(pointer, &mut grab_map);
             let mut handled = false;
             let mut iter = roots.iter_mut().rev();
             while let (false, Some(root)) = (handled, iter.next()) {
@@ -357,16 +333,19 @@ impl<P: Platform> CurrentApp<P> {
                 let mut found = false;
                 let mut iter = roots.iter_mut();
                 while let (false, Some(root)) = (found, iter.next()) {
-                    root.find_widget(&id, &mut Some(Box::new(|widget| {
-                        found = true;
-                        widget.pointer_event_self(&mut PointerEvent::new(
-                            PointerEventData {
-                                action: PointerAction::GrabStolen,
-                                ..pointer
-                            },
-                            &mut grab_map,
-                        ));
-                    })));
+                    root.find_widget(
+                        &id,
+                        &mut Some(Box::new(|widget| {
+                            found = true;
+                            widget.pointer_event_self(&mut PointerEvent::new(
+                                PointerEventData {
+                                    action: PointerAction::GrabStolen,
+                                    ..pointer
+                                },
+                                &mut grab_map,
+                            ));
+                        })),
+                    );
                 }
                 grab_map
             })
@@ -377,7 +356,7 @@ impl<P: Platform> CurrentApp<P> {
 
     /// Consume the current app, cleaning up its resources immediately.
     pub fn shutdown(self) {
-        let Self { window, roots, ..  } = self;
+        let Self { window, roots, .. } = self;
         std::mem::drop(roots);
         std::mem::drop(window);
     }

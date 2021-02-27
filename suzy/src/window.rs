@@ -31,7 +31,7 @@ pub enum WindowEvent {
 pub trait WindowSettings {
     /// Get the size of the window in dp
     fn size(&self) -> (f32, f32);
-    
+
     /// Set the size of the window in dp
     fn set_size(&mut self, size: (f32, f32));
 
@@ -64,7 +64,9 @@ pub struct WindowBuilder {
 
 impl WindowBuilder {
     /// Consumes the window builder, returning just the title string.
-    pub fn into_title(self) -> String { self.title }
+    pub fn into_title(self) -> String {
+        self.title
+    }
 }
 
 impl Default for WindowBuilder {
@@ -79,25 +81,33 @@ impl Default for WindowBuilder {
 }
 
 impl WindowSettings for WindowBuilder {
-    fn size(&self) -> (f32, f32) { self.size }
-    
+    fn size(&self) -> (f32, f32) {
+        self.size
+    }
+
     fn set_size(&mut self, size: (f32, f32)) {
         self.size = size;
     }
 
-    fn title(&self) -> &str { &self.title }
+    fn title(&self) -> &str {
+        &self.title
+    }
 
     fn set_title(&mut self, title: String) {
         self.title = title;
     }
 
-    fn fullscreen(&self) -> bool { self.fullscreen }
+    fn fullscreen(&self) -> bool {
+        self.fullscreen
+    }
 
     fn set_fullscreen(&mut self, fullscreen: bool) {
         self.fullscreen = fullscreen;
     }
 
-    fn background_color(&self) -> Color { self.background_color }
+    fn background_color(&self) -> Color {
+        self.background_color
+    }
 
     fn set_background_color(&mut self, color: Color) {
         self.background_color = color;
@@ -105,7 +115,7 @@ impl WindowSettings for WindowBuilder {
 }
 
 /// A trait which represents a window.
-pub trait Window<P: RenderPlatform> : WindowSettings {
+pub trait Window<P: RenderPlatform>: WindowSettings {
     /// Get the pixel density of the window as displayed
     fn pixels_per_dp(&self) -> f32;
 

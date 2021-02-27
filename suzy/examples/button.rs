@@ -4,10 +4,7 @@
 
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::widget::{
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
+    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
 use suzy::widgets::Button;
 

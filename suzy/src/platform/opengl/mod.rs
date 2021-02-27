@@ -8,7 +8,8 @@
 //! In this module are a number of important Graphics implementations for
 //! the platform.
 
-#[macro_use] mod primitive;
+#[macro_use]
+mod primitive;
 mod buffer;
 mod texture;
 
@@ -20,38 +21,23 @@ mod matrix;
 mod shader;
 mod stdshaders;
 mod text;
-mod window;
 mod widgets;
+mod window;
 
 pub use buffer::{
-    SingleVertexBuffer,
-    DualVertexBuffer,
-    DualVertexBufferIndexed,
+    DualVertexBuffer, DualVertexBufferIndexed, SingleVertexBuffer,
 };
-pub use texture::{
-    PopulateTexture,
-    PopulateTextureDynClone,
-    PopulateTextureUtil,
-    Texture,
-    TextureCacheKey,
-    TextureSize,
-};
-pub use context::{
-    OpenGlContext,
-    OpenGlBindings,
-};
+pub use context::{OpenGlBindings, OpenGlContext};
 pub use drawparams::DrawParams;
 pub use graphics::*;
 pub use matrix::Mat4;
 pub use text::{
-    FontFamily,
-    FontFamilyDynamic,
-    FontFamilySource,
-    FontFamilySourceDynamic,
-    FontStyle,
-    Text,
-    TextAlignment,
-    TextLayoutSettings,
+    FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
+    FontStyle, Text, TextAlignment, TextLayoutSettings,
+};
+pub use texture::{
+    PopulateTexture, PopulateTextureDynClone, PopulateTextureUtil, Texture,
+    TextureCacheKey, TextureSize,
 };
 pub use window::Window;
 

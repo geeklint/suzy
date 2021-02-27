@@ -5,45 +5,33 @@
 use std::ffi::{CStr, CString};
 use std::rc::{Rc, Weak};
 
-use super::OpenGlBindings;
 use super::context::bindings::types::*;
 use super::context::bindings::{
-    ACTIVE_ATTRIBUTES,
-    COMPILE_STATUS,
-    FALSE,
-    FRAGMENT_SHADER,
-    INFO_LOG_LENGTH,
-    LINK_STATUS,
-    MAX_VERTEX_ATTRIBS,
-    VERTEX_SHADER,
+    ACTIVE_ATTRIBUTES, COMPILE_STATUS, FALSE, FRAGMENT_SHADER,
+    INFO_LOG_LENGTH, LINK_STATUS, MAX_VERTEX_ATTRIBS, VERTEX_SHADER,
 };
+use super::OpenGlBindings;
 
 macro_rules! info_log {
-    ( $id:expr, $gl:expr, $fn_get_iv:ident, $fn_log:ident ) => {
-        {
-            let log_len = unsafe {
-                let mut log_len = 0;
-                $gl.$fn_get_iv(
-                    $id,
-                    INFO_LOG_LENGTH,
-                    &mut log_len as *mut GLint,
-                );
-                log_len as usize
-            };
-            let mut array = vec![0; log_len];
-            let mut actual_len = 0;
-            unsafe {
-                $gl.$fn_log(
-                    $id,
-                    array.len() as GLsizei,
-                    &mut actual_len as *mut GLsizei,
-                    array.as_mut_ptr() as *mut GLchar,
-                );
-            }
-            array.truncate((actual_len + 1) as usize);
-            CStr::from_bytes_with_nul(&array).unwrap().to_owned()
+    ( $id:expr, $gl:expr, $fn_get_iv:ident, $fn_log:ident ) => {{
+        let log_len = unsafe {
+            let mut log_len = 0;
+            $gl.$fn_get_iv($id, INFO_LOG_LENGTH, &mut log_len as *mut GLint);
+            log_len as usize
+        };
+        let mut array = vec![0; log_len];
+        let mut actual_len = 0;
+        unsafe {
+            $gl.$fn_log(
+                $id,
+                array.len() as GLsizei,
+                &mut actual_len as *mut GLsizei,
+                array.as_mut_ptr() as *mut GLchar,
+            );
         }
-    };
+        array.truncate((actual_len + 1) as usize);
+        CStr::from_bytes_with_nul(&array).unwrap().to_owned()
+    }};
 }
 
 struct ShaderObj<'a> {
@@ -59,9 +47,11 @@ impl<'a> Drop for ShaderObj<'a> {
     }
 }
 
-fn compile_shader<'a>(gl: &'a OpenGlBindings, type_: GLenum, text: &[u8])
-    -> Result<ShaderObj<'a>, CString>
-{
+fn compile_shader<'a>(
+    gl: &'a OpenGlBindings,
+    type_: GLenum,
+    text: &[u8],
+) -> Result<ShaderObj<'a>, CString> {
     let lines = [text.as_ptr()];
     let lengths = [text.len()];
     let (obj, success) = unsafe {
@@ -114,9 +104,11 @@ impl Drop for ProgramObject {
     }
 }
 
-fn compile_program(gl: &Rc<OpenGlBindings>, vert_text: &[u8], frag_text: &[u8])
-    -> Result<ProgramObject, ProgramCompileError>
-{
+fn compile_program(
+    gl: &Rc<OpenGlBindings>,
+    vert_text: &[u8],
+    frag_text: &[u8],
+) -> Result<ProgramObject, ProgramCompileError> {
     let vert = compile_shader(&gl, VERTEX_SHADER, vert_text)
         .map_err(ProgramCompileError::Vertex)?;
     let frag = compile_shader(&gl, FRAGMENT_SHADER, frag_text)
@@ -137,9 +129,12 @@ fn compile_program(gl: &Rc<OpenGlBindings>, vert_text: &[u8], frag_text: &[u8])
     let result = if success {
         Ok(())
     } else {
-        Err(ProgramCompileError::Link(
-            info_log!(program.id, gl, GetProgramiv, GetProgramInfoLog)
-        ))
+        Err(ProgramCompileError::Link(info_log!(
+            program.id,
+            gl,
+            GetProgramiv,
+            GetProgramInfoLog
+        )))
     };
     unsafe {
         gl.DetachShader(program.id, vert.id);
@@ -162,9 +157,11 @@ pub struct UniformLoc {
 }
 
 impl Shader {
-    pub fn create(gl: &Rc<OpenGlBindings>, vert_text: &[u8], frag_text: &[u8])
-        -> Result<Self, ProgramCompileError>
-    {
+    pub fn create(
+        gl: &Rc<OpenGlBindings>,
+        vert_text: &[u8],
+        frag_text: &[u8],
+    ) -> Result<Self, ProgramCompileError> {
         let obj = compile_program(gl, vert_text, frag_text)?;
         let (attrs, total_attrs) = unsafe {
             let mut attrs: GLint = 0;
@@ -174,10 +171,7 @@ impl Shader {
                 ACTIVE_ATTRIBUTES,
                 &mut attrs as *mut GLint,
             );
-            gl.GetIntegerv(
-                MAX_VERTEX_ATTRIBS,
-                &mut total_attrs as *mut GLint,
-            );
+            gl.GetIntegerv(MAX_VERTEX_ATTRIBS, &mut total_attrs as *mut GLint);
             (attrs as GLuint, total_attrs as GLuint)
         };
         let shader = Shader {
@@ -189,7 +183,9 @@ impl Shader {
         Ok(shader)
     }
 
-    pub fn attrs(&self) -> GLuint { self.attrs }
+    pub fn attrs(&self) -> GLuint {
+        self.attrs
+    }
 
     pub fn make_current(
         &self,
@@ -210,8 +206,7 @@ impl Shader {
     }
 
     pub fn uniform(&self, gl: &OpenGlBindings, name: &str) -> UniformLoc {
-        let cname = CString::new(name)
-            .expect("Uniform name contained null");
+        let cname = CString::new(name).expect("Uniform name contained null");
         let id = unsafe {
             gl.GetUniformLocation(
                 self.program_id,
@@ -232,22 +227,14 @@ impl Shader {
         value: (GLfloat, GLfloat, GLfloat, GLfloat),
     ) {
         unsafe {
-            gl.Uniform4f(
-                loc.id,
-                value.0, value.1, value.2, value.3,
-            );
+            gl.Uniform4f(loc.id, value.0, value.1, value.2, value.3);
         }
     }
 
     pub fn set_mat4(gl: &OpenGlBindings, loc: UniformLoc, value: &[GLfloat]) {
         debug_assert_eq!(value.len(), 16, "mat4 must have 16 elements!");
         unsafe {
-            gl.UniformMatrix4fv(
-                loc.id,
-                1,
-                FALSE,
-                value.as_ptr(),
-            );
+            gl.UniformMatrix4fv(loc.id, 1, FALSE, value.as_ptr());
         }
     }
 }

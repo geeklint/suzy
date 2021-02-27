@@ -5,8 +5,7 @@
 use crate::dims::{Dim, Rect};
 use crate::platform::RenderPlatform;
 
-use super::{WidgetId, WidgetContent, WidgetRect};
-
+use super::{WidgetContent, WidgetId, WidgetRect};
 
 pub(super) struct WidgetInternal<P, T>
 where
@@ -47,19 +46,24 @@ impl WidgetExtra<'_> {
 }
 
 impl Rect for WidgetExtra<'_> {
-    fn x(&self) -> Dim { self.rect.x() }
-    fn y(&self) -> Dim { self.rect.y() }
+    fn x(&self) -> Dim {
+        self.rect.x()
+    }
+    fn y(&self) -> Dim {
+        self.rect.y()
+    }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.rect.x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.rect.y_mut(f)
     }
 }
-

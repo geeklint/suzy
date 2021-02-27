@@ -2,16 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::graphics::{Graphic, DrawContext};
+use crate::graphics::{DrawContext, Graphic};
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
 use super::{
-    Widget,
-    WidgetGraphic,
-    WidgetContent,
-    AnonWidget,
-    FindWidgetCallback,
+    AnonWidget, FindWidgetCallback, Widget, WidgetContent, WidgetGraphic,
 };
 
 /// An internal iterator style receiver.  Types of this trait are passed to
@@ -42,7 +38,8 @@ pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform + ?Sized> {
 }
 
 impl<'a, 'b, P> WidgetChildReceiver<P> for DrawChildReceiver<'a, 'b, P>
-where P: RenderPlatform + ?Sized
+where
+    P: RenderPlatform + ?Sized,
 {
     fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
         Widget::draw(child, self.ctx);
@@ -59,7 +56,7 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
 }
 
 impl<'a, 'b, 'c, P> WidgetChildReceiver<P>
-for PointerEventChildReceiver<'a, 'b, 'c>
+    for PointerEventChildReceiver<'a, 'b, 'c>
 where
     P: RenderPlatform + ?Sized,
 {
@@ -83,11 +80,15 @@ where
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, P> WidgetGraphicReceiver<P> for DrawGraphicBeforeReceiver<'a, 'b, P>
+impl<'a, 'b, P> WidgetGraphicReceiver<P>
+    for DrawGraphicBeforeReceiver<'a, 'b, P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(
+        &mut self,
+        graphic: &'g mut T,
+    ) {
         graphic.before_children().draw(self.ctx);
     }
 }
@@ -101,11 +102,14 @@ where
 }
 
 impl<'a, 'b, P> WidgetGraphicReceiver<P>
-for DrawGraphicUnorderedReceiver<'a, 'b, P>
+    for DrawGraphicUnorderedReceiver<'a, 'b, P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(
+        &mut self,
+        graphic: &'g mut T,
+    ) {
         if T::ordered() {
             *self.num_ordered += 1;
         } else {
@@ -124,11 +128,14 @@ where
 }
 
 impl<'a, 'b, P> WidgetGraphicReceiver<P>
-for DrawGraphicOrderedReceiver<'a, 'b, P>
+    for DrawGraphicOrderedReceiver<'a, 'b, P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T) {
+    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(
+        &mut self,
+        graphic: &'g mut T,
+    ) {
         if T::ordered() {
             if self.current == self.target {
                 graphic.after_children().draw(self.ctx);

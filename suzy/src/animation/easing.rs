@@ -13,7 +13,6 @@ pub trait Easing {
     fn ease(&self, t: f32) -> f32;
 }
 
-
 /// An easing function implementation based on cubic polynomials.
 ///
 /// Given the four parameters, (a, b, c, d), compute the easing to be
@@ -33,14 +32,16 @@ pub struct CubicPoly(
 impl Easing for CubicPoly {
     fn ease(&self, t: f32) -> f32 {
         (self.0 * t.powi(3))
-        + (self.1 * t.powi(2))
-        + (self.2 * t.powi(1))
-        + (self.3 * t)
+            + (self.1 * t.powi(2))
+            + (self.2 * t.powi(1))
+            + (self.3 * t)
     }
 }
 
 impl Default for CubicPoly {
-    fn default() -> Self { CubicPoly(0.0, 0.0, 1.0, 0.0) }
+    fn default() -> Self {
+        CubicPoly(0.0, 0.0, 1.0, 0.0)
+    }
 }
 
 /// Built-in easing function constants.
@@ -85,7 +86,9 @@ pub mod eases {
     }
 
     impl Into<Box<dyn Easing>> for BuiltInEasingFunction {
-        fn into(self) -> Box<dyn Easing> { self.get() }
+        fn into(self) -> Box<dyn Easing> {
+            self.get()
+        }
     }
 
     /// Built-in easing function "LINEAR"
@@ -125,9 +128,10 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_SINE.get());
     /// ```
-    pub const EASE_IN_OUT_SINE: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-2.604746, 3.8931036, -0.3192672, 0.0146106),
-    };
+    pub const EASE_IN_OUT_SINE: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-2.604746, 3.8931036, -0.3192672, 0.0146106),
+        };
     /// Built-in easing function "IN_QUAD"
     /// ```
     /// use suzy::animation::{Animation, eases};
@@ -155,9 +159,10 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_QUAD.get());
     /// ```
-    pub const EASE_IN_OUT_QUAD: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-2.874367, 4.246888, -0.4121176, 0.0146106),
-    };
+    pub const EASE_IN_OUT_QUAD: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-2.874367, 4.246888, -0.4121176, 0.0146106),
+        };
     /// Built-in easing function "IN_CUBIC"
     /// ```
     /// use suzy::animation::{Animation, eases};
@@ -185,9 +190,10 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_CUBIC.get());
     /// ```
-    pub const EASE_IN_OUT_CUBIC: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-4.640512, 6.8892117, -1.3691432, 0.0576649),
-    };
+    pub const EASE_IN_OUT_CUBIC: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-4.640512, 6.8892117, -1.3691432, 0.0576649),
+        };
     /// Built-in easing function "IN_QUART"
     /// ```
     /// use suzy::animation::{Animation, eases};
@@ -215,9 +221,10 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_QUART.get());
     /// ```
-    pub const EASE_IN_OUT_QUART: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-6.361061, 9.294237, -2.1385376, 0.0804249),
-    };
+    pub const EASE_IN_OUT_QUART: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-6.361061, 9.294237, -2.1385376, 0.0804249),
+        };
     /// Built-in easing function "IN_QUINT"
     /// ```
     /// use suzy::animation::{Animation, eases};
@@ -226,7 +233,7 @@ pub mod eases {
     /// anim.set_ease(eases::EASE_IN_QUINT.get());
     /// ```
     pub const EASE_IN_QUINT: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(3.952197, -4.34287, 1.3833293, -0.0753837 ),
+        inner: &CubicPoly(3.952197, -4.34287, 1.3833293, -0.0753837),
     };
     /// Built-in easing function "OUT_QUINT"
     /// ```
@@ -245,9 +252,10 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_QUINT.get());
     /// ```
-    pub const EASE_IN_OUT_QUINT: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-7.268606, 10.561782, -2.544196, 0.0938484 ),
-    };
+    pub const EASE_IN_OUT_QUINT: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-7.268606, 10.561782, -2.544196, 0.0938484),
+        };
     /// Built-in easing function "IN_EXPO"
     /// ```
     /// use suzy::animation::{Animation, eases};
@@ -275,9 +283,10 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_EXPO.get());
     /// ```
-    pub const EASE_IN_OUT_EXPO: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-8.033254, 12.04988, -3.303217, 0.1432952),
-    };
+    pub const EASE_IN_OUT_EXPO: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-8.033254, 12.04988, -3.303217, 0.1432952),
+        };
     /// Built-in easing function "IN_CIRC"
     /// ```
     /// use suzy::animation::{Animation, eases};
@@ -305,9 +314,10 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_CIRC.get());
     /// ```
-    pub const EASE_IN_OUT_CIRC: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-5.443271, 7.907937, -1.6431735, 0.0663622 ),
-    };
+    pub const EASE_IN_OUT_CIRC: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-5.443271, 7.907937, -1.6431735, 0.0663622),
+        };
     /// Built-in easing function "IN_BACK"
     /// ```
     /// use suzy::animation::{Animation, eases};
@@ -335,7 +345,8 @@ pub mod eases {
     /// let mut anim: Animation<f32> = Animation::new();
     /// anim.set_ease(eases::EASE_IN_OUT_BACK.get());
     /// ```
-    pub const EASE_IN_OUT_BACK: BuiltInEasingFunction = BuiltInEasingFunction {
-        inner: &CubicPoly(-9.643229, 14.132771, -3.767638, 0.1074972),
-    };
+    pub const EASE_IN_OUT_BACK: BuiltInEasingFunction =
+        BuiltInEasingFunction {
+            inner: &CubicPoly(-9.643229, 14.132771, -3.767638, 0.1074972),
+        };
 }

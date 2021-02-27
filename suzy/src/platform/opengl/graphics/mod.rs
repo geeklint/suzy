@@ -6,14 +6,7 @@ mod effects;
 mod image;
 mod masker;
 
-pub use image::{
-    SlicedImage,
-    SelectableSlicedImage,
-};
+pub use image::{SelectableSlicedImage, SlicedImage};
 
+pub use effects::{BaseEffect, Effect, Tint};
 pub use masker::Masker;
-pub use effects::{
-    BaseEffect,
-    Effect,
-    Tint,
-};

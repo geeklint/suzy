@@ -5,7 +5,7 @@
 //! This module provides shorthand to create layout groups to organize
 //! widgets in common configurations.
 //!
-//! Use the method `create_layout_group` provided by WidgetInit to get a 
+//! Use the method `create_layout_group` provided by WidgetInit to get a
 //! instance of `LayoutTypes`, which will allow you to create a variety of
 //! different layout types.
 //!
@@ -47,13 +47,12 @@
 //! #    }
 //! }
 
-
 use std::marker::PhantomData;
 
 use crate::dims::Rect;
 use crate::platform::RenderPlatform;
 
-use super::{WidgetInit, WidgetContent, WidgetRect};
+use super::{WidgetContent, WidgetInit, WidgetRect};
 
 /// A combined reference to a widget's content and it's Rect, which is passed
 /// to the closures used to customize layouts.
@@ -65,25 +64,35 @@ pub struct ContentRef<'a, T: ?Sized> {
 impl<'a, T: ?Sized> std::ops::Deref for ContentRef<'a, T> {
     type Target = T;
 
-    fn deref(&self) -> &T { &self.content }
+    fn deref(&self) -> &T {
+        &self.content
+    }
 }
 
 impl<'a, T: ?Sized> std::ops::DerefMut for ContentRef<'a, T> {
-    fn deref_mut(&mut self) -> &mut T { &mut self.content }
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.content
+    }
 }
 
 impl<'a, T: ?Sized> Rect for ContentRef<'a, T> {
-    fn x(&self) -> crate::dims::Dim { self.rect.x() }
-    fn y(&self) -> crate::dims::Dim { self.rect.y() }
+    fn x(&self) -> crate::dims::Dim {
+        self.rect.x()
+    }
+    fn y(&self) -> crate::dims::Dim {
+        self.rect.y()
+    }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut crate::dims::Dim) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
     {
         self.rect.x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut crate::dims::Dim) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
     {
         self.rect.y_mut(f)
     }
@@ -109,7 +118,6 @@ where
         (self.f)(&mut ContentRef { content, rect })
     }
 }
-
 
 /// The base type returned from WidgetInit::create_layout_group, used to
 /// create a variety of types of layouts.
@@ -137,7 +145,9 @@ where
         }
     }
 
-    fn stack<D>(self) -> StackLayout<
+    fn stack<D>(
+        self,
+    ) -> StackLayout<
         'a,
         D,
         I,
@@ -162,7 +172,9 @@ where
 
     /// Create a layout which arranges elements vertically, putting each
     /// element above the previous one.
-    pub fn stack_up(self) -> StackLayout<
+    pub fn stack_up(
+        self,
+    ) -> StackLayout<
         'a,
         Up,
         I,
@@ -176,7 +188,9 @@ where
 
     /// Create a layout which arranges elements vertically, putting each
     /// element below the previous one.
-    pub fn stack_down(self) -> StackLayout<
+    pub fn stack_down(
+        self,
+    ) -> StackLayout<
         'a,
         Down,
         I,
@@ -190,7 +204,9 @@ where
 
     /// Create a layout which arranges elements horizontally, putting each
     /// element to the left of the previous one.
-    pub fn stack_left(self) -> StackLayout<
+    pub fn stack_left(
+        self,
+    ) -> StackLayout<
         'a,
         Left,
         I,
@@ -204,7 +220,9 @@ where
 
     /// Create a layout which arranges elements horizontally, putting each
     /// element to the right of the previous one.
-    pub fn stack_right(self) -> StackLayout<
+    pub fn stack_right(
+        self,
+    ) -> StackLayout<
         'a,
         Right,
         I,
@@ -235,7 +253,9 @@ pub trait StackLayoutDirection {
 pub struct Up;
 
 impl StackLayoutDirection for Up {
-    fn sign(value: f32) -> f32 { value }
+    fn sign(value: f32) -> f32 {
+        value
+    }
 
     fn set_start<R: Rect>(rect: &mut R, value: f32) {
         rect.set_bottom(value);
@@ -252,7 +272,9 @@ impl StackLayoutDirection for Up {
 pub struct Down;
 
 impl StackLayoutDirection for Down {
-    fn sign(value: f32) -> f32 { -value }
+    fn sign(value: f32) -> f32 {
+        -value
+    }
 
     fn set_start<R: Rect>(rect: &mut R, value: f32) {
         rect.set_top(value);
@@ -269,7 +291,9 @@ impl StackLayoutDirection for Down {
 pub struct Left;
 
 impl StackLayoutDirection for Left {
-    fn sign(value: f32) -> f32 { -value }
+    fn sign(value: f32) -> f32 {
+        -value
+    }
 
     fn set_start<R: Rect>(rect: &mut R, value: f32) {
         rect.set_right(value);
@@ -286,7 +310,9 @@ impl StackLayoutDirection for Left {
 pub struct Right;
 
 impl StackLayoutDirection for Right {
-    fn sign(value: f32) -> f32 { value }
+    fn sign(value: f32) -> f32 {
+        value
+    }
 
     fn set_start<R: Rect>(rect: &mut R, value: f32) {
         rect.set_left(value);
@@ -316,17 +342,19 @@ pub struct StackLayout<
     _types: PhantomData<(&'a Content, &'a Platform, Direction)>,
 }
 
-impl<
-    'a,
+impl<'a, Direction, Init, Content, Platform, Spacing, Value>
+    StackLayout<'a, Direction, Init, Content, Platform, Spacing, Value>
+where
     Direction: ?Sized,
     Init: ?Sized,
     Content: ?Sized,
     Platform: ?Sized,
-    Spacing,
-    Value,
-> StackLayout<'a, Direction, Init, Content, Platform, Spacing, Value> {
+{
     /// Specify the position the layout stack should start from.
-    pub fn start_at<F>(self, f: F) -> StackLayout<
+    pub fn start_at<F>(
+        self,
+        f: F,
+    ) -> StackLayout<
         'a,
         Direction,
         Init,
@@ -348,7 +376,10 @@ impl<
     }
 
     /// Specify the spacing between elements in the layout group.
-    pub fn spacing<F>(self, f: F) -> StackLayout<
+    pub fn spacing<F>(
+        self,
+        f: F,
+    ) -> StackLayout<
         'a,
         Direction,
         Init,
@@ -370,17 +401,21 @@ impl<
     }
 }
 
-impl<
-    'a,
+impl<'a, Direction, Init, Content, Platform, Spacing, Value>
+    StackLayout<'a, Direction, Init, Content, Platform, Spacing, Value>
+where
     Direction: StackLayoutDirection + ?Sized,
     Init: WidgetInit<Content, Platform> + ?Sized,
     Content: WidgetContent<Platform> + ?Sized,
     Platform: RenderPlatform + ?Sized,
     Spacing: Clone + LayoutValue<Content>,
     Value: LayoutValue<Content>,
-> StackLayout<'a, Direction, Init, Content, Platform, Spacing, Value> {
+{
     /// Add a rectangle to the layout group.
-    pub fn push<F, R>(self, f: F) -> StackLayout<
+    pub fn push<F, R>(
+        self,
+        f: F,
+    ) -> StackLayout<
         'a,
         Direction,
         Init,
@@ -390,10 +425,17 @@ impl<
         impl LayoutValue<Content>,
     >
     where
-        F: 'static + Copy + for<'b> Fn(&'b mut ContentRef<Content>) -> &'b mut R,
+        F: 'static
+            + Copy
+            + for<'b> Fn(&'b mut ContentRef<Content>) -> &'b mut R,
         R: Rect,
     {
-        let Self { spacing, init, prev, .. } = self;
+        let Self {
+            spacing,
+            init,
+            prev,
+            ..
+        } = self;
         let spacing_clone = spacing.clone();
         init.watch(move |content, rect| {
             let start = prev.value(content, rect);
@@ -403,7 +445,8 @@ impl<
         });
         let prev = ValueImpl {
             f: move |content: &mut ContentRef<Content>| -> f32 {
-                let spacing = spacing_clone.value(content.content, content.rect);
+                let spacing =
+                    spacing_clone.value(content.content, content.rect);
                 let spacing = Direction::sign(spacing);
                 let rect = f(content);
                 Direction::get_end(rect) + spacing
@@ -417,4 +460,3 @@ impl<
         }
     }
 }
-

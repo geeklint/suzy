@@ -99,10 +99,15 @@ mod internal {
         pub fn new(
             id: super::PointerId,
             action: super::PointerAction,
-            x: f32, y: f32,
+            x: f32,
+            y: f32,
         ) -> Self {
             Self {
-                id, action, x, y, normalized: false,
+                id,
+                action,
+                x,
+                y,
+                normalized: false,
             }
         }
     }
@@ -137,28 +142,38 @@ impl<'a> PointerEvent<'a> {
 }
 
 impl PointerEvent<'_> {
-
     /// Get the pointer involved in this event
-    pub fn id(&self) -> PointerId { self.data.id }
+    pub fn id(&self) -> PointerId {
+        self.data.id
+    }
 
     /// Get the activity which triggered this event
-    pub fn action(&self) -> &PointerAction { &self.data.action }
+    pub fn action(&self) -> &PointerAction {
+        &self.data.action
+    }
 
     /// Get the horizontal position of the pointer during this event
-    pub fn x(&self) -> f32 { self.data.x }
+    pub fn x(&self) -> f32 {
+        self.data.x
+    }
 
     /// Get the vertical position of the pointer during this event
-    pub fn y(&self) -> f32 { self.data.y }
+    pub fn y(&self) -> f32 {
+        self.data.y
+    }
 
     /// Get the position of the pointer during this event
-    pub fn pos(&self) -> (f32, f32) { (self.data.x, self.data.y) }
+    pub fn pos(&self) -> (f32, f32) {
+        (self.data.x, self.data.y)
+    }
 
     /// Try to "grab" the pointer, indicating that the identified widget
     /// should be the primary handler of this pointer.
     ///
     /// Returns false if a different widget has already grabbed the pointer.
     pub fn try_grab<I>(&mut self, holder: I) -> bool
-        where I: Into<WidgetId>
+    where
+        I: Into<WidgetId>,
     {
         use std::collections::hash_map::Entry::*;
 
@@ -174,9 +189,12 @@ impl PointerEvent<'_> {
 
     /// Check if this event is grabbed by the identified widget.
     pub fn is_grabbed_by<I>(&self, holder: I) -> bool
-        where I: Into<WidgetId>
+    where
+        I: Into<WidgetId>,
     {
-        self.grab_map.get(&self.id()).map_or(false, |v| v == &holder.into())
+        self.grab_map
+            .get(&self.id())
+            .map_or(false, |v| v == &holder.into())
     }
 
     /// Try to stop grabbing this pointer, indicating that the identified
@@ -185,7 +203,8 @@ impl PointerEvent<'_> {
     /// Returns false if the grab was not previously held by the
     /// identified widget.
     pub fn try_ungrab<I>(&mut self, holder: I) -> bool
-        where I: Into<WidgetId>
+    where
+        I: Into<WidgetId>,
     {
         use std::collections::hash_map::Entry::*;
 
@@ -199,7 +218,7 @@ impl PointerEvent<'_> {
                     false
                 }
             }
-            Vacant(_entry) => false
+            Vacant(_entry) => false,
         }
     }
 }

@@ -7,24 +7,13 @@
 use crate::graphics::Color;
 use crate::graphics::DrawContext;
 
-use super::{
-    OpenGlRenderPlatform,
-    OpenGlContext,
-    Mat4,
-};
 use super::context::bindings::types::*;
 use super::context::bindings::{
-    COLOR_BUFFER_BIT,
-    BLEND,
-    SRC_ALPHA,
-    ONE_MINUS_SRC_ALPHA,
-    COLOR_CLEAR_VALUE,
-    PACK_ALIGNMENT,
-    VIEWPORT,
-    RGBA,
-    UNSIGNED_BYTE,
+    BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE_MINUS_SRC_ALPHA,
+    PACK_ALIGNMENT, RGBA, SRC_ALPHA, UNSIGNED_BYTE, VIEWPORT,
 };
 use super::drawparams::DrawParams;
+use super::{Mat4, OpenGlContext, OpenGlRenderPlatform};
 
 /// opengl::Window provides a subset of the methods to implement the Window
 /// trait. It can be embedded in another window implementation which
@@ -49,10 +38,9 @@ impl Window {
     pub fn get_clear_color(&self) -> Color {
         let mut array = [0f32; 4];
         unsafe {
-            self.ctx.bindings.GetFloatv(
-                COLOR_CLEAR_VALUE,
-                array.as_mut_ptr(),
-            );
+            self.ctx
+                .bindings
+                .GetFloatv(COLOR_CLEAR_VALUE, array.as_mut_ptr());
         }
         Color::create_rgba(array[0], array[1], array[2], array[3])
     }
@@ -71,9 +59,11 @@ impl Window {
         self.ctx.mask.mask_size(&self.ctx.bindings, width, height);
     }
 
-    pub fn prepare_draw(&mut self, screen_size: (f32, f32), first_pass: bool)
-        -> DrawContext<OpenGlRenderPlatform>
-    {
+    pub fn prepare_draw(
+        &mut self,
+        screen_size: (f32, f32),
+        first_pass: bool,
+    ) -> DrawContext<OpenGlRenderPlatform> {
         unsafe {
             self.ctx.bindings.Enable(BLEND);
             self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
@@ -81,7 +71,7 @@ impl Window {
         let mut params = DrawParams::new();
         params.transform(
             Mat4::translate(-1.0, -1.0)
-            * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1)
+                * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1),
         );
         DrawContext::new(&mut self.ctx, params, first_pass)
     }
@@ -94,8 +84,7 @@ impl Window {
     }
 
     /// This function does not block like window::Window requires.
-    pub fn flip(&mut self) {
-    }
+    pub fn flip(&mut self) {}
 
     pub fn take_screenshot(&self) -> Box<[u8]> {
         let mut answer: [GLint; 4] = [0; 4];
@@ -112,8 +101,10 @@ impl Window {
         let mut buffer = vec![0u8; buflen].into_boxed_slice();
         unsafe {
             self.ctx.bindings.ReadPixels(
-                x, y,
-                width, height, 
+                x,
+                y,
+                width,
+                height,
                 RGBA,
                 UNSIGNED_BYTE,
                 buffer.as_mut_ptr() as *mut _,

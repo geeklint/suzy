@@ -29,7 +29,9 @@ enum SelectionStateAll {
 }
 
 impl Default for SelectionStateAll {
-    fn default() -> Self { Self::Normal }
+    fn default() -> Self {
+        Self::Normal
+    }
 }
 
 /// A selection state is an opaque type which indicates the current state
@@ -45,19 +47,29 @@ pub struct SelectionState(SelectionStateAll);
 
 impl SelectionState {
     /// Normal selection state
-    pub const fn normal() -> Self { Self(SelectionStateAll::Normal) }
+    pub const fn normal() -> Self {
+        Self(SelectionStateAll::Normal)
+    }
 
     /// Hover selection state
-    pub const fn hover() -> Self { Self(SelectionStateAll::Hover) }
+    pub const fn hover() -> Self {
+        Self(SelectionStateAll::Hover)
+    }
 
     /// Focus selection state
-    pub const fn focus() -> Self { Self(SelectionStateAll::Focus) }
+    pub const fn focus() -> Self {
+        Self(SelectionStateAll::Focus)
+    }
 
     /// Pressed selection state
-    pub const fn pressed() -> Self { Self(SelectionStateAll::Pressed) }
+    pub const fn pressed() -> Self {
+        Self(SelectionStateAll::Pressed)
+    }
 
     /// Active selection state
-    pub const fn active() -> Self { Self(SelectionStateAll::Active) }
+    pub const fn active() -> Self {
+        Self(SelectionStateAll::Active)
+    }
 
     /// Get version 0 selection states.
     pub fn v0(self) -> SelectionStateV0 {
@@ -119,11 +131,15 @@ pub enum SelectionStateV0 {
 }
 
 impl Default for SelectionStateV0 {
-    fn default() -> Self { SelectionState::default().into() }
+    fn default() -> Self {
+        SelectionState::default().into()
+    }
 }
 
 impl From<SelectionState> for SelectionStateV0 {
-    fn from(all: SelectionState) -> Self { all.v0() }
+    fn from(all: SelectionState) -> Self {
+        all.v0()
+    }
 }
 
 /// Version 1 selection states.
@@ -143,11 +159,15 @@ pub enum SelectionStateV1 {
 }
 
 impl From<SelectionState> for SelectionStateV1 {
-    fn from(all: SelectionState) -> Self { all.v1() }
+    fn from(all: SelectionState) -> Self {
+        all.v1()
+    }
 }
 
 impl Default for SelectionStateV1 {
-    fn default() -> Self { SelectionState::default().into() }
+    fn default() -> Self {
+        SelectionState::default().into()
+    }
 }
 
 /// Version 2 selection states.
@@ -170,11 +190,15 @@ pub enum SelectionStateV2 {
 }
 
 impl From<SelectionState> for SelectionStateV2 {
-    fn from(all: SelectionState) -> Self { all.v2() }
+    fn from(all: SelectionState) -> Self {
+        all.v2()
+    }
 }
 
 impl Default for SelectionStateV2 {
-    fn default() -> Self { SelectionState::default().into() }
+    fn default() -> Self {
+        SelectionState::default().into()
+    }
 }
 
 /// A trait which enables a widget to respond to changes in selection state.
@@ -212,7 +236,7 @@ impl<T> SelectableData<T> {
                 focus: None,
                 pressed: None,
                 active: None,
-            }
+            },
         }
     }
 }
@@ -224,19 +248,21 @@ impl<T> std::ops::Deref for SelectableData<T> {
             SelectionStateAll::Normal => &self.normal,
             SelectionStateAll::Hover => {
                 self.hover.as_ref().unwrap_or(&self.normal)
-            },
+            }
             SelectionStateAll::Focus => {
                 self.focus.as_ref().unwrap_or(&self.normal)
-            },
-            SelectionStateAll::Pressed => {
+            }
+            SelectionStateAll::Pressed =>
+            {
                 #[allow(clippy::or_fun_call)]
-                self.pressed.as_ref()
+                self.pressed
+                    .as_ref()
                     .or(self.focus.as_ref())
                     .unwrap_or(&self.normal)
-            },
+            }
             SelectionStateAll::Active => {
                 self.active.as_ref().unwrap_or(&self.normal)
-            },
+            }
         }
     }
 }
@@ -247,19 +273,21 @@ impl<T> std::ops::DerefMut for SelectableData<T> {
             SelectionStateAll::Normal => &mut self.normal,
             SelectionStateAll::Hover => {
                 self.hover.as_mut().unwrap_or(&mut self.normal)
-            },
+            }
             SelectionStateAll::Focus => {
                 self.focus.as_mut().unwrap_or(&mut self.normal)
-            },
-            SelectionStateAll::Pressed => {
+            }
+            SelectionStateAll::Pressed =>
+            {
                 #[allow(clippy::or_fun_call)]
-                self.pressed.as_mut()
+                self.pressed
+                    .as_mut()
                     .or(self.focus.as_mut())
                     .unwrap_or(&mut self.normal)
-            },
+            }
             SelectionStateAll::Active => {
                 self.active.as_mut().unwrap_or(&mut self.normal)
-            },
+            }
         }
     }
 }
@@ -307,7 +335,6 @@ impl<T> Selectable for SelectableData<T> {
     }
 }
 
-
 /// A type which ignores changes to selection state.
 ///
 /// This type implements `Selectable`, but does nothing in response.  It can be
@@ -321,32 +348,30 @@ pub struct SelectableIgnored<T> {
 
 impl<T> std::ops::Deref for SelectableIgnored<T> {
     type Target = T;
-    fn deref(&self) -> &T { &self.data }
+    fn deref(&self) -> &T {
+        &self.data
+    }
 }
 
 impl<T> std::ops::DerefMut for SelectableIgnored<T> {
-    fn deref_mut(&mut self) -> &mut T { &mut self.data }
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.data
+    }
 }
 
 impl<T> Selectable for SelectableIgnored<T> {
-    fn selection_changed(&mut self, _state: SelectionState) { }
+    fn selection_changed(&mut self, _state: SelectionState) {}
 }
 
 mod extra_impls {
+    use super::*;
+    use crate::graphics::{DrawContext, Graphic};
     use crate::platform::RenderPlatform;
     use crate::pointer::PointerEvent;
-    use crate::graphics::{
-        DrawContext,
-        Graphic,
-    };
     use crate::widget::{
-        WidgetContent,
-        WidgetInit,
-        WidgetChildReceiver,
-        WidgetGraphicReceiver,
-        WidgetExtra,
+        WidgetChildReceiver, WidgetContent, WidgetExtra,
+        WidgetGraphicReceiver, WidgetInit,
     };
-    use super::*;
 
     impl<T, P> WidgetContent<P> for SelectableIgnored<T>
     where
@@ -365,7 +390,11 @@ mod extra_impls {
             self.data.graphics(receiver);
         }
 
-        fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
+        fn hittest(
+            &self,
+            extra: &mut WidgetExtra<'_>,
+            point: (f32, f32),
+        ) -> bool {
             self.data.hittest(extra, point)
         }
 
@@ -378,7 +407,7 @@ mod extra_impls {
         }
     }
 
-    impl <T, P> Graphic<P> for SelectableIgnored<T>
+    impl<T, P> Graphic<P> for SelectableIgnored<T>
     where
         P: RenderPlatform,
         T: Graphic<P>,
@@ -388,7 +417,7 @@ mod extra_impls {
         }
     }
 
-    impl <T, P> Graphic<P> for SelectableData<T>
+    impl<T, P> Graphic<P> for SelectableData<T>
     where
         P: RenderPlatform,
         T: Graphic<P>,

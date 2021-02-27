@@ -2,17 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use drying_paint::{WatcherMeta, WatcherInit};
+use drying_paint::{WatcherInit, WatcherMeta};
 
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
-use super::{
-    layout,
-    WidgetContent,
-    WidgetId,
-    WidgetInternal,
-    WidgetRect,
-};
+use super::{layout, WidgetContent, WidgetId, WidgetInternal, WidgetRect};
 
 /// Instances of this trait are provided to
 /// [`WidgetContent::init`](trait.WidgetContent.html#tymethod.init).
@@ -34,8 +28,7 @@ where
     /// [watch](../watch/index.html) module for more information.
     fn watch<F>(&mut self, func: F)
     where
-        F: Fn(&mut T, &mut WidgetRect) + 'static
-    ;
+        F: Fn(&mut T, &mut WidgetRect) + 'static;
 
     /// Create a layout group which a provides a shorthand for organizing
     /// widgets in common configurations.
@@ -47,8 +40,7 @@ where
     fn init_child_inline<F, C>(&mut self, getter: F)
     where
         C: WidgetContent<P>,
-        F: 'static + Clone + Fn(&mut T) -> &mut C,
-    ;
+        F: 'static + Clone + Fn(&mut T) -> &mut C;
 }
 
 struct WidgetInitImpl<'a, 'b, O, T, G, P>
@@ -70,11 +62,14 @@ where
     T: WidgetContent<P>,
 {
     fn widget_id(&self) -> WidgetId {
-        WidgetId { id: self.watcher.id() }
+        WidgetId {
+            id: self.watcher.id(),
+        }
     }
 
     fn watch<F>(&mut self, func: F)
-        where F: Fn(&mut T, &mut WidgetRect) + 'static
+    where
+        F: Fn(&mut T, &mut WidgetRect) + 'static,
     {
         let getter = self.getter.clone();
         self.watcher.watch(move |wid_int| {

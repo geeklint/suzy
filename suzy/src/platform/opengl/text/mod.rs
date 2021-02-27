@@ -4,41 +4,28 @@
 
 use std::collections::HashMap;
 
-use crate::watch::{Watched};
 use crate::graphics::{Color, DrawContext, Graphic};
+use crate::watch::Watched;
 
-use super::OpenGlRenderPlatform;
-use super::Mat4;
-use super::context::bindings::types::*;
-use super::context::bindings::{
-    FALSE,
-    FLOAT,
-    TRIANGLES,
-};
-use super::texture::Texture;
 use super::buffer::SingleVertexBuffer;
+use super::context::bindings::types::*;
+use super::context::bindings::{FALSE, FLOAT, TRIANGLES};
+use super::texture::Texture;
+use super::Mat4;
+use super::OpenGlRenderPlatform;
 
-mod font;
 mod calc;
+mod font;
 
 pub use font::{
-    FontFamily,
-    FontFamilySource,
-    FontFamilyDynamic,
-    FontFamilySourceDynamic,
+    FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
 };
 
-pub use calc::{
-    FontStyle,
-    TextAlignment,
-    TextLayoutSettings,
-};
-use calc::{
-    RichTextParser,
-};
+use calc::RichTextParser;
+pub use calc::{FontStyle, TextAlignment, TextLayoutSettings};
 
-use font::{ChannelMask, GlyphMetricsSource};
 use calc::FontCharCalc;
+use font::{ChannelMask, GlyphMetricsSource};
 
 #[cfg(feature = "default_font")]
 mod default_font;
@@ -62,7 +49,6 @@ fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(_f: F) -> R {
         " enable the feature `default_font`.",
     ));
 }
-
 
 /// Default Graphic for displaying Text.
 ///
@@ -106,13 +92,7 @@ impl Text {
         let channels = &mut self.channels;
         let mut do_render = move |font: &FontFamilyDynamic| {
             *texture = font.texture.clone();
-            Self::render_impl(
-                text,
-                settings,
-                vertices,
-                channels,
-                font,
-            )
+            Self::render_impl(text, settings, vertices, channels, font)
         };
         match &*self.font {
             Some(font) => do_render(font),
@@ -183,7 +163,8 @@ impl Graphic<OpenGlRenderPlatform> for Text {
             ctx.params().sdf_mode();
             ctx.params().use_texture(self.texture.clone());
             ctx.params().text_color(self.render_settings.text_color);
-            ctx.params().outline_color(self.render_settings.outline_color);
+            ctx.params()
+                .outline_color(self.render_settings.outline_color);
             ctx.params().body_edge(
                 self.render_settings.pseudo_bold_level,
                 self.render_settings.smoothing,
@@ -202,11 +183,14 @@ impl Graphic<OpenGlRenderPlatform> for Text {
                 let gl = &ctx.render_ctx().bindings;
                 unsafe {
                     gl.VertexAttribPointer(
-                        0, 2, FLOAT, FALSE, stride, std::ptr::null(),
+                        0,
+                        2,
+                        FLOAT,
+                        FALSE,
+                        stride,
+                        std::ptr::null(),
                     );
-                    gl.VertexAttribPointer(
-                        1, 2, FLOAT, FALSE, stride, offset,
-                    );
+                    gl.VertexAttribPointer(1, 2, FLOAT, FALSE, stride, offset);
                 }
                 for (mask, range) in self.channels.iter() {
                     #[allow(clippy::len_zero)]

@@ -2,26 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+use super::{
+    OpenGlRenderPlatform, SelectableSlicedImage, Text, TextAlignment,
+    TextLayoutSettings, Texture,
+};
 use crate::dims::{Rect, SimplePadding2d};
 use crate::graphics::Color;
 use crate::selectable::{Selectable, SelectionState, SelectionStateV0};
 use crate::widget::{
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
+    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
-use crate::widgets::{
-    TextContent,
-};
-use super::{
-    OpenGlRenderPlatform,
-    SelectableSlicedImage,
-    Text,
-    TextLayoutSettings,
-    TextAlignment,
-    Texture,
-};
+use crate::widgets::TextContent;
 
 const BUTTON_DATA: &[u8] = include_bytes!("button-all.data");
 const BUTTON_STATES: &[SelectionState] = &[

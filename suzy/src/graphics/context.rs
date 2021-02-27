@@ -2,10 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::platform::{
-    DefaultRenderPlatform,
-    RenderPlatform,
-};
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
 /// A trait for graphical state, with methods to apply changes to that state.
 pub trait DrawParams<Ctx> {
@@ -69,17 +66,25 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
 
     /// Get the current state of the draw pass.  See the documenation of
     /// [`DrawPass`](./enum.DrawPass.html) for more information.
-    pub fn pass(&self) -> DrawPass { self.pass }
+    pub fn pass(&self) -> DrawPass {
+        self.pass
+    }
 
     /// Get the RenderPlatfrom context associated with this DrawContex.
-    pub fn render_ctx(&self) -> &P::Context { &self.context }
+    pub fn render_ctx(&self) -> &P::Context {
+        &self.context
+    }
 
     /// Get a mutable reference to the RenderPlatfrom context associated with
     /// this DrawContext.
-    pub fn render_ctx_mut(&mut self) -> &mut P::Context { &mut self.context }
+    pub fn render_ctx_mut(&mut self) -> &mut P::Context {
+        &mut self.context
+    }
 
     /// Get a mutable reference to the current draw params.
-    pub fn params(&mut self) -> &mut P::DrawParams { &mut self.current }
+    pub fn params(&mut self) -> &mut P::DrawParams {
+        &mut self.current
+    }
 
     /// Notify the context that a graphic is not ready to be drawn, and
     /// subsequent draw passes are needed.
@@ -94,7 +99,7 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
     /// already drawn this frame.
     pub fn force_redraw<F, R>(&mut self, f: F) -> R
     where
-        F: FnOnce(&mut Self) -> R
+        F: FnOnce(&mut Self) -> R,
     {
         let restore = if self.pass == DrawPass::DrawRemaining {
             self.pass = DrawPass::DrawAll;
@@ -126,13 +131,13 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
 impl<'a, P> DrawContext<'a, P>
 where
     P: RenderPlatform,
-    P::DrawParams: Clone
+    P::DrawParams: Clone,
 {
     /// Apply all pending changes to the current draw params.
     #[inline]
     pub fn prepare_draw(&mut self) {
         assert_ne!(
-            self.pass, 
+            self.pass,
             DrawPass::UpdateContext,
             "prepare_draw called during an UpdateContext pass",
         );
@@ -143,7 +148,7 @@ where
                     &mut self.current,
                     self.context,
                 );
-            },
+            }
             None => self.current.apply_all(self.context),
         }
         self.last_applied = Some(self.current.clone());

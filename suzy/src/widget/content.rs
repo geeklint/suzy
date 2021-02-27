@@ -3,14 +3,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::dims::Rect;
-use crate::platform::{DefaultPlatform, DefaultRenderPlatform, RenderPlatform};
+use crate::platform::{
+    DefaultPlatform, DefaultRenderPlatform, RenderPlatform,
+};
 use crate::pointer::PointerEvent;
 
 use super::{
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
-    WidgetInit,
-    WidgetExtra,
+    WidgetChildReceiver, WidgetExtra, WidgetGraphicReceiver, WidgetInit,
 };
 
 /// This trait provides the "glue" between the data you define in custom
@@ -139,16 +138,15 @@ where
     use crate::window::WindowSettings;
 
     let name = std::any::type_name::<T>().rsplit("::").next().unwrap();
-    let (_, title) = name.chars().fold(
-        (false, String::new()),
-        |(prev, mut title), ch| {
-            if prev && ch.is_uppercase() {
-                title.push(' ');
-            }
-            title.push(ch);
-            (ch.is_lowercase(), title)
-        }
-    );
+    let (_, title) =
+        name.chars()
+            .fold((false, String::new()), |(prev, mut title), ch| {
+                if prev && ch.is_uppercase() {
+                    title.push(' ');
+                }
+                title.push(ch);
+                (ch.is_lowercase(), title)
+            });
     let mut builder = AppBuilder::default();
     builder.set_title(title);
     let app: App<DefaultPlatform> = builder.build();

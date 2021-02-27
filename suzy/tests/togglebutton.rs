@@ -6,38 +6,18 @@
 
 extern crate suzy;
 
-use suzy::dims::{
-    Rect,
-    SimplePadding2d,
-};
-use suzy::window::WindowSettings;
+use suzy::app::{App, AppBuilder};
+use suzy::dims::{Rect, SimplePadding2d};
 use suzy::graphics::Color;
-use suzy::widgets::{
-    ToggleButton,
-    ToggleButtonGroup,
-    ToggleButtonValue,
-};
-use suzy::app::{
-    App,
-    AppBuilder,
-};
-use suzy::selectable::{
-    Selectable,
-    SelectionState,
-};
-use suzy::widget::{
-    Widget,
-    WidgetExtra,
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
-};
-use suzy::platform::opengl::{
-    OpenGlRenderPlatform,
-    SlicedImage,
-};
+use suzy::platform::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platform::TestPlatform;
+use suzy::selectable::{Selectable, SelectionState};
+use suzy::widget::{
+    Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
+    WidgetGraphicReceiver, WidgetInit,
+};
+use suzy::widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
+use suzy::window::WindowSettings;
 
 mod utils;
 use utils::*;
@@ -68,15 +48,20 @@ impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
         });
     }
 
-    fn children(&mut self, _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
+    fn children(
+        &mut self,
+        _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+    ) {
     }
 
-    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
+    fn graphics(
+        &mut self,
+        mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+    ) {
         if self.show_image {
             receiver.graphic(&mut self.image);
         }
     }
-
 }
 
 #[derive(Default)]
@@ -90,10 +75,10 @@ struct GroupRoot {
 
 impl WidgetContent<OpenGlRenderPlatform> for GroupRoot {
     fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
-        init.watch(|root, _rect| { 
+        init.watch(|root, _rect| {
             root.value_feedback.set(root.group.value());
         });
-        init.watch(|root, _rect| { 
+        init.watch(|root, _rect| {
             root.top.content_mut().value = 1;
             root.top.add_to_group(&root.group);
 
@@ -125,15 +110,20 @@ impl WidgetContent<OpenGlRenderPlatform> for GroupRoot {
         });
     }
 
-    fn children(&mut self, mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
+    fn children(
+        &mut self,
+        mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+    ) {
         receiver.child(&mut self.top);
         receiver.child(&mut self.middle);
         receiver.child(&mut self.bottom);
     }
 
-    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
+    fn graphics(
+        &mut self,
+        _receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+    ) {
     }
-
 }
 
 #[test]
@@ -144,13 +134,15 @@ fn togglebutton_group() {
     let app: App<TestPlatform> = builder.build();
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
-    let app = app.with(|app| {
-        app.add_root(move || {
-            let mut root = Widget::<GroupRoot>::default();
-            root.value_feedback = group_value_feedback;
-            root
-        });
-    }).0;
+    let app = app
+        .with(|app| {
+            app.add_root(move || {
+                let mut root = Widget::<GroupRoot>::default();
+                root.value_feedback = group_value_feedback;
+                root
+            });
+        })
+        .0;
     app.test(|mut app| {
         let capture = app.take_screenshot();
         assert_eq!(group_value_output.get(), None);

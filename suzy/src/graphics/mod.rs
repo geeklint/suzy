@@ -17,12 +17,9 @@ mod color;
 mod context;
 
 pub use color::{Color, ParseColorError};
-pub use context::{DrawPass, DrawParams, DrawContext};
+pub use context::{DrawContext, DrawParams, DrawPass};
 
-use crate::platform::{
-    DefaultRenderPlatform,
-    RenderPlatform,
-};
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
 /// A trait which represents a drawable graphic.
 ///

@@ -4,10 +4,7 @@
 
 use suzy::dims::Rect;
 use suzy::widget::{
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
+    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
 use suzy::widgets::{Button, TextContent};
 
@@ -31,8 +28,7 @@ impl WidgetContent for Root {
             .spacing(|_| 10.0)
             .push(|this| &mut this.one)
             .push(|this| &mut this.two)
-            .push(|this| &mut this.three)
-        ;
+            .push(|this| &mut this.three);
     }
 
     fn children(&mut self, mut receiver: impl WidgetChildReceiver) {

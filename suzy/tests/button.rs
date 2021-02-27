@@ -6,38 +6,19 @@
 
 extern crate suzy;
 
-use suzy::dims::{
-    Rect,
-    SimplePadding2d,
-};
-use suzy::window::WindowSettings;
+use suzy::app::{App, AppBuilder};
+use suzy::dims::{Rect, SimplePadding2d};
 use suzy::graphics::Color;
-use suzy::widgets::Button;
-use suzy::app::{
-    App,
-    AppBuilder,
-};
-use suzy::pointer::{
-    PointerId,
-    PointerAction,
-    PointerEventData,
-};
-use suzy::selectable::{
-    Selectable,
-    SelectionState,
-};
-use suzy::widget::{
-    Widget,
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
-};
-use suzy::platform::opengl::{
-    OpenGlRenderPlatform,
-    SlicedImage,
-};
+use suzy::platform::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platform::TestPlatform;
+use suzy::pointer::{PointerAction, PointerEventData, PointerId};
+use suzy::selectable::{Selectable, SelectionState};
+use suzy::widget::{
+    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
+    WidgetInit,
+};
+use suzy::widgets::Button;
+use suzy::window::WindowSettings;
 
 #[derive(Default)]
 struct ButtonContent {
@@ -58,16 +39,21 @@ impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
         });
     }
 
-    fn children(&mut self, _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
+    fn children(
+        &mut self,
+        _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+    ) {
     }
 
-    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
+    fn graphics(
+        &mut self,
+        mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+    ) {
         println!("ButtonContent draw: {}", self.show_image);
         if self.show_image {
             receiver.graphic(&mut self.image);
         }
     }
-
 }
 
 #[derive(Default)]
@@ -82,13 +68,18 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children(&mut self, mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
+    fn children(
+        &mut self,
+        mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+    ) {
         receiver.child(&mut self.button);
     }
 
-    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
+    fn graphics(
+        &mut self,
+        _receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+    ) {
     }
-
 }
 
 #[test]
@@ -97,15 +88,16 @@ fn button() {
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
     let app: App<TestPlatform> = builder.build();
-    let app = app.with(|app| {
-        app.add_root(Widget::<Root>::default);
-    }).0;
+    let app = app
+        .with(|app| {
+            app.add_root(Widget::<Root>::default);
+        })
+        .0;
     app.test(|mut app| {
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
-            let color = Color::create_rgba8(
-                chunk[0], chunk[1], chunk[2], chunk[3]
-            );
+            let color =
+                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::BLACK);
         }
         app.pointer(PointerEventData {
@@ -117,9 +109,8 @@ fn button() {
         });
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
-            let color = Color::create_rgba8(
-                chunk[0], chunk[1], chunk[2], chunk[3]
-            );
+            let color =
+                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::WHITE);
         }
         app.pointer(PointerEventData {
@@ -131,9 +122,8 @@ fn button() {
         });
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
-            let color = Color::create_rgba8(
-                chunk[0], chunk[1], chunk[2], chunk[3]
-            );
+            let color =
+                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::BLACK);
         }
     });

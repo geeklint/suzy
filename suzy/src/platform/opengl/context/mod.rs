@@ -4,12 +4,12 @@
 
 #![allow(missing_docs)]
 
-use std::rc::Rc;
 use std::collections::HashMap;
+use std::rc::Rc;
 
+use super::mask::Mask;
 use super::stdshaders::Shaders;
 use super::texture::TextureCache;
-use super::mask::Mask;
 
 pub mod bindings {
     #![allow(bare_trait_objects)]
