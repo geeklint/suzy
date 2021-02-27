@@ -114,6 +114,7 @@ where
 {
     active: HashMap<Layout::ElementKey, Widget<Content, Platform>>,
     inactive: Vec<Widget<Content, Platform>>,
+    child_flag: WatchedMeta,
     position: (f32, f32),
     rest_position: (f32, f32),
 }
@@ -170,6 +171,7 @@ where
             Entry::Occupied(bucket) => bucket.into_mut(),
             Entry::Vacant(bucket) => {
                 let inactive = &mut self.data.inactive;
+                let child_flag = &mut self.data.child_flag;
                 // try to get from previous
                 let element = self
                     .prev
@@ -182,7 +184,10 @@ where
                         })
                     })
                     // otherwise, create a new widget
-                    .unwrap_or_else(|| Adaptable::from(data));
+                    .unwrap_or_else(|| {
+                        child_flag.trigger();
+                        Adaptable::from(data)
+                    });
                 bucket.insert(element)
             }
         }
@@ -239,6 +244,16 @@ where
         self.data_flag.watched();
         self.layout.data_mut()
     }
+
+    /// This provides a Watched iterator of every Widget the AdapterView
+    /// has instantiated.  This allows the parent widget of the AdapterView
+    /// to listen to events from the content Widgets.
+    pub fn watch_each_child(
+        &self,
+    ) -> impl Iterator<Item = &Widget<Content, Platform>> {
+        self.inner.child_flag.watched();
+        self.inner.active.values().chain(&self.inner.inactive)
+    }
 }
 
 impl<Layout, Content, Platform> Default
@@ -254,6 +269,7 @@ where
             inner: AdapterData {
                 active: HashMap::default(),
                 inactive: Vec::default(),
+                child_flag: WatchedMeta::new(),
                 position: (0.0, 0.0),
                 rest_position: (0.0, 0.0),
             },
