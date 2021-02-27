@@ -29,3 +29,5 @@ jobs:
       run: cargo build --verbose --manifest-path suzy/Cargo.toml --no-default-features --features ci_build
     - name: Run tests
       run: cargo test --verbose --manifest-path suzy/Cargo.toml --no-default-features --features ci_build
+    - name: Check formatting
+      run: cargo fmt --all -- --check
