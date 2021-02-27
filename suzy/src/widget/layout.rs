@@ -26,7 +26,7 @@
 //! }
 //!
 //! impl WidgetContent for CustomWidget {
-//!     fn init<I: WidgetInit<Self>>(mut init: I) {
+//!     fn init(mut init: impl WidgetInit<Self>) {
 //!         init.create_layout_group()
 //!             .stack_right()
 //!             .start_at(|this| this.left())
@@ -38,12 +38,12 @@
 //!     }
 //!
 //!     // ...
-//! #    fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+//! #    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
 //! #        receiver.child(&mut self.one);
 //! #        receiver.child(&mut self.two);
 //! #        receiver.child(&mut self.three);
 //! #    }
-//! #    fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {
+//! #    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
 //! #    }
 //! }
 

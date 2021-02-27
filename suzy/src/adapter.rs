@@ -268,7 +268,7 @@ where
     Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
-    fn init<I: WidgetInit<Self, Platform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, Platform>) {
         init.watch(|this, rect| {
             this.position_flag.watched();
             this.data_flag.watched();
@@ -282,13 +282,13 @@ where
         });
     }
 
-    fn children<R: WidgetChildReceiver<Platform>>(&mut self, mut receiver: R) {
+    fn children(&mut self, mut receiver: impl WidgetChildReceiver<Platform>) {
         for (_k, child) in self.inner.active.iter_mut() {
             receiver.child(child);
         }
     }
 
-    fn graphics<R: WidgetGraphicReceiver<Platform>>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<Platform>) {
         // no graphics
     }
 

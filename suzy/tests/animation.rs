@@ -35,7 +35,7 @@ struct Root {
 }
 
 impl WidgetContent<TestRenderPlatform> for Root {
-    fn init<I: WidgetInit<Self, TestRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, TestRenderPlatform>) {
         init.watch(|root, _rect| {
             let mut value = root.value_feedback.get();
             root.anim.apply(&mut value);
@@ -47,10 +47,10 @@ impl WidgetContent<TestRenderPlatform> for Root {
         });
     }
 
-    fn children<R: WidgetChildReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<TestRenderPlatform>) {
     }
 
-    fn graphics<R: WidgetGraphicReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<TestRenderPlatform>) {
     }
 
 }

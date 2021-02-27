@@ -29,6 +29,9 @@ use suzy::selectable::{
 use suzy::widget::{
     Widget,
     WidgetContent,
+    WidgetInit,
+    WidgetChildReceiver,
+    WidgetGraphicReceiver,
 };
 use suzy::platform::opengl::{
     OpenGlRenderPlatform,
@@ -49,16 +52,16 @@ impl Selectable for ButtonContent {
 }
 
 impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
-    fn init<I: suzy::widget::WidgetInit<Self, OpenGlRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
     }
 
-    fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
         println!("ButtonContent draw: {}", self.show_image);
         if self.show_image {
             receiver.graphic(&mut self.image);
@@ -73,17 +76,17 @@ struct Root {
 }
 
 impl WidgetContent<OpenGlRenderPlatform> for Root {
-    fn init<I: suzy::widget::WidgetInit<Self, OpenGlRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|root, rect| {
             root.button.set_fill(rect, &SimplePadding2d::zero());
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
+    fn children(&mut self, mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
         receiver.child(&mut self.button);
     }
 
-    fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
     }
 
 }

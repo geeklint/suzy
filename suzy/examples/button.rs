@@ -17,17 +17,17 @@ struct Root {
 }
 
 impl WidgetContent for Root {
-    fn init<I: WidgetInit<Self>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, rect| {
             this.button.set_fill(&rect, &SimplePadding2d::uniform(20.0));
         });
     }
 
-    fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
         receiver.child(&mut self.button);
     }
 
-    fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
         // no graphics
     }
 }

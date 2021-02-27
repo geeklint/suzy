@@ -29,6 +29,9 @@ use suzy::widget::{
     Widget,
     WidgetExtra,
     WidgetContent,
+    WidgetInit,
+    WidgetChildReceiver,
+    WidgetGraphicReceiver,
 };
 use suzy::platform::opengl::{
     OpenGlRenderPlatform,
@@ -59,16 +62,16 @@ impl ToggleButtonValue<i32> for ButtonContent {
 }
 
 impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
-    fn init<I: suzy::widget::WidgetInit<Self, OpenGlRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
     }
 
-    fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
         if self.show_image {
             receiver.graphic(&mut self.image);
         }
@@ -86,7 +89,7 @@ struct GroupRoot {
 }
 
 impl WidgetContent<OpenGlRenderPlatform> for GroupRoot {
-    fn init<I: suzy::widget::WidgetInit<Self, OpenGlRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|root, _rect| { 
             root.value_feedback.set(root.group.value());
         });
@@ -122,13 +125,13 @@ impl WidgetContent<OpenGlRenderPlatform> for GroupRoot {
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
+    fn children(&mut self, mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
         receiver.child(&mut self.top);
         receiver.child(&mut self.middle);
         receiver.child(&mut self.bottom);
     }
 
-    fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
     }
 
 }

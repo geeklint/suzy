@@ -56,7 +56,7 @@ impl TextContent for DefaultOpenGlButton {
 }
 
 impl WidgetContent<Plat> for DefaultOpenGlButton {
-    fn init<I: WidgetInit<Self, Plat>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, Plat>) {
         init.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
 
@@ -80,11 +80,11 @@ impl WidgetContent<Plat> for DefaultOpenGlButton {
         });
     }
 
-    fn children<R: WidgetChildReceiver<Plat>>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<Plat>) {
         // no children
     }
 
-    fn graphics<R: WidgetGraphicReceiver<Plat>>(&mut self, mut receiver: R) {
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<Plat>) {
         receiver.graphic(&mut self.image);
         receiver.graphic(&mut self.text_graphic);
     }

@@ -20,9 +20,9 @@
 //! struct Data { }
 //!
 //! impl WidgetContent for Data {
-//!     fn init<I: WidgetInit<Self>>(_init: I) {}
-//!     fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {}
-//!     fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//!     fn init(_init: impl WidgetInit<Self>) {}
+//!     fn children(&mut self, _receiver: impl WidgetChildReceiver) {}
+//!     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! }
 //!
 //! fn main() {
@@ -44,13 +44,13 @@
 //! # use suzy::dims::Rect;
 //! # struct Data { child: Widget<()> }
 //! # impl WidgetContent for Data {
-//! #     fn init<I: WidgetInit<Self>>(mut init: I) {
+//! #     fn init(mut init: impl WidgetInit<Self>) {
 //! init.watch(|this, rect| {
 //!     this.child.set_width(rect.width() / 2.0);
 //! });
 //! #     }
-//! #     fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {}
-//! #     fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//! #     fn children(&mut self, _receiver: impl WidgetChildReceiver) {}
+//! #     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! # }
 //! ```
 //!

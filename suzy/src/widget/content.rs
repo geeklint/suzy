@@ -44,10 +44,10 @@ use super::{
 ///
 /// impl WidgetContent for MyWidgetData {
 ///     // ...
-/// #   fn init<I: WidgetInit<Self>>(_init: I) {}
-/// #   fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+/// #   fn init(_init: impl WidgetInit<Self>) {}
+/// #   fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 ///
-///     fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+///     fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
 ///         receiver.child(&mut self.button_one);
 ///         receiver.child(&mut self.button_two);
 ///     }
@@ -66,10 +66,10 @@ use super::{
 ///
 /// impl WidgetContent for MyWidgetData {
 ///     // ...
-/// #   fn init<I: WidgetInit<Self>>(_init: I) {}
-/// #   fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {}
+/// #   fn init(_init: impl WidgetInit<Self>) {}
+/// #   fn children(&mut self, _receiver: impl WidgetChildReceiver) {}
 ///
-///     fn graphics<R: WidgetGraphicReceiver>(&mut self, mut receiver: R) {
+///     fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver) {
 ///         receiver.graphic(&mut self.graphic);
 ///     }
 /// }
@@ -82,17 +82,17 @@ where
 {
     /// This method provides a convient place to register functions which
     /// watch values and update parts of the widget when they change.
-    fn init<I: WidgetInit<Self, P>>(init: I);
+    fn init(init: impl WidgetInit<Self, P>);
 
     /// Use this method to specify the children a custom widget contains.
     ///
     /// Call `receiver.child` for each child.
-    fn children<R: WidgetChildReceiver<P>>(&mut self, receiver: R);
+    fn children(&mut self, receiver: impl WidgetChildReceiver<P>);
 
     /// Use this method to specify the graphics a custom widget contains.
     ///
     /// Call `receiver.graphic` for each graphic.
-    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R);
+    fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>);
 
     /// Override this method to define a custom shape for the widget.
     ///
@@ -126,9 +126,9 @@ where
 }
 
 impl<P: RenderPlatform> WidgetContent<P> for () {
-    fn init<I: WidgetInit<Self, P>>(_init: I) {}
-    fn children<R: WidgetChildReceiver<P>>(&mut self, _receiver: R) {}
-    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, _receiver: R) {}
+    fn init(_init: impl WidgetInit<Self, P>) {}
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) {}
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<P>) {}
 }
 
 fn run_widget_as_app<T>() -> !

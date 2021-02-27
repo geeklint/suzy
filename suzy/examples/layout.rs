@@ -19,7 +19,7 @@ struct Root {
 }
 
 impl WidgetContent for Root {
-    fn init<I: WidgetInit<Self>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
             this.one.content_mut().set_text("One");
             this.two.content_mut().set_text("Two");
@@ -35,13 +35,13 @@ impl WidgetContent for Root {
         ;
     }
 
-    fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
         receiver.child(&mut self.one);
         receiver.child(&mut self.two);
         receiver.child(&mut self.three);
     }
 
-    fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
         // no graphics
     }
 }

@@ -175,11 +175,11 @@ impl crate::widgets::TextContent for StubButtonContent {
 }
 
 impl<P: super::RenderPlatform> WidgetContent<P> for StubButtonContent {
-    fn init<I: WidgetInit<Self, P>>(_init: I) { stub!() }
+    fn init(_init: impl WidgetInit<Self, P>) { stub!() }
 
-    fn children<R: WidgetChildReceiver<P>>(&mut self, _receiver: R) { stub!() }
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) { stub!() }
 
-    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<P>) {
         stub!()
     }
 }

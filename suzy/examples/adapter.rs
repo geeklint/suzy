@@ -38,7 +38,7 @@ impl Adaptable<&'static str> for Element {
 }
 
 impl WidgetContent for Element {
-    fn init<I: WidgetInit<Self>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, rect| {
             let text_settings = this.text.render_settings();
             text_settings.x = rect.left();
@@ -53,11 +53,11 @@ impl WidgetContent for Element {
         });
     }
 
-    fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver) {
         // no children
     }
 
-    fn graphics<R: WidgetGraphicReceiver>(&mut self, mut receiver: R) {
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver) {
         receiver.graphic(&mut self.text);
     }
 }
@@ -68,7 +68,7 @@ struct AdapterExample {
 }
 
 impl WidgetContent for AdapterExample {
-    fn init<I: WidgetInit<Self>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
             this.layout.data_mut().clear();
             this.layout.data_mut().extend(WORDS.split_whitespace());
@@ -78,11 +78,11 @@ impl WidgetContent for AdapterExample {
         });
     }
 
-    fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
         receiver.child(&mut self.layout);
     }
 
-    fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
         // no graphics
     }
 }

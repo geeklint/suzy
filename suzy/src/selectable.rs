@@ -353,15 +353,15 @@ mod extra_impls {
         P: RenderPlatform,
         T: WidgetContent<P>,
     {
-        fn init<I: WidgetInit<Self, P>>(mut init: I) {
+        fn init(mut init: impl WidgetInit<Self, P>) {
             init.init_child_inline(|x| &mut x.data);
         }
 
-        fn children<R: WidgetChildReceiver<P>>(&mut self, receiver: R) {
+        fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
             self.data.children(receiver);
         }
 
-        fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {
+        fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {
             self.data.graphics(receiver);
         }
 

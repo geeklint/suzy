@@ -19,6 +19,9 @@ use suzy::app::{
 use suzy::widget::{
     Widget,
     WidgetContent,
+    WidgetInit,
+    WidgetChildReceiver,
+    WidgetGraphicReceiver,
 };
 use suzy::platform::opengl::{
     OpenGlRenderPlatform,
@@ -37,7 +40,7 @@ struct Root {
 }
 
 impl WidgetContent<OpenGlRenderPlatform> for Root {
-    fn init<I: suzy::widget::WidgetInit<Self, OpenGlRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|root, _rect| {
             root.tint.set_tint_color(Color::RED);
         });
@@ -46,10 +49,10 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>) {
     }
 
-    fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>) {
         receiver.graphic(&mut self.tint);
         receiver.graphic(&mut self.image);
     }

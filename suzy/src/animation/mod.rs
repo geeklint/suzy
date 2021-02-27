@@ -24,7 +24,7 @@
 //! }
 //!
 //! impl WidgetContent for MyWidgetData {
-//!     fn init<I: WidgetInit<Self>>(mut init: I) {
+//!     fn init(mut init: impl WidgetInit<Self>) {
 //!         init.watch(|this, rect| {
 //!             this.animation.set_speed(1.0);
 //!             this.animation.animate_to(Color::GREEN);
@@ -36,9 +36,9 @@
 //!     }
 //!
 //!     // ...
-//! #   fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {
+//! #   fn children(&mut self, _receiver: impl WidgetChildReceiver) {
 //! #   }
-//! #   fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//! #   fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! }
 //! ```
 
