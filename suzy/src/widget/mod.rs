@@ -183,15 +183,22 @@ where
         this: &mut Self,
         event: &mut PointerEvent,
     ) -> bool {
-        let mut handled_by_child = false;
-        {
-            let content: &mut T = this;
-            content.children(PointerEventChildReceiver {
-                event,
-                handled: &mut handled_by_child,
-            });
-        }
-        handled_by_child || Self::pointer_event_self(this, event)
+        let id = Widget::id(this);
+        let wid_int = this.watcher.data_mut();
+        let mut extra = WidgetExtra {
+            id,
+            rect: &mut wid_int.rect,
+        };
+        T::pointer_event_before(&mut wid_int.content, &mut extra, event)
+            || {
+                let mut handled_by_child = false;
+                wid_int.content.children(PointerEventChildReceiver {
+                    event,
+                    handled: &mut handled_by_child,
+                });
+                handled_by_child
+            }
+            || T::pointer_event(&mut wid_int.content, &mut extra, event)
     }
 
     pub(crate) fn pointer_event_self(

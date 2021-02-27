@@ -114,6 +114,18 @@ where
         false
     }
 
+    /// This is the same as `pointer_event`, except that it runs before
+    /// passing the event to children, rather than after.  This is only
+    /// recomended for special cases.
+    fn pointer_event_before(
+        &mut self,
+        extra: &mut WidgetExtra<'_>,
+        event: &mut PointerEvent,
+    ) -> bool {
+        let _unused = (extra, event);
+        false
+    }
+
     /// This is a convience function to create and run an App with this
     /// content as the only initial root widget.
     fn run_as_app() -> !
