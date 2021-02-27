@@ -4,9 +4,9 @@
 
 use rusttype::Font;
 
-use crate::sdf;
 use super::output::{FontOutput, GlyphMetric};
 use super::GlyphSizeExt;
+use crate::sdf;
 
 pub(super) struct CharToRender {
     pub ch: char,
@@ -25,7 +25,6 @@ pub(super) struct DestBuffer<'a> {
     pub nchans: usize,
 }
 
-
 pub(super) fn render_char(
     font: &Font,
     ch: CharToRender,
@@ -33,9 +32,8 @@ pub(super) fn render_char(
 ) {
     let one = rusttype::Scale::uniform(1.0);
     let zero = rusttype::Point { x: 0.0, y: 0.0 };
-    let (dest_width, dest_height) = font.glyph(ch.ch)
-        .scaled(ch.dest_scale)
-        .glyph_size();
+    let (dest_width, dest_height) =
+        font.glyph(ch.ch).scaled(ch.dest_scale).glyph_size();
     let norm_glyph = font.glyph(ch.ch).scaled(one);
     let norm_bb = if let Some(bb) = norm_glyph.exact_bounding_box() {
         bb
@@ -45,19 +43,22 @@ pub(super) fn render_char(
     };
     let sprite_width = (dest_width as f64 + 2.0 * ch.padding).floor();
     let sprite_height = (dest_height as f64 + 2.0 * ch.padding).floor();
-    buf.buffer.add_metric(ch.chan as u8, GlyphMetric {
-        ch: ch.ch,
-        u_offset: ch.x as f32,
-        v_offset: ch.y as f32,
-        uv_width: sprite_width as f32 / buf.tex_size as f32,
-        uv_height: sprite_height as f32 / buf.tex_size as f32,
-        bb_min_x: norm_bb.min.x - ch.norm_padding,
-        bb_max_x: norm_bb.max.x + ch.norm_padding,
-        // y-coordinates are opposite what I think they are?
-        bb_min_y: -norm_bb.max.y - ch.norm_padding,
-        bb_max_y: -norm_bb.min.y + ch.norm_padding,
-        advance_width: norm_glyph.h_metrics().advance_width,
-    });
+    buf.buffer.add_metric(
+        ch.chan as u8,
+        GlyphMetric {
+            ch: ch.ch,
+            u_offset: ch.x as f32,
+            v_offset: ch.y as f32,
+            uv_width: sprite_width as f32 / buf.tex_size as f32,
+            uv_height: sprite_height as f32 / buf.tex_size as f32,
+            bb_min_x: norm_bb.min.x - ch.norm_padding,
+            bb_max_x: norm_bb.max.x + ch.norm_padding,
+            // y-coordinates are opposite what I think they are?
+            bb_min_y: -norm_bb.max.y - ch.norm_padding,
+            bb_max_y: -norm_bb.min.y + ch.norm_padding,
+            advance_width: norm_glyph.h_metrics().advance_width,
+        },
+    );
 
     let glyph = font.glyph(ch.ch).scaled(ch.ref_scale).positioned(zero);
     let pxbb = glyph.pixel_bounding_box().expect("no pixel bounding box?");
@@ -92,4 +93,3 @@ pub(super) fn render_char(
     };
     sdf::render_sdf(dest, source);
 }
-

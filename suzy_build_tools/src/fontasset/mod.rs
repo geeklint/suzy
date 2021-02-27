@@ -2,19 +2,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
 
 use rusttype::Font;
 
 use crate::progressbar::ProgressBar;
 
-mod render_char;
 mod output;
+mod render_char;
 mod settings;
 
 use render_char::render_char;
-pub use settings::{AssetSize, Settings, FontFamily};
+pub use settings::{AssetSize, FontFamily, Settings};
 
 trait GlyphSizeExt {
     fn glyph_size(&self) -> (f32, f32);
@@ -35,7 +35,6 @@ pub fn build_fontasset<P: AsRef<Path>>(
     dest_file: P,
     settings: Settings,
 ) {
-
     let fonts = ttf_family.parse();
 
     let fonts = (
@@ -59,12 +58,11 @@ pub fn build_fontasset<P: AsRef<Path>>(
     let max = sizes.0.max(sizes.1).max(sizes.2).max(sizes.3);
 
     let layout = |font: &Font<'_>| {
-        let packer = get_layout(
-            settings.padding_ratio,
-            font,
-            &settings.chars,
-            max,
-        ).expect("Failed to pack a font that previously fit in a larger box");
+        let packer =
+            get_layout(settings.padding_ratio, font, &settings.chars, max)
+                .expect(
+                "Failed to pack a font that previously fit in a larger box",
+            );
         packer.positions
     };
 
@@ -79,10 +77,10 @@ pub fn build_fontasset<P: AsRef<Path>>(
         AssetSize::FontSize(font_size) => {
             let tex_size = ((font_size * max) as usize).next_power_of_two();
             ((tex_size as f64) / max, tex_size)
-        },
+        }
         AssetSize::TextureSize(tex_size) => {
             ((tex_size as f64) / max, tex_size)
-        },
+        }
     };
 
     let padding = font_size * settings.padding_ratio;
@@ -97,11 +95,12 @@ pub fn build_fontasset<P: AsRef<Path>>(
         fonts.2.is_some() as usize,
         fonts.3.is_some() as usize,
     );
-    let bold_channel = fonts.1.as_ref()
-        .map(|_| 1);
-    let italic_channel = fonts.2.as_ref()
-        .map(|_| bold_channel.unwrap_or(0) + 1);
-    let bold_italic_channel = fonts.3.as_ref()
+    let bold_channel = fonts.1.as_ref().map(|_| 1);
+    let italic_channel =
+        fonts.2.as_ref().map(|_| bold_channel.unwrap_or(0) + 1);
+    let bold_italic_channel = fonts
+        .3
+        .as_ref()
         .map(|_| italic_channel.or(bold_channel).unwrap_or(0) + 1);
     let channels = channels.0 + channels.1 + channels.2 + channels.3;
     let channels = if channels == 2 { 3 } else { channels };
@@ -111,91 +110,100 @@ pub fn build_fontasset<P: AsRef<Path>>(
     } else {
         ProgressBar::none()
     };
-    let mut output = settings.chars.iter()
-        .enumerate()
-        .fold(
-            output::FontOutput::new(
-                texture_size,
-                texture_size,
-                channels,
-                bold_channel,
-                italic_channel,
-                bold_italic_channel,
-            ),
-            |mut buffer_data, (chindex, ch)| {
-                let mut channel = 0;
-                let tex_size = texture_size;
-                let nchans = channels;
-                let ch_shared = render_char::CharToRender {
-                    ch: *ch,
-                    dest_scale,
-                    ref_scale,
-                    x: 0.0,
-                    y: 0.0,
-                    chan: 0,
-                    padding,
-                    norm_padding: settings.padding_ratio as f32,
-                };
-                let mut dest_buffer = render_char::DestBuffer {
-                    buffer: &mut buffer_data,
-                    tex_size,
-                    nchans,
-                };
-                let (x, y) = uniform.0[&ch];
+    let mut output = settings.chars.iter().enumerate().fold(
+        output::FontOutput::new(
+            texture_size,
+            texture_size,
+            channels,
+            bold_channel,
+            italic_channel,
+            bold_italic_channel,
+        ),
+        |mut buffer_data, (chindex, ch)| {
+            let mut channel = 0;
+            let tex_size = texture_size;
+            let nchans = channels;
+            let ch_shared = render_char::CharToRender {
+                ch: *ch,
+                dest_scale,
+                ref_scale,
+                x: 0.0,
+                y: 0.0,
+                chan: 0,
+                padding,
+                norm_padding: settings.padding_ratio as f32,
+            };
+            let mut dest_buffer = render_char::DestBuffer {
+                buffer: &mut buffer_data,
+                tex_size,
+                nchans,
+            };
+            let (x, y) = uniform.0[&ch];
+            render_char(
+                &fonts.0,
+                render_char::CharToRender {
+                    x,
+                    y,
+                    chan: channel,
+                    ..ch_shared
+                },
+                &mut dest_buffer,
+            );
+            channel += 1;
+            if let Some(font) = &fonts.1 {
+                let (x, y) = uniform.1.as_ref().unwrap()[&ch];
                 render_char(
-                    &fonts.0,
+                    font,
                     render_char::CharToRender {
-                        x, y, chan: channel, ..ch_shared
+                        x,
+                        y,
+                        chan: channel,
+                        ..ch_shared
                     },
                     &mut dest_buffer,
                 );
                 channel += 1;
-                if let Some(font) = &fonts.1 {
-                    let (x, y) = uniform.1.as_ref().unwrap()[&ch];
-                    render_char(
-                        font,
-                        render_char::CharToRender {
-                            x, y, chan: channel, ..ch_shared
-                        },
-                        &mut dest_buffer,
-                    );
-                    channel += 1;
-                }
-                if let Some(font) = &fonts.2 {
-                    let (x, y) = uniform.2.as_ref().unwrap()[&ch];
-                    render_char(
-                        font,
-                        render_char::CharToRender {
-                            x, y, chan: channel, ..ch_shared
-                        },
-                        &mut dest_buffer,
-                    );
-                    channel += 1;
-                }
-                if let Some(font) = &fonts.3 {
-                    let (x, y) = uniform.3.as_ref().unwrap()[&ch];
-                    render_char(
-                        font,
-                        render_char::CharToRender {
-                            x, y, chan: channel, ..ch_shared
-                        },
-                        &mut dest_buffer,
-                    );
-                }
-                progressbar.update(chindex, settings.chars.len());
-                buffer_data
             }
-        );
+            if let Some(font) = &fonts.2 {
+                let (x, y) = uniform.2.as_ref().unwrap()[&ch];
+                render_char(
+                    font,
+                    render_char::CharToRender {
+                        x,
+                        y,
+                        chan: channel,
+                        ..ch_shared
+                    },
+                    &mut dest_buffer,
+                );
+                channel += 1;
+            }
+            if let Some(font) = &fonts.3 {
+                let (x, y) = uniform.3.as_ref().unwrap()[&ch];
+                render_char(
+                    font,
+                    render_char::CharToRender {
+                        x,
+                        y,
+                        chan: channel,
+                        ..ch_shared
+                    },
+                    &mut dest_buffer,
+                );
+            }
+            progressbar.update(chindex, settings.chars.len());
+            buffer_data
+        },
+    );
     std::mem::drop(progressbar);
     let write_failure = "Failed to write to output file";
     output.write(dest_file).expect(write_failure);
 }
 
-fn get_packed_size(padding_ratio: f64, font: &Font, chars: &[char])
-    -> f64
-{
+fn get_packed_size(padding_ratio: f64, font: &Font, chars: &[char]) -> f64 {
     let scale = rusttype::Scale::uniform(1.0);
-    let glyphs = font.glyphs_for(chars.iter().copied())
+    let glyphs = font
+        .glyphs_for(chars.iter().copied())
         .map(|glyph| glyph.scaled(scale));
 
     let padding = padding_ratio * 2.0;
@@ -213,12 +221,7 @@ fn get_packed_size(padding_ratio: f64, font: &Font, chars: &[char])
 
     loop {
         let size = (high + low) / 2.0;
-        if let Some(layout) = get_layout(
-            padding_ratio,
-            font,
-            chars,
-            size,
-        ) {
+        if let Some(layout) = get_layout(padding_ratio, font, chars, size) {
             let empty_threshold = 0.05 * size * size;
             if layout.empty_area < empty_threshold || high < 1.05 * low {
                 return size;
@@ -251,7 +254,8 @@ fn get_layout(
     };
     let mut packer = rect_packer::Packer::new(config);
     let scale = rusttype::Scale::uniform(1.0);
-    let mut array: Vec<_> = chars.iter()
+    let mut array: Vec<_> = chars
+        .iter()
         .map(|ch| {
             let glyph = font.glyph(*ch).scaled(scale);
             let (width, height) = glyph.glyph_size();
@@ -261,7 +265,10 @@ fn get_layout(
         })
         .collect();
     array.sort_unstable_by(|a, b| {
-        (a.1.max(a.2)).partial_cmp(&(b.1.max(b.2))).unwrap().reverse()
+        (a.1.max(a.2))
+            .partial_cmp(&(b.1.max(b.2)))
+            .unwrap()
+            .reverse()
     });
     let mut positions = HashMap::new();
     let mut empty_area = size * size;
@@ -274,5 +281,8 @@ fn get_layout(
         let height = height as f64 / 100_000.0;
         empty_area -= width * height;
     }
-    Some(LayoutResult { positions, empty_area })
+    Some(LayoutResult {
+        positions,
+        empty_area,
+    })
 }
