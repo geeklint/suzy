@@ -1,4 +1,4 @@
-use std::os::raw::{ c_uint, c_uchar, c_int, c_char, c_void };
+use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
 
 #[repr(C)]
 pub(super) struct osmesa_context {

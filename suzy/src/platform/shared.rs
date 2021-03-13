@@ -3,13 +3,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::selectable::Selectable;
-use crate::window::{
-    Window,
-    WindowEvent,
-    WindowBuilder,
-};
 use crate::widget::WidgetContent;
 use crate::widgets::TextContent;
+use crate::window::{Window, WindowBuilder, WindowEvent};
 
 /// A RenderPlatform provides tools to create Graphics.
 pub trait RenderPlatform: 'static {
@@ -21,8 +17,10 @@ pub trait RenderPlatform: 'static {
 
     /// A default type of WidgetContent this RenderPlatform provides for
     /// buttons.
-    type DefaultButtonContent:
-        Default + Selectable + WidgetContent<Self> + TextContent;
+    type DefaultButtonContent: Default
+        + Selectable
+        + WidgetContent<Self>
+        + TextContent;
 }
 
 /// Possible events a platform could generate.
@@ -69,8 +67,10 @@ pub trait Platform: 'static {
     fn new() -> Self;
 
     /// Create a window.
-    fn create_window(&mut self, settings: WindowBuilder)
-        -> Result<Self::Window, String>;
+    fn create_window(
+        &mut self,
+        settings: WindowBuilder,
+    ) -> Result<Self::Window, String>;
 
     /// Run, the event loop, calling the provided closure with each new event.
     fn run<F>(self, event_handler: F) -> !
@@ -86,7 +86,9 @@ pub struct SimpleEventLoopState {
 }
 
 impl Default for SimpleEventLoopState {
-    fn default() -> Self { Self { running: true } }
+    fn default() -> Self {
+        Self { running: true }
+    }
 }
 
 impl EventLoopState for SimpleEventLoopState {

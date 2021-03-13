@@ -3,12 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::dims::Rect;
+use crate::graphics::{DrawContext, DrawPass, Graphic};
 use crate::widget::WidgetGraphic;
-use crate::graphics::{
-    Graphic,
-    DrawContext,
-    DrawPass,
-};
 
 use super::super::OpenGlRenderPlatform;
 
@@ -30,11 +26,7 @@ where
 
     fn pop(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
         ctx.params().pop_mask();
-        let draw = match (ctx.pass(), self.popped) {
-            (DrawPass::DrawRemaining, true) => false,
-            _ => true,
-        };
-        if draw {
+        if ctx.pass() != DrawPass::DrawRemaining || !self.popped {
             self.popped = ctx.force_redraw(|ctx| {
                 self.item.draw(ctx);
                 ctx.pass() != DrawPass::UpdateContext
@@ -52,12 +44,15 @@ pub struct Masker<T: ?Sized> {
 
 impl<T: ?Sized> Masker<T> {
     /// Get a reference to the graphic used as a mask.
-    pub fn graphic(&self) -> &T { &self.inner.effect.item }
+    pub fn graphic(&self) -> &T {
+        &self.inner.effect.item
+    }
 
     /// Get a mutable reference to the graphic used as a mask.
-    pub fn graphic_mut(&mut self) -> &mut T { &mut self.inner.effect.item }
+    pub fn graphic_mut(&mut self) -> &mut T {
+        &mut self.inner.effect.item
+    }
 }
-
 
 impl<'a, 'b, T> WidgetGraphic<'a, 'b, OpenGlRenderPlatform> for Masker<T>
 where
@@ -83,14 +78,15 @@ impl<T: Rect + ?Sized> Rect for Masker<T> {
         self.inner.effect.item.y()
     }
     fn x_mut<F, R>(&mut self, f: F) -> R
-    where F: FnOnce(&mut crate::dims::Dim) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
     {
         self.inner.effect.item.x_mut(f)
     }
     fn y_mut<F, R>(&mut self, f: F) -> R
-    where F: FnOnce(&mut crate::dims::Dim) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
     {
         self.inner.effect.item.y_mut(f)
     }
-    
 }

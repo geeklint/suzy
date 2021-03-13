@@ -2,12 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+#![allow(missing_docs)]
+
+use crate::graphics::{Color, DrawContext, Graphic};
 use crate::widget::WidgetGraphic;
-use crate::graphics::{
-    Color,
-    Graphic,
-    DrawContext,
-};
 
 use super::super::OpenGlRenderPlatform;
 
@@ -85,8 +83,7 @@ impl Effect for TintEffect {
         ctx.params().tint(self.color);
     }
 
-    fn pop(&mut self, _ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-    }
+    fn pop(&mut self, _ctx: &mut DrawContext<OpenGlRenderPlatform>) {}
 }
 
 #[derive(Default)]

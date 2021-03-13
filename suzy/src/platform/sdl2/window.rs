@@ -10,13 +10,10 @@ use sdl2::video::WindowBuildError;
 
 use crate::graphics::Color;
 use crate::graphics::DrawContext;
-use crate::window;
-use crate::window::{WindowEvent, WindowSettings, WindowBuilder};
 use crate::platform::opengl;
-use crate::pointer::{
-    PointerAction,
-    PointerEventData,
-};
+use crate::pointer::{PointerAction, PointerEventData};
+use crate::window;
+use crate::window::{WindowBuilder, WindowEvent, WindowSettings};
 
 //use super::texture_loader::load_texture;
 
@@ -35,9 +32,8 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
 
     fn try_from(window: &sdl2::video::Window) -> Result<Self, Self::Error> {
         let display_index = window.display_index()?;
-        let (_ddpi, hdpi, vdpi) = {
-            window.subsystem().display_dpi(display_index)?
-        };
+        let (_ddpi, hdpi, vdpi) =
+            { window.subsystem().display_dpi(display_index)? };
         let dpi = ((hdpi + vdpi) / 2.0) as f32;
         let pixels_per_dp = dpi / crate::units::DPI;
         let screen_size = window.size();
@@ -71,9 +67,10 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new_window(sdl: &sdl2::Sdl, builder: WindowBuilder)
-        -> Result<Self, String>
-    {
+    pub fn new_window(
+        sdl: &sdl2::Sdl,
+        builder: WindowBuilder,
+    ) -> Result<Self, String> {
         // initialize systems
         let video = sdl.video()?;
         // setup window parameters
@@ -91,9 +88,7 @@ impl Window {
         }
         let (width, height) = builder.size();
         let guess_px_per_dp = {
-            let (_ddpi, hdpi, vdpi) = {
-                video.display_dpi(0)?
-            };
+            let (_ddpi, hdpi, vdpi) = { video.display_dpi(0)? };
             let dpi = ((hdpi + vdpi) / 2.0) as f32;
             dpi / crate::units::DPI
         };
@@ -106,11 +101,9 @@ impl Window {
         );
         win_builder.opengl().allow_highdpi().resizable();
         // build window
-        let mut window = win_builder.build().map_err(|err| {
-            match err {
-                WindowBuildError::SdlError(msg) => msg,
-                _ => panic!("Unexpected window builder error!"),
-            }
+        let mut window = win_builder.build().map_err(|err| match err {
+            WindowBuildError::SdlError(msg) => msg,
+            _ => panic!("Unexpected window builder error!"),
         })?;
         // ensure we made it at the correct size - tricky because display
         // units might be anything (vs what we care about, dp and px)
@@ -135,17 +128,14 @@ impl Window {
         let _ = video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context()?;
         let plat_gl_context = {
-            opengl::OpenGlContext::new(
-                |s| video.gl_get_proc_address(s) as *const _
-            )
+            opengl::OpenGlContext::new(|s| {
+                video.gl_get_proc_address(s) as *const _
+            })
         };
         let gl_win = opengl::Window::new(plat_gl_context);
         Ok(Window {
             title: builder.into_title(),
-            info: WindowInfo {
-                window,
-                gl_win,
-            },
+            info: WindowInfo { window, gl_win },
             _video: video,
             _context: context,
         })
@@ -157,7 +147,7 @@ impl WindowSettings for Window {
         let info: PixelInfo = (&self.info.window).try_into().unwrap();
         info.size
     }
-    
+
     fn set_size(&mut self, size: (f32, f32)) {
         let info: PixelInfo = (&self.info.window).try_into().unwrap();
         let dp_per_su = info.dp_per_screen_unit;
@@ -166,7 +156,9 @@ impl WindowSettings for Window {
         let _res = self.info.window.set_size(calc_width, calc_height);
     }
 
-    fn title(&self) -> &str { &self.title }
+    fn title(&self) -> &str {
+        &self.title
+    }
 
     fn set_title(&mut self, title: String) {
         let _res = self.info.window.set_title(&title);
@@ -182,13 +174,11 @@ impl WindowSettings for Window {
     }
 
     fn set_fullscreen(&mut self, fullscreen: bool) {
-        let _res = self.info.window.set_fullscreen(
-            if fullscreen {
-                sdl2::video::FullscreenType::Desktop
-            } else {
-                sdl2::video::FullscreenType::Off
-            }
-        );
+        let _res = self.info.window.set_fullscreen(if fullscreen {
+            sdl2::video::FullscreenType::Desktop
+        } else {
+            sdl2::video::FullscreenType::Off
+        });
     }
 
     fn background_color(&self) -> Color {
@@ -228,19 +218,15 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         match event.action {
             PointerAction::Move(ref mut x, ref mut y) => {
                 *x *= info.dp_per_screen_unit;
-                *y *= info.dp_per_screen_unit;
-                *y = info.size.1 - *y;
-            },
-            PointerAction::Wheel(ref mut x, ref mut y) => {
-                *x *= info.dp_per_screen_unit;
-                *y *= info.dp_per_screen_unit;
-                *y = info.size.1 - *y;
-            },
+                *y *= -info.dp_per_screen_unit;
+            }
+            PointerAction::Wheel(ref mut _x, ref mut y) => {
+                *y *= -1.0;
+            }
             PointerAction::Hover(ref mut x, ref mut y) => {
                 *x *= info.dp_per_screen_unit;
-                *y *= info.dp_per_screen_unit;
-                *y = info.size.1 - *y;
-            },
+                *y *= -info.dp_per_screen_unit;
+            }
             _ => (),
         }
         event.normalized = true;
@@ -248,12 +234,9 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
 
     fn recalculate_viewport(&mut self) {
         let info: PixelInfo = (&self.info.window).try_into().unwrap();
-        self.info.gl_win.viewport(
-            0,
-            0,
-            info.pixel_size.0,
-            info.pixel_size.1,
-        );
+        self.info
+            .gl_win
+            .viewport(0, 0, info.pixel_size.0, info.pixel_size.1);
     }
 
     fn flip(&mut self) {
@@ -261,9 +244,10 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         self.info.window.gl_swap_window();
     }
 
-    fn prepare_draw(&mut self, first_pass: bool)
-        -> DrawContext<opengl::OpenGlRenderPlatform>
-    {
+    fn prepare_draw(
+        &mut self,
+        first_pass: bool,
+    ) -> DrawContext<opengl::OpenGlRenderPlatform> {
         self.info.gl_win.clear();
         self.info.gl_win.prepare_draw(self.size(), first_pass)
     }
@@ -279,26 +263,24 @@ pub struct Events {
 }
 
 impl Events {
-    fn win_event(&mut self, win_event: sdl_WindowEvent)
-        -> Option<WindowEvent>
-    {
+    fn win_event(
+        &mut self,
+        win_event: sdl_WindowEvent,
+    ) -> Option<WindowEvent> {
         Some(match win_event {
             sdl_WindowEvent::SizeChanged(_, _)
             | sdl_WindowEvent::Moved { .. } => {
                 self.send_dp = true;
                 WindowEvent::Resize
             }
-            sdl_WindowEvent::Close => {
-                WindowEvent::Quit
-            }
+            sdl_WindowEvent::Close => WindowEvent::Quit,
             sdl_WindowEvent::Leave => {
-                WindowEvent::Pointer(
-                    PointerEventData::new(
-                        crate::pointer::PointerId::Mouse,
-                        PointerAction::Hover(f32::NAN, f32::NAN),
-                        f32::NAN, f32::NAN,
-                    )
-                )
+                WindowEvent::Pointer(PointerEventData::new(
+                    crate::pointer::PointerId::Mouse,
+                    PointerAction::Hover(f32::NAN, f32::NAN),
+                    f32::NAN,
+                    f32::NAN,
+                ))
             }
             _ => return None,
         })
@@ -318,78 +300,92 @@ impl Events {
                         None => continue,
                     }
                 }
-                Event::MouseButtonDown { mouse_btn, x, y, .. } => {
-                    use sdl2::mouse::MouseButton::*;
+                Event::MouseButtonDown {
+                    mouse_btn, x, y, ..
+                } => {
                     use crate::pointer::*;
+                    use sdl2::mouse::MouseButton::*;
                     let (x, y) = (x as f32, y as f32);
                     let action = match mouse_btn {
                         Left => PointerAction::Down,
                         X1 => PointerAction::AltDown(AltMouseButton::X1),
                         X2 => PointerAction::AltDown(AltMouseButton::X2),
-                        Middle => PointerAction::AltDown(
-                            AltMouseButton::Middle
-                        ),
-                        Right => PointerAction::AltDown(
-                            AltMouseButton::Right
-                        ),
+                        Middle => {
+                            PointerAction::AltDown(AltMouseButton::Middle)
+                        }
+                        Right => PointerAction::AltDown(AltMouseButton::Right),
                         Unknown => continue,
                     };
-                    WindowEvent::Pointer(
-                        PointerEventData::new(
-                            PointerId::Mouse,
-                            action,
-                            x, y,
-                        )
-                    )
+                    WindowEvent::Pointer(PointerEventData::new(
+                        PointerId::Mouse,
+                        action,
+                        x,
+                        y,
+                    ))
                 }
-                Event::MouseButtonUp { mouse_btn, x, y, .. } => {
-                    use sdl2::mouse::MouseButton::*;
+                Event::MouseButtonUp {
+                    mouse_btn, x, y, ..
+                } => {
                     use crate::pointer::*;
+                    use sdl2::mouse::MouseButton::*;
                     let (x, y) = (x as f32, y as f32);
                     let action = match mouse_btn {
                         Left => PointerAction::Up,
                         X1 => PointerAction::AltUp(AltMouseButton::X1),
                         X2 => PointerAction::AltUp(AltMouseButton::X2),
-                        Middle => PointerAction::AltUp(
-                            AltMouseButton::Middle
-                        ),
-                        Right => PointerAction::AltUp(
-                            AltMouseButton::Right
-                        ),
+                        Middle => PointerAction::AltUp(AltMouseButton::Middle),
+                        Right => PointerAction::AltUp(AltMouseButton::Right),
                         Unknown => continue,
                     };
-                    WindowEvent::Pointer(
-                        PointerEventData::new(
-                            PointerId::Mouse,
-                            action,
-                            x, y,
-                        )
-                    )
+                    WindowEvent::Pointer(PointerEventData::new(
+                        PointerId::Mouse,
+                        action,
+                        x,
+                        y,
+                    ))
                 }
-                Event::MouseMotion { mousestate, x, y, xrel, yrel, .. } => {
+                Event::MouseMotion {
+                    mousestate,
+                    x,
+                    y,
+                    xrel,
+                    yrel,
+                    ..
+                } => {
                     use crate::pointer::*;
                     let (x, y) = (x as f32, y as f32);
                     let (xrel, yrel) = (xrel as f32, yrel as f32);
                     if mousestate.left() {
-                        WindowEvent::Pointer(
-                            PointerEventData::new(
-                                PointerId::Mouse,
-                                PointerAction::Move(xrel, yrel),
-                                x, y,
-                            )
-                        )
+                        WindowEvent::Pointer(PointerEventData::new(
+                            PointerId::Mouse,
+                            PointerAction::Move(xrel, yrel),
+                            x,
+                            y,
+                        ))
                     } else {
-                        WindowEvent::Pointer(
-                            PointerEventData::new(
-                                PointerId::Mouse,
-                                PointerAction::Hover(xrel, yrel),
-                                x, y,
-                            )
-                        )
+                        WindowEvent::Pointer(PointerEventData::new(
+                            PointerId::Mouse,
+                            PointerAction::Hover(xrel, yrel),
+                            x,
+                            y,
+                        ))
                     }
                 }
+                Event::MouseWheel { x, y, .. } => {
+                    use crate::pointer::*;
+                    let state = self.events.mouse_state();
+                    let (xrel, yrel) = (x as f32, y as f32);
+                    let x = state.x() as f32;
+                    let y = state.y() as f32;
+                    WindowEvent::Pointer(PointerEventData::new(
+                        PointerId::Mouse,
+                        PointerAction::Wheel(xrel, yrel),
+                        x,
+                        y,
+                    ))
+                }
                 _ => continue,
-            })
+            });
         }
         None
     }

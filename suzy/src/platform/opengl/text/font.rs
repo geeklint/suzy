@@ -18,7 +18,7 @@ pub(super) type GlyphMetricsSource =
 type KerningSource = (char, char, f32);
 
 pub type FontSource<'a> = (
-    u8,  // texture channel
+    u8, // texture channel
     &'a [GlyphMetricsSource],
     &'a [KerningSource],
 );
@@ -66,11 +66,13 @@ pub struct FontFamilySourceDynamic<'a> {
 pub(super) type ChannelMask = (u8, u8, u8, u8);
 
 const ALPHA_MASKS: &[ChannelMask] = &[(0, 0, 0, 0xff)];
-const RGB_MASKS: &[ChannelMask] = &[
-    (0xff, 0, 0, 0), (0, 0xff, 0, 0), (0, 0, 0xff, 0),
-];
+const RGB_MASKS: &[ChannelMask] =
+    &[(0xff, 0, 0, 0), (0, 0xff, 0, 0), (0, 0, 0xff, 0)];
 const RGBA_MASKS: &[ChannelMask] = &[
-    (0xff, 0, 0, 0), (0, 0xff, 0, 0), (0, 0, 0xff, 0), (0, 0, 0, 0xff),
+    (0xff, 0, 0, 0),
+    (0, 0xff, 0, 0),
+    (0, 0, 0xff, 0),
+    (0, 0, 0, 0xff),
 ];
 
 impl<'a> FontFamilySourceDynamic<'a> {
@@ -85,7 +87,7 @@ impl<'a> FontFamilySourceDynamic<'a> {
                     self.atlas_image,
                 );
                 (texture, ALPHA_MASKS)
-            },
+            }
             3 => {
                 let texture = Texture::from_rgb(
                     self.image_width,
@@ -137,18 +139,21 @@ pub struct FontFamilyDynamic<'a> {
 impl<'a> FontFamilyDynamic<'a> {
     pub(super) fn channel_mask(&self, style: FontStyle) -> ChannelMask {
         let index: usize = self.best_font_source(style).0.into();
-        self.channel_masks.get(index).copied().unwrap_or((0, 0, 0, 0))
+        self.channel_masks
+            .get(index)
+            .copied()
+            .unwrap_or((0, 0, 0, 0))
     }
 
     #[doc(hidden)]
     pub fn best_font_source(&self, style: FontStyle) -> &FontSource {
         match style {
             FontStyle::Normal => &self.normal,
-            FontStyle::Bold => self.bold.as_ref()
-                .unwrap_or(&self.normal),
-            FontStyle::Italic => self.italic.as_ref()
-                .unwrap_or(&self.normal),
-            FontStyle::BoldItalic => self.bold_italic.as_ref()
+            FontStyle::Bold => self.bold.as_ref().unwrap_or(&self.normal),
+            FontStyle::Italic => self.italic.as_ref().unwrap_or(&self.normal),
+            FontStyle::BoldItalic => self
+                .bold_italic
+                .as_ref()
                 .or_else(|| self.bold.as_ref())
                 .or_else(|| self.italic.as_ref())
                 .unwrap_or(&self.normal),

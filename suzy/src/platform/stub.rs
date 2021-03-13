@@ -3,19 +3,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::widget::{
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
+    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
 
-use super::{
-    Event,
-    SimpleEventLoopState,
-};
+use super::{Event, SimpleEventLoopState};
 
 macro_rules! stub {
-    () => { unimplemented!("StubPlatform used at runtime") };
+    () => {
+        unimplemented!("StubPlatform used at runtime")
+    };
 }
 
 /// The stub platform is used as a placeholder when no other platforms are
@@ -57,8 +53,12 @@ impl crate::platform::RenderPlatform for StubRenderPlatform {
 }
 
 impl crate::graphics::DrawParams<()> for StubDrawParams {
-    fn apply_all(&mut self, _ctx: &mut ()) { stub!() }
-    fn apply_change(_c: &Self, _n: &mut Self, _ctx: &mut ()) { stub!() }
+    fn apply_all(&mut self, _ctx: &mut ()) {
+        stub!()
+    }
+    fn apply_change(_c: &Self, _n: &mut Self, _ctx: &mut ()) {
+        stub!()
+    }
 }
 
 impl crate::platform::Platform for StubPlatform {
@@ -66,17 +66,20 @@ impl crate::platform::Platform for StubPlatform {
     type Window = StubWindow;
     type Renderer = StubRenderPlatform;
 
-    fn new() -> Self { stub!() }
+    fn new() -> Self {
+        stub!()
+    }
 
-    fn create_window(&mut self, _settings: crate::window::WindowBuilder)
-        -> Result<Self::Window, String>
-    {
+    fn create_window(
+        &mut self,
+        _settings: crate::window::WindowBuilder,
+    ) -> Result<Self::Window, String> {
         stub!()
     }
 
     fn run<F>(self, _event_handler: F) -> !
     where
-        F: 'static + FnMut(&mut Self::State, Event)
+        F: 'static + FnMut(&mut Self::State, Event),
     {
         stub!()
     }
@@ -88,35 +91,56 @@ impl crate::platform::Platform for StubOpenglPlatform {
     type Window = StubWindow;
     type Renderer = super::opengl::OpenGlRenderPlatform;
 
-    fn new() -> Self { stub!() }
+    fn new() -> Self {
+        stub!()
+    }
 
-    fn create_window(&mut self, _settings: crate::window::WindowBuilder)
-        -> Result<Self::Window, String>
-    {
+    fn create_window(
+        &mut self,
+        _settings: crate::window::WindowBuilder,
+    ) -> Result<Self::Window, String> {
         stub!()
     }
 
     fn run<F>(self, _event_handler: F) -> !
     where
-        F: 'static + FnMut(&mut Self::State, Event)
+        F: 'static + FnMut(&mut Self::State, Event),
     {
         stub!()
     }
 }
 
 impl crate::window::WindowSettings for StubWindow {
-    fn size(&self) -> (f32, f32) { stub!() }
-    fn set_size(&mut self, _size: (f32, f32)) { stub!() }
-    fn title(&self) -> &str { stub!() }
-    fn set_title(&mut self, _title: String) { stub!() }
-    fn fullscreen(&self) -> bool { stub!() }
-    fn set_fullscreen(&mut self, _fullscreen: bool) { stub!() }
-    fn background_color(&self) -> crate::graphics::Color { stub!() }
-    fn set_background_color(&mut self, _color: crate::graphics::Color) { stub!() }
+    fn size(&self) -> (f32, f32) {
+        stub!()
+    }
+    fn set_size(&mut self, _size: (f32, f32)) {
+        stub!()
+    }
+    fn title(&self) -> &str {
+        stub!()
+    }
+    fn set_title(&mut self, _title: String) {
+        stub!()
+    }
+    fn fullscreen(&self) -> bool {
+        stub!()
+    }
+    fn set_fullscreen(&mut self, _fullscreen: bool) {
+        stub!()
+    }
+    fn background_color(&self) -> crate::graphics::Color {
+        stub!()
+    }
+    fn set_background_color(&mut self, _color: crate::graphics::Color) {
+        stub!()
+    }
 }
 
 impl crate::window::Window<StubRenderPlatform> for StubWindow {
-    fn pixels_per_dp(&self) -> f32 { stub!() }
+    fn pixels_per_dp(&self) -> f32 {
+        stub!()
+    }
 
     fn normalize_pointer_event(
         &self,
@@ -133,18 +157,25 @@ impl crate::window::Window<StubRenderPlatform> for StubWindow {
         stub!()
     }
 
-    fn prepare_draw(&mut self, _first_pass: bool)
-        -> crate::graphics::DrawContext<StubRenderPlatform>
-    {
+    fn prepare_draw(
+        &mut self,
+        _first_pass: bool,
+    ) -> crate::graphics::DrawContext<StubRenderPlatform> {
         stub!()
     }
 
-    fn take_screenshot(&self) -> Box<[u8]> { stub!() }
+    fn take_screenshot(&self) -> Box<[u8]> {
+        stub!()
+    }
 }
 
 #[cfg(feature = "platform_opengl")]
-impl crate::window::Window<super::opengl::OpenGlRenderPlatform> for StubWindow {
-    fn pixels_per_dp(&self) -> f32 { stub!() }
+impl crate::window::Window<super::opengl::OpenGlRenderPlatform>
+    for StubWindow
+{
+    fn pixels_per_dp(&self) -> f32 {
+        stub!()
+    }
 
     fn normalize_pointer_event(
         &self,
@@ -161,31 +192,44 @@ impl crate::window::Window<super::opengl::OpenGlRenderPlatform> for StubWindow {
         stub!()
     }
 
-    fn prepare_draw(&mut self, _first_pass: bool)
-        -> crate::graphics::DrawContext<super::opengl::OpenGlRenderPlatform>
+    fn prepare_draw(
+        &mut self,
+        _first_pass: bool,
+    ) -> crate::graphics::DrawContext<super::opengl::OpenGlRenderPlatform>
     {
         stub!()
     }
 
-    fn take_screenshot(&self) -> Box<[u8]> { stub!() }
+    fn take_screenshot(&self) -> Box<[u8]> {
+        stub!()
+    }
 }
 
 impl crate::widgets::TextContent for StubButtonContent {
-    fn set_text(&mut self, _text: &str) { stub!() }
+    fn set_text(&mut self, _text: &str) {
+        stub!()
+    }
 }
 
 impl<P: super::RenderPlatform> WidgetContent<P> for StubButtonContent {
-    fn init<I: WidgetInit<Self, P>>(_init: I) { stub!() }
+    fn init(_init: impl WidgetInit<Self, P>) {
+        stub!()
+    }
 
-    fn children<R: WidgetChildReceiver<P>>(&mut self, _receiver: R) { stub!() }
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) {
+        stub!()
+    }
 
-    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<P>) {
         stub!()
     }
 }
 
 impl crate::selectable::Selectable for StubButtonContent {
-    fn selection_changed(&mut self, _state: crate::selectable::SelectionState) {
+    fn selection_changed(
+        &mut self,
+        _state: crate::selectable::SelectionState,
+    ) {
         stub!()
     }
 }

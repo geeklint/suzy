@@ -2,12 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use std::rc::Rc;
-use std::collections::HashMap;
+#![allow(missing_docs)]
 
+use std::collections::HashMap;
+use std::rc::Rc;
+
+use super::mask::Mask;
 use super::stdshaders::Shaders;
 use super::texture::TextureCache;
-use super::mask::Mask;
 
 pub mod bindings {
     #![allow(bare_trait_objects)]

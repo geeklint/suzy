@@ -2,15 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use std::collections::HashMap;
 use std::borrow::Cow;
+use std::collections::HashMap;
 
-use super::{
-    FontFamilyDynamic,
-    ChannelMask,
-    GlyphMetricsSource,
-};
-
+use super::{ChannelMask, FontFamilyDynamic, GlyphMetricsSource};
 
 struct GlyphMetrics {
     _ch: char,
@@ -50,7 +45,7 @@ pub enum FontStyle {
     /// Italic font style.
     Italic,
     /// Bold and italic font style.
-    BoldItalic
+    BoldItalic,
 }
 
 impl Default for FontStyle {
@@ -133,7 +128,7 @@ pub enum TextAlignment {
     /// Center-aligned
     Center,
     /// Right-aligned
-    Right
+    Right,
 }
 
 /// A type which contains settings which effect the vertex generation
@@ -228,7 +223,8 @@ impl<'a> Iterator for RichTextParser<'a> {
             self.text = &self.text[4..];
             Some(RichTextCommand::ResetItalic)
         } else {
-            let next_cmd = ["<b>", "<i>", "</b>", "</i>"].iter()
+            let next_cmd = ["<b>", "<i>", "</b>", "</i>"]
+                .iter()
                 .filter_map(|cmd| self.text.find(cmd))
                 .min();
             let text = if let Some(index) = next_cmd {
@@ -259,10 +255,13 @@ pub(super) struct FontCharCalc<'a> {
 }
 
 impl<'a> FontCharCalc<'a> {
-    pub fn new(font_family: &'a FontFamilyDynamic, settings: TextLayoutSettings)
-        -> Self
-    {
-        let mut bufs: HashMap<_,_> = font_family.channel_masks.iter()
+    pub fn new(
+        font_family: &'a FontFamilyDynamic,
+        settings: TextLayoutSettings,
+    ) -> Self {
+        let mut bufs: HashMap<_, _> = font_family
+            .channel_masks
+            .iter()
             .copied()
             .map(|mask| (mask, vec![]))
             .collect();
@@ -349,61 +348,54 @@ impl<'a> FontCharCalc<'a> {
         y_offset: f32,
         metrics: GlyphMetrics,
     ) {
-        let left = (
-            x_offset + metrics.bb_min_x * font_size,
-            metrics.uv_x,
-        );
-        let right = (
-            x_offset + metrics.bb_max_x * font_size,
-            metrics.uv_x + metrics.uv_width,
-        );
-        let top = (
-            y_offset + metrics.bb_max_y * font_size,
-            metrics.uv_y,
-        );
-        let bottom = (
-            y_offset + metrics.bb_min_y * font_size,
-            metrics.uv_y + metrics.uv_height,
-        );
+        let left_pos = x_offset + metrics.bb_min_x * font_size;
+        let left_uv = metrics.uv_x;
+        let right_pos = x_offset + metrics.bb_max_x * font_size;
+        let right_uv = metrics.uv_x + metrics.uv_width;
+        let top_pos = y_offset + metrics.bb_max_y * font_size;
+        let top_uv = metrics.uv_y;
+        let bottom_pos = y_offset + metrics.bb_min_y * font_size;
+        let bottom_uv = metrics.uv_y + metrics.uv_height;
         // TODO: use extend or something, rather than all these pushes.
         buf.reserve(4 * 6);
 
-        buf.push(left.0);
-        buf.push(bottom.0);
-        buf.push(left.1);
-        buf.push(bottom.1);
+        buf.push(left_pos);
+        buf.push(bottom_pos);
+        buf.push(left_uv);
+        buf.push(bottom_uv);
 
-        buf.push(right.0);
-        buf.push(top.0);
-        buf.push(right.1);
-        buf.push(top.1);
+        buf.push(right_pos);
+        buf.push(top_pos);
+        buf.push(right_uv);
+        buf.push(top_uv);
 
-        buf.push(left.0);
-        buf.push(top.0);
-        buf.push(left.1);
-        buf.push(top.1);
+        buf.push(left_pos);
+        buf.push(top_pos);
+        buf.push(left_uv);
+        buf.push(top_uv);
 
-        buf.push(left.0);
-        buf.push(bottom.0);
-        buf.push(left.1);
-        buf.push(bottom.1);
+        buf.push(left_pos);
+        buf.push(bottom_pos);
+        buf.push(left_uv);
+        buf.push(bottom_uv);
 
-        buf.push(right.0);
-        buf.push(bottom.0);
-        buf.push(right.1);
-        buf.push(bottom.1);
+        buf.push(right_pos);
+        buf.push(bottom_pos);
+        buf.push(right_uv);
+        buf.push(bottom_uv);
 
-        buf.push(right.0);
-        buf.push(top.0);
-        buf.push(right.1);
-        buf.push(top.1);
+        buf.push(right_pos);
+        buf.push(top_pos);
+        buf.push(right_uv);
+        buf.push(top_uv);
     }
 
     fn push_word_splitwrap(&mut self, word: &str) {
         let mut iter = word.chars().peekable();
         while let Some(ch) = iter.next() {
             if let Some(metrics) = self.metrics(ch) {
-                let kerning = iter.peek()
+                let kerning = iter
+                    .peek()
                     .copied()
                     .map_or(0.0, |nch| self.kerning(ch, nch));
                 let advance = metrics.advance_width + kerning;
@@ -427,7 +419,8 @@ impl<'a> FontCharCalc<'a> {
         let mut iter = word.chars().peekable();
         while let Some(ch) = iter.next() {
             if let Some(metrics) = self.metrics(ch) {
-                let kerning = iter.peek()
+                let kerning = iter
+                    .peek()
                     .copied()
                     .map_or(0.0, |nch| self.kerning(ch, nch));
                 let advance = metrics.advance_width + kerning;
@@ -467,13 +460,13 @@ impl<'a> FontCharCalc<'a> {
             '\t' => {
                 let ntabs = self.x_offset.div_euclid(self.settings.tab_stop);
                 self.x_offset = (ntabs + 1.0) * self.settings.tab_stop;
-            },
+            }
             '\n' => {
                 self.push_newline();
-            },
+            }
             ' ' => {
                 self.x_offset += self.settings.font_size * 0.25;
-            },
+            }
             _ => (),
         }
     }
@@ -486,17 +479,17 @@ impl<'a> FontCharCalc<'a> {
                 None => {
                     self.push_word(remaining);
                     remaining = "";
-                },
+                }
                 Some(0) => {
                     let mut iter = remaining.chars();
                     self.push_whitespace(iter.next().unwrap());
                     remaining = iter.as_str();
-                },
+                }
                 Some(index) => {
                     let (word, next) = remaining.split_at(index);
                     self.push_word(word);
                     remaining = next;
-                },
+                }
             }
         }
     }
@@ -506,16 +499,16 @@ impl<'a> FontCharCalc<'a> {
             RichTextCommand::Text(text) => self.push_str(&text),
             RichTextCommand::Bold => {
                 self.current_style = self.current_style.bold();
-            },
+            }
             RichTextCommand::Italic => {
                 self.current_style = self.current_style.italic();
-            },
+            }
             RichTextCommand::ResetBold => {
                 self.current_style = self.current_style.unbold();
-            },
+            }
             RichTextCommand::ResetItalic => {
                 self.current_style = self.current_style.unitalic();
-            },
+            }
         }
     }
 }

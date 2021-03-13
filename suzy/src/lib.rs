@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+#![warn(missing_docs)]
 #![warn(clippy::clone_on_ref_ptr)]
 #![warn(clippy::todo)]
 #![warn(clippy::print_stdout)]
@@ -19,9 +20,9 @@
 //! struct Data { }
 //!
 //! impl WidgetContent for Data {
-//!     fn init<I: WidgetInit<Self>>(_init: I) {}
-//!     fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {}
-//!     fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//!     fn init(_init: impl WidgetInit<Self>) {}
+//!     fn children(&mut self, _receiver: impl WidgetChildReceiver) {}
+//!     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! }
 //!
 //! fn main() {
@@ -43,13 +44,13 @@
 //! # use suzy::dims::Rect;
 //! # struct Data { child: Widget<()> }
 //! # impl WidgetContent for Data {
-//! #     fn init<I: WidgetInit<Self>>(mut init: I) {
+//! #     fn init(mut init: impl WidgetInit<Self>) {
 //! init.watch(|this, rect| {
 //!     this.child.set_width(rect.width() / 2.0);
 //! });
 //! #     }
-//! #     fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {}
-//! #     fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//! #     fn children(&mut self, _receiver: impl WidgetChildReceiver) {}
+//! #     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! # }
 //! ```
 //!
@@ -64,15 +65,14 @@ pub mod animation;
 pub mod app;
 pub mod dims;
 pub mod graphics;
+pub mod platform;
 pub mod pointer;
 pub mod selectable;
 pub mod units;
-pub mod widget;
-pub mod window;
-pub mod platform;
 pub mod watch;
+pub mod widget;
 pub mod widgets;
-
+pub mod window;
 
 /// A version of the tweak! macro from the crate
 /// [`inline_tweak`](https://crates.io/crates/inline_tweak), but designed to

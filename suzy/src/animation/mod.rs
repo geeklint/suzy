@@ -24,7 +24,7 @@
 //! }
 //!
 //! impl WidgetContent for MyWidgetData {
-//!     fn init<I: WidgetInit<Self>>(mut init: I) {
+//!     fn init(mut init: impl WidgetInit<Self>) {
 //!         init.watch(|this, rect| {
 //!             this.animation.set_speed(1.0);
 //!             this.animation.animate_to(Color::GREEN);
@@ -36,26 +36,21 @@
 //!     }
 //!
 //!     // ...
-//! #   fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {
+//! #   fn children(&mut self, _receiver: impl WidgetChildReceiver) {
 //! #   }
-//! #   fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//! #   fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! }
 //! ```
 
-use std::time::{
-    Duration,
-    Instant,
-};
+use std::time::{Duration, Instant};
 
 use crate::app::App;
 use crate::platform::DefaultPlatform;
-use crate::watch::{
-    Watched,
-};
+use crate::watch::Watched;
 
 mod easing;
 
-pub use easing::{Easing, CubicPoly, eases};
+pub use easing::{eases, CubicPoly, Easing};
 
 /// A trait with describes how to linearly interpolate between two values
 /// of the type.
@@ -136,9 +131,10 @@ impl<T> Speed<T> {
 }
 
 impl<T> Default for Speed<T> {
-    fn default() -> Self { Self::Duration(Duration::from_millis(500)) }
+    fn default() -> Self {
+        Self::Duration(Duration::from_millis(500))
+    }
 }
-
 
 /// An instance of an animation.
 ///
@@ -152,7 +148,9 @@ pub struct Animation<T> {
 
 impl<T> Animation<T> {
     /// Create a new animation.
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 impl<T> Default for Animation<T> {
@@ -222,11 +220,7 @@ impl<T: Lerp<Output = T>> Animation<T> {
         let frame_time = App::<DefaultPlatform>::time();
         let elapsed = frame_time.duration_since(*start_time);
         let t = elapsed.as_secs_f32() / total_duration.as_secs_f32();
-        let (t, at_end) = if t > 1.0 {
-            (1.0, true)
-        } else {
-            (t, false)
-        };
+        let (t, at_end) = if t > 1.0 { (1.0, true) } else { (t, false) };
         let t = match self.easing {
             None => t,
             Some(ref easing) => easing.ease(t),

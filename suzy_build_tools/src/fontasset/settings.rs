@@ -44,7 +44,8 @@ impl Settings {
     }
 
     pub fn add_chars<I>(mut self, chars: I) -> Settings
-        where I: IntoIterator<Item=char>
+    where
+        I: IntoIterator<Item = char>,
     {
         self.chars.extend(chars);
         self
@@ -78,18 +79,15 @@ fn parse_font(source: FontSource) -> Result<rusttype::Font, String> {
         FontSource::Path(path) => {
             let bytes = std::fs::read(path)
                 .map_err(|_| format!("Failed to read font file {:?}", path))?;
-            rusttype::Font::try_from_vec(bytes)
-                .ok_or_else(
-                    || format!("Failed to parse font file {:?}", path)
-                )?
-        },
+            rusttype::Font::try_from_vec(bytes).ok_or_else(|| {
+                format!("Failed to parse font file {:?}", path)
+            })?
+        }
         FontSource::Bytes(cow) => match cow {
-            Cow::Borrowed(bytes) =>
-                rusttype::Font::try_from_bytes(bytes)
-                    .ok_or_else(|| "Failed to parse font data".to_string())?,
-            Cow::Owned(bytes) =>
-                rusttype::Font::try_from_vec(bytes)
-                    .ok_or_else(|| "Failed to parse font data".to_string())?,
+            Cow::Borrowed(bytes) => rusttype::Font::try_from_bytes(bytes)
+                .ok_or_else(|| "Failed to parse font data".to_string())?,
+            Cow::Owned(bytes) => rusttype::Font::try_from_vec(bytes)
+                .ok_or_else(|| "Failed to parse font data".to_string())?,
         },
     })
 }
@@ -109,8 +107,7 @@ pub(super) struct ParsedFontFamily<'n, 'b, 'i, 'bi> {
 }
 
 impl<'n> FontFamily<'n, 'static, 'static, 'static> {
-    pub fn font_path<P: AsRef<Path> + ?Sized>(font_path: &'n P) -> Self
-    {
+    pub fn font_path<P: AsRef<Path> + ?Sized>(font_path: &'n P) -> Self {
         Self {
             normal: FontSource::Path(font_path.as_ref()),
             bold: None,
@@ -119,8 +116,7 @@ impl<'n> FontFamily<'n, 'static, 'static, 'static> {
         }
     }
 
-    pub fn font_bytes<B: Into<Cow<'n, [u8]>>>(font_bytes: B) -> Self
-    {
+    pub fn font_bytes<B: Into<Cow<'n, [u8]>>>(font_bytes: B) -> Self {
         Self {
             normal: FontSource::Bytes(font_bytes.into()),
             bold: None,
@@ -140,9 +136,10 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn bold_path<'bnew, P: AsRef<Path> + ?Sized>(self, font_path: &'bnew P)
-        -> FontFamily<'n, 'bnew, 'i, 'bi>
-    {
+    pub fn bold_path<'bnew, P: AsRef<Path> + ?Sized>(
+        self,
+        font_path: &'bnew P,
+    ) -> FontFamily<'n, 'bnew, 'i, 'bi> {
         FontFamily {
             normal: self.normal,
             bold: Some(FontSource::Path(font_path.as_ref())),
@@ -151,9 +148,10 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn italic_path<'inew, P: AsRef<Path> + ?Sized>(self, font_path: &'inew P)
-        -> FontFamily<'n, 'b, 'inew, 'bi>
-    {
+    pub fn italic_path<'inew, P: AsRef<Path> + ?Sized>(
+        self,
+        font_path: &'inew P,
+    ) -> FontFamily<'n, 'b, 'inew, 'bi> {
         FontFamily {
             normal: self.normal,
             bold: self.bold,
@@ -162,9 +160,10 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn bold_italic_path<'binew, P: AsRef<Path> + ?Sized>(self, font_path: &'binew P)
-        -> FontFamily<'n, 'b, 'i, 'binew>
-    {
+    pub fn bold_italic_path<'binew, P: AsRef<Path> + ?Sized>(
+        self,
+        font_path: &'binew P,
+    ) -> FontFamily<'n, 'b, 'i, 'binew> {
         FontFamily {
             normal: self.normal,
             bold: self.bold,
@@ -173,9 +172,10 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn bold_bytes<'bnew, B: Into<Cow<'bnew, [u8]>>>(self, font_bytes: B)
-        -> FontFamily<'n, 'bnew, 'i, 'bi>
-    {
+    pub fn bold_bytes<'bnew, B: Into<Cow<'bnew, [u8]>>>(
+        self,
+        font_bytes: B,
+    ) -> FontFamily<'n, 'bnew, 'i, 'bi> {
         FontFamily {
             normal: self.normal,
             bold: Some(FontSource::Bytes(font_bytes.into())),
@@ -184,9 +184,10 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn italic_bytes<'inew, B: Into<Cow<'inew, [u8]>>>(self, font_bytes: B)
-        -> FontFamily<'n, 'b, 'inew, 'bi>
-    {
+    pub fn italic_bytes<'inew, B: Into<Cow<'inew, [u8]>>>(
+        self,
+        font_bytes: B,
+    ) -> FontFamily<'n, 'b, 'inew, 'bi> {
         FontFamily {
             normal: self.normal,
             bold: self.bold,
@@ -195,9 +196,10 @@ impl<'n, 'b, 'i, 'bi> FontFamily<'n, 'b, 'i, 'bi> {
         }
     }
 
-    pub fn bold_italic_bytes<'binew, B: Into<Cow<'binew, [u8]>>>(self, font_bytes: B)
-        -> FontFamily<'n, 'b, 'i, 'binew>
-    {
+    pub fn bold_italic_bytes<'binew, B: Into<Cow<'binew, [u8]>>>(
+        self,
+        font_bytes: B,
+    ) -> FontFamily<'n, 'b, 'i, 'binew> {
         FontFamily {
             normal: self.normal,
             bold: self.bold,

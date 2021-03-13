@@ -21,8 +21,10 @@ impl ProgressBar {
             if let Ok(zenity) = Command::new("zenity")
                 .args(&[
                     "--progress",
-                    "--title", "Suzy Build Tools",
-                    "--text", label,
+                    "--title",
+                    "Suzy Build Tools",
+                    "--text",
+                    label,
                     "--no-cancel",
                     "--auto-close",
                     "--width=400",
@@ -46,20 +48,14 @@ impl ProgressBar {
             Self::None => (),
             Self::IntPctChild(child) => {
                 if let Some(stdin) = child.stdin.as_mut() {
-                    let _ign = writeln!(
-                        stdin,
-                        "{}",
-                        items * 100 / total,
-                    );
+                    let _ign = writeln!(stdin, "{}", items * 100 / total,);
                 }
             }
         }
     }
 
     fn whiptail(label: &str) -> std::io::Result<std::process::Child> {
-        let tty = std::fs::OpenOptions::new()
-            .write(true)
-            .open("/dev/tty")?;
+        let tty = std::fs::OpenOptions::new().write(true).open("/dev/tty")?;
         Command::new("whiptail")
             .args(&["--gauge", label, "6", "60", "0"])
             .stdin(Stdio::piped())
@@ -74,7 +70,7 @@ impl Drop for ProgressBar {
             Self::None => (),
             Self::IntPctChild(child) => {
                 let _ign = child.kill();
-            },
+            }
         }
     }
 }

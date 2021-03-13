@@ -2,23 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+use crate::dims::{Dim, Padding2d, Rect, SimplePadding2d, SimpleRect};
 use crate::graphics::{DrawContext, Graphic};
-use crate::dims::{Dim, Rect, SimpleRect, SimplePadding2d, Padding2d};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV2};
 
 use crate::platform::opengl;
-use opengl::context::bindings::{
-    FALSE,
-    FLOAT,
-    TRIANGLES,
-    UNSIGNED_BYTE,
-};
-use opengl::{
-    OpenGlRenderPlatform,
-    DualVertexBufferIndexed,
-    Texture,
-};
+use opengl::context::bindings::{FALSE, FLOAT, TRIANGLES, UNSIGNED_BYTE};
+use opengl::{DualVertexBufferIndexed, OpenGlRenderPlatform, Texture};
 
+#[rustfmt::skip]
 static SLICED_INDICES: [u8; 18 * 3] = [
     0, 4, 11,
     4, 12, 11,
@@ -74,7 +66,7 @@ impl SlicedImage {
     /// the sliced area.
     pub fn set_image<P>(&mut self, texture: Texture, padding: &P)
     where
-        P: Padding2d
+        P: Padding2d,
     {
         self.texture = texture;
         self.padding = padding.into();
@@ -83,7 +75,12 @@ impl SlicedImage {
 
     fn update_image(&mut self) {
         let mut uvs = [0f32; 32];
-        let Self { buffers, texture, padding, .. } = self;
+        let Self {
+            buffers,
+            texture,
+            padding,
+            ..
+        } = self;
         buffers.set_data_1(|_gl| {
             texture.size().and_then(|(tex_width, tex_height)| {
                 let uvs = &mut uvs;
@@ -92,7 +89,8 @@ impl SlicedImage {
                     let right = 1.0 - (padding.right() / tex_width);
                     let bottom = padding.bottom() / tex_height;
                     let top = 1.0 - (padding.top() / tex_height);
-                    *uvs = [
+                    #[rustfmt::skip]
+                    let data = [
                         0.0, 0.0,
                         1.0, 0.0,
                         1.0, 1.0,
@@ -110,6 +108,7 @@ impl SlicedImage {
                         right, top,
                         left, top,
                     ];
+                    *uvs = data;
                     &mut uvs[..]
                 })
             })
@@ -122,7 +121,8 @@ impl SlicedImage {
         let rect = &self.rect;
         let mut vertices = [0f32; 32];
         self.buffers.set_data_0(|_gl| {
-            vertices = [
+            #[rustfmt::skip]
+            let data = [
                 // outer corners
                 rect.left(), rect.bottom(),
                 rect.right(), rect.bottom(),
@@ -146,17 +146,23 @@ impl SlicedImage {
                 inner.right(), inner.top(),
                 inner.left(), inner.top(),
             ];
+            vertices = data;
             &vertices[..]
         });
     }
 }
 
 impl Rect for SlicedImage {
-    fn x(&self) -> Dim { self.rect.x() }
-    fn y(&self) -> Dim { self.rect.y() }
+    fn x(&self) -> Dim {
+        self.rect.x()
+    }
+    fn y(&self) -> Dim {
+        self.rect.y()
+    }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         let res = self.rect.x_mut(f);
         self.update();
@@ -164,7 +170,8 @@ impl Rect for SlicedImage {
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         let res = self.rect.y_mut(f);
         self.update();
@@ -182,13 +189,23 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
                 ready.bind_0();
                 unsafe {
                     gl.VertexAttribPointer(
-                        0, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                        0,
+                        2,
+                        FLOAT,
+                        FALSE,
+                        0,
+                        std::ptr::null(),
                     );
                 }
                 ready.bind_1();
                 unsafe {
                     gl.VertexAttribPointer(
-                        1, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                        1,
+                        2,
+                        FLOAT,
+                        FALSE,
+                        0,
+                        std::ptr::null(),
                     );
                 }
                 ready.bind_indices();
@@ -222,17 +239,23 @@ pub struct SelectableSlicedImage {
 }
 
 impl Rect for SelectableSlicedImage {
-    fn x(&self) -> Dim { self.inner.x() }
-    fn y(&self) -> Dim { self.inner.y() }
+    fn x(&self) -> Dim {
+        self.inner.x()
+    }
+    fn y(&self) -> Dim {
+        self.inner.y()
+    }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.inner.x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.inner.y_mut(f)
     }
@@ -250,7 +273,6 @@ impl SelectableSlicedImage {
         Self::default()
     }
 
-
     /// Set the texture used by this graphic.
     ///
     /// The given slice of states defines the number and varients of the
@@ -259,12 +281,7 @@ impl SelectableSlicedImage {
     /// unincluded states.
     ///
     /// The given padding describes the sliced area of each sub-image.
-    pub fn set_image<P, S>(
-        &mut self,
-        texture: Texture,
-        padding: &P,
-        states: S,
-    )
+    pub fn set_image<P, S>(&mut self, texture: Texture, padding: &P, states: S)
     where
         P: Padding2d,
         S: Into<std::borrow::Cow<'static, [SelectionState]>>,
@@ -292,7 +309,12 @@ impl SelectableSlicedImage {
         ];
         let mut uvs = [0f32; NUM_STATES * COORDS_PER_STATE];
         let states = &self.states;
-        let SlicedImage { buffers, texture, padding, .. } = &mut self.inner;
+        let SlicedImage {
+            buffers,
+            texture,
+            padding,
+            ..
+        } = &mut self.inner;
         buffers.set_data_1(|_gl| {
             texture.size().and_then(|(tex_width, tex_height)| {
                 let uvs = &mut uvs;
@@ -306,7 +328,8 @@ impl SelectableSlicedImage {
                         let data_end = data_start + COORDS_PER_STATE;
                         let mut find_state = *state;
                         let state_index: usize = loop {
-                            if let Some(idx) = states.iter()
+                            if let Some(idx) = states
+                                .iter()
                                 .position(|item| *item == find_state)
                             {
                                 break idx;
@@ -317,6 +340,7 @@ impl SelectableSlicedImage {
                         let left = offset + left;
                         let end = offset + state_frac;
                         let right = end - (padding.right() / tex_width);
+                        #[rustfmt::skip]
                         uvs[data_start..data_end].copy_from_slice(&[
                             offset, 0.0,
                             end, 0.0,
@@ -361,13 +385,23 @@ impl Graphic<OpenGlRenderPlatform> for SelectableSlicedImage {
                 ready.bind_0();
                 unsafe {
                     gl.VertexAttribPointer(
-                        0, 2, FLOAT, FALSE, 0, std::ptr::null(),
+                        0,
+                        2,
+                        FLOAT,
+                        FALSE,
+                        0,
+                        std::ptr::null(),
                     );
                 }
                 ready.bind_1();
                 unsafe {
                     gl.VertexAttribPointer(
-                        1, 2, FLOAT, FALSE, 0, uv_offset as _,
+                        1,
+                        2,
+                        FLOAT,
+                        FALSE,
+                        0,
+                        uv_offset as _,
                     );
                 }
                 ready.bind_indices();

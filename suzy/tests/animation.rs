@@ -9,24 +9,14 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use suzy::animation::Animation;
-use suzy::window::WindowSettings;
+use suzy::app::{App, AppBuilder};
 use suzy::graphics::Color;
-use suzy::app::{
-    App,
-    AppBuilder,
-};
+use suzy::platform::{TestPlatform, TestRenderPlatform};
 use suzy::widget::{
-    Widget,
-    WidgetContent,
+    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
     WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
 };
-use suzy::platform::{
-    TestPlatform,
-    TestRenderPlatform,
-};
-
+use suzy::window::WindowSettings;
 
 #[derive(Default)]
 struct Root {
@@ -35,7 +25,7 @@ struct Root {
 }
 
 impl WidgetContent<TestRenderPlatform> for Root {
-    fn init<I: WidgetInit<Self, TestRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, TestRenderPlatform>) {
         init.watch(|root, _rect| {
             let mut value = root.value_feedback.get();
             root.anim.apply(&mut value);
@@ -47,12 +37,17 @@ impl WidgetContent<TestRenderPlatform> for Root {
         });
     }
 
-    fn children<R: WidgetChildReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
+    fn children(
+        &mut self,
+        _receiver: impl WidgetChildReceiver<TestRenderPlatform>,
+    ) {
     }
 
-    fn graphics<R: WidgetGraphicReceiver<TestRenderPlatform>>(&mut self, _receiver: R) {
+    fn graphics(
+        &mut self,
+        _receiver: impl WidgetGraphicReceiver<TestRenderPlatform>,
+    ) {
     }
-
 }
 
 #[test]
@@ -63,47 +58,55 @@ fn animation() {
     let app: App<TestPlatform> = builder.build();
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
-    let app = app.with(|app| {
-        app.add_root(move || {
-            let mut root = Widget::<Root>::default();
-            root.value_feedback = value_feedback;
-            root
-        });
-    }).0;
+    let app = app
+        .with(|app| {
+            app.add_root(move || {
+                let mut root = Widget::<Root>::default();
+                root.value_feedback = value_feedback;
+                root
+            });
+        })
+        .0;
     app.test(|mut app| {
         assert!(
             (value_output.get() - 142.0).abs() < f32::EPSILON,
-            "value is {}", value_output.get(),
+            "value is {}",
+            value_output.get(),
         );
         app.next_frame(Duration::from_millis(100));
         app.draw_if_needed();
         assert!(
             (value_output.get() - 153.9).abs() < f32::EPSILON,
-            "value is {}", value_output.get(),
+            "value is {}",
+            value_output.get(),
         );
         app.next_frame(Duration::from_millis(226));
         app.draw_if_needed();
         assert!(
             (value_output.get() - 180.794).abs() < f32::EPSILON,
-            "value is {}", value_output.get(),
+            "value is {}",
+            value_output.get(),
         );
         app.next_frame(Duration::from_millis(195));
         app.draw_if_needed();
         assert!(
             (value_output.get() - 203.99901).abs() < f32::EPSILON,
-            "value is {}", value_output.get(),
+            "value is {}",
+            value_output.get(),
         );
         app.next_frame(Duration::from_millis(407));
         app.draw_if_needed();
         assert!(
             (value_output.get() - 252.43199).abs() < f32::EPSILON,
-            "value is {}", value_output.get(),
+            "value is {}",
+            value_output.get(),
         );
         app.next_frame(Duration::from_millis(72));
         app.draw_if_needed();
         assert!(
             (value_output.get() - 261.0).abs() < f32::EPSILON,
-            "value is {}", value_output.get(),
+            "value is {}",
+            value_output.get(),
         );
     });
 }

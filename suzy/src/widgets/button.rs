@@ -2,32 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use drying_paint::{
-    Watched,
-    WatchedEvent,
-};
+use drying_paint::{Watched, WatchedEvent};
 
-use crate::pointer::{
-    PointerEvent,
-    PointerAction,
-    PointerId,
-};
-use crate::platform::{
-    RenderPlatform,
-    DefaultRenderPlatform,
-};
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::pointer::{PointerAction, PointerEvent, PointerId};
+use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    Widget,
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
-    WidgetExtra,
-};
-use crate::selectable::{
-    Selectable,
-    SelectionState,
-    SelectionStateV1,
+    Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
+    WidgetGraphicReceiver, WidgetInit,
 };
 
 pub struct ButtonContent<T> {
@@ -39,13 +21,21 @@ pub struct ButtonContent<T> {
 }
 
 impl<T> ButtonContent<T> {
-    pub fn content(&self) -> &T { &self.content }
+    pub fn content(&self) -> &T {
+        &self.content
+    }
 
-    pub fn content_mut(&mut self) -> &mut T { &mut self.content }
+    pub fn content_mut(&mut self) -> &mut T {
+        &mut self.content
+    }
 
-    pub fn state(&self) -> SelectionState { *self.state }
+    pub fn state(&self) -> SelectionState {
+        *self.state
+    }
 
-    pub fn on_click(&self) -> Option<()> { self.on_click.bind().copied() }
+    pub fn on_click(&self) -> Option<()> {
+        self.on_click.bind().copied()
+    }
 }
 
 impl<T, P> WidgetContent<P> for ButtonContent<T>
@@ -53,7 +43,7 @@ where
     P: RenderPlatform,
     T: Selectable + WidgetContent<P>,
 {
-    fn init<I: WidgetInit<Self, P>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, P>) {
         init.init_child_inline(|button| &mut button.content);
         init.watch(|button, _rect| {
             button.content.selection_changed(*button.state);
@@ -65,11 +55,11 @@ where
         });
     }
 
-    fn children<R: WidgetChildReceiver<P>>(&mut self, receiver: R) {
+    fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
         self.content.children(receiver);
     }
 
-    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {
+    fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {
         self.content.graphics(receiver);
     }
 
@@ -84,8 +74,8 @@ where
     ) -> bool {
         match event.action() {
             PointerAction::Down => {
-                let grabbed = self.hittest(extra, event.pos())
-                    && event.try_grab(extra);
+                let grabbed =
+                    self.hittest(extra, event.pos()) && event.try_grab(extra);
                 if grabbed {
                     self.pointers_down += 1;
                     if *self.interactable {
@@ -93,7 +83,7 @@ where
                     }
                 }
                 grabbed
-            },
+            }
             PointerAction::Move(_, _) => {
                 let ungrabbed = !self.hittest(extra, event.pos())
                     && event.try_ungrab(extra);
@@ -104,14 +94,14 @@ where
                     }
                 }
                 ungrabbed
-            },
+            }
             PointerAction::GrabStolen => {
                 self.pointers_down -= 1;
                 if self.pointers_down == 0 {
                     *self.state = SelectionState::normal();
                 }
                 true
-            },
+            }
             PointerAction::Up => {
                 let ungrabbed = event.try_ungrab(extra.id());
                 if ungrabbed {
@@ -126,7 +116,7 @@ where
                     }
                 }
                 ungrabbed
-            },
+            }
             PointerAction::Hover(_, _) => {
                 match (self.state.v1(), self.hittest(extra, event.pos())) {
                     (SelectionStateV1::Normal, true) => {
@@ -141,7 +131,7 @@ where
                     }
                     _ => false,
                 }
-            },
+            }
             _ => false,
         }
     }
@@ -166,4 +156,3 @@ pub type Button<
     T = <DefaultRenderPlatform as RenderPlatform>::DefaultButtonContent,
     P = DefaultRenderPlatform,
 > = Widget<ButtonContent<T>, P>;
-

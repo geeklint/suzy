@@ -33,8 +33,7 @@ struct EdgePixels {
     edge_pixels_out: Vec<(f64, f64)>,
 }
 
-fn get_edge_pixels(source: SourceBitmap<'_>) -> EdgePixels
-{
+fn get_edge_pixels(source: SourceBitmap<'_>) -> EdgePixels {
     let mut edge_pixels_in = Vec::new();
     let mut edge_pixels_out = Vec::new();
     let xlim = (source.width as usize) - 1;
@@ -64,12 +63,18 @@ fn get_edge_pixels(source: SourceBitmap<'_>) -> EdgePixels
             }
         }
     }
-    EdgePixels { edge_pixels_in, edge_pixels_out }
+    EdgePixels {
+        edge_pixels_in,
+        edge_pixels_out,
+    }
 }
 
 pub fn render_sdf(dest: DestImage<'_>, source: SourceBitmap<'_>) {
     let edge_pixels = get_edge_pixels(source);
-    let EdgePixels { edge_pixels_in, edge_pixels_out } = edge_pixels;
+    let EdgePixels {
+        edge_pixels_in,
+        edge_pixels_out,
+    } = edge_pixels;
     // 'inner' = dest space size w/o padding
     let inner_width = (dest.width as f64) - (2.0 * dest.padding);
     let inner_height = (dest.height as f64) - (2.0 * dest.padding);
@@ -111,7 +116,8 @@ pub fn render_sdf(dest: DestImage<'_>, source: SourceBitmap<'_>) {
             } else {
                 &edge_pixels_in
             };
-            let min_dist = edge_list.iter()
+            let min_dist = edge_list
+                .iter()
                 .map(|(dx, dy)| {
                     let a2 = (src_x - dx).powi(2);
                     let b2 = (src_y - dy).powi(2);
@@ -126,7 +132,7 @@ pub fn render_sdf(dest: DestImage<'_>, source: SourceBitmap<'_>) {
             let signed_dist = if state { scaled_dist } else { -scaled_dist };
             let norm_dist = signed_dist / (dest.padding as f64);
             let unorm_dist = (norm_dist + 1.0) / 2.0;
-            let unorm_dist  = unorm_dist.max(0.0).min(1.0);
+            let unorm_dist = unorm_dist.max(0.0).min(1.0);
             *dest_px = (unorm_dist * 255.0).floor() as u8;
         }
     }

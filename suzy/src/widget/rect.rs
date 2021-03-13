@@ -4,7 +4,7 @@
 
 use drying_paint::Watched;
 
-use crate::dims::{Rect, Dim};
+use crate::dims::{Dim, Rect};
 
 fn nan_dim() -> Dim {
     let mut dim = Dim::with_length(std::f32::NAN);
@@ -38,17 +38,19 @@ impl TwoSidedDim {
     }
 
     pub fn mut_external<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
-        let res = (f)( &mut self.external );
+        let res = (f)(&mut self.external);
         self.internal = self.get();
         res
     }
 
     pub fn mut_internal<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
-        let res = (f)( &mut self.internal );
+        let res = (f)(&mut self.internal);
         self.internal = self.get();
         res
     }
@@ -81,13 +83,15 @@ pub struct WidgetRect {
 
 impl WidgetRect {
     pub(super) fn external_x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.x.mut_external(f)
     }
 
     pub(super) fn external_y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.y.mut_external(f)
     }
@@ -101,34 +105,46 @@ impl WidgetRect {
 }
 
 impl Rect for WidgetRect {
-    fn x(&self) -> Dim { self.x.get() }
-    fn y(&self) -> Dim { self.y.get() }
+    fn x(&self) -> Dim {
+        self.x.get()
+    }
+    fn y(&self) -> Dim {
+        self.y.get()
+    }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.x.mut_internal(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.y.mut_internal(f)
     }
 }
 
 impl Rect for &mut WidgetRect {
-    fn x(&self) -> Dim { self.x.get() }
-    fn y(&self) -> Dim { self.y.get() }
+    fn x(&self) -> Dim {
+        self.x.get()
+    }
+    fn y(&self) -> Dim {
+        self.y.get()
+    }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.x.mut_internal(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.y.mut_internal(f)
     }

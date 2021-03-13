@@ -4,24 +4,14 @@
 
 use std::rc::Rc;
 
-use super::context::OpenGlBindings;
+use super::context::bindings::types::*;
 use super::context::bindings::{
-    BLEND_COLOR,
-    COLOR_ATTACHMENT0,
-    CLAMP_TO_EDGE,
-    FRAMEBUFFER_BINDING,
-    FRAMEBUFFER,
-    FRAMEBUFFER_COMPLETE,
-    NEAREST,
-    RGBA,
-    TEXTURE_2D,
-    TEXTURE_MAG_FILTER,
-    TEXTURE_MIN_FILTER,
-    TEXTURE_WRAP_S,
-    TEXTURE_WRAP_T,
+    BLEND_COLOR, CLAMP_TO_EDGE, COLOR_ATTACHMENT0, FRAMEBUFFER,
+    FRAMEBUFFER_BINDING, FRAMEBUFFER_COMPLETE, NEAREST, RGBA, TEXTURE_2D,
+    TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
     UNSIGNED_BYTE,
 };
-use super::context::bindings::types::*;
+use super::context::OpenGlBindings;
 use super::texture::TextureData;
 
 gl_object! { FramebufferData, GenFramebuffers, DeleteFramebuffers, 1 }

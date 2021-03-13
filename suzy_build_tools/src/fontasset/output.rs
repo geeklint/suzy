@@ -39,10 +39,11 @@ impl FontSource {
             kerning_pairs: Vec::new(),
         }
     }
-        
-    fn write<W: std::io::Write>(&mut self, writer: &mut W)
-        -> std::io::Result<()>
-    {
+
+    fn write<W: std::io::Write>(
+        &mut self,
+        writer: &mut W,
+    ) -> std::io::Result<()> {
         self.metrics.sort_unstable_by_key(|c| c.0);
         self.kerning_pairs.sort_unstable_by_key(|v| (v.0, v.1));
         let metrics_ref: &[GlyphMetricsSource] = &self.metrics;
@@ -50,9 +51,7 @@ impl FontSource {
         write!(
             writer,
             "({}, &{:?}, &{:?})",
-            self.channel,
-            metrics_ref,
-            kerning_ref,
+            self.channel, metrics_ref, kerning_ref,
         )?;
         Ok(())
     }
@@ -66,7 +65,7 @@ impl FontSource {
                 write!(writer, "Some(")?;
                 source.write(writer)?;
                 write!(writer, ")")?;
-            },
+            }
             None => write!(writer, "None")?,
         }
         Ok(())
@@ -114,7 +113,12 @@ impl FontOutput {
         let source = if channel == 0 {
             &mut self.normal
         } else {
-            let Self { bold, italic, bold_italic, .. } = self;
+            let Self {
+                bold,
+                italic,
+                bold_italic,
+                ..
+            } = self;
             let bold = bold.as_mut();
             let italic = italic.as_mut();
             let bold_italic = bold_italic.as_mut();
@@ -139,12 +143,12 @@ impl FontOutput {
 
     pub fn write<P: AsRef<Path>>(&mut self, path: P) -> std::io::Result<()> {
         let mut data_filename = path.as_ref().to_path_buf();
-        let mut ext = data_filename.extension()
-            .unwrap_or_default()
-            .to_os_string();
+        let mut ext =
+            data_filename.extension().unwrap_or_default().to_os_string();
         ext.push(".texdata");
         data_filename.set_extension(ext);
-        let data_filename_str = data_filename.to_str()
+        let data_filename_str = data_filename
+            .to_str()
             .expect("Sorry, output filenames must be valid unicode");
         {
             let mut texfile = std::fs::OpenOptions::new()
@@ -159,23 +163,18 @@ impl FontOutput {
             .create(true)
             .truncate(true)
             .open(path)?;
-        writeln!(
-            &file,
-            "use suzy::platform::opengl::FontFamilySource;",
-        )?;
+        writeln!(&file, "use suzy::platform::opengl::FontFamilySource;",)?;
         write!(
             &file,
-            "pub const FONT: FontFamilySource = FontFamilySource {{
+            "#[rustfmt::skip]
+            pub const FONT: FontFamilySource = FontFamilySource {{
                 image_width: {},
                 image_height: {},
                 image_row_alignment: 1,
                 image_channels: {},
                 atlas_image: include_bytes!({:?}),
             ",
-            self.width,
-            self.height,
-            self.channels,
-            data_filename_str,
+            self.width, self.height, self.channels, data_filename_str,
         )?;
         write!(&file, "normal: ")?;
         self.normal.write(&mut file)?;

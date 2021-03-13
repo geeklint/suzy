@@ -3,24 +3,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::platform::opengl;
-use opengl::context::OpenGlBindings;
 use opengl::context::bindings::types::*;
 use opengl::context::bindings::{
-    ALPHA,
-    CLAMP_TO_EDGE,
-    LINEAR,
-    NEAREST,
-    REPEAT,
-    RGB,
-    RGBA,
-    TEXTURE_2D,
-    TEXTURE_MAG_FILTER,
-    TEXTURE_MIN_FILTER,
-    TEXTURE_WRAP_S,
-    TEXTURE_WRAP_T,
-    UNSIGNED_BYTE,
-    UNPACK_ALIGNMENT,
+    ALPHA, CLAMP_TO_EDGE, LINEAR, NEAREST, REPEAT, RGB, RGBA, TEXTURE_2D,
+    TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
+    UNPACK_ALIGNMENT, UNSIGNED_BYTE,
 };
+use opengl::context::OpenGlBindings;
 
 use super::TextureSize;
 
@@ -42,7 +31,7 @@ pub trait PopulateTextureDynClone {
 
 impl<T> PopulateTextureDynClone for T
 where
-    T: 'static + PopulateTexture + Clone
+    T: 'static + PopulateTexture + Clone,
 {
     fn clone_boxed(&self) -> Box<dyn PopulateTexture> {
         Box::new(self.clone())
@@ -60,16 +49,20 @@ pub trait PopulateTexture: PopulateTextureDynClone {
 
     /// This function should return Some, if the populator can perfectly
     /// determine the size the texture will be without loading it.
-    fn get_known_size(&self) -> Option<(f32, f32)> { None }
+    fn get_known_size(&self) -> Option<(f32, f32)> {
+        None
+    }
 
     /// An implementation may override this with a better debug implementation.
-    fn debug(&self) -> &dyn std::fmt::Debug { &DEFAULT_POPULATE_DEBUG }
+    fn debug(&self) -> &dyn std::fmt::Debug {
+        &DEFAULT_POPULATE_DEBUG
+    }
 }
 
 impl<F> PopulateTexture for F
 where
     F: 'static + Clone,
-    F: for<'a> Fn(&'a OpenGlBindings) -> Result<TextureSize, ()>
+    F: for<'a> Fn(&'a OpenGlBindings) -> Result<TextureSize, ()>,
 {
     fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
         (self)(gl)
@@ -173,10 +166,13 @@ impl PopulateTextureUtil {
     }
 
     #[doc(hidden)]
-    pub fn data_len(width: u16, height: u16, alignment: u16, channels: u16)
-        -> usize
-    {
-        assert!(match alignment { 1 | 2 | 4 => true, _ => false });
+    pub fn data_len(
+        width: u16,
+        height: u16,
+        alignment: u16,
+        channels: u16,
+    ) -> usize {
+        assert!(matches!(alignment, 1 | 2 | 4));
         let pixel_row_len = width * channels;
         let padding = (alignment - (pixel_row_len % alignment)) % alignment;
         let full_row_len = pixel_row_len + padding;
@@ -233,9 +229,7 @@ impl PopulateTexture for DefaultTexturePopulator {
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, 1);
         }
-        let size = PopulateTextureUtil::populate_rgb(
-            gl, 2, 2, 1, &pixels
-        );
+        let size = PopulateTextureUtil::populate_rgb(gl, 2, 2, 1, &pixels);
         unsafe {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as _);
@@ -262,7 +256,11 @@ impl PopulateTexture for ErrorTexturePopulator {
             gl.PixelStorei(UNPACK_ALIGNMENT, 1);
         }
         let size = PopulateTextureUtil::populate_rgb(
-            gl, ERRTEX_SIDE, ERRTEX_SIDE, 1, ERRTEX
+            gl,
+            ERRTEX_SIDE,
+            ERRTEX_SIDE,
+            1,
+            ERRTEX,
         );
         unsafe {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
@@ -292,7 +290,11 @@ impl PopulateTexture for AlphaTexturePopulator {
             gl.PixelStorei(UNPACK_ALIGNMENT, self.alignment.into());
         }
         let size = PopulateTextureUtil::populate_alpha(
-            gl, self.width, self.height, self.alignment, &self.pixels
+            gl,
+            self.width,
+            self.height,
+            self.alignment,
+            &self.pixels,
         );
         PopulateTextureUtil::default_params(gl);
         size
@@ -317,7 +319,11 @@ impl PopulateTexture for RGBTexturePopulator {
             gl.PixelStorei(UNPACK_ALIGNMENT, self.alignment.into());
         }
         let size = PopulateTextureUtil::populate_rgb(
-            gl, self.width, self.height, self.alignment, &self.pixels
+            gl,
+            self.width,
+            self.height,
+            self.alignment,
+            &self.pixels,
         );
         PopulateTextureUtil::default_params(gl);
         size
@@ -339,7 +345,11 @@ impl PopulateTexture for RGBATexturePopulator {
 
     fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, ()> {
         let size = PopulateTextureUtil::populate_rgba(
-            gl, self.width, self.height, self.alignment, &self.pixels
+            gl,
+            self.width,
+            self.height,
+            self.alignment,
+            &self.pixels,
         );
         PopulateTextureUtil::default_params(gl);
         size

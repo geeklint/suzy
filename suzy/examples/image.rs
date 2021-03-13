@@ -5,9 +5,9 @@
 extern crate suzy;
 
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::widget::*;
-use suzy::platform::opengl::Texture;
 use suzy::platform::opengl::SlicedImage;
+use suzy::platform::opengl::Texture;
+use suzy::widget::*;
 
 const IMAGE: &[u8] = include_bytes!("cute.data");
 const IMAGE_WIDTH: u16 = 384;
@@ -21,7 +21,7 @@ struct ImageViewer {
 }
 
 impl WidgetContent for ImageViewer {
-    fn init<I: WidgetInit<Self>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
             this.image.set_image(
                 Texture::from_rgb(IMAGE_WIDTH, IMAGE_HEIGHT, 1, IMAGE),
@@ -36,11 +36,11 @@ impl WidgetContent for ImageViewer {
         });
     }
 
-    fn children<R: WidgetChildReceiver>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver) {
         // no widget children
     }
 
-    fn graphics<R: WidgetGraphicReceiver>(&mut self, mut receiver: R) {
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver) {
         receiver.graphic(&mut self.image);
     }
 }

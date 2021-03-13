@@ -15,11 +15,7 @@
 
 mod shared;
 pub use shared::{
-    Platform,
-    RenderPlatform,
-    Event,
-    EventLoopState,
-    SimpleEventLoopState,
+    Event, EventLoopState, Platform, RenderPlatform, SimpleEventLoopState,
 };
 
 // Platforms
@@ -42,17 +38,17 @@ pub mod osmesa;
 
 // Default Platform
 
-/// The default Platform is determined by the cargo features enabled on 
+/// The default Platform is determined by the cargo features enabled on
 /// this crate.
 #[cfg(not(feature = "platform_opengl"))]
 pub use self::stub::StubPlatform as DefaultPlatform;
 
-/// The default Platform is determined by the cargo features enabled on 
+/// The default Platform is determined by the cargo features enabled on
 /// this crate.
 #[cfg(all(feature = "platform_opengl", not(feature = "sdl")))]
 pub use self::stub::StubOpenglPlatform as DefaultPlatform;
 
-/// The default Platform is determined by the cargo features enabled on 
+/// The default Platform is determined by the cargo features enabled on
 /// this crate.
 #[cfg(feature = "sdl")]
 pub use self::sdl2::SDLPlatform as DefaultPlatform;
@@ -91,11 +87,10 @@ pub use self::sdl2::SDLPlatform as TestPlatform;
 ))]
 pub use self::osmesa::OSMesaPlatform as TestPlatform;
 
-/// The default RenderPlatform is determined by the cargo features enabled on 
+/// The default RenderPlatform is determined by the cargo features enabled on
 /// this crate.
 pub type DefaultRenderPlatform = <DefaultPlatform as Platform>::Renderer;
 
 /// The default RenderPlatform used for tests is determined by the cargo
 /// features enabled on this crate.
 pub type TestRenderPlatform = <TestPlatform as Platform>::Renderer;
-

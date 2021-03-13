@@ -4,14 +4,12 @@
 
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
-use super::context::{OpenGlContext, OpenGlBindings};
-use super::context::bindings::{
-    TEXTURE_2D,
-};
+use super::context::bindings::TEXTURE_2D;
+use super::context::{OpenGlBindings, OpenGlContext};
 
 mod populate;
 
@@ -42,11 +40,23 @@ pub struct TextureSize {
 }
 
 impl TextureSize {
-    fn get_crop_transform(self, x: f32, y: f32, width: f32, height: f32)
-        -> (f32, f32, f32, f32)
-    {
-        let width = if width.is_nan() { self.image_width - x } else { width };
-        let height = if height.is_nan() { self.image_height - y } else { height };
+    fn get_crop_transform(
+        self,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+    ) -> (f32, f32, f32, f32) {
+        let width = if width.is_nan() {
+            self.image_width - x
+        } else {
+            width
+        };
+        let height = if height.is_nan() {
+            self.image_height - y
+        } else {
+            height
+        };
         let offset_x = x / self.texture_width;
         let offset_y = y / self.texture_height;
         let scale_x = self.texture_width / width;
@@ -85,7 +95,7 @@ impl SharedTexture {
         };
         Rc::new(Self {
             obj: RefCell::new(st),
-            populator
+            populator,
         })
     }
 
@@ -121,7 +131,9 @@ enum KeyVariants {
 }
 
 impl Default for KeyVariants {
-    fn default() -> Self { Self::Default }
+    fn default() -> Self {
+        Self::Default
+    }
 }
 
 /// A key indicating the source of a texture, used to lookup duplicate
@@ -133,23 +145,31 @@ pub struct TextureCacheKey {
 
 impl TextureCacheKey {
     fn buffer(buf: &'static [u8]) -> Self {
-        Self { inner: KeyVariants::Buffer(buf.as_ptr()) }
+        Self {
+            inner: KeyVariants::Buffer(buf.as_ptr()),
+        }
     }
 
     fn error() -> Self {
-        Self { inner: KeyVariants::Error }
+        Self {
+            inner: KeyVariants::Error,
+        }
     }
 }
 
 impl From<PathBuf> for TextureCacheKey {
     fn from(path: PathBuf) -> Self {
-        Self { inner: KeyVariants::Path(path.into()) }
+        Self {
+            inner: KeyVariants::Path(path.into()),
+        }
     }
 }
 
 impl From<&'static Path> for TextureCacheKey {
     fn from(path: &'static Path) -> Self {
-        Self { inner: KeyVariants::Path(path.into()) }
+        Self {
+            inner: KeyVariants::Path(path.into()),
+        }
     }
 }
 
@@ -190,9 +210,9 @@ impl TextureInstance {
 
     fn image_size(&self) -> Option<(f32, f32)> {
         match self {
-            Self::Existing(existing) => existing.size()
-                .map(|ts| (ts.image_width, ts.image_height)
-            ),
+            Self::Existing(existing) => {
+                existing.size().map(|ts| (ts.image_width, ts.image_height))
+            }
             Self::ToCache(_, pop) => pop.get_known_size(),
         }
     }
@@ -206,14 +226,13 @@ impl TextureInstance {
                 Self::Existing(_) => unreachable!(),
                 Self::ToCache(key, populator) => {
                     let entry = ctx.texture_cache.entry(key);
-                    let cached = entry.or_insert_with(move || {
-                        SharedTexture::new(populator)
-                    });
+                    let cached = entry
+                        .or_insert_with(move || SharedTexture::new(populator));
                     let clone = Rc::clone(cached);
                     let success = clone.bind(&ctx.bindings);
                     *self = Self::Existing(clone);
                     success
-                },
+                }
             }
         };
         if !success {
@@ -222,10 +241,7 @@ impl TextureInstance {
                 SharedTexture::new(Box::new(ErrorTexturePopulator))
             });
             let clone = Rc::clone(cached);
-            assert!(
-                clone.bind(&ctx.bindings),
-                "Failed to bind error texture",
-            );
+            assert!(clone.bind(&ctx.bindings), "Failed to bind error texture",);
         }
     }
 }
@@ -248,7 +264,7 @@ impl PartialEq<Self> for TextureInstance {
             (Self::ToCache(key, _), Self::ToCache(other_key, _)) => {
                 key == other_key
             }
-            _ => false
+            _ => false,
         }
     }
 }
@@ -308,10 +324,14 @@ impl Texture {
     }
 
     /// Create a texture from some single-channel pixel data
-    pub fn from_alpha<T>(width: u16, height: u16, alignment: u16, pixels: T)
-        -> Self
+    pub fn from_alpha<T>(
+        width: u16,
+        height: u16,
+        alignment: u16,
+        pixels: T,
+    ) -> Self
     where
-        T: Into<Cow<'static, [u8]>>
+        T: Into<Cow<'static, [u8]>>,
     {
         let pixels = pixels.into();
         assert_eq!(
@@ -328,10 +348,14 @@ impl Texture {
     }
 
     /// Create a texture from some RGB pixel data
-    pub fn from_rgb<T>(width: u16, height: u16, alignment: u16, pixels: T)
-        -> Self
+    pub fn from_rgb<T>(
+        width: u16,
+        height: u16,
+        alignment: u16,
+        pixels: T,
+    ) -> Self
     where
-        T: Into<Cow<'static, [u8]>>
+        T: Into<Cow<'static, [u8]>>,
     {
         let pixels = pixels.into();
         assert_eq!(
@@ -348,10 +372,14 @@ impl Texture {
     }
 
     /// Create a texture from some RGBA pixel data
-    pub fn from_rgba<T>(width: u16, height: u16, alignment: u16, pixels: T)
-        -> Self
+    pub fn from_rgba<T>(
+        width: u16,
+        height: u16,
+        alignment: u16,
+        pixels: T,
+    ) -> Self
     where
-        T: Into<Cow<'static, [u8]>>
+        T: Into<Cow<'static, [u8]>>,
     {
         let pixels = pixels.into();
         assert_eq!(
@@ -382,12 +410,15 @@ impl Texture {
             "Invalid pixel data for given width/height/alignment",
         );
         let key = TextureCacheKey::buffer(pixels);
-        Self::new_cached(key, RGBATexturePopulator {
-            width,
-            height,
-            alignment,
-            pixels: pixels.into(),
-        })
+        Self::new_cached(
+            key,
+            RGBATexturePopulator {
+                width,
+                height,
+                alignment,
+                pixels: pixels.into(),
+            },
+        )
     }
 
     /// Crop this texture.
@@ -402,9 +433,10 @@ impl Texture {
         }
     }
 
-    pub(super) fn bind(&mut self, ctx: &mut OpenGlContext)
-        -> (f32, f32, f32, f32)
-    {
+    pub(super) fn bind(
+        &mut self,
+        ctx: &mut OpenGlContext,
+    ) -> (f32, f32, f32, f32) {
         self.ins.bind(ctx);
         let size = self.ins.size().unwrap();
         size.get_crop_transform(

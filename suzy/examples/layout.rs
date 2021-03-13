@@ -4,10 +4,7 @@
 
 use suzy::dims::Rect;
 use suzy::widget::{
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
+    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
 use suzy::widgets::{Button, TextContent};
 
@@ -19,7 +16,7 @@ struct Root {
 }
 
 impl WidgetContent for Root {
-    fn init<I: WidgetInit<Self>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
             this.one.content_mut().set_text("One");
             this.two.content_mut().set_text("Two");
@@ -31,17 +28,16 @@ impl WidgetContent for Root {
             .spacing(|_| 10.0)
             .push(|this| &mut this.one)
             .push(|this| &mut this.two)
-            .push(|this| &mut this.three)
-        ;
+            .push(|this| &mut this.three);
     }
 
-    fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
         receiver.child(&mut self.one);
         receiver.child(&mut self.two);
         receiver.child(&mut self.three);
     }
 
-    fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {
+    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
         // no graphics
     }
 }

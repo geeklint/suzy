@@ -4,32 +4,14 @@
 
 use std::rc::Rc;
 
-use drying_paint::{
-    Watched,
-    WatchedCell,
-};
+use drying_paint::{Watched, WatchedCell};
 
-use crate::pointer::{
-    PointerEvent,
-    PointerAction,
-};
-use crate::platform::{
-    RenderPlatform,
-    DefaultRenderPlatform,
-};
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::pointer::{PointerAction, PointerEvent};
+use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    Widget,
-    WidgetId,
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
-    WidgetExtra,
-};
-use crate::selectable::{
-    Selectable,
-    SelectionState,
-    SelectionStateV1,
+    Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
+    WidgetGraphicReceiver, WidgetId, WidgetInit,
 };
 
 /// A group of toggle buttons make members of the group mutually exclusive.
@@ -83,7 +65,9 @@ impl<V: Copy> ToggleButtonGroup<V> {
 }
 
 impl<V> Default for ToggleButtonGroup<V> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Custom toggle button content can implement this trait to describe
@@ -94,7 +78,7 @@ pub trait ToggleButtonValue<V> {
 }
 
 impl<T> ToggleButtonValue<()> for T {
-    fn get_value(&self, _extra: &WidgetExtra) { }
+    fn get_value(&self, _extra: &WidgetExtra) {}
 }
 
 impl<T> ToggleButtonValue<WidgetId> for T {
@@ -115,11 +99,17 @@ pub struct ToggleButtonContent<T, V = ()> {
 }
 
 impl<T, V> ToggleButtonContent<T, V> {
-    pub fn content(&self) -> &T { &self.content }
+    pub fn content(&self) -> &T {
+        &self.content
+    }
 
-    pub fn content_mut(&mut self) -> &mut T { &mut self.content }
+    pub fn content_mut(&mut self) -> &mut T {
+        &mut self.content
+    }
 
-    pub fn state(&self) -> SelectionState { *self.state }
+    pub fn state(&self) -> SelectionState {
+        *self.state
+    }
 
     pub fn add_to_group(&mut self, group: &ToggleButtonGroup<V>) {
         if let Some(existing) = &*self.group {
@@ -146,7 +136,7 @@ where
     T: Selectable + WidgetContent<P> + ToggleButtonValue<V>,
     V: 'static + std::fmt::Debug + Copy,
 {
-    fn init<I: WidgetInit<Self, P>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, P>) {
         init.init_child_inline(|button| &mut button.content);
         init.watch(|button, _rect| {
             button.content.selection_changed(*button.state);
@@ -174,11 +164,11 @@ where
         });
     }
 
-    fn children<R: WidgetChildReceiver<P>>(&mut self, receiver: R) {
+    fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
         self.content.children(receiver);
     }
 
-    fn graphics<R: WidgetGraphicReceiver<P>>(&mut self, receiver: R) {
+    fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {
         self.content.graphics(receiver);
     }
 
@@ -203,7 +193,7 @@ where
                     }
                 }
                 grabbed
-            },
+            }
             PointerAction::Move(_, _) => {
                 let ungrabbed = !self.hittest(extra, event.pos())
                     && event.try_ungrab(extra);
@@ -214,14 +204,14 @@ where
                     }
                 }
                 ungrabbed
-            },
+            }
             PointerAction::GrabStolen => {
                 self.pointers_down -= 1;
                 if self.pointers_down == 0 {
                     *self.state = self.base_state();
                 }
                 true
-            },
+            }
             PointerAction::Up => {
                 let ungrabbed = event.try_ungrab(extra.id());
                 if ungrabbed {
@@ -243,7 +233,7 @@ where
                     }
                 }
                 ungrabbed
-            },
+            }
             PointerAction::Hover(_, _) => {
                 match (self.state.v1(), self.hittest(extra, event.pos())) {
                     (SelectionStateV1::Normal, true) => {
@@ -262,7 +252,7 @@ where
                     }
                     _ => false,
                 }
-            },
+            }
             _ => false,
         }
     }
@@ -284,6 +274,5 @@ impl<T: Default, V> Default for ToggleButtonContent<T, V> {
 }
 
 /// A button which remains in an active state after being selected.
-pub type ToggleButton<T, V = (), P = DefaultRenderPlatform>
-    = Widget<ToggleButtonContent<T, V>, P>;
-
+pub type ToggleButton<T, V = (), P = DefaultRenderPlatform> =
+    Widget<ToggleButtonContent<T, V>, P>;

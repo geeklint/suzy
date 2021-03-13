@@ -2,26 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+use super::{
+    OpenGlRenderPlatform, SelectableSlicedImage, Text, TextAlignment,
+    TextLayoutSettings, Texture,
+};
 use crate::dims::{Rect, SimplePadding2d};
 use crate::graphics::Color;
 use crate::selectable::{Selectable, SelectionState, SelectionStateV0};
 use crate::widget::{
-    WidgetContent,
-    WidgetInit,
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
+    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
-use crate::widgets::{
-    TextContent,
-};
-use super::{
-    OpenGlRenderPlatform,
-    SelectableSlicedImage,
-    Text,
-    TextLayoutSettings,
-    TextAlignment,
-    Texture,
-};
+use crate::widgets::TextContent;
 
 const BUTTON_DATA: &[u8] = include_bytes!("button-all.data");
 const BUTTON_STATES: &[SelectionState] = &[
@@ -56,7 +47,7 @@ impl TextContent for DefaultOpenGlButton {
 }
 
 impl WidgetContent<Plat> for DefaultOpenGlButton {
-    fn init<I: WidgetInit<Self, Plat>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, Plat>) {
         init.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
 
@@ -80,11 +71,11 @@ impl WidgetContent<Plat> for DefaultOpenGlButton {
         });
     }
 
-    fn children<R: WidgetChildReceiver<Plat>>(&mut self, _receiver: R) {
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<Plat>) {
         // no children
     }
 
-    fn graphics<R: WidgetGraphicReceiver<Plat>>(&mut self, mut receiver: R) {
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<Plat>) {
         receiver.graphic(&mut self.image);
         receiver.graphic(&mut self.text_graphic);
     }

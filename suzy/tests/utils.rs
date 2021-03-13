@@ -31,9 +31,8 @@ pub fn round_both(buffer: &[u8]) -> &[u8] {
 #[allow(unused)]
 pub fn is_color(buffer: &[u8], color: Color) -> bool {
     buffer.chunks_exact(4).all(|chunk| {
-        let buf_color = Color::create_rgba8(
-            chunk[0], chunk[1], chunk[2], chunk[3]
-        );
+        let buf_color =
+            Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
         buf_color == color
     })
 }

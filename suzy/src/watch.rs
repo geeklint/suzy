@@ -45,7 +45,7 @@
 //! }
 //!
 //! impl WidgetContent for MyWidgetData {
-//!     fn init<I: WidgetInit<Self>>(mut init: I) {
+//!     fn init(mut init: impl WidgetInit<Self>) {
 //!         init.watch(|this, rect| {
 //!             this.button.set_width(200.0);
 //!             this.button.set_height(100.0);
@@ -55,23 +55,15 @@
 //!     }
 //!
 //!     // ...
-//! #   fn children<R: WidgetChildReceiver>(&mut self, mut receiver: R) {
+//! #   fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
 //! #       receiver.child(&mut self.button);
 //! #   }
-//! #   fn graphics<R: WidgetGraphicReceiver>(&mut self, _receiver: R) {}
+//! #   fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! }
 
 pub use drying_paint::{
-    Watched,
-    WatchedCell,
-    WatchedEvent,
-    WatchedMeta,
-    Watcher,
-    WatcherId,
-    WatcherMeta,
-    watched_channel,
-    WatchedReceiver,
-    WatchedSender,
+    watched_channel, Watched, WatchedCell, WatchedEvent, WatchedMeta,
+    WatchedReceiver, WatchedSender, Watcher, WatcherId, WatcherMeta,
 };
 
 #[cfg(feature = "inline_tweak")]

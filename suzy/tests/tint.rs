@@ -6,26 +6,16 @@
 
 extern crate suzy;
 
-use suzy::dims::{
-    Rect,
-    SimplePadding2d,
+use suzy::app::{App, AppBuilder};
+use suzy::dims::{Rect, SimplePadding2d};
+use suzy::graphics::Color;
+use suzy::platform::opengl::{OpenGlRenderPlatform, SlicedImage, Tint};
+use suzy::platform::TestPlatform;
+use suzy::widget::{
+    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
+    WidgetInit,
 };
 use suzy::window::WindowSettings;
-use suzy::graphics::Color;
-use suzy::app::{
-    App,
-    AppBuilder,
-};
-use suzy::widget::{
-    Widget,
-    WidgetContent,
-};
-use suzy::platform::opengl::{
-    OpenGlRenderPlatform,
-    SlicedImage,
-    Tint,
-};
-use suzy::platform::TestPlatform;
 
 mod utils;
 use utils::*;
@@ -37,7 +27,7 @@ struct Root {
 }
 
 impl WidgetContent<OpenGlRenderPlatform> for Root {
-    fn init<I: suzy::widget::WidgetInit<Self, OpenGlRenderPlatform>>(mut init: I) {
+    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|root, _rect| {
             root.tint.set_tint_color(Color::RED);
         });
@@ -46,10 +36,16 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children<R: suzy::widget::WidgetChildReceiver<OpenGlRenderPlatform>>(&mut self, _receiver: R) {
+    fn children(
+        &mut self,
+        _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+    ) {
     }
 
-    fn graphics<R: suzy::widget::WidgetGraphicReceiver<OpenGlRenderPlatform>>(&mut self, mut receiver: R) {
+    fn graphics(
+        &mut self,
+        mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+    ) {
         receiver.graphic(&mut self.tint);
         receiver.graphic(&mut self.image);
     }
@@ -61,12 +57,13 @@ fn tint_red() {
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
     let app: App<TestPlatform> = builder.build();
-    let app = app.with(|app| {
-        app.add_root(Widget::<Root>::default);
-    }).0;
+    let app = app
+        .with(|app| {
+            app.add_root(Widget::<Root>::default);
+        })
+        .0;
     app.test(|mut app| {
         let capture = app.take_screenshot();
         assert!(is_color(&capture, Color::RED));
     });
 }
-

@@ -5,16 +5,13 @@
 //! This module contains all the types associated with defining custom
 //! widgets.
 
-use std::ops::{
-    Deref,
-    DerefMut,
-};
+use std::ops::{Deref, DerefMut};
 
-use drying_paint::{Watcher, WatcherId};
 pub use drying_paint::Watched;
+use drying_paint::{Watcher, WatcherId};
 
 use crate::adapter::Adaptable;
-use crate::dims::{Rect, Dim};
+use crate::dims::{Dim, Rect};
 use crate::graphics::DrawContext;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
@@ -29,14 +26,10 @@ mod receivers;
 mod rect;
 
 use internal::WidgetInternal;
-use rect::WidgetRect;
 use receivers::{
-    DrawChildReceiver,
+    DrawChildReceiver, DrawGraphicBeforeReceiver, DrawGraphicOrderedReceiver,
+    DrawGraphicUnorderedReceiver, FindWidgetReceiver,
     PointerEventChildReceiver,
-    DrawGraphicBeforeReceiver,
-    DrawGraphicUnorderedReceiver,
-    DrawGraphicOrderedReceiver,
-    FindWidgetReceiver,
 };
 
 pub use anon::AnonWidget;
@@ -44,10 +37,8 @@ pub use content::WidgetContent;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
 pub use internal::WidgetExtra;
-pub use receivers::{
-    WidgetChildReceiver,
-    WidgetGraphicReceiver,
-};
+pub use receivers::{WidgetChildReceiver, WidgetGraphicReceiver};
+pub use rect::WidgetRect;
 
 pub(crate) type FindWidgetCallback<'a, P> =
     Option<Box<dyn FnOnce(&mut dyn AnonWidget<P>) + 'a>>;
@@ -81,7 +72,9 @@ where
     T: WidgetContent<P> + Default + ?Sized,
 {
     fn default() -> Self {
-        Self { watcher: Default::default() }
+        Self {
+            watcher: Default::default(),
+        }
     }
 }
 
@@ -158,11 +151,14 @@ where
         content.children(DrawChildReceiver { ctx });
         let mut num_ordered = 0;
         content.graphics(DrawGraphicUnorderedReceiver {
-            ctx, num_ordered: &mut num_ordered,
+            ctx,
+            num_ordered: &mut num_ordered,
         });
         for target in (0..num_ordered).rev() {
             content.graphics(DrawGraphicOrderedReceiver {
-                ctx, target, current: 0,
+                ctx,
+                target,
+                current: 0,
             });
         }
     }
@@ -183,23 +179,32 @@ where
         }
     }
 
-    pub(crate) fn pointer_event(this: &mut Self, event: &mut PointerEvent)
-        -> bool
-    {
-        let mut handled_by_child = false;
-        {
-            let content: &mut T = this;
-            content.children(PointerEventChildReceiver {
-                event,
-                handled: &mut handled_by_child,
-            });
-        }
-        handled_by_child || Self::pointer_event_self(this, event)
+    pub(crate) fn pointer_event(
+        this: &mut Self,
+        event: &mut PointerEvent,
+    ) -> bool {
+        let id = Widget::id(this);
+        let wid_int = this.watcher.data_mut();
+        let mut extra = WidgetExtra {
+            id,
+            rect: &mut wid_int.rect,
+        };
+        T::pointer_event_before(&mut wid_int.content, &mut extra, event)
+            || {
+                let mut handled_by_child = false;
+                wid_int.content.children(PointerEventChildReceiver {
+                    event,
+                    handled: &mut handled_by_child,
+                });
+                handled_by_child
+            }
+            || T::pointer_event(&mut wid_int.content, &mut extra, event)
     }
 
-    pub(crate) fn pointer_event_self(this: &mut Self, event: &mut PointerEvent)
-        -> bool
-    {
+    pub(crate) fn pointer_event_self(
+        this: &mut Self,
+        event: &mut PointerEvent,
+    ) -> bool {
         let id = Widget::id(this);
         let wid_int = this.watcher.data_mut();
         let mut extra = WidgetExtra {
@@ -208,7 +213,6 @@ where
         };
         T::pointer_event(&mut wid_int.content, &mut extra, event)
     }
-
 }
 
 impl<P, T> Widget<T, P>
@@ -233,17 +237,23 @@ where
     P: RenderPlatform + ?Sized,
     T: WidgetContent<P>,
 {
-    fn x(&self) -> Dim { self.watcher.data().rect.x() }
-    fn y(&self) -> Dim { self.watcher.data().rect.y() }
+    fn x(&self) -> Dim {
+        self.watcher.data().rect.x()
+    }
+    fn y(&self) -> Dim {
+        self.watcher.data().rect.y()
+    }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.watcher.data_mut().rect.external_x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
-        where F: FnOnce(&mut Dim) -> R
+    where
+        F: FnOnce(&mut Dim) -> R,
     {
         self.watcher.data_mut().rect.external_y_mut(f)
     }

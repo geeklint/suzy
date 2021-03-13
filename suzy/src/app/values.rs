@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use std::cell::RefCell;
 use drying_paint::Watched;
+use std::cell::RefCell;
 use std::time;
 
 thread_local! {
@@ -31,7 +31,7 @@ impl AppValues {
 
     pub(crate) fn try_with_current<F, R>(func: F) -> Option<R>
     where
-        F: FnOnce(&AppValues) -> R
+        F: FnOnce(&AppValues) -> R,
     {
         APP_STACK.with(|cell| {
             if let Some(top) = cell.borrow().last() {
@@ -44,7 +44,7 @@ impl AppValues {
 
     pub(crate) fn expect_current<F, R>(func: F) -> R
     where
-        F: FnOnce(&AppValues) -> R
+        F: FnOnce(&AppValues) -> R,
     {
         APP_STACK.with(|cell| {
             let stack = cell.borrow();
@@ -55,7 +55,7 @@ impl AppValues {
 
     pub(crate) fn expect_current_mut<F, R>(func: F) -> R
     where
-        F: FnOnce(&mut AppValues) -> R
+        F: FnOnce(&mut AppValues) -> R,
     {
         APP_STACK.with(|cell| {
             let mut stack = cell.borrow_mut();
@@ -104,4 +104,3 @@ pub(crate) fn get_cell_size(width: f32, height: f32) -> f32 {
     }
     best
 }
-

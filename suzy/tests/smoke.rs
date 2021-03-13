@@ -6,13 +6,10 @@
 
 extern crate suzy;
 
-use suzy::window::WindowSettings;
+use suzy::app::{App, AppBuilder};
 use suzy::graphics::Color;
-use suzy::app::{
-    App,
-    AppBuilder,
-};
 use suzy::platform::TestPlatform;
+use suzy::window::WindowSettings;
 
 #[test]
 fn smoke() {
@@ -23,9 +20,8 @@ fn smoke() {
     app.test(|mut app| {
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
-            let color = Color::create_rgba8(
-                chunk[0], chunk[1], chunk[2], chunk[3]
-            );
+            let color =
+                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::BLACK);
         }
     });
