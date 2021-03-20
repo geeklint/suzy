@@ -25,7 +25,13 @@ impl AppValues {
     pub(super) fn with<F: FnOnce() -> R, R>(self, func: F) -> (Self, R) {
         APP_STACK.with(|cell| cell.borrow_mut().push(self));
         let res = (func)();
-        let values = APP_STACK.with(|cell| cell.borrow_mut().pop()).unwrap();
+        let values =
+            APP_STACK
+                .with(|cell| cell.borrow_mut().pop())
+                .expect(concat!(
+                    "Failed to pop from APP_STACK,",
+                    "it must have been modified incorrectly"
+                ));
         (values, res)
     }
 

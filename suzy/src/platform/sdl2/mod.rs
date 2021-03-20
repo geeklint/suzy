@@ -22,7 +22,7 @@ impl crate::platform::Platform for SDLPlatform {
 
     fn new() -> Self {
         SDLPlatform {
-            sdl: sdl2::init().unwrap(),
+            sdl: sdl2::init().expect("Failed to initialize SDL2"),
         }
     }
 
@@ -39,7 +39,10 @@ impl crate::platform::Platform for SDLPlatform {
     {
         let mut state = SimpleEventLoopState::default();
         let mut events = window::Events {
-            events: self.sdl.event_pump().unwrap(),
+            events: self
+                .sdl
+                .event_pump()
+                .expect("Failed to create SDL2 event pump"),
             send_dp: false,
         };
         while state.running {

@@ -438,7 +438,9 @@ impl Texture {
         ctx: &mut OpenGlContext,
     ) -> (f32, f32, f32, f32) {
         self.ins.bind(ctx);
-        let size = self.ins.size().unwrap();
+        let size = self.ins.size().expect(
+            "Failed to get texture size, even though we just bound it",
+        );
         size.get_crop_transform(
             self.offset.0,
             self.offset.1,

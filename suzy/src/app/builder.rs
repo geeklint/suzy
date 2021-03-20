@@ -22,7 +22,9 @@ impl AppBuilder {
     /// Build the app
     pub fn build<P: Platform>(self) -> App<P> {
         let mut platform = P::new();
-        let window = platform.create_window(self.win).unwrap();
+        let window = platform
+            .create_window(self.win)
+            .expect("Failed to create window");
         let watch_ctx = drying_paint::WatchContext::new();
 
         let (width, height) = window.size();

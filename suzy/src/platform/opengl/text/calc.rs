@@ -482,7 +482,10 @@ impl<'a> FontCharCalc<'a> {
                 }
                 Some(0) => {
                     let mut iter = remaining.chars();
-                    self.push_whitespace(iter.next().unwrap());
+                    self.push_whitespace(iter.next().expect(concat!(
+                        "remaining text was not empty,",
+                        "but str::chars returned no items"
+                    )));
                     remaining = iter.as_str();
                 }
                 Some(index) => {

@@ -144,12 +144,16 @@ impl Window {
 
 impl WindowSettings for Window {
     fn size(&self) -> (f32, f32) {
-        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        let info: PixelInfo = (&self.info.window)
+            .try_into()
+            .expect("Unable to get pixel info from current SDL window");
         info.size
     }
 
     fn set_size(&mut self, size: (f32, f32)) {
-        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        let info: PixelInfo = (&self.info.window)
+            .try_into()
+            .expect("Unable to get pixel info from current SDL window");
         let dp_per_su = info.dp_per_screen_unit;
         let calc_width = (size.0 / dp_per_su) as u32;
         let calc_height = (size.1 / dp_per_su) as u32;
@@ -206,12 +210,16 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     */
 
     fn pixels_per_dp(&self) -> f32 {
-        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        let info: PixelInfo = (&self.info.window)
+            .try_into()
+            .expect("Unable to get pixel info from current SDL window");
         info.pixels_per_dp
     }
 
     fn normalize_pointer_event(&self, event: &mut PointerEventData) {
-        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        let info: PixelInfo = (&self.info.window)
+            .try_into()
+            .expect("Unable to get pixel info from current SDL window");
         event.x *= info.dp_per_screen_unit;
         event.y *= info.dp_per_screen_unit;
         event.y = info.size.1 - event.y;
@@ -233,7 +241,9 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     }
 
     fn recalculate_viewport(&mut self) {
-        let info: PixelInfo = (&self.info.window).try_into().unwrap();
+        let info: PixelInfo = (&self.info.window)
+            .try_into()
+            .expect("Unable to get pixel info from current SDL window");
         self.info
             .gl_win
             .viewport(0, 0, info.pixel_size.0, info.pixel_size.1);

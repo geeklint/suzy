@@ -7,6 +7,7 @@
 #![warn(clippy::todo)]
 #![warn(clippy::print_stdout)]
 #![allow(clippy::needless_doctest_main)]
+#![deny(clippy::unwrap_used)]
 
 //! ## Create an application with Suzy
 //!

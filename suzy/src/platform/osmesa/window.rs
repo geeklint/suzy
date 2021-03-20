@@ -38,7 +38,9 @@ impl OSMesaWindow {
             );
         }
         let plat_gl_context = opengl::OpenGlContext::new(|s| {
-            let name = std::ffi::CString::new(s).unwrap();
+            let name = std::ffi::CString::new(s).expect(
+                "Requested OpenGL function name contained a null byte",
+            );
             unsafe { bindings::OSMesaGetProcAddress(name.as_ptr()) }
         });
         let mut gl_win = opengl::Window::new(plat_gl_context);

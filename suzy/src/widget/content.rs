@@ -149,7 +149,10 @@ where
     use crate::app::{App, AppBuilder};
     use crate::window::WindowSettings;
 
-    let name = std::any::type_name::<T>().rsplit("::").next().unwrap();
+    let name = std::any::type_name::<T>()
+        .rsplit("::")
+        .next()
+        .expect("Iterator Returnned by str::rsplit was empty.");
     let (_, title) =
         name.chars()
             .fold((false, String::new()), |(prev, mut title), ch| {
