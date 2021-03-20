@@ -60,7 +60,7 @@ impl Default for TwoSidedDim {
     fn default() -> Self {
         TwoSidedDim {
             external: nan_dim(),
-            internal: Default::default(),
+            internal: Dim::default(),
         }
     }
 }

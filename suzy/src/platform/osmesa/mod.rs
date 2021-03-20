@@ -34,6 +34,7 @@ impl crate::platform::Platform for OSMesaPlatform {
         Ok(window::OSMesaWindow::new(self.ctx, settings))
     }
 
+    #[allow(clippy::unimplemented)]
     fn run<F>(self, _event_handler: F) -> !
     where
         F: 'static + FnMut(&mut Self::State, Event),

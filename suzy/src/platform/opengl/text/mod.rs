@@ -76,7 +76,7 @@ impl Text {
         Text {
             vertices: SingleVertexBuffer::new(true),
             channels: HashMap::new(),
-            texture: Default::default(),
+            texture: Texture::default(),
             font: Watched::new(None),
             render_settings: TextRenderSettings::default(),
         }

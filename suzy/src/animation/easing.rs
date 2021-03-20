@@ -53,15 +53,15 @@ pub mod eases {
 
     use super::{CubicPoly, Easing};
 
-    trait IntoBoxedEasing {
-        fn into_boxed_easing(&self) -> Box<dyn Easing>;
+    trait ToBoxedEasing {
+        fn to_boxed_easing(&self) -> Box<dyn Easing>;
     }
 
-    impl<T> IntoBoxedEasing for T
+    impl<T> ToBoxedEasing for T
     where
         T: 'static + Clone + Easing + Send + Sync,
     {
-        fn into_boxed_easing(&self) -> Box<dyn Easing> {
+        fn to_boxed_easing(&self) -> Box<dyn Easing> {
             Box::new(self.clone())
         }
     }
@@ -88,13 +88,13 @@ pub mod eases {
     /// ```
     #[derive(Clone, Copy)]
     pub struct BuiltInEasingFunction {
-        inner: &'static (dyn IntoBoxedEasing + Send + Sync),
+        inner: &'static (dyn ToBoxedEasing + Send + Sync),
     }
 
     impl BuiltInEasingFunction {
         /// Get a trait object representing this easing function.
         pub fn get(&self) -> Box<dyn Easing> {
-            self.inner.into_boxed_easing()
+            self.inner.to_boxed_easing()
         }
     }
 

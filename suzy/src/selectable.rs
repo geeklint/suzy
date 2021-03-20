@@ -230,7 +230,7 @@ impl<T> SelectableData<T> {
     pub fn builder(normal: T) -> SelectableDataBuilder<T> {
         SelectableDataBuilder {
             content: Self {
-                state: Default::default(),
+                state: drying_paint::Watched::default(),
                 normal,
                 hover: None,
                 focus: None,

@@ -73,7 +73,7 @@ where
 {
     fn default() -> Self {
         Self {
-            watcher: Default::default(),
+            watcher: Watcher::default(),
         }
     }
 }
@@ -114,7 +114,7 @@ where
             watcher: Watcher::create(WidgetInternal {
                 rect: WidgetRect::default(),
                 content: Adaptable::from(data),
-                _platform: Default::default(),
+                _platform: std::marker::PhantomData,
             }),
         }
     }
@@ -130,7 +130,7 @@ where
             watcher: Watcher::create(WidgetInternal {
                 rect: WidgetRect::external_from(rect),
                 content: Adaptable::from(data),
-                _platform: Default::default(),
+                _platform: std::marker::PhantomData,
             }),
         }
     }
@@ -225,8 +225,8 @@ where
         Widget {
             watcher: Watcher::create(WidgetInternal {
                 rect: WidgetRect::external_from(rect),
-                content: Default::default(),
-                _platform: Default::default(),
+                content: T::default(),
+                _platform: std::marker::PhantomData,
             }),
         }
     }

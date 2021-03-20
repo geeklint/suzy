@@ -5,9 +5,11 @@
 #![warn(missing_docs)]
 #![warn(clippy::clone_on_ref_ptr)]
 #![warn(clippy::todo)]
+#![warn(clippy::unimplemented)]
 #![warn(clippy::print_stdout)]
 #![allow(clippy::needless_doctest_main)]
 #![deny(clippy::unwrap_used)]
+#![warn(clippy::default_trait_access)]
 
 //! ## Create an application with Suzy
 //!
