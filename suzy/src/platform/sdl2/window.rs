@@ -32,8 +32,10 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
 
     fn try_from(window: &sdl2::video::Window) -> Result<Self, Self::Error> {
         let display_index = window.display_index()?;
-        let (_ddpi, hdpi, vdpi) =
-            { window.subsystem().display_dpi(display_index)? };
+        let (_ddpi, hdpi, vdpi) = window
+            .subsystem()
+            .display_dpi(display_index)
+            .unwrap_or((1.0, 1.0, 1.0));
         let dpi = ((hdpi + vdpi) / 2.0) as f32;
         let pixels_per_dp = dpi / crate::units::DPI;
         let screen_size = window.size();
@@ -88,7 +90,8 @@ impl Window {
         }
         let (width, height) = builder.size();
         let guess_px_per_dp = {
-            let (_ddpi, hdpi, vdpi) = { video.display_dpi(0)? };
+            let (_ddpi, hdpi, vdpi) =
+                video.display_dpi(0).unwrap_or((1.0, 1.0, 1.0));
             let dpi = ((hdpi + vdpi) / 2.0) as f32;
             dpi / crate::units::DPI
         };
