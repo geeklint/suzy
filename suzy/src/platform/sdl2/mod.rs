@@ -11,17 +11,17 @@ use crate::platform::opengl::OpenGlRenderPlatform;
 mod window;
 //mod texture_loader;
 
-pub struct SDLPlatform {
+pub struct SdlPlatform {
     sdl: sdl2::Sdl,
 }
 
-impl crate::platform::Platform for SDLPlatform {
+impl crate::platform::Platform for SdlPlatform {
     type State = SimpleEventLoopState;
     type Window = window::Window;
     type Renderer = OpenGlRenderPlatform;
 
     fn new() -> Self {
-        SDLPlatform {
+        SdlPlatform {
             sdl: sdl2::init().expect("Failed to initialize SDL2"),
         }
     }

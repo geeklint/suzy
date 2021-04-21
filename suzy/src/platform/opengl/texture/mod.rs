@@ -363,7 +363,7 @@ impl Texture {
             PopulateTextureUtil::data_len(width, height, alignment, 3),
             "Invalid pixel data for given width/height/alignment",
         );
-        Self::new(RGBTexturePopulator {
+        Self::new(RgbTexturePopulator {
             width,
             height,
             alignment,
@@ -387,7 +387,7 @@ impl Texture {
             PopulateTextureUtil::data_len(width, height, alignment, 4),
             "Invalid pixel data for given width/height/alignment",
         );
-        Self::new(RGBATexturePopulator {
+        Self::new(RgbaTexturePopulator {
             width,
             height,
             alignment,
@@ -412,7 +412,7 @@ impl Texture {
         let key = TextureCacheKey::buffer(pixels);
         Self::new_cached(
             key,
-            RGBATexturePopulator {
+            RgbaTexturePopulator {
                 width,
                 height,
                 alignment,

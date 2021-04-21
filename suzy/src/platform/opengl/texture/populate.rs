@@ -302,14 +302,14 @@ impl PopulateTexture for AlphaTexturePopulator {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct RGBTexturePopulator {
+pub(super) struct RgbTexturePopulator {
     pub(super) width: u16,
     pub(super) height: u16,
     pub(super) alignment: u16,
     pub(super) pixels: std::borrow::Cow<'static, [u8]>,
 }
 
-impl PopulateTexture for RGBTexturePopulator {
+impl PopulateTexture for RgbTexturePopulator {
     fn get_known_size(&self) -> Option<(f32, f32)> {
         Some((self.width as f32, self.height as f32))
     }
@@ -331,14 +331,14 @@ impl PopulateTexture for RGBTexturePopulator {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct RGBATexturePopulator {
+pub(super) struct RgbaTexturePopulator {
     pub(super) width: u16,
     pub(super) height: u16,
     pub(super) alignment: u16,
     pub(super) pixels: std::borrow::Cow<'static, [u8]>,
 }
 
-impl PopulateTexture for RGBATexturePopulator {
+impl PopulateTexture for RgbaTexturePopulator {
     fn get_known_size(&self) -> Option<(f32, f32)> {
         Some((self.width as f32, self.height as f32))
     }

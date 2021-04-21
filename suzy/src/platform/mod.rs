@@ -51,7 +51,7 @@ pub use self::stub::StubOpenglPlatform as DefaultPlatform;
 /// The default Platform is determined by the cargo features enabled on
 /// this crate.
 #[cfg(feature = "sdl")]
-pub use self::sdl2::SDLPlatform as DefaultPlatform;
+pub use self::sdl2::SdlPlatform as DefaultPlatform;
 
 // Platform used for tests
 
@@ -77,7 +77,7 @@ pub use self::stub::StubOpenglPlatform as TestPlatform;
     not(feature = "platform_osmesa"),
     not(all(test, feature = "platform_osmesa_test")),
 ))]
-pub use self::sdl2::SDLPlatform as TestPlatform;
+pub use self::sdl2::SdlPlatform as TestPlatform;
 
 /// The default Platform used for tests is determined by the cargo features
 /// enabled on this crate.

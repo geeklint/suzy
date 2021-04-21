@@ -98,9 +98,9 @@ pub mod eases {
         }
     }
 
-    impl Into<Box<dyn Easing>> for BuiltInEasingFunction {
-        fn into(self) -> Box<dyn Easing> {
-            self.get()
+    impl From<BuiltInEasingFunction> for Box<dyn Easing> {
+        fn from(func: BuiltInEasingFunction) -> Box<dyn Easing> {
+            func.get()
         }
     }
 
