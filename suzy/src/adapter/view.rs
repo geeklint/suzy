@@ -39,6 +39,15 @@ impl PointerSet {
         self.data.iter().any(|entry| entry.pointer == pointer)
     }
 
+    fn status(&self, pointer: PointerId) -> Option<PointerStatus> {
+        self.data
+            .iter()
+            .filter_map(|entry| {
+                (entry.pointer == pointer).then(|| entry.status)
+            })
+            .next()
+    }
+
     fn add_pending(&mut self, pointer: PointerId) {
         self.data.push(PointerEntry {
             status: PointerStatus::Pending,
@@ -162,7 +171,9 @@ where
                 false
             }
             PointerAction::Move(x, y) => {
-                if self.current_pointers.contains(event.id()) {
+                if self.current_pointers.status(event.id())
+                    == Some(PointerStatus::Pending)
+                {
                     self.current_pointers.add_grabbed(event.id());
                     if self.current_pointers.primary_pointer()
                         == Some(event.id())
