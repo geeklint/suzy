@@ -320,13 +320,15 @@ impl<P: Platform> CurrentApp<P> {
     fn pointer_event(&mut self, pointer: PointerEventData) {
         let mut grab_map = std::mem::take(&mut self.pointer_grab_map);
         let (stolen_from, mut grab_map) = self.access_roots(move |roots| {
-            let mut event = PointerEvent::new(pointer, &mut grab_map);
+            let mut stolen_from = None;
+            let mut event =
+                PointerEvent::new(pointer, &mut grab_map, &mut stolen_from);
             let mut handled = false;
             let mut iter = roots.iter_mut().rev();
             while let (false, Some(root)) = (handled, iter.next()) {
                 handled = root.pointer_event(&mut event);
             }
-            (event.grab_stolen_from, grab_map)
+            (stolen_from, grab_map)
         });
         self.pointer_grab_map = if let Some(id) = stolen_from {
             self.access_roots(move |roots| {
@@ -343,6 +345,7 @@ impl<P: Platform> CurrentApp<P> {
                                     ..pointer
                                 },
                                 &mut grab_map,
+                                &mut None,
                             ));
                         })),
                     );

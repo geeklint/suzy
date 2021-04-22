@@ -119,7 +119,7 @@ pub use internal::PointerEvent as PointerEventData;
 pub struct PointerEvent<'a> {
     data: PointerEventData,
     grab_map: &'a mut HashMap<PointerId, WidgetId>,
-    pub(crate) grab_stolen_from: Option<WidgetId>,
+    grab_stolen_from: &'a mut Option<WidgetId>,
 }
 
 impl std::fmt::Debug for PointerEvent<'_> {
@@ -132,11 +132,12 @@ impl<'a> PointerEvent<'a> {
     pub(crate) fn new(
         data: PointerEventData,
         grab_map: &'a mut HashMap<PointerId, WidgetId>,
+        grab_stolen_from: &'a mut Option<WidgetId>,
     ) -> Self {
         PointerEvent {
             data,
             grab_map,
-            grab_stolen_from: None,
+            grab_stolen_from,
         }
     }
 }
