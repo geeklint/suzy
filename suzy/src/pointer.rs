@@ -188,6 +188,22 @@ impl PointerEvent<'_> {
         }
     }
 
+    /// Focibly "grab" the pointer, indicating that the identified widget
+    /// should be the primary handler of this pointer.
+    ///
+    /// The widget previously grabbing the pointer will be notified with a
+    /// "GrabStolen" pointer event.
+    pub fn force_grab<I>(&mut self, holder: I)
+    where
+        I: Into<WidgetId>,
+    {
+        let wid = holder.into();
+        let prev = self.grab_map.insert(self.id(), wid);
+        if let Some(prev_wid) = prev {
+            *self.grab_stolen_from = Some(prev_wid);
+        }
+    }
+
     /// Check if this event is grabbed by the identified widget.
     pub fn is_grabbed_by<I>(&self, holder: I) -> bool
     where

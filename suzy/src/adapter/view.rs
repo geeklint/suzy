@@ -39,15 +39,6 @@ impl PointerSet {
         self.data.iter().any(|entry| entry.pointer == pointer)
     }
 
-    fn status(&self, pointer: PointerId) -> Option<PointerStatus> {
-        self.data
-            .iter()
-            .filter_map(|entry| {
-                (entry.pointer == pointer).then(|| entry.status)
-            })
-            .next()
-    }
-
     fn add_pending(&mut self, pointer: PointerId) {
         self.data.push(PointerEntry {
             status: PointerStatus::Pending,
@@ -162,7 +153,31 @@ where
         extra: &mut crate::widget::WidgetExtra<'_>,
         event: &mut crate::pointer::PointerEvent,
     ) -> bool {
-        todo!()
+        use crate::pointer::PointerAction;
+        match event.action() {
+            PointerAction::Down => {
+                if self.hittest(extra, event.pos()) {
+                    self.current_pointers.add_pending(event.id());
+                }
+                false
+            }
+            PointerAction::Move(x, y) => {
+                if self.current_pointers.contains(event.id()) {
+                    self.current_pointers.add_grabbed(event.id());
+                    if self.current_pointers.primary_pointer()
+                        == Some(event.id())
+                    {
+                        self.inner.move_content(*x, *y);
+                        self.position_flag.trigger();
+                    }
+                    event.force_grab(extra);
+                    true
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        }
     }
 
     fn pointer_event(
@@ -181,13 +196,7 @@ where
                 grabbed
             }
             PointerAction::Move(x, y) => {
-                if self.current_pointers.primary_pointer().is_none()
-                    && self.current_pointers.contains(event.id())
-                {
-                    self.current_pointers.add_grabbed(event.id());
-                    todo!()
-                } else if Some(event.id())
-                    == self.current_pointers.primary_pointer()
+                if Some(event.id()) == self.current_pointers.primary_pointer()
                 {
                     self.inner.move_content(*x, *y);
                     self.position_flag.trigger();
