@@ -68,6 +68,7 @@ pub struct Text {
     texture: Texture,
     font: Watched<Option<Box<FontFamily>>>,
     render_settings: TextRenderSettings,
+    char_locs: Vec<(f32, f32)>,
 }
 
 impl Text {
@@ -79,6 +80,34 @@ impl Text {
             texture: Texture::default(),
             font: Watched::new(None),
             render_settings: TextRenderSettings::default(),
+            char_locs: Vec::new(),
+        }
+    }
+
+    pub fn char_at(&self, x: f32, y: f32) -> Result<usize, ()> {
+        let mut err = false;
+        let search_res = self.char_locs.binary_search_by(|(cx, cy)| {
+            println!("{:?}", (cx, cy));
+            if y <= *cy && y > *cy - 24.0 {
+                cx.partial_cmp(&x).unwrap_or_else(|| {
+                    err = true;
+                    std::cmp::Ordering::Equal
+                })
+            } else {
+                cy.partial_cmp(&y)
+                    .unwrap_or_else(|| {
+                        err = true;
+                        std::cmp::Ordering::Equal
+                    })
+                    .reverse()
+            }
+        });
+        if err {
+            return Err(());
+        }
+        match search_res {
+            Ok(index) => Ok(index),
+            Err(index) => Ok(index - 1),
         }
     }
 
@@ -90,9 +119,12 @@ impl Text {
         let texture = &mut self.texture;
         let vertices = &mut self.vertices;
         let channels = &mut self.channels;
+        let char_locs = &mut self.char_locs;
         let mut do_render = move |font: &FontFamilyDynamic| {
             *texture = font.texture.clone();
-            Self::render_impl(text, settings, vertices, channels, font)
+            Self::render_impl(
+                text, settings, vertices, channels, font, char_locs,
+            )
         };
         match &*self.font {
             Some(font) => do_render(font),
@@ -125,6 +157,7 @@ impl Text {
             &mut self.vertices,
             &mut self.channels,
             font,
+            &mut self.char_locs,
         )
     }
 
@@ -134,6 +167,7 @@ impl Text {
         vertices: &mut SingleVertexBuffer<GLfloat>,
         channels: &mut HashMap<ChannelMask, std::ops::Range<usize>>,
         font: &FontFamilyDynamic,
+        char_locs: &mut Vec<(f32, f32)>,
     ) {
         let mut verts = vec![];
         vertices.set_data(|_gl| {
@@ -145,6 +179,7 @@ impl Text {
                 }
                 channels.clear();
                 calc.merge_verts(&mut verts, channels);
+                *char_locs = calc.take_char_locs();
                 &mut verts[..]
             })
         });

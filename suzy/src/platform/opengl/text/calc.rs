@@ -252,6 +252,7 @@ pub(super) struct FontCharCalc<'a> {
     y_offset: f32,
     bufs: HashMap<ChannelMask, Vec<f32>>,
     commited: HashMap<ChannelMask, usize>,
+    char_locs: Vec<(f32, f32)>,
 }
 
 impl<'a> FontCharCalc<'a> {
@@ -275,7 +276,16 @@ impl<'a> FontCharCalc<'a> {
             x_offset: 0.0,
             bufs,
             commited,
+            char_locs: Vec::new(),
         }
+    }
+
+    fn record_char_loc(&mut self) {
+        self.char_locs.push((self.x_offset, self.y_offset));
+    }
+
+    pub(super) fn take_char_locs(&mut self) -> Vec<(f32, f32)> {
+        std::mem::take(&mut self.char_locs)
     }
 
     pub(super) fn merge_verts(
@@ -356,38 +366,38 @@ impl<'a> FontCharCalc<'a> {
         let top_uv = metrics.uv_y;
         let bottom_pos = y_offset + metrics.bb_min_y * font_size;
         let bottom_uv = metrics.uv_y + metrics.uv_height;
-        // TODO: use extend or something, rather than all these pushes.
-        buf.reserve(4 * 6);
+        #[rustfmt::skip]
+        buf.extend(&[
+            left_pos,
+            bottom_pos,
+            left_uv,
+            bottom_uv,
 
-        buf.push(left_pos);
-        buf.push(bottom_pos);
-        buf.push(left_uv);
-        buf.push(bottom_uv);
+            right_pos,
+            top_pos,
+            right_uv,
+            top_uv,
 
-        buf.push(right_pos);
-        buf.push(top_pos);
-        buf.push(right_uv);
-        buf.push(top_uv);
+            left_pos,
+            top_pos,
+            left_uv,
+            top_uv,
 
-        buf.push(left_pos);
-        buf.push(top_pos);
-        buf.push(left_uv);
-        buf.push(top_uv);
+            left_pos,
+            bottom_pos,
+            left_uv,
+            bottom_uv,
 
-        buf.push(left_pos);
-        buf.push(bottom_pos);
-        buf.push(left_uv);
-        buf.push(bottom_uv);
+            right_pos,
+            bottom_pos,
+            right_uv,
+            bottom_uv,
 
-        buf.push(right_pos);
-        buf.push(bottom_pos);
-        buf.push(right_uv);
-        buf.push(bottom_uv);
-
-        buf.push(right_pos);
-        buf.push(top_pos);
-        buf.push(right_uv);
-        buf.push(top_uv);
+            right_pos,
+            top_pos,
+            right_uv,
+            top_uv,
+        ]);
     }
 
     fn push_word_splitwrap(&mut self, word: &str) {
@@ -403,6 +413,7 @@ impl<'a> FontCharCalc<'a> {
                 if self.x_offset + advance > self.settings.wrap_width {
                     self.push_newline();
                 }
+                self.record_char_loc();
                 self.populate_char(metrics);
                 self.x_offset += advance;
             }
@@ -416,6 +427,7 @@ impl<'a> FontCharCalc<'a> {
         }
         let mut x_offset = self.x_offset;
         let mut verts = Vec::new();
+        let mut char_locs = Vec::new();
         let mut iter = word.chars().peekable();
         while let Some(ch) = iter.next() {
             if let Some(metrics) = self.metrics(ch) {
@@ -430,6 +442,7 @@ impl<'a> FontCharCalc<'a> {
                     self.push_word_splitwrap(word);
                     return;
                 }
+                char_locs.push((x_offset, self.y_offset));
                 Self::populate_vertices(
                     self.settings.font_size,
                     &mut verts,
@@ -442,10 +455,12 @@ impl<'a> FontCharCalc<'a> {
         }
         let mask = self.font_family.channel_mask(self.current_style);
         self.bufs.get_mut(&mask).unwrap().append(&mut verts);
+        self.char_locs.append(&mut char_locs);
         self.x_offset = x_offset;
     }
 
     pub fn push_whitespace(&mut self, white_char: char) {
+        self.record_char_loc();
         if let Some(metrics) = self.metrics(white_char) {
             let advance = metrics.advance_width;
             let advance = advance * self.settings.font_size;
