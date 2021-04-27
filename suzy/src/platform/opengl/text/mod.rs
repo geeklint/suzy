@@ -5,6 +5,7 @@
 use std::collections::HashMap;
 
 use crate::graphics::{Color, DrawContext, Graphic};
+use crate::text::{FontStyle, RichTextParser, TextAlignment};
 use crate::watch::Watched;
 
 use super::buffer::SingleVertexBuffer;
@@ -21,10 +22,7 @@ pub use font::{
     FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
 };
 
-use calc::RichTextParser;
-pub use calc::{FontStyle, TextAlignment, TextLayoutSettings};
-
-use calc::FontCharCalc;
+use calc::{FontCharCalc, TextLayoutSettings};
 use font::{ChannelMask, GlyphMetricsSource};
 
 #[cfg(feature = "default_font")]
