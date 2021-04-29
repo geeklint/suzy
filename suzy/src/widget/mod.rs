@@ -18,6 +18,7 @@ use crate::pointer::PointerEvent;
 
 mod anon;
 mod content;
+mod coroutine;
 mod graphic;
 mod init;
 mod internal;
@@ -34,6 +35,7 @@ use receivers::{
 
 pub use anon::AnonWidget;
 pub use content::WidgetContent;
+pub use coroutine::Coroutine;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
 pub use internal::WidgetExtra;
