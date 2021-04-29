@@ -21,7 +21,7 @@ default_font = ["platform_opengl"]
 sdl = ["sdl2", "platform_opengl"]
 
 [dependencies]
-drying_paint = "0.4.5"
+drying_paint = "0.4.6"
 inline_tweak = { version = "1.0.8", optional = true }
 
 [dependencies.sdl2]

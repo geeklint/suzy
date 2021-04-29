@@ -64,6 +64,7 @@
 pub use drying_paint::{
     watched_channel, Watched, WatchedCell, WatchedEvent, WatchedMeta,
     WatchedReceiver, WatchedSender, Watcher, WatcherId, WatcherMeta,
+    AtomicWatchedMeta, AtomicWatchedMetaTrigger,
 };
 
 #[cfg(feature = "inline_tweak")]
