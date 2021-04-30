@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use super::{Event, SimpleEventLoopState};
+use crate::platform::{Event, SimpleEventLoopState};
 
-use crate::platform::opengl::OpenGlRenderPlatform;
+use crate::platforms::opengl::OpenGlRenderPlatform;
 
 mod bindings;
 mod window;

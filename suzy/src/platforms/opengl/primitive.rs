@@ -6,12 +6,12 @@ macro_rules! gl_object {
     ($vis:vis $name:ident, $create:ident, $delete:ident, $count:expr) => {
         $vis struct $name {
             pub(crate) ids: [
-                $crate::platform::opengl::context::bindings::types::GLuint;
+                $crate::platforms::opengl::context::bindings::types::GLuint;
                 $count
             ],
             pub(crate) ready: Option<bool>,
             pub(crate) gl:
-                ::std::rc::Weak<$crate::platform::opengl::OpenGlBindings>,
+                ::std::rc::Weak<$crate::platforms::opengl::OpenGlBindings>,
         }
         gl_object! {impl $name, $create, $delete, $count}
     };
@@ -29,10 +29,10 @@ macro_rules! gl_object {
             #[allow(dead_code)]
             pub fn get(&mut self)
                 -> Option<([
-                    $crate::platform::opengl::context::bindings::types::GLuint;
+                    $crate::platforms::opengl::context::bindings::types::GLuint;
                     $count
                 ],
-                    ::std::rc::Rc<$crate::platform::opengl::OpenGlBindings>,
+                    ::std::rc::Rc<$crate::platforms::opengl::OpenGlBindings>,
                 )>
             {
                 self.ready.get_or_insert(false);
@@ -47,7 +47,7 @@ macro_rules! gl_object {
             #[allow(dead_code)]
             pub fn check_ready(
                 &mut self,
-                gl: &::std::rc::Rc<$crate::platform::opengl::OpenGlBindings>,
+                gl: &::std::rc::Rc<$crate::platforms::opengl::OpenGlBindings>,
             ) -> Option<bool> {
                 let weak_gl = ::std::rc::Rc::downgrade(gl);
                 if !self.gl.ptr_eq(&weak_gl) {

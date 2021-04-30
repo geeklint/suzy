@@ -11,12 +11,12 @@ use sdl2::surface::Surface;
 use sdl2::image::LoadSurface;
 use sdl2::pixels::PixelFormatEnum;
 
-use crate::platform::opengl::bindings::{
+use crate::platforms::opengl::bindings::{
     RGB,
     RGBA,
     UNSIGNED_BYTE,
 };
-use crate::platform::opengl::image::{
+use crate::platforms::opengl::image::{
     TextureLoadResult, TextureBuilder
 };
 

@@ -69,6 +69,7 @@ pub mod app;
 pub mod dims;
 pub mod graphics;
 pub mod platform;
+pub mod platforms;
 pub mod pointer;
 pub mod selectable;
 pub mod units;

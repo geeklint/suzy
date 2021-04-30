@@ -8,7 +8,7 @@ use crate::widget::{
     WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
 
-use super::{Event, SimpleEventLoopState};
+use crate::platform::{Event, RenderPlatform, SimpleEventLoopState};
 
 macro_rules! stub {
     () => {
@@ -213,7 +213,7 @@ impl crate::widgets::TextContent for StubButtonContent {
     }
 }
 
-impl<P: super::RenderPlatform> WidgetContent<P> for StubButtonContent {
+impl<P: RenderPlatform> WidgetContent<P> for StubButtonContent {
     fn init(_init: impl WidgetInit<Self, P>) {
         stub!()
     }

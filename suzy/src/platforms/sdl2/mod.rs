@@ -4,9 +4,9 @@
 
 #![allow(missing_docs)]
 
-use super::{Event, SimpleEventLoopState};
+use crate::platform::{Event, SimpleEventLoopState};
 
-use crate::platform::opengl::OpenGlRenderPlatform;
+use crate::platforms::opengl::OpenGlRenderPlatform;
 
 mod window;
 //mod texture_loader;

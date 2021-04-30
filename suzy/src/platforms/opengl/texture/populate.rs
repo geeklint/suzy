@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::platform::opengl;
+use crate::platforms::opengl;
 use opengl::context::bindings::types::*;
 use opengl::context::bindings::{
     ALPHA, CLAMP_TO_EDGE, LINEAR, NEAREST, REPEAT, RGB, RGBA, TEXTURE_2D,

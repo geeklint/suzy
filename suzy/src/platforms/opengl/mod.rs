@@ -45,7 +45,7 @@ pub use window::Window;
 /// included with Suzy.
 pub struct OpenGlRenderPlatform;
 
-impl super::RenderPlatform for OpenGlRenderPlatform {
+impl crate::platform::RenderPlatform for OpenGlRenderPlatform {
     type Context = OpenGlContext;
     type DrawParams = drawparams::DrawParams;
 

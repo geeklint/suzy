@@ -10,7 +10,7 @@ use sdl2::video::WindowBuildError;
 
 use crate::graphics::Color;
 use crate::graphics::DrawContext;
-use crate::platform::opengl;
+use crate::platforms::opengl;
 use crate::pointer::{PointerAction, PointerEventData};
 use crate::window;
 use crate::window::{WindowBuilder, WindowEvent, WindowSettings};

@@ -9,8 +9,8 @@ extern crate suzy;
 use suzy::app::{App, AppBuilder};
 use suzy::dims::{Padding, Rect, SimplePadding2d};
 use suzy::graphics::Color;
-use suzy::platform::opengl::{Masker, OpenGlRenderPlatform, SlicedImage};
-use suzy::platform::TestPlatform;
+use suzy::platforms::opengl::{Masker, OpenGlRenderPlatform, SlicedImage};
+use suzy::platforms::TestPlatform;
 use suzy::widget::{
     Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
     WidgetInit,

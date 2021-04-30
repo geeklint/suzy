@@ -9,8 +9,8 @@ extern crate suzy;
 use suzy::app::{App, AppBuilder};
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::graphics::Color;
-use suzy::platform::opengl::{OpenGlRenderPlatform, SlicedImage};
-use suzy::platform::TestPlatform;
+use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
+use suzy::platforms::TestPlatform;
 use suzy::selectable::{Selectable, SelectionState};
 use suzy::widget::{
     Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,

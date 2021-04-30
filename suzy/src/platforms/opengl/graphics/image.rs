@@ -6,7 +6,7 @@ use crate::dims::{Dim, Padding2d, Rect, SimplePadding2d, SimpleRect};
 use crate::graphics::{DrawContext, Graphic};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV2};
 
-use crate::platform::opengl;
+use crate::platforms::opengl;
 use opengl::context::bindings::{FALSE, FLOAT, TRIANGLES, UNSIGNED_BYTE};
 use opengl::{
     DualVertexBuffer, DualVertexBufferIndexed, OpenGlRenderPlatform, Texture,

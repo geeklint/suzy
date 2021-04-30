@@ -13,84 +13,51 @@
 //! If no platforms are enabled (using features) the default platform is
 //! a "stub" platform which has no functionality (all methods panic).
 
-mod shared;
-pub use shared::{
-    Event, EventLoopState, Platform, RenderPlatform, SimpleEventLoopState,
+mod event;
+pub use event::{Event, EventLoopState, SimpleEventLoopState};
+
+pub use crate::platforms::{
+    DefaultPlatform, DefaultRenderPlatform, TestPlatform, TestRenderPlatform,
 };
 
-// Platforms
+/// A platform handles window creation and manages an event loop.
+pub trait Platform: 'static {
+    /// The event loop state tracked by this platform.
+    type State: EventLoopState;
 
-// stub types are used in case no other defaults are available - all their
-// methods panic
-mod stub;
+    /// The RenderPlatform this platform supports.
+    type Renderer: RenderPlatform;
 
-#[cfg(feature = "platform_opengl")]
-pub mod opengl;
+    /// The type of window this platform creates.
+    type Window: crate::window::Window<Self::Renderer>;
 
-#[cfg(feature = "sdl")]
-pub mod sdl2;
+    /// Initialize the platform.
+    fn new() -> Self;
 
-#[cfg(any(
-    feature = "platform_osmesa",
-    all(test, feature = "platform_osmesa_test"),
-))]
-pub mod osmesa;
+    /// Create a window.
+    fn create_window(
+        &mut self,
+        settings: crate::window::WindowBuilder,
+    ) -> Result<Self::Window, String>;
 
-// Default Platform
+    /// Run, the event loop, calling the provided closure with each new event.
+    fn run<F>(self, event_handler: F) -> !
+    where
+        F: 'static + FnMut(&mut Self::State, Event);
+}
 
-/// The default Platform is determined by the cargo features enabled on
-/// this crate.
-#[cfg(not(feature = "platform_opengl"))]
-pub use self::stub::StubPlatform as DefaultPlatform;
+/// A RenderPlatform provides tools to create Graphics.
+pub trait RenderPlatform: 'static {
+    /// The shared context passed along to draw calls.
+    type Context: 'static;
 
-/// The default Platform is determined by the cargo features enabled on
-/// this crate.
-#[cfg(all(feature = "platform_opengl", not(feature = "sdl")))]
-pub use self::stub::StubOpenglPlatform as DefaultPlatform;
+    /// The parameters passed to draw calls.
+    type DrawParams: crate::graphics::DrawParams<Self::Context>;
 
-/// The default Platform is determined by the cargo features enabled on
-/// this crate.
-#[cfg(feature = "sdl")]
-pub use self::sdl2::SdlPlatform as DefaultPlatform;
-
-// Platform used for tests
-
-/// The default Platform used for tests is determined by the cargo features
-/// enabled on this crate.
-#[cfg(not(feature = "platform_opengl"))]
-pub use self::stub::StubPlatform as TestPlatform;
-
-/// The default Platform used for tests is determined by the cargo features
-/// enabled on this crate.
-#[cfg(all(
-    feature = "platform_opengl",
-    not(feature = "sdl"),
-    not(feature = "platform_osmesa"),
-    not(all(test, feature = "platform_osmesa_test")),
-))]
-pub use self::stub::StubOpenglPlatform as TestPlatform;
-
-/// The default Platform used for tests is determined by the cargo features
-/// enabled on this crate.
-#[cfg(all(
-    feature = "sdl",
-    not(feature = "platform_osmesa"),
-    not(all(test, feature = "platform_osmesa_test")),
-))]
-pub use self::sdl2::SdlPlatform as TestPlatform;
-
-/// The default Platform used for tests is determined by the cargo features
-/// enabled on this crate.
-#[cfg(any(
-    feature = "platform_osmesa",
-    all(test, feature = "platform_osmesa_test"),
-))]
-pub use self::osmesa::OSMesaPlatform as TestPlatform;
-
-/// The default RenderPlatform is determined by the cargo features enabled on
-/// this crate.
-pub type DefaultRenderPlatform = <DefaultPlatform as Platform>::Renderer;
-
-/// The default RenderPlatform used for tests is determined by the cargo
-/// features enabled on this crate.
-pub type TestRenderPlatform = <TestPlatform as Platform>::Renderer;
+    /// A default type of WidgetContent this RenderPlatform provides for
+    /// buttons.
+    type DefaultButtonContent: Default
+        + crate::selectable::Selectable
+        + crate::widget::WidgetContent<Self>
+        + crate::widgets::TextContent;
+}

@@ -1,4 +1,4 @@
-use crate::platform::opengl::FontFamilySource;
+use crate::platforms::opengl::FontFamilySource;
 #[rustfmt::skip]
 pub const FONT: FontFamilySource = FontFamilySource {
                 image_width: 1024,
