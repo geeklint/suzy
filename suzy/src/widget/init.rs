@@ -36,6 +36,15 @@ where
         layout::LayoutTypes::new(self)
     }
 
+    fn register_coroutine<Get, Args, Fac, Fut>(&mut self, coroutine: Get, factory: Fac)
+    where
+        Get: 'static + Fn(&mut T) -> &mut super::Coroutine<Args>,
+        Fut: 'static + std::future::Future<Output=()>,
+        Fac: 'static + Fn(Args) -> Fut,
+    {
+        super::Coroutine::register(coroutine, self, factory);
+    }
+
     #[doc(hidden)]
     fn init_child_inline<F, C>(&mut self, getter: F)
     where
