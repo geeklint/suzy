@@ -4,8 +4,8 @@
 
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::widget::{
-    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
-    Coroutine,
+    Coroutine, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
+    WidgetInit,
 };
 use suzy::widgets::Button;
 
@@ -25,10 +25,13 @@ impl WidgetContent for Root {
                 this.coroutine.start(());
             }
         });
-        init.register_coroutine(|this| &mut this.coroutine, |()| async {
-            Coroutine::delay_secs(5.0).await;
-            println!("Button clicked after delay");
-        });
+        init.register_coroutine(
+            |this| &mut this.coroutine,
+            |()| async {
+                Coroutine::delay_secs(5.0).await;
+                println!("Button clicked after delay");
+            },
+        );
     }
 
     fn children(&mut self, mut receiver: impl WidgetChildReceiver) {

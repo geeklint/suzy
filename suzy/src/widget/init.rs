@@ -36,10 +36,15 @@ where
         layout::LayoutTypes::new(self)
     }
 
-    fn register_coroutine<Get, Args, Fac, Fut>(&mut self, coroutine: Get, factory: Fac)
-    where
+    /// Register a coroutine with a factory function which creates the Future
+    /// from the arguments provided to Coroutine::start.
+    fn register_coroutine<Get, Args, Fac, Fut>(
+        &mut self,
+        coroutine: Get,
+        factory: Fac,
+    ) where
         Get: 'static + Fn(&mut T) -> &mut super::Coroutine<Args>,
-        Fut: 'static + std::future::Future<Output=()>,
+        Fut: 'static + std::future::Future<Output = ()>,
         Fac: 'static + Fn(Args) -> Fut,
     {
         super::Coroutine::register(coroutine, self, factory);
