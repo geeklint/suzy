@@ -11,16 +11,16 @@ use crate::platforms::opengl;
 
 use super::bindings;
 
-pub struct OSMesaWindow {
+pub struct OsMesaWindow {
     title: String,
     size: (u16, u16),
     gl_win: opengl::Window,
     buffer: Vec<u8>,
 }
 
-impl OSMesaWindow {
+impl OsMesaWindow {
     pub(super) fn new(
-        ctx: bindings::OSMesaContext,
+        ctx: bindings::OsMesaContext,
         builder: WindowBuilder,
     ) -> Self {
         let (width, height) = builder.size();
@@ -54,7 +54,7 @@ impl OSMesaWindow {
     }
 }
 
-impl WindowSettings for OSMesaWindow {
+impl WindowSettings for OsMesaWindow {
     fn size(&self) -> (f32, f32) {
         (self.size.0.into(), self.size.1.into())
     }
@@ -91,7 +91,7 @@ impl WindowSettings for OSMesaWindow {
     }
 }
 
-impl Window<opengl::OpenGlRenderPlatform> for OSMesaWindow {
+impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
     fn pixels_per_dp(&self) -> f32 {
         1.0
     }

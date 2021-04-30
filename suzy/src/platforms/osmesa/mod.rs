@@ -2,6 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+//! The OS Mesa platform uses the Mesa library to render graphics
+//! offscreen, without involving a window manager.
+//!
+//! The OS Mesa platform does not implement an event loop, since there is
+//! no window to recieve events from.  Mostly it should be used for
+//! automation, e.g. tests.
+
 use crate::platform::{Event, SimpleEventLoopState};
 
 use crate::platforms::opengl::OpenGlRenderPlatform;
@@ -9,14 +16,16 @@ use crate::platforms::opengl::OpenGlRenderPlatform;
 mod bindings;
 mod window;
 
+/// OS Mesa Platform.  See [the module level documentation](self)
+/// for more.
 #[derive(Debug)]
-pub struct OSMesaPlatform {
-    ctx: bindings::OSMesaContext,
+pub struct OsMesaPlatform {
+    ctx: bindings::OsMesaContext,
 }
 
-impl crate::platform::Platform for OSMesaPlatform {
+impl crate::platform::Platform for OsMesaPlatform {
     type State = SimpleEventLoopState;
-    type Window = window::OSMesaWindow;
+    type Window = window::OsMesaWindow;
     type Renderer = OpenGlRenderPlatform;
 
     fn new() -> Self {
@@ -31,7 +40,7 @@ impl crate::platform::Platform for OSMesaPlatform {
         &mut self,
         settings: crate::window::WindowBuilder,
     ) -> Result<Self::Window, String> {
-        Ok(window::OSMesaWindow::new(self.ctx, settings))
+        Ok(window::OsMesaWindow::new(self.ctx, settings))
     }
 
     #[allow(clippy::unimplemented)]
@@ -43,7 +52,7 @@ impl crate::platform::Platform for OSMesaPlatform {
     }
 }
 
-impl Drop for OSMesaPlatform {
+impl Drop for OsMesaPlatform {
     fn drop(&mut self) {
         unsafe {
             bindings::OSMesaDestroyContext(self.ctx);

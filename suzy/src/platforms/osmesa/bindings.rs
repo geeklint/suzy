@@ -5,19 +5,19 @@ pub(super) struct osmesa_context {
     _unused: [u8; 0],
 }
 
-pub(super) type OSMesaContext = *mut osmesa_context;
+pub(super) type OsMesaContext = *mut osmesa_context;
 
 #[link(name = "OSMesa")]
 extern "C" {
     pub(super) fn OSMesaCreateContext(
         format: c_uint,
-        sharelist: OSMesaContext,
-    ) -> OSMesaContext;
+        sharelist: OsMesaContext,
+    ) -> OsMesaContext;
 
-    pub(super) fn OSMesaDestroyContext(ctx: OSMesaContext);
+    pub(super) fn OSMesaDestroyContext(ctx: OsMesaContext);
 
     pub(super) fn OSMesaMakeCurrent(
-        ctx: OSMesaContext,
+        ctx: OsMesaContext,
         buffer: *mut c_void,
         type_: c_uint,
         width: c_int,

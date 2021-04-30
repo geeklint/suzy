@@ -1,4 +1,4 @@
-// Platforms
+//! This module contains the built-in implementations of the Suzy platform.
 
 // stub types are used in case no other defaults are available - all their
 // methods panic
@@ -65,7 +65,7 @@ pub use self::sdl2::SdlPlatform as TestPlatform;
     feature = "platform_osmesa",
     all(test, feature = "platform_osmesa_test"),
 ))]
-pub use self::osmesa::OSMesaPlatform as TestPlatform;
+pub use self::osmesa::OsMesaPlatform as TestPlatform;
 
 /// The default RenderPlatform is determined by the cargo features enabled on
 /// this crate.
