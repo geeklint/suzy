@@ -16,6 +16,8 @@
 mod event;
 pub use event::{Event, EventLoopState, SimpleEventLoopState};
 
+pub mod graphics;
+
 pub use crate::platforms::{
     DefaultPlatform, DefaultRenderPlatform, TestPlatform, TestRenderPlatform,
 };
