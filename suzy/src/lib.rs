@@ -72,6 +72,7 @@ pub mod platform;
 pub mod platforms;
 pub mod pointer;
 pub mod selectable;
+pub mod text;
 pub mod units;
 pub mod watch;
 pub mod widget;
