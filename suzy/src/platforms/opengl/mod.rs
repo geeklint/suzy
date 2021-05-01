@@ -50,4 +50,7 @@ impl crate::platform::RenderPlatform for OpenGlRenderPlatform {
     type DrawParams = drawparams::DrawParams;
 
     type DefaultButtonContent = widgets::DefaultOpenGlButton;
+    type Texture = Texture;
+    type SlicedImage = SlicedImage;
+    type SelectableSlicedImage = SelectableSlicedImage;
 }

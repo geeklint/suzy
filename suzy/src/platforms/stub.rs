@@ -52,6 +52,9 @@ impl crate::platform::RenderPlatform for StubRenderPlatform {
     type DrawParams = StubDrawParams;
 
     type DefaultButtonContent = StubButtonContent;
+    type Texture = StubTexture;
+    type SlicedImage = StubSlicedImage;
+    type SelectableSlicedImage = StubSelectableSlicedImage;
 }
 
 impl crate::graphics::DrawParams<()> for StubDrawParams {
@@ -262,6 +265,12 @@ impl crate::platform::graphics::SlicedImage<StubTexture> for StubSlicedImage {
     }
 }
 
+impl crate::graphics::Graphic<StubRenderPlatform> for StubSlicedImage {
+    fn draw(&mut self, _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>) {
+        stub!()
+    }
+}
+
 #[derive(Default)]
 pub struct StubSelectableSlicedImage;
 
@@ -281,6 +290,12 @@ impl crate::platform::graphics::SelectableSlicedImage<StubTexture> for StubSelec
         P: crate::dims::Padding2d {
             stub!()
         }
+}
+
+impl crate::graphics::Graphic<StubRenderPlatform> for StubSelectableSlicedImage {
+    fn draw(&mut self, _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>) {
+        stub!()
+    }
 }
 
 #[derive(Default)]
