@@ -108,19 +108,27 @@ pub enum TextAlignment {
     Right,
 }
 
+/// A enum of commands to be fed into a rich text renderer.
 pub enum RichTextCommand<'a> {
+    /// Text command to render text.
     Text(Cow<'a, str>),
+    /// Command to increase the current font-weight.
     Bold,
+    /// Command to make text more italic.
     Italic,
+    /// Command to decrease the current font-weight.
     ResetBold,
+    /// Command to make text less italic.
     ResetItalic,
 }
 
+/// A parser which parses a basic subset of HTML and generates TextCommands.
 pub struct RichTextParser<'a> {
     text: &'a str,
 }
 
 impl<'a> RichTextParser<'a> {
+    /// Create a new RichTextParser with some text
     pub fn new(text: &'a str) -> Self {
         Self { text }
     }
@@ -166,6 +174,8 @@ impl<'a> Iterator for RichTextParser<'a> {
     }
 }
 
+/// Text settings contains common settings for rendering text, such as
+/// font size, color, and alignment.
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub struct TextSettings {
@@ -205,9 +215,13 @@ impl Default for TextSettings {
     }
 }
 
+/// Struct which describes basic position information for rendering text.
 #[derive(Clone, Copy, Debug)]
 pub struct TextPosition {
-    x: f32,
-    y: f32,
-    wrap_width: f32,
+    /// Horizontal position to start rendering the text.
+    pub left: f32,
+    /// Vertical position to start rendering the text.
+    pub top: f32,
+    /// Width to wrap text at.
+    pub wrap_width: f32,
 }

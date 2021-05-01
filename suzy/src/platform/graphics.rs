@@ -9,7 +9,9 @@ use crate::dims::Padding2d;
 use crate::selectable::{Selectable, SelectionState};
 use crate::text::{RichTextCommand, TextPosition, TextSettings};
 
+/// A platform's primitive texture type.
 pub trait Texture {
+    /// Load a texture from static memory (e.g. include_bytes!())
     fn load_static(
         width: u16,
         height: u16,
@@ -18,13 +20,18 @@ pub trait Texture {
     ) -> Self;
 }
 
+/// A platform's 9-slice image graphic primitive.
 pub trait SlicedImage<T> {
+    /// Set the image to be drawn from a given texture and padding.
     fn set_image<P>(&mut self, texture: T, padding: P)
     where
         P: Padding2d;
 }
 
+/// A platform's selectable 9-slice image graphic primitive.
 pub trait SelectableSlicedImage<T>: Selectable {
+    /// Set the image to be drawn from a given texture and padding, and 
+    /// states present in the image.
     fn set_image<P>(
         &mut self,
         texture: T,
@@ -34,7 +41,10 @@ pub trait SelectableSlicedImage<T>: Selectable {
         P: Padding2d;
 }
 
+/// A platform's text graphic primitive.
 pub trait Text {
+    /// Set the text to be rendered with the given rich text commands,
+    /// position information, and render settings.
     fn set_text<'a, T>(
         &mut self,
         text: T,

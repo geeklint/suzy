@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use crate::graphics::{Color, DrawContext, Graphic};
-use crate::text::{FontStyle, RichTextParser, TextAlignment};
+use crate::text::{FontStyle, RichTextParser};
 use crate::watch::Watched;
 
 use super::buffer::SingleVertexBuffer;
