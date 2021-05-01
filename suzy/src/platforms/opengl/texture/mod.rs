@@ -485,3 +485,14 @@ impl Default for Texture {
         }
     }
 }
+
+impl crate::platform::graphics::Texture for Texture {
+    fn load_static(
+        width: u16,
+        height: u16,
+        alignment: u16,
+        pixels: &'static [u8],
+    ) -> Self {
+        Self::from_rgba_cached(width, height, alignment, pixels)
+    }
+}

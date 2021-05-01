@@ -66,12 +66,9 @@ impl SlicedImage {
 
     /// Set the texture used by this graphic.  The given padding describes
     /// the sliced area.
-    pub fn set_image<P>(&mut self, texture: Texture, padding: &P)
-    where
-        P: Padding2d,
-    {
+    pub fn set_image(&mut self, texture: Texture, padding: SimplePadding2d) {
         self.texture = texture;
-        self.padding = padding.into();
+        self.padding = padding;
         self.update_image();
     }
 
@@ -229,6 +226,14 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
     }
 }
 
+impl crate::platform::graphics::SlicedImage<Texture> for SlicedImage {
+    fn set_image<P>(&mut self, texture: Texture, padding: P)
+    where
+        P: Padding2d {
+        self.set_image(texture, (&padding).into())
+    }
+}
+
 /// A version of SliceImage which assumes multiple images are layed out in
 /// the same texture corosponding to different "selection states".
 ///
@@ -283,13 +288,12 @@ impl SelectableSlicedImage {
     /// unincluded states.
     ///
     /// The given padding describes the sliced area of each sub-image.
-    pub fn set_image<P, S>(&mut self, texture: Texture, padding: &P, states: S)
+    pub fn set_image<S>(&mut self, texture: Texture, padding: SimplePadding2d, states: S)
     where
-        P: Padding2d,
         S: Into<std::borrow::Cow<'static, [SelectionState]>>,
     {
         self.inner.texture = texture;
-        self.inner.padding = padding.into();
+        self.inner.padding = padding;
         let states = states.into();
         assert!(
             states.contains(&SelectionState::normal()),
@@ -422,6 +426,18 @@ impl Graphic<OpenGlRenderPlatform> for SelectableSlicedImage {
                 self.inner.buffers.set_indices(|_gl| &SLICED_INDICES[..]);
             }
         });
+    }
+}
+
+impl crate::platform::graphics::SelectableSlicedImage<Texture> for SelectableSlicedImage {
+    fn set_image<P>(
+        &mut self,
+        texture: Texture,
+        padding: P,
+        states: &'static [SelectionState],
+    ) where
+        P: Padding2d {
+        self.set_image(texture, (&padding).into(), states)
     }
 }
 

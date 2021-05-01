@@ -66,7 +66,7 @@ impl WidgetContent<Plat> for DefaultOpenGlButton {
         init.watch(|this, _rect| {
             this.image.set_image(
                 Texture::from_rgba_cached(112, 37, 1, BUTTON_DATA),
-                &SimplePadding2d::uniform(6.0),
+                SimplePadding2d::uniform(6.0),
                 BUTTON_STATES,
             );
         });
