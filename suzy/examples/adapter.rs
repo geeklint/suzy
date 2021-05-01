@@ -6,7 +6,8 @@ extern crate suzy;
 
 use suzy::adapter::{Adaptable, DownwardVecAdapter};
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::platforms::opengl::{Text, TextAlignment, TextLayoutSettings};
+use suzy::platforms::opengl::{Text, TextLayoutSettings};
+use suzy::text::TextAlignment;
 use suzy::watch::Watched;
 use suzy::widget::*;
 

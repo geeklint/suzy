@@ -3,12 +3,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use super::{
-    OpenGlRenderPlatform, SelectableSlicedImage, Text, TextAlignment,
-    TextLayoutSettings, Texture,
+    OpenGlRenderPlatform, SelectableSlicedImage, Text, TextLayoutSettings,
+    Texture,
 };
 use crate::dims::{Rect, SimplePadding2d};
 use crate::graphics::Color;
 use crate::selectable::{Selectable, SelectionState, SelectionStateV0};
+use crate::text::TextAlignment;
 use crate::widget::{
     WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };

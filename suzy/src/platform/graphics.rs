@@ -7,6 +7,7 @@
 
 use crate::dims::Padding2d;
 use crate::selectable::{Selectable, SelectionState};
+use crate::text::{RichTextCommand, TextPosition, TextSettings};
 
 pub trait Texture {
     fn load_static(
@@ -33,4 +34,12 @@ pub trait SelectableSlicedImage<T>: Selectable {
         P: Padding2d;
 }
 
-pub trait Text {}
+pub trait Text {
+    fn set_text<'a, T>(
+        &mut self,
+        text: T,
+        pos: &TextPosition,
+        settings: &TextSettings,
+    ) where
+        T: 'a + Iterator<Item = RichTextCommand<'a>>;
+}

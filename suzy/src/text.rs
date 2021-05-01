@@ -6,6 +6,8 @@
 
 use std::borrow::Cow;
 
+use crate::graphics::Color;
+
 /// A font style for a block of rich text.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FontStyle {
@@ -34,6 +36,7 @@ impl FontStyle {
     /// assert_eq!(FontStyle::Bold.bold(), FontStyle::Bold);
     /// assert_eq!(FontStyle::Italic.bold(), FontStyle::BoldItalic);
     /// ```
+    #[must_use]
     pub fn bold(self) -> Self {
         match self {
             Self::Normal => Self::Bold,
@@ -50,6 +53,7 @@ impl FontStyle {
     /// assert_eq!(FontStyle::Italic.italic(), FontStyle::Italic);
     /// assert_eq!(FontStyle::Bold.italic(), FontStyle::BoldItalic);
     /// ```
+    #[must_use]
     pub fn italic(self) -> Self {
         match self {
             Self::Normal => Self::Italic,
@@ -66,6 +70,7 @@ impl FontStyle {
     /// assert_eq!(FontStyle::Bold.unbold(), FontStyle::Normal);
     /// assert_eq!(FontStyle::BoldItalic.unbold(), FontStyle::Italic);
     /// ```
+    #[must_use]
     pub fn unbold(self) -> Self {
         match self {
             Self::Bold => Self::Normal,
@@ -82,6 +87,7 @@ impl FontStyle {
     /// assert_eq!(FontStyle::Italic.unitalic(), FontStyle::Normal);
     /// assert_eq!(FontStyle::BoldItalic.unitalic(), FontStyle::Bold);
     /// ```
+    #[must_use]
     pub fn unitalic(self) -> Self {
         match self {
             Self::Italic => Self::Normal,
@@ -158,4 +164,50 @@ impl<'a> Iterator for RichTextParser<'a> {
             Some(RichTextCommand::Text(cow))
         }
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+#[non_exhaustive]
+pub struct TextSettings {
+    /// Primary text color.
+    pub text_color: Color,
+
+    /// Font size
+    pub font_size: f32,
+
+    /// Text Alignment
+    pub alignment: TextAlignment,
+
+    /// Base font style
+    pub font_style: FontStyle,
+
+    /// Color of outline around glyphs.
+    pub outline_color: Color,
+
+    /// Width of the outline around glyphs.
+    pub outline_width: f32,
+
+    /// Width between tab stops
+    pub tab_stop: f32,
+}
+
+impl Default for TextSettings {
+    fn default() -> Self {
+        Self {
+            text_color: Color::WHITE,
+            font_size: 24.0,
+            alignment: TextAlignment::Left,
+            font_style: FontStyle::Normal,
+            outline_color: Color::create_rgba(1.0, 1.0, 1.0, 0.0),
+            outline_width: 0.0,
+            tab_stop: 48.0,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct TextPosition {
+    x: f32,
+    y: f32,
+    wrap_width: f32,
 }

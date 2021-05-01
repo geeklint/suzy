@@ -18,11 +18,12 @@ use super::OpenGlRenderPlatform;
 mod calc;
 mod font;
 
+pub use calc::TextLayoutSettings;
 pub use font::{
     FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
 };
 
-use calc::{FontCharCalc, TextLayoutSettings};
+use calc::FontCharCalc;
 use font::{ChannelMask, GlyphMetricsSource};
 
 #[cfg(feature = "default_font")]
