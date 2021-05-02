@@ -12,7 +12,8 @@ use crate::widget::{
     WidgetGraphicReceiver, WidgetInit,
 };
 
-pub struct ButtonContent<T> {
+/// A Widget providing the behavior of a button.
+pub struct ButtonBehavior<T> {
     on_click: WatchedEvent<()>,
     state: Watched<SelectionState>,
     interactable: Watched<bool>,
@@ -20,25 +21,29 @@ pub struct ButtonContent<T> {
     content: T,
 }
 
-impl<T> ButtonContent<T> {
+impl<T> ButtonBehavior<T> {
+    /// Get a reference to the content of this button.
     pub fn content(&self) -> &T {
         &self.content
     }
 
+    /// Get a mutable reference to the content of this button.
     pub fn content_mut(&mut self) -> &mut T {
         &mut self.content
     }
 
+    /// Get the current button selection state.
     pub fn state(&self) -> SelectionState {
         *self.state
     }
 
+    /// Returns Some(()) in a watch closure when the button is clicked.
     pub fn on_click(&self) -> Option<()> {
         self.on_click.bind().copied()
     }
 }
 
-impl<T, P> WidgetContent<P> for ButtonContent<T>
+impl<T, P> WidgetContent<P> for ButtonBehavior<T>
 where
     P: RenderPlatform,
     T: Selectable + WidgetContent<P>,
@@ -137,7 +142,7 @@ where
     }
 }
 
-impl<T: Default> Default for ButtonContent<T> {
+impl<T: Default> Default for ButtonBehavior<T> {
     fn default() -> Self {
         Self {
             on_click: WatchedEvent::default(),
@@ -155,4 +160,4 @@ impl<T: Default> Default for ButtonContent<T> {
 pub type Button<
     T = <DefaultRenderPlatform as RenderPlatform>::DefaultButtonContent,
     P = DefaultRenderPlatform,
-> = Widget<ButtonContent<T>, P>;
+> = Widget<ButtonBehavior<T>, P>;

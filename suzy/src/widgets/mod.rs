@@ -7,7 +7,7 @@
 mod button;
 mod togglebutton;
 
-pub use button::Button;
+pub use button::{Button, ButtonBehavior};
 
 pub use togglebutton::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
 
