@@ -8,12 +8,12 @@ use crate::selectable::{Selectable, SelectionState, SelectionStateV2};
 
 use crate::platforms::opengl;
 use opengl::context::bindings::{FALSE, FLOAT, TRIANGLES, UNSIGNED_BYTE};
-use opengl::{
-    DualVertexBuffer, DualVertexBufferIndexed, OpenGlRenderPlatform, Texture,
-};
+use opengl::{DualVertexBufferIndexed, OpenGlRenderPlatform, Texture};
 
 #[rustfmt::skip]
 static SLICED_INDICES: [u8; 18 * 3] = [
+    12, 13, 15,
+    13, 14, 15,
     0, 4, 11,
     4, 12, 11,
     4, 5, 12,
@@ -22,8 +22,6 @@ static SLICED_INDICES: [u8; 18 * 3] = [
     1, 6, 13,
     11, 12, 10,
     12, 15, 10,
-    12, 13, 15,
-    13, 14, 15,
     13, 6, 14,
     6, 7, 14,
     10, 15, 3,
@@ -70,6 +68,14 @@ impl SlicedImage {
         self.texture = texture;
         self.padding = padding;
         self.update_image();
+    }
+
+    fn indicies_to_draw(&self) -> opengl::context::bindings::types::GLsizei {
+        if self.padding == SimplePadding2d::zero() {
+            6
+        } else {
+            SLICED_INDICES.len() as _
+        }
     }
 
     fn update_image(&mut self) {
@@ -183,6 +189,7 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
         ctx.push(|ctx| {
             ctx.params().standard_mode();
             ctx.params().use_texture(self.texture.clone());
+            let indicies_to_draw = self.indicies_to_draw();
             if let Some(ready) = self.buffers.check_ready(ctx) {
                 let gl = ready.gl;
                 ready.bind_0();
@@ -211,7 +218,7 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
                 unsafe {
                     gl.DrawElements(
                         TRIANGLES,
-                        SLICED_INDICES.len() as _,
+                        indicies_to_draw,
                         UNSIGNED_BYTE,
                         std::ptr::null(),
                     );
@@ -391,6 +398,7 @@ impl Graphic<OpenGlRenderPlatform> for SelectableSlicedImage {
         ctx.push(|ctx| {
             ctx.params().standard_mode();
             ctx.params().use_texture(self.inner.texture.clone());
+            let indicies_to_draw = self.inner.indicies_to_draw();
             if let Some(ready) = self.inner.buffers.check_ready(ctx) {
                 let gl = ready.gl;
                 ready.bind_0();
@@ -419,7 +427,7 @@ impl Graphic<OpenGlRenderPlatform> for SelectableSlicedImage {
                 unsafe {
                     gl.DrawElements(
                         TRIANGLES,
-                        SLICED_INDICES.len() as _,
+                        indicies_to_draw,
                         UNSIGNED_BYTE,
                         std::ptr::null(),
                     );
@@ -446,146 +454,5 @@ impl crate::platform::graphics::SelectableSlicedImage<Texture>
         P: Padding2d,
     {
         self.set_image(texture, (&padding).into(), states)
-    }
-}
-
-/// An image which will stretch the texture to fill the image rect.
-pub struct SimpleImage {
-    rect: SimpleRect,
-    texture: Texture,
-    buffers: DualVertexBuffer<f32>,
-}
-
-impl Default for SimpleImage {
-    fn default() -> Self {
-        Self {
-            rect: SimpleRect::default(),
-            texture: Texture::default(),
-            buffers: DualVertexBuffer::new(true, false),
-        }
-    }
-}
-
-impl SimpleImage {
-    /// Create a new SimpleImage.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Set the texture used by this graphic.
-    pub fn set_image(&mut self, texture: Texture) {
-        self.texture = texture;
-        self.update_image();
-    }
-
-    fn update_image(&mut self) {
-        let mut uvs = [0f32; 12];
-        let Self {
-            buffers, texture, ..
-        } = self;
-        buffers.set_data_1(|_gl| {
-            texture.size().and_then(|_| {
-                let uvs = &mut uvs;
-                texture.transform_uvs(move || {
-                    #[rustfmt::skip]
-                    let data = [
-                        0.0, 0.0,
-                        1.0, 0.0,
-                        1.0, 1.0,
-                        0.0, 0.0,
-                        1.0, 1.0,
-                        0.0, 1.0,
-                    ];
-                    *uvs = data;
-                    &mut uvs[..]
-                })
-            })
-        });
-    }
-
-    fn update(&mut self) {
-        let rect = &self.rect;
-        let mut vertices = [0f32; 12];
-        self.buffers.set_data_0(|_gl| {
-            #[rustfmt::skip]
-            let data = [
-                rect.left(), rect.bottom(),
-                rect.right(), rect.bottom(),
-                rect.right(), rect.top(),
-                rect.left(), rect.bottom(),
-                rect.right(), rect.top(),
-                rect.left(), rect.top(),
-            ];
-            vertices = data;
-            &vertices[..]
-        });
-    }
-}
-
-impl Rect for SimpleImage {
-    fn x(&self) -> Dim {
-        self.rect.x()
-    }
-    fn y(&self) -> Dim {
-        self.rect.y()
-    }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        let res = self.rect.x_mut(f);
-        self.update();
-        res
-    }
-
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        let res = self.rect.y_mut(f);
-        self.update();
-        res
-    }
-}
-
-impl Graphic<OpenGlRenderPlatform> for SimpleImage {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
-        ctx.push(|ctx| {
-            ctx.params().standard_mode();
-            ctx.params().use_texture(self.texture.clone());
-            if let Some(ready) = self.buffers.check_ready(ctx) {
-                let gl = ready.gl;
-                ready.bind_0();
-                unsafe {
-                    gl.VertexAttribPointer(
-                        0,
-                        2,
-                        FLOAT,
-                        FALSE,
-                        0,
-                        std::ptr::null(),
-                    );
-                }
-                ready.bind_1();
-                unsafe {
-                    gl.VertexAttribPointer(
-                        1,
-                        2,
-                        FLOAT,
-                        FALSE,
-                        0,
-                        std::ptr::null(),
-                    );
-                }
-                unsafe {
-                    gl.DrawArrays(TRIANGLES, 0, 6);
-                }
-            } else {
-                self.update();
-                self.texture.bind(ctx.render_ctx_mut());
-                self.update_image();
-            }
-        });
     }
 }

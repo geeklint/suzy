@@ -8,7 +8,7 @@ use suzy::adapter::{Adaptable, DownwardVecAdapter};
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::platform::graphics::Text as _TextTrait;
 use suzy::platforms::opengl::Text;
-use suzy::text::{RichTextCommand, TextAlignment, TextPosition, TextSettings};
+use suzy::text::{TextAlignment, TextPosition, TextSettings};
 use suzy::watch::Watched;
 use suzy::widget::*;
 

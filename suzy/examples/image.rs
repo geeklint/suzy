@@ -5,7 +5,7 @@
 extern crate suzy;
 
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::platforms::opengl::SimpleImage;
+use suzy::platforms::opengl::SlicedImage;
 use suzy::platforms::opengl::Texture;
 use suzy::widget::*;
 
@@ -17,18 +17,16 @@ const IMAGE_ASPECT: f32 = 384.0 / 512.0;
 // Root widget data
 #[derive(Default)]
 struct ImageViewer {
-    image: SimpleImage,
+    image: SlicedImage,
 }
 
 impl WidgetContent for ImageViewer {
     fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
-            this.image.set_image(Texture::from_rgb(
-                IMAGE_WIDTH,
-                IMAGE_HEIGHT,
-                1,
-                IMAGE,
-            ));
+            this.image.set_image(
+                Texture::from_rgb(IMAGE_WIDTH, IMAGE_HEIGHT, 1, IMAGE),
+                SimplePadding2d::zero(),
+            );
         });
         init.watch(|this, rect| {
             // fill the screen with the image
