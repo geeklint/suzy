@@ -3,13 +3,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use super::{
-    OpenGlRenderPlatform, RawText, SelectableSlicedImage, TextLayoutSettings,
+    OpenGlRenderPlatform, SelectableSlicedImage, Text, TextLayoutSettings,
     Texture,
 };
 use crate::dims::{Rect, SimplePadding2d};
 use crate::graphics::Color;
+use crate::platform::graphics::Text as _TextTrait;
 use crate::selectable::{Selectable, SelectionState, SelectionStateV0};
-use crate::text::TextAlignment;
+use crate::text::{RichTextParser, TextAlignment, TextPosition, TextSettings};
+use crate::watch::Watched;
 use crate::widget::{
     WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
 };
@@ -27,16 +29,18 @@ type Plat = OpenGlRenderPlatform;
 
 pub struct DefaultOpenGlButton {
     image: SelectableSlicedImage,
-    text_graphic: RawText,
-    text: crate::watch::Watched<String>,
+    text_graphic: Text,
+    text_color: Watched<Color>,
+    text: Watched<String>,
 }
 
 impl Default for DefaultOpenGlButton {
     fn default() -> Self {
         DefaultOpenGlButton {
             image: SelectableSlicedImage::default(),
-            text_graphic: RawText::default(),
-            text: crate::watch::Watched::new("Button".to_string()),
+            text_graphic: Text::default(),
+            text_color: Watched::new(Color::WHITE),
+            text: Watched::new("Button".to_string()),
         }
     }
 }
@@ -51,17 +55,21 @@ impl WidgetContent<Plat> for DefaultOpenGlButton {
     fn init(mut init: impl WidgetInit<Self, Plat>) {
         init.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
-
-            let text_settings = this.text_graphic.render_settings();
-            text_settings.x = rect.left();
-            text_settings.y = rect.center_y();
         });
         init.watch(|this, rect| {
-            let text_layout = TextLayoutSettings::default()
-                .wrap_width(rect.width())
-                .alignment(TextAlignment::Center)
-                .y_offset(-12.0);
-            this.text_graphic.set_text(&this.text, text_layout);
+            let pos = TextPosition {
+                left: rect.left(),
+                top: rect.center_y() + 12.0,
+                wrap_width: rect.width(),
+            };
+            let (r, g, b, _) = this.text_color.rgba();
+            let settings = TextSettings {
+                text_color: *this.text_color,
+                alignment: TextAlignment::Center,
+                outline_color: Color::create_rgba(r, g, b, 0.0),
+                ..TextSettings::default()
+            };
+            this.text_graphic.set_text_rich(&this.text, &pos, &settings);
         });
         init.watch(|this, _rect| {
             this.image.set_image(
@@ -85,12 +93,9 @@ impl WidgetContent<Plat> for DefaultOpenGlButton {
 impl Selectable for DefaultOpenGlButton {
     fn selection_changed(&mut self, state: SelectionState) {
         self.image.selection_changed(state);
-        let text_settings = self.text_graphic.render_settings();
-        text_settings.text_color = match state.v0() {
+        *self.text_color = match state.v0() {
             SelectionStateV0::Active => Color::BLACK,
             _ => Color::WHITE,
         };
-        let (r, g, b, _) = text_settings.text_color.rgba();
-        text_settings.outline_color = Color::create_rgba(r, g, b, 0.0);
     }
 }

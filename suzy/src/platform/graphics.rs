@@ -52,4 +52,28 @@ pub trait Text {
         settings: &TextSettings,
     ) where
         T: 'a + Iterator<Item = RichTextCommand<'a>>;
+
+    /// Set the text to be rendered with the given position information,
+    /// and render settings, parsing the text as rich text.
+    fn set_text_rich(
+        &mut self,
+        text: &str,
+        pos: &TextPosition,
+        settings: &TextSettings,
+    ) {
+        use crate::text::RichTextParser;
+        self.set_text(RichTextParser::new(text), pos, settings);
+    }
+
+    /// Set the text to be rendered with the given position information,
+    /// and render settings, assuming the text is plain.
+    fn set_text_plain(
+        &mut self,
+        text: &str,
+        pos: &TextPosition,
+        settings: &TextSettings,
+    ) {
+        let cmd = RichTextCommand::Text(text.into());
+        self.set_text(Some(cmd).into_iter(), pos, settings);
+    }
 }

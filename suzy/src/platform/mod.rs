@@ -67,8 +67,12 @@ pub trait RenderPlatform: 'static {
     type Texture: graphics::Texture + Default;
 
     /// The platform's graphic primitive for 9-sliced images.
-    type SlicedImage: graphics::SlicedImage<Self::Texture> + Default + crate::graphics::Graphic<Self>;
+    type SlicedImage: graphics::SlicedImage<Self::Texture>
+        + Default
+        + crate::graphics::Graphic<Self>;
 
     /// The platform's graphic primitive for selectable 9-sliced images.
-    type SelectableSlicedImage: graphics::SelectableSlicedImage<Self::Texture> + Default + crate::graphics::Graphic<Self>;
+    type SelectableSlicedImage: graphics::SelectableSlicedImage<Self::Texture>
+        + Default
+        + crate::graphics::Graphic<Self>;
 }

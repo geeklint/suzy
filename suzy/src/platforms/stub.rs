@@ -259,14 +259,17 @@ pub struct StubSlicedImage;
 impl crate::platform::graphics::SlicedImage<StubTexture> for StubSlicedImage {
     fn set_image<P>(&mut self, _texture: StubTexture, _padding: P)
     where
-        P: crate::dims::Padding2d
+        P: crate::dims::Padding2d,
     {
         stub!()
     }
 }
 
 impl crate::graphics::Graphic<StubRenderPlatform> for StubSlicedImage {
-    fn draw(&mut self, _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>) {
+    fn draw(
+        &mut self,
+        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+    ) {
         stub!()
     }
 }
@@ -275,25 +278,36 @@ impl crate::graphics::Graphic<StubRenderPlatform> for StubSlicedImage {
 pub struct StubSelectableSlicedImage;
 
 impl crate::selectable::Selectable for StubSelectableSlicedImage {
-    fn selection_changed(&mut self, _state: crate::selectable::SelectionState) {
+    fn selection_changed(
+        &mut self,
+        _state: crate::selectable::SelectionState,
+    ) {
         stub!()
     }
 }
 
-impl crate::platform::graphics::SelectableSlicedImage<StubTexture> for StubSelectableSlicedImage {
+impl crate::platform::graphics::SelectableSlicedImage<StubTexture>
+    for StubSelectableSlicedImage
+{
     fn set_image<P>(
         &mut self,
         _texture: StubTexture,
         _padding: P,
         _states: &'static [crate::selectable::SelectionState],
     ) where
-        P: crate::dims::Padding2d {
-            stub!()
-        }
+        P: crate::dims::Padding2d,
+    {
+        stub!()
+    }
 }
 
-impl crate::graphics::Graphic<StubRenderPlatform> for StubSelectableSlicedImage {
-    fn draw(&mut self, _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>) {
+impl crate::graphics::Graphic<StubRenderPlatform>
+    for StubSelectableSlicedImage
+{
+    fn draw(
+        &mut self,
+        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+    ) {
         stub!()
     }
 }
@@ -308,7 +322,8 @@ impl crate::platform::graphics::Text for StubText {
         _pos: &crate::text::TextPosition,
         _settings: &crate::text::TextSettings,
     ) where
-        T: 'a + Iterator<Item = crate::text::RichTextCommand<'a>> {
-            stub!()
-        }
+        T: 'a + Iterator<Item = crate::text::RichTextCommand<'a>>,
+    {
+        stub!()
+    }
 }

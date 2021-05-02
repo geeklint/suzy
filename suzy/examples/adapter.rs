@@ -6,8 +6,9 @@ extern crate suzy;
 
 use suzy::adapter::{Adaptable, DownwardVecAdapter};
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::platforms::opengl::{RawText, TextLayoutSettings};
-use suzy::text::TextAlignment;
+use suzy::platform::graphics::Text as _TextTrait;
+use suzy::platforms::opengl::Text;
+use suzy::text::{RichTextCommand, TextAlignment, TextPosition, TextSettings};
 use suzy::watch::Watched;
 use suzy::widget::*;
 
@@ -15,7 +16,7 @@ const WORDS: &str = include_str!("words.txt");
 
 struct Element {
     value: Watched<&'static str>,
-    text: RawText,
+    text: Text,
 }
 
 impl Adaptable<&'static str> for Element {
@@ -26,7 +27,7 @@ impl Adaptable<&'static str> for Element {
     fn from(data: &&'static str) -> Self {
         Element {
             value: Watched::new(data),
-            text: RawText::default(),
+            text: Text::default(),
         }
     }
 }
@@ -34,16 +35,14 @@ impl Adaptable<&'static str> for Element {
 impl WidgetContent for Element {
     fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, rect| {
-            let text_settings = this.text.render_settings();
-            text_settings.x = rect.left();
-            text_settings.y = rect.center_y();
-        });
-        init.watch(|this, rect| {
-            let text_layout = TextLayoutSettings::default()
-                .wrap_width(rect.width())
-                .alignment(TextAlignment::Center)
-                .y_offset(-12.0);
-            this.text.set_text(&this.value, text_layout);
+            let pos = TextPosition {
+                left: rect.left(),
+                top: rect.center_y() + 12.0,
+                wrap_width: rect.width(),
+            };
+            let mut settings = TextSettings::default();
+            settings.alignment = TextAlignment::Center;
+            this.text.set_text_plain(&*this.value, &pos, &settings);
         });
     }
 

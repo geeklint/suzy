@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use crate::graphics::{Color, DrawContext, Graphic};
-use crate::text::{FontStyle, RichTextParser};
+use crate::text::{FontStyle, RichTextCommand, TextPosition, TextSettings};
 use crate::watch::Watched;
 
 use super::buffer::SingleVertexBuffer;
@@ -53,6 +53,60 @@ fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(_f: F) -> R {
 ///
 /// This implementation is based on a signed distance field font atlas, these
 /// fonts can be generated using the crate `suzy_build_tools`.
+#[derive(Default)]
+pub struct Text {
+    raw: RawText<()>,
+    font: Watched<Option<Box<FontFamily>>>,
+    render_settings: TextRenderSettings,
+}
+
+impl Text {
+    /// Set the font to be used by future calls to `set_text`.
+    pub fn set_font(&mut self, font: Box<FontFamily>) {
+        *self.font = Some(font);
+    }
+}
+
+impl Graphic<OpenGlRenderPlatform> for Text {
+    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+        self.raw.draw(ctx, self.render_settings);
+    }
+}
+
+impl crate::platform::graphics::Text for Text {
+    fn set_text<'a, T>(
+        &mut self,
+        text: T,
+        pos: &TextPosition,
+        settings: &TextSettings,
+    ) where
+        T: 'a + Iterator<Item = RichTextCommand<'a>>,
+    {
+        let layout = TextLayoutSettings::default()
+            .font_size(settings.font_size)
+            .wrap_width(pos.wrap_width)
+            .alignment(settings.alignment)
+            .tab_stop(settings.tab_stop);
+        self.render_settings = TextRenderSettings {
+            text_color: settings.text_color,
+            outline_color: settings.outline_color,
+            pseudo_bold_level: 0.5,
+            outline_width: settings.outline_width,
+            smoothing: 0.07,
+            outline_smoothing: 0.07,
+            x: pos.left,
+            y: pos.top - settings.font_size,
+        };
+        match &*self.font {
+            Some(font) => self.raw.render(text, font, layout),
+            None => with_default_font(|font| {
+                self.raw.render(text, font, layout);
+            }),
+        };
+    }
+}
+
+/// RawText for custom use cases or optimization
 ///
 /// Text is done in two stages, and there are two settings types for each
 /// stage:
@@ -61,92 +115,50 @@ fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(_f: F) -> R {
 /// contains settings like alignment and wrap width.
 /// 2. `TextRenderSettings` controls the rendering of the text, and contains
 /// settings such as text color and position.
-pub struct RawText {
+pub struct RawText<T> {
     vertices: SingleVertexBuffer<GLfloat>,
     channels: HashMap<ChannelMask, std::ops::Range<usize>>,
     texture: Texture,
-    font: Watched<Option<Box<FontFamily>>>,
-    render_settings: TextRenderSettings,
-    char_locs: calc::CharLocationRecorder,
+    char_locs: T,
 }
 
-impl RawText {
-    /// Create a new empty text graphic.
-    pub fn new() -> Self {
+impl<T: Default> Default for RawText<T> {
+    fn default() -> Self {
         Self {
             vertices: SingleVertexBuffer::new(true),
             channels: HashMap::new(),
             texture: Texture::default(),
-            font: Watched::new(None),
-            render_settings: TextRenderSettings::default(),
-            char_locs: calc::CharLocationRecorder::default(),
+            char_locs: T::default(),
         }
     }
+}
 
-    /// Update the text to display, using the current font, or a default font.
-    ///
-    /// Panics if a font has not been assigned using set_font, and the
-    /// default_font feature has been disabled.
-    pub fn set_text(&mut self, text: &str, settings: TextLayoutSettings) {
-        let texture = &mut self.texture;
+impl<T: Default> RawText<T> {
+    /// Create a new empty text graphic.
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<T: calc::RecordCharLocation> RawText<T> {
+    /// Update the text to display, using the provided font.
+    pub fn render<'a, I>(
+        &mut self,
+        text: I,
+        font: &FontFamilyDynamic,
+        settings: TextLayoutSettings,
+    ) where
+        I: 'a + Iterator<Item = RichTextCommand<'a>>,
+    {
+        self.texture = font.texture.clone();
         let vertices = &mut self.vertices;
         let channels = &mut self.channels;
         let char_locs = &mut self.char_locs;
-        let mut do_render = move |font: &FontFamilyDynamic| {
-            *texture = font.texture.clone();
-            Self::render_impl(
-                text, settings, vertices, channels, font, char_locs,
-            )
-        };
-        match &*self.font {
-            Some(font) => do_render(font),
-            None => with_default_font(do_render),
-        };
-    }
-
-    /// Set the font to be used by future calls to `set_text`.
-    pub fn set_font(&mut self, font: Box<FontFamily>) {
-        *self.font = Some(font);
-    }
-
-    /// Get a mutable reference to this graphics render settings, so you can
-    /// change attributes like the text color.
-    pub fn render_settings(&mut self) -> &mut TextRenderSettings {
-        &mut self.render_settings
-    }
-
-    /// Update the text to display, using the provided font.
-    pub fn render(
-        &mut self,
-        text: &str,
-        font: &FontFamilyDynamic,
-        settings: TextLayoutSettings,
-    ) {
-        self.texture = font.texture.clone();
-        Self::render_impl(
-            text,
-            settings,
-            &mut self.vertices,
-            &mut self.channels,
-            font,
-            &mut self.char_locs,
-        )
-    }
-
-    fn render_impl(
-        text: &str,
-        settings: TextLayoutSettings,
-        vertices: &mut SingleVertexBuffer<GLfloat>,
-        channels: &mut HashMap<ChannelMask, std::ops::Range<usize>>,
-        font: &FontFamilyDynamic,
-        char_locs: &mut calc::CharLocationRecorder,
-    ) {
         let mut verts = vec![];
         vertices.set_data(|_gl| {
             font.texture.transform_uvs(|| {
                 let mut calc = FontCharCalc::new(font, settings, char_locs);
-                let parser = RichTextParser::new(text);
-                for rich_text_cmd in parser {
+                for rich_text_cmd in text {
                     calc.push(rich_text_cmd);
                 }
                 channels.clear();
@@ -157,31 +169,28 @@ impl RawText {
     }
 }
 
-impl Default for RawText {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Graphic<OpenGlRenderPlatform> for RawText {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+impl<T> RawText<T> {
+    fn draw(
+        &mut self,
+        ctx: &mut DrawContext<OpenGlRenderPlatform>,
+        render_settings: TextRenderSettings,
+    ) {
         ctx.push(|ctx| {
             ctx.params().sdf_mode();
             ctx.params().use_texture(self.texture.clone());
-            ctx.params().text_color(self.render_settings.text_color);
-            ctx.params()
-                .outline_color(self.render_settings.outline_color);
+            ctx.params().text_color(render_settings.text_color);
+            ctx.params().outline_color(render_settings.outline_color);
             ctx.params().body_edge(
-                self.render_settings.pseudo_bold_level,
-                self.render_settings.smoothing,
+                render_settings.pseudo_bold_level,
+                render_settings.smoothing,
             );
             ctx.params().outline_edge(
-                self.render_settings.outline_width,
-                self.render_settings.outline_smoothing,
+                render_settings.outline_width,
+                render_settings.outline_smoothing,
             );
             ctx.params().transform(Mat4::translate(
-                self.render_settings.x,
-                self.render_settings.y,
+                render_settings.x,
+                render_settings.y,
             ));
             if self.vertices.bind_if_ready(ctx) {
                 let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
