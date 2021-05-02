@@ -55,6 +55,7 @@ impl crate::platform::RenderPlatform for StubRenderPlatform {
     type Texture = StubTexture;
     type SlicedImage = StubSlicedImage;
     type SelectableSlicedImage = StubSelectableSlicedImage;
+    type Text = StubText;
 }
 
 impl crate::graphics::DrawParams<()> for StubDrawParams {
@@ -324,6 +325,15 @@ impl crate::platform::graphics::Text for StubText {
     ) where
         T: 'a + Iterator<Item = crate::text::RichTextCommand<'a>>,
     {
+        stub!()
+    }
+}
+
+impl crate::graphics::Graphic<StubRenderPlatform> for StubText {
+    fn draw(
+        &mut self,
+        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+    ) {
         stub!()
     }
 }

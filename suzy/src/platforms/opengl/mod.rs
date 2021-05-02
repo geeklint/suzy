@@ -53,4 +53,5 @@ impl crate::platform::RenderPlatform for OpenGlRenderPlatform {
     type Texture = Texture;
     type SlicedImage = SlicedImage;
     type SelectableSlicedImage = SelectableSlicedImage;
+    type Text = Text;
 }
