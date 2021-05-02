@@ -5,7 +5,7 @@
 //! This describes traits which apply to a set of graphic primitives a
 //! platform must implement to support Suzy's built-in widgets.
 
-use crate::dims::Padding2d;
+use crate::dims::{Padding2d, Rect};
 use crate::selectable::{Selectable, SelectionState};
 use crate::text::{RichTextCommand, TextPosition, TextSettings};
 
@@ -21,7 +21,7 @@ pub trait Texture {
 }
 
 /// A platform's 9-slice image graphic primitive.
-pub trait SlicedImage<T> {
+pub trait SlicedImage<T>: Rect {
     /// Set the image to be drawn from a given texture and padding.
     fn set_image<P>(&mut self, texture: T, padding: P)
     where
@@ -29,7 +29,7 @@ pub trait SlicedImage<T> {
 }
 
 /// A platform's selectable 9-slice image graphic primitive.
-pub trait SelectableSlicedImage<T>: Selectable {
+pub trait SelectableSlicedImage<T>: Rect + Selectable {
     /// Set the image to be drawn from a given texture and padding, and
     /// states present in the image.
     fn set_image<P>(

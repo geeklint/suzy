@@ -275,6 +275,27 @@ impl crate::graphics::Graphic<StubRenderPlatform> for StubSlicedImage {
     }
 }
 
+impl crate::dims::Rect for StubSlicedImage {
+    fn x(&self) -> crate::dims::Dim {
+        stub!()
+    }
+    fn y(&self) -> crate::dims::Dim {
+        stub!()
+    }
+    fn x_mut<F, R>(&mut self, _f: F) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
+    {
+        stub!()
+    }
+    fn y_mut<F, R>(&mut self, _f: F) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
+    {
+        stub!()
+    }
+}
+
 #[derive(Default)]
 pub struct StubSelectableSlicedImage;
 
@@ -309,6 +330,27 @@ impl crate::graphics::Graphic<StubRenderPlatform>
         &mut self,
         _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
     ) {
+        stub!()
+    }
+}
+
+impl crate::dims::Rect for StubSelectableSlicedImage {
+    fn x(&self) -> crate::dims::Dim {
+        stub!()
+    }
+    fn y(&self) -> crate::dims::Dim {
+        stub!()
+    }
+    fn x_mut<F, R>(&mut self, _f: F) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
+    {
+        stub!()
+    }
+    fn y_mut<F, R>(&mut self, _f: F) -> R
+    where
+        F: FnOnce(&mut crate::dims::Dim) -> R,
+    {
         stub!()
     }
 }

@@ -17,14 +17,6 @@ use crate::widget::{
 };
 use crate::widgets::TextContent;
 
-const BUTTON_DATA: &[u8] = include_bytes!("button-all.data");
-const BUTTON_STATES: &[SelectionState] = &[
-    SelectionState::normal(),
-    SelectionState::hover(),
-    SelectionState::focus(),
-    SelectionState::active(),
-];
-
 type Plat = OpenGlRenderPlatform;
 
 pub struct DefaultOpenGlButton {
@@ -70,13 +62,6 @@ impl WidgetContent<Plat> for DefaultOpenGlButton {
                 ..TextSettings::default()
             };
             this.text_graphic.set_text_rich(&this.text, &pos, &settings);
-        });
-        init.watch(|this, _rect| {
-            this.image.set_image(
-                Texture::from_rgba_cached(112, 37, 1, BUTTON_DATA),
-                SimplePadding2d::uniform(6.0),
-                BUTTON_STATES,
-            );
         });
     }
 

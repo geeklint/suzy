@@ -4,6 +4,7 @@
 
 use drying_paint::{Watched, WatchedEvent};
 
+use crate::graphics::Color;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent, PointerId};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
@@ -11,6 +12,17 @@ use crate::widget::{
     Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
     WidgetGraphicReceiver, WidgetInit,
 };
+
+const IMAGE_DATA: &[u8] = include_bytes!("button-all.data");
+const IMAGE_WIDTH: u16 = 112;
+const IMAGE_HEIGHT: u16 = 37;
+const IMAGE_ALIGNMENT: u16 = 1;
+const IMAGE_STATES: &[SelectionState] = &[
+    SelectionState::normal(),
+    SelectionState::hover(),
+    SelectionState::focus(),
+    SelectionState::active(),
+];
 
 /// A Widget providing the behavior of a button.
 pub struct ButtonBehavior<T> {
@@ -158,6 +170,92 @@ impl<T: Default> Default for ButtonBehavior<T> {
 ///
 /// Use `Button::on_click` like a WatchedEvent to handle button clicks
 pub type Button<
-    T = <DefaultRenderPlatform as RenderPlatform>::DefaultButtonContent,
+    T = DefaultButtonContent<DefaultRenderPlatform>,
     P = DefaultRenderPlatform,
 > = Widget<ButtonBehavior<T>, P>;
+
+pub struct DefaultButtonContent<P: RenderPlatform> {
+    image: P::SelectableSlicedImage,
+    text_graphic: P::Text,
+    text_color: Watched<Color>,
+    text: Watched<String>,
+}
+
+impl<P: RenderPlatform> Default for DefaultButtonContent<P> {
+    fn default() -> Self {
+        Self {
+            image: P::SelectableSlicedImage::default(),
+            text_graphic: P::Text::default(),
+            text_color: Watched::new(Color::WHITE),
+            text: Watched::new("Button".to_string()),
+        }
+    }
+}
+
+impl<P: RenderPlatform> super::TextContent for DefaultButtonContent<P> {
+    fn set_text(&mut self, text: &str) {
+        *self.text = text.to_string();
+    }
+}
+
+impl<P: RenderPlatform> Selectable for DefaultButtonContent<P> {
+    fn selection_changed(&mut self, state: SelectionState) {
+        use crate::selectable::SelectionStateV0;
+        self.image.selection_changed(state);
+        *self.text_color = match state.v0() {
+            SelectionStateV0::Active => Color::BLACK,
+            _ => Color::WHITE,
+        };
+    }
+}
+
+impl<P: RenderPlatform> WidgetContent<P> for DefaultButtonContent<P> {
+    fn init(mut init: impl WidgetInit<Self, P>) {
+        use crate::dims::{Rect, SimplePadding2d};
+        use crate::platform::graphics::{
+            SelectableSlicedImage, Text, Texture,
+        };
+        use crate::text::{TextAlignment, TextPosition, TextSettings};
+
+        init.watch(|this, rect| {
+            this.image.set_fill(&rect, &SimplePadding2d::zero());
+        });
+        init.watch(|this, rect| {
+            let pos = TextPosition {
+                left: rect.left(),
+                top: rect.center_y() + 12.0,
+                wrap_width: rect.width(),
+            };
+            let (r, g, b, _) = this.text_color.rgba();
+            let settings = TextSettings {
+                text_color: *this.text_color,
+                alignment: TextAlignment::Center,
+                outline_color: Color::create_rgba(r, g, b, 0.0),
+                ..TextSettings::default()
+            };
+            this.text_graphic.set_text_rich(&this.text, &pos, &settings);
+        });
+        init.watch(|this, _rect| {
+            let texture = P::Texture::load_static(
+                IMAGE_WIDTH,
+                IMAGE_HEIGHT,
+                IMAGE_ALIGNMENT,
+                IMAGE_DATA,
+            );
+            this.image.set_image(
+                texture,
+                SimplePadding2d::uniform(6.0),
+                IMAGE_STATES,
+            );
+        });
+    }
+
+    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) {
+        // no children
+    }
+
+    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<P>) {
+        receiver.graphic(&mut self.image);
+        receiver.graphic(&mut self.text_graphic);
+    }
+}
