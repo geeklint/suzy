@@ -31,7 +31,7 @@ impl FontStyle {
     /// Convert the font style, applying bold (if not already present).
     ///
     /// ```
-    /// # use suzy::platform::opengl::FontStyle;
+    /// # use suzy::text::FontStyle;
     /// assert_eq!(FontStyle::Normal.bold(), FontStyle::Bold);
     /// assert_eq!(FontStyle::Bold.bold(), FontStyle::Bold);
     /// assert_eq!(FontStyle::Italic.bold(), FontStyle::BoldItalic);
@@ -48,7 +48,7 @@ impl FontStyle {
     /// Convert the font style, applying italic (if not already present).
     ///
     /// ```
-    /// # use suzy::platform::opengl::FontStyle;
+    /// # use suzy::text::FontStyle;
     /// assert_eq!(FontStyle::Normal.italic(), FontStyle::Italic);
     /// assert_eq!(FontStyle::Italic.italic(), FontStyle::Italic);
     /// assert_eq!(FontStyle::Bold.italic(), FontStyle::BoldItalic);
@@ -65,7 +65,7 @@ impl FontStyle {
     /// Convert the font style, removing bold (if present).
     ///
     /// ```
-    /// # use suzy::platform::opengl::FontStyle;
+    /// # use suzy::text::FontStyle;
     /// assert_eq!(FontStyle::Normal.unbold(), FontStyle::Normal);
     /// assert_eq!(FontStyle::Bold.unbold(), FontStyle::Normal);
     /// assert_eq!(FontStyle::BoldItalic.unbold(), FontStyle::Italic);
@@ -82,7 +82,7 @@ impl FontStyle {
     /// Convert the font style, removing italic (if present).
     ///
     /// ```
-    /// # use suzy::platform::opengl::FontStyle;
+    /// # use suzy::text::FontStyle;
     /// assert_eq!(FontStyle::Normal.unitalic(), FontStyle::Normal);
     /// assert_eq!(FontStyle::Italic.unitalic(), FontStyle::Normal);
     /// assert_eq!(FontStyle::BoldItalic.unitalic(), FontStyle::Bold);
