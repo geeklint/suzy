@@ -33,7 +33,7 @@ pub use graphics::*;
 pub use matrix::Mat4;
 pub use text::{
     FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
-    Text, TextLayoutSettings,
+    RawText, TextLayoutSettings,
 };
 pub use texture::{
     PopulateTexture, PopulateTextureDynClone, PopulateTextureUtil, Texture,

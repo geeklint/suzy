@@ -35,6 +35,116 @@ fn conv_glyph_metrics(source: GlyphMetricsSource) -> GlyphMetrics {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CharLocationError {
+    CalcError,
+    Outside { clamped: usize },
+}
+
+pub trait RecordCharLocation: Default {
+    fn record_char(&mut self, left: f32, right: f32, top: f32, bottom: f32);
+    fn append(&mut self, other: Self);
+}
+
+impl RecordCharLocation for () {
+    fn record_char(&mut self, _l: f32, _r: f32, _t: f32, _b: f32) {}
+    fn append(&mut self, _other: Self) {}
+}
+
+#[derive(Clone, Copy, Debug)]
+struct CharRect {
+    left: f32,
+    right: f32,
+    top: f32,
+    bottom: f32,
+}
+
+pub struct CharLocationRecorder {
+    min_x: f32,
+    min_y: f32,
+    max_x: f32,
+    max_y: f32,
+    data: Vec<CharRect>,
+}
+
+impl CharLocationRecorder {
+    pub fn char_at(&self, x: f32, y: f32) -> Result<usize, CharLocationError> {
+        use std::cmp::Ordering;
+
+        let mut err = false;
+        let inside = (self.min_x..=self.max_x).contains(&x)
+            && (self.min_y..=self.max_y).contains(&y);
+        let x = x.clamp(self.min_x, self.max_x);
+        let y = y.clamp(self.min_y, self.max_y);
+        let search_res = self.data.binary_search_by(|rect| {
+            if rect.top < y {
+                Ordering::Greater
+            } else if rect.bottom > y {
+                Ordering::Less
+            } else if rect.left > x {
+                Ordering::Greater
+            } else if rect.right < x {
+                Ordering::Less
+            } else if [x, y, rect.left, rect.top, rect.bottom, rect.right]
+                .iter()
+                .any(|v| v.is_nan())
+            {
+                err = true;
+                std::cmp::Ordering::Equal
+            } else {
+                std::cmp::Ordering::Equal
+            }
+        });
+        if err {
+            return Err(CharLocationError::CalcError);
+        }
+        let index = match search_res {
+            Ok(index) => index,
+            Err(index) => index.saturating_sub(1),
+        };
+        if inside {
+            Ok(index)
+        } else {
+            Err(CharLocationError::Outside { clamped: index })
+        }
+    }
+}
+
+impl Default for CharLocationRecorder {
+    fn default() -> Self {
+        Self {
+            min_x: f32::INFINITY,
+            min_y: f32::INFINITY,
+            max_x: f32::NEG_INFINITY,
+            max_y: f32::NEG_INFINITY,
+            data: Vec::new(),
+        }
+    }
+}
+
+impl RecordCharLocation for CharLocationRecorder {
+    fn record_char(&mut self, left: f32, right: f32, top: f32, bottom: f32) {
+        self.min_x = self.min_x.min(left);
+        self.min_y = self.min_y.min(bottom);
+        self.max_x = self.max_x.max(right);
+        self.max_y = self.max_y.max(top);
+        self.data.push(CharRect {
+            left,
+            right,
+            top,
+            bottom,
+        })
+    }
+
+    fn append(&mut self, mut other: Self) {
+        self.min_x = self.min_x.min(other.min_x);
+        self.min_y = self.min_y.min(other.min_y);
+        self.max_x = self.max_x.max(other.max_x);
+        self.max_y = self.max_y.max(other.max_y);
+        self.data.append(&mut other.data);
+    }
+}
+
 /// A type which contains settings which effect the vertex generation
 /// of a text object.
 #[derive(Clone, Copy, Debug)]
@@ -90,7 +200,7 @@ impl TextLayoutSettings {
     }
 }
 
-pub(super) struct FontCharCalc<'a> {
+pub(super) struct FontCharCalc<'a, T> {
     font_family: &'a FontFamilyDynamic<'a>,
     settings: TextLayoutSettings,
     current_style: FontStyle,
@@ -98,13 +208,14 @@ pub(super) struct FontCharCalc<'a> {
     y_offset: f32,
     bufs: HashMap<ChannelMask, Vec<f32>>,
     commited: HashMap<ChannelMask, usize>,
-    char_locs: Vec<(f32, f32)>,
+    char_locs: &'a mut T,
 }
 
-impl<'a> FontCharCalc<'a> {
+impl<'a, T> FontCharCalc<'a, T> {
     pub fn new(
         font_family: &'a FontFamilyDynamic,
         settings: TextLayoutSettings,
+        char_locs: &'a mut T,
     ) -> Self {
         let mut bufs: HashMap<_, _> = font_family
             .channel_masks
@@ -122,16 +233,8 @@ impl<'a> FontCharCalc<'a> {
             x_offset: 0.0,
             bufs,
             commited,
-            char_locs: Vec::new(),
+            char_locs,
         }
-    }
-
-    fn record_char_loc(&mut self) {
-        self.char_locs.push((self.x_offset, self.y_offset));
-    }
-
-    pub(super) fn take_char_locs(&mut self) -> Vec<(f32, f32)> {
-        std::mem::take(&mut self.char_locs)
     }
 
     pub(super) fn merge_verts(
@@ -245,6 +348,17 @@ impl<'a> FontCharCalc<'a> {
             top_uv,
         ]);
     }
+}
+
+impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
+    fn record_char_loc(&mut self, advance: f32) {
+        self.char_locs.record_char(
+            self.x_offset,
+            self.x_offset + advance,
+            self.y_offset + self.settings.font_size,
+            self.y_offset,
+        );
+    }
 
     fn push_word_splitwrap(&mut self, word: &str) {
         let mut iter = word.chars().peekable();
@@ -259,7 +373,7 @@ impl<'a> FontCharCalc<'a> {
                 if self.x_offset + advance > self.settings.wrap_width {
                     self.push_newline();
                 }
-                self.record_char_loc();
+                self.record_char_loc(advance);
                 self.populate_char(metrics);
                 self.x_offset += advance;
             }
@@ -273,7 +387,7 @@ impl<'a> FontCharCalc<'a> {
         }
         let mut x_offset = self.x_offset;
         let mut verts = Vec::new();
-        let mut char_locs = Vec::new();
+        let mut char_locs = T::default();
         let mut iter = word.chars().peekable();
         while let Some(ch) = iter.next() {
             if let Some(metrics) = self.metrics(ch) {
@@ -288,7 +402,12 @@ impl<'a> FontCharCalc<'a> {
                     self.push_word_splitwrap(word);
                     return;
                 }
-                char_locs.push((x_offset, self.y_offset));
+                char_locs.record_char(
+                    x_offset,
+                    x_offset + advance,
+                    self.y_offset + self.settings.font_size,
+                    self.y_offset,
+                );
                 Self::populate_vertices(
                     self.settings.font_size,
                     &mut verts,
@@ -301,12 +420,12 @@ impl<'a> FontCharCalc<'a> {
         }
         let mask = self.font_family.channel_mask(self.current_style);
         self.bufs.get_mut(&mask).unwrap().append(&mut verts);
-        self.char_locs.append(&mut char_locs);
+        self.char_locs.append(char_locs);
         self.x_offset = x_offset;
     }
 
     pub fn push_whitespace(&mut self, white_char: char) {
-        self.record_char_loc();
+        self.record_char_loc(f32::EPSILON);
         if let Some(metrics) = self.metrics(white_char) {
             let advance = metrics.advance_width;
             let advance = advance * self.settings.font_size;

@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use super::{
-    OpenGlRenderPlatform, SelectableSlicedImage, Text, TextLayoutSettings,
+    OpenGlRenderPlatform, RawText, SelectableSlicedImage, TextLayoutSettings,
     Texture,
 };
 use crate::dims::{Rect, SimplePadding2d};
@@ -27,7 +27,7 @@ type Plat = OpenGlRenderPlatform;
 
 pub struct DefaultOpenGlButton {
     image: SelectableSlicedImage,
-    text_graphic: Text,
+    text_graphic: RawText,
     text: crate::watch::Watched<String>,
 }
 
@@ -35,7 +35,7 @@ impl Default for DefaultOpenGlButton {
     fn default() -> Self {
         DefaultOpenGlButton {
             image: SelectableSlicedImage::default(),
-            text_graphic: Text::default(),
+            text_graphic: RawText::default(),
             text: crate::watch::Watched::new("Button".to_string()),
         }
     }

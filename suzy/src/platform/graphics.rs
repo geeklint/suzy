@@ -30,7 +30,7 @@ pub trait SlicedImage<T> {
 
 /// A platform's selectable 9-slice image graphic primitive.
 pub trait SelectableSlicedImage<T>: Selectable {
-    /// Set the image to be drawn from a given texture and padding, and 
+    /// Set the image to be drawn from a given texture and padding, and
     /// states present in the image.
     fn set_image<P>(
         &mut self,

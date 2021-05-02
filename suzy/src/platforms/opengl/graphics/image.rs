@@ -229,7 +229,8 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
 impl crate::platform::graphics::SlicedImage<Texture> for SlicedImage {
     fn set_image<P>(&mut self, texture: Texture, padding: P)
     where
-        P: Padding2d {
+        P: Padding2d,
+    {
         self.set_image(texture, (&padding).into())
     }
 }
@@ -288,8 +289,12 @@ impl SelectableSlicedImage {
     /// unincluded states.
     ///
     /// The given padding describes the sliced area of each sub-image.
-    pub fn set_image<S>(&mut self, texture: Texture, padding: SimplePadding2d, states: S)
-    where
+    pub fn set_image<S>(
+        &mut self,
+        texture: Texture,
+        padding: SimplePadding2d,
+        states: S,
+    ) where
         S: Into<std::borrow::Cow<'static, [SelectionState]>>,
     {
         self.inner.texture = texture;
@@ -429,14 +434,17 @@ impl Graphic<OpenGlRenderPlatform> for SelectableSlicedImage {
     }
 }
 
-impl crate::platform::graphics::SelectableSlicedImage<Texture> for SelectableSlicedImage {
+impl crate::platform::graphics::SelectableSlicedImage<Texture>
+    for SelectableSlicedImage
+{
     fn set_image<P>(
         &mut self,
         texture: Texture,
         padding: P,
         states: &'static [SelectionState],
     ) where
-        P: Padding2d {
+        P: Padding2d,
+    {
         self.set_image(texture, (&padding).into(), states)
     }
 }

@@ -6,7 +6,7 @@ extern crate suzy;
 
 use suzy::adapter::{Adaptable, DownwardVecAdapter};
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::platforms::opengl::{Text, TextLayoutSettings};
+use suzy::platforms::opengl::{RawText, TextLayoutSettings};
 use suzy::text::TextAlignment;
 use suzy::watch::Watched;
 use suzy::widget::*;
@@ -15,7 +15,7 @@ const WORDS: &str = include_str!("words.txt");
 
 struct Element {
     value: Watched<&'static str>,
-    text: Text,
+    text: RawText,
 }
 
 impl Adaptable<&'static str> for Element {
@@ -26,7 +26,7 @@ impl Adaptable<&'static str> for Element {
     fn from(data: &&'static str) -> Self {
         Element {
             value: Watched::new(data),
-            text: Text::default(),
+            text: RawText::default(),
         }
     }
 }

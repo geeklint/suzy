@@ -61,52 +61,25 @@ fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(_f: F) -> R {
 /// contains settings like alignment and wrap width.
 /// 2. `TextRenderSettings` controls the rendering of the text, and contains
 /// settings such as text color and position.
-pub struct Text {
+pub struct RawText {
     vertices: SingleVertexBuffer<GLfloat>,
     channels: HashMap<ChannelMask, std::ops::Range<usize>>,
     texture: Texture,
     font: Watched<Option<Box<FontFamily>>>,
     render_settings: TextRenderSettings,
-    char_locs: Vec<(f32, f32)>,
+    char_locs: calc::CharLocationRecorder,
 }
 
-impl Text {
+impl RawText {
     /// Create a new empty text graphic.
     pub fn new() -> Self {
-        Text {
+        Self {
             vertices: SingleVertexBuffer::new(true),
             channels: HashMap::new(),
             texture: Texture::default(),
             font: Watched::new(None),
             render_settings: TextRenderSettings::default(),
-            char_locs: Vec::new(),
-        }
-    }
-
-    pub fn char_at(&self, x: f32, y: f32) -> Result<usize, ()> {
-        let mut err = false;
-        let search_res = self.char_locs.binary_search_by(|(cx, cy)| {
-            println!("{:?}", (cx, cy));
-            if y <= *cy && y > *cy - 24.0 {
-                cx.partial_cmp(&x).unwrap_or_else(|| {
-                    err = true;
-                    std::cmp::Ordering::Equal
-                })
-            } else {
-                cy.partial_cmp(&y)
-                    .unwrap_or_else(|| {
-                        err = true;
-                        std::cmp::Ordering::Equal
-                    })
-                    .reverse()
-            }
-        });
-        if err {
-            return Err(());
-        }
-        match search_res {
-            Ok(index) => Ok(index),
-            Err(index) => Ok(index - 1),
+            char_locs: calc::CharLocationRecorder::default(),
         }
     }
 
@@ -166,32 +139,31 @@ impl Text {
         vertices: &mut SingleVertexBuffer<GLfloat>,
         channels: &mut HashMap<ChannelMask, std::ops::Range<usize>>,
         font: &FontFamilyDynamic,
-        char_locs: &mut Vec<(f32, f32)>,
+        char_locs: &mut calc::CharLocationRecorder,
     ) {
         let mut verts = vec![];
         vertices.set_data(|_gl| {
             font.texture.transform_uvs(|| {
-                let mut calc = FontCharCalc::new(font, settings);
+                let mut calc = FontCharCalc::new(font, settings, char_locs);
                 let parser = RichTextParser::new(text);
                 for rich_text_cmd in parser {
                     calc.push(rich_text_cmd);
                 }
                 channels.clear();
                 calc.merge_verts(&mut verts, channels);
-                *char_locs = calc.take_char_locs();
                 &mut verts[..]
             })
         });
     }
 }
 
-impl Default for Text {
+impl Default for RawText {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Graphic<OpenGlRenderPlatform> for Text {
+impl Graphic<OpenGlRenderPlatform> for RawText {
     fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
         ctx.push(|ctx| {
             ctx.params().sdf_mode();
