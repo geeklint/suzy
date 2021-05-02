@@ -21,7 +21,6 @@ mod matrix;
 mod shader;
 mod stdshaders;
 mod text;
-mod widgets;
 mod window;
 
 pub use buffer::{
@@ -49,7 +48,6 @@ impl crate::platform::RenderPlatform for OpenGlRenderPlatform {
     type Context = OpenGlContext;
     type DrawParams = drawparams::DrawParams;
 
-    type DefaultButtonContent = widgets::DefaultOpenGlButton;
     type Texture = Texture;
     type SlicedImage = SlicedImage;
     type SelectableSlicedImage = SelectableSlicedImage;

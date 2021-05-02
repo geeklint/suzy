@@ -56,13 +56,6 @@ pub trait RenderPlatform: 'static {
     /// The parameters passed to draw calls.
     type DrawParams: crate::graphics::DrawParams<Self::Context>;
 
-    /// A default type of WidgetContent this RenderPlatform provides for
-    /// buttons.
-    type DefaultButtonContent: Default
-        + crate::selectable::Selectable
-        + crate::widget::WidgetContent<Self>
-        + crate::widgets::TextContent;
-
     /// The platform's texture primitive.
     type Texture: graphics::Texture + Default;
 

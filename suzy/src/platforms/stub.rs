@@ -4,11 +4,7 @@
 
 #![allow(clippy::unimplemented)]
 
-use crate::widget::{
-    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
-};
-
-use crate::platform::{Event, RenderPlatform, SimpleEventLoopState};
+use crate::platform::{Event, SimpleEventLoopState};
 
 macro_rules! stub {
     () => {
@@ -38,11 +34,6 @@ pub struct StubDrawParams;
 
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
-#[derive(Default)]
-pub struct StubButtonContent;
-
-/// The stub platform is used as a placeholder when no other platforms are
-/// enabled.  All its methods will panic.
 #[cfg(feature = "platform_opengl")]
 #[derive(Default)]
 pub struct StubOpenglPlatform;
@@ -51,7 +42,6 @@ impl crate::platform::RenderPlatform for StubRenderPlatform {
     type Context = ();
     type DrawParams = StubDrawParams;
 
-    type DefaultButtonContent = StubButtonContent;
     type Texture = StubTexture;
     type SlicedImage = StubSlicedImage;
     type SelectableSlicedImage = StubSelectableSlicedImage;
@@ -207,35 +197,6 @@ impl crate::window::Window<super::opengl::OpenGlRenderPlatform>
     }
 
     fn take_screenshot(&self) -> Box<[u8]> {
-        stub!()
-    }
-}
-
-impl crate::widgets::TextContent for StubButtonContent {
-    fn set_text(&mut self, _text: &str) {
-        stub!()
-    }
-}
-
-impl<P: RenderPlatform> WidgetContent<P> for StubButtonContent {
-    fn init(_init: impl WidgetInit<Self, P>) {
-        stub!()
-    }
-
-    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) {
-        stub!()
-    }
-
-    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<P>) {
-        stub!()
-    }
-}
-
-impl crate::selectable::Selectable for StubButtonContent {
-    fn selection_changed(
-        &mut self,
-        _state: crate::selectable::SelectionState,
-    ) {
         stub!()
     }
 }
