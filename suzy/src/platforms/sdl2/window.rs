@@ -135,7 +135,8 @@ impl Window {
                 video.gl_get_proc_address(s) as *const _
             })
         };
-        let gl_win = opengl::Window::new(plat_gl_context);
+        let mut gl_win = opengl::Window::new(plat_gl_context);
+        gl_win.clear_color(builder.background_color());
         Ok(Window {
             title: builder.into_title(),
             info: WindowInfo { window, gl_win },
