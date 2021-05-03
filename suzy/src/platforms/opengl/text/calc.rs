@@ -68,6 +68,18 @@ pub struct CharLocationRecorder {
 }
 
 impl CharLocationRecorder {
+    pub fn char_rect(&self, index: usize) -> Option<crate::dims::SimpleRect> {
+        use crate::dims::{Dim, SimpleRect};
+
+        self.data.get(index).map(|ch_rect| {
+            let mut x = Dim::default();
+            x.set_stretch(ch_rect.left, ch_rect.right);
+            let mut y = Dim::default();
+            y.set_stretch(ch_rect.bottom, ch_rect.top);
+            SimpleRect::new(x, y)
+        })
+    }
+
     pub fn char_at(&self, x: f32, y: f32) -> Result<usize, CharLocationError> {
         use std::cmp::Ordering;
 

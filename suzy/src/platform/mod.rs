@@ -71,4 +71,9 @@ pub trait RenderPlatform: 'static {
 
     /// The platform's graphic primitive for text
     type Text: graphics::Text + Default + crate::graphics::Graphic<Self>;
+
+    /// The platform's graphic primitive for editable text
+    type TextEdit: graphics::TextEdit
+        + Default
+        + crate::graphics::Graphic<Self>;
 }

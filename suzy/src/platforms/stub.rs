@@ -46,6 +46,7 @@ impl crate::platform::RenderPlatform for StubRenderPlatform {
     type SlicedImage = StubSlicedImage;
     type SelectableSlicedImage = StubSelectableSlicedImage;
     type Text = StubText;
+    type TextEdit = StubTextEdit;
 }
 
 impl crate::graphics::DrawParams<()> for StubDrawParams {
@@ -333,6 +334,35 @@ impl crate::platform::graphics::Text for StubText {
 }
 
 impl crate::graphics::Graphic<StubRenderPlatform> for StubText {
+    fn draw(
+        &mut self,
+        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+    ) {
+        stub!()
+    }
+}
+
+#[derive(Default)]
+pub struct StubTextEdit;
+
+impl crate::platform::graphics::TextEdit for StubTextEdit {
+    fn set_text_plain(
+        &mut self,
+        _text: &str,
+        _pos: &crate::text::TextPosition,
+        _settings: &crate::text::TextSettings,
+    ) {
+        stub!()
+    }
+    fn char_at(&self, _x: f32, _y: f32) -> Option<usize> {
+        stub!()
+    }
+    fn char_rect(&self, _index: usize) -> Option<crate::dims::SimpleRect> {
+        stub!()
+    }
+}
+
+impl crate::graphics::Graphic<StubRenderPlatform> for StubTextEdit {
     fn draw(
         &mut self,
         _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,

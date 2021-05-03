@@ -23,7 +23,7 @@ pub use font::{
     FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
 };
 
-use calc::FontCharCalc;
+use calc::{CharLocationError, CharLocationRecorder, FontCharCalc};
 use font::{ChannelMask, GlyphMetricsSource};
 
 #[cfg(feature = "default_font")]
@@ -106,6 +106,72 @@ impl crate::platform::graphics::Text for Text {
     }
 }
 
+/// Default Graphic for displaying text in a text editor
+#[derive(Default)]
+pub struct TextEdit {
+    raw: RawText<CharLocationRecorder>,
+    font: Watched<Option<Box<FontFamily>>>,
+    render_settings: TextRenderSettings,
+}
+
+impl TextEdit {
+    /// Set the font to be used by future calls to `set_text`.
+    pub fn set_font(&mut self, font: Box<FontFamily>) {
+        *self.font = Some(font);
+    }
+}
+
+impl Graphic<OpenGlRenderPlatform> for TextEdit {
+    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+        self.raw.draw(ctx, self.render_settings);
+    }
+}
+
+impl crate::platform::graphics::TextEdit for TextEdit {
+    fn set_text_plain(
+        &mut self,
+        text: &str,
+        pos: &TextPosition,
+        settings: &TextSettings,
+    ) {
+        let cmd = RichTextCommand::Text(text.into());
+        let text = Some(cmd).into_iter();
+        let layout = TextLayoutSettings::default()
+            .font_size(settings.font_size)
+            .wrap_width(pos.wrap_width)
+            .alignment(settings.alignment)
+            .tab_stop(settings.tab_stop);
+        self.render_settings = TextRenderSettings {
+            text_color: settings.text_color,
+            outline_color: settings.outline_color,
+            pseudo_bold_level: 0.5,
+            outline_width: settings.outline_width,
+            smoothing: 0.07,
+            outline_smoothing: 0.07,
+            x: pos.left,
+            y: pos.top - settings.font_size,
+        };
+        match &*self.font {
+            Some(font) => self.raw.render(text, font, layout),
+            None => with_default_font(|font| {
+                self.raw.render(text, font, layout);
+            }),
+        };
+    }
+
+    fn char_at(&self, x: f32, y: f32) -> Option<usize> {
+        match self.raw.char_at(x, y) {
+            Ok(index) => Some(index),
+            Err(CharLocationError::Outside { clamped }) => Some(clamped),
+            Err(CharLocationError::CalcError) => None,
+        }
+    }
+
+    fn char_rect(&self, index: usize) -> Option<crate::dims::SimpleRect> {
+        self.raw.char_rect(index)
+    }
+}
+
 /// RawText for custom use cases or optimization
 ///
 /// Text is done in two stages, and there are two settings types for each
@@ -166,6 +232,18 @@ impl<T: calc::RecordCharLocation> RawText<T> {
                 &mut verts[..]
             })
         });
+    }
+}
+
+impl RawText<CharLocationRecorder> {
+    /// Get the index of the character at the given position
+    pub fn char_at(&self, x: f32, y: f32) -> Result<usize, CharLocationError> {
+        self.char_locs.char_at(x, y)
+    }
+
+    /// Get the bounding rect of the character at the given index
+    fn char_rect(&self, index: usize) -> Option<crate::dims::SimpleRect> {
+        self.char_locs.char_rect(index)
     }
 }
 

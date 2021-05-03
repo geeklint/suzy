@@ -5,7 +5,7 @@
 //! This describes traits which apply to a set of graphic primitives a
 //! platform must implement to support Suzy's built-in widgets.
 
-use crate::dims::{Padding2d, Rect};
+use crate::dims::{Padding2d, Rect, SimpleRect};
 use crate::selectable::{Selectable, SelectionState};
 use crate::text::{RichTextCommand, TextPosition, TextSettings};
 
@@ -76,4 +76,22 @@ pub trait Text {
         let cmd = RichTextCommand::Text(text.into());
         self.set_text(Some(cmd).into_iter(), pos, settings);
     }
+}
+
+/// A platforms Text graphic primitive for editable text
+pub trait TextEdit {
+    /// Set the text to be rendered with the given position information,
+    /// and render settings, assuming the text is plain.
+    fn set_text_plain(
+        &mut self,
+        text: &str,
+        pos: &TextPosition,
+        settings: &TextSettings,
+    );
+
+    /// Get the index of the character at the given position
+    fn char_at(&self, x: f32, y: f32) -> Option<usize>;
+
+    /// Get the index of the character at the given position
+    fn char_rect(&self, index: usize) -> Option<SimpleRect>;
 }
