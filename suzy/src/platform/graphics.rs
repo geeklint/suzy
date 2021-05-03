@@ -92,6 +92,6 @@ pub trait TextEdit {
     /// Get the index of the character at the given position
     fn char_at(&self, x: f32, y: f32) -> Option<usize>;
 
-    /// Get the index of the character at the given position
+    /// Get the bounding rect of the character at the given index
     fn char_rect(&self, index: usize) -> Option<SimpleRect>;
 }
