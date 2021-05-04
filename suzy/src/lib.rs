@@ -79,6 +79,16 @@ pub mod widget;
 pub mod widgets;
 pub mod window;
 
+/// The Suzy prelude contains exports of the most frequently-used types
+pub mod prelude {
+    pub use crate::dims::Rect;
+    pub use crate::watch::Watched;
+    pub use crate::widget::{
+        Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
+        WidgetInit,
+    };
+}
+
 /// A version of the tweak! macro from the crate
 /// [`inline_tweak`](https://crates.io/crates/inline_tweak), but designed to
 /// work within Suzy's watch system.
