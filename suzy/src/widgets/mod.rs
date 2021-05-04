@@ -5,9 +5,12 @@
 //! Suzy comes with a set of built-in widgets.
 
 mod button;
+mod label;
 mod togglebutton;
 
 pub use button::{Button, ButtonBehavior};
+
+pub use label::{Label, LabelContent};
 
 pub use togglebutton::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
 
