@@ -29,8 +29,13 @@ void main() {
     if (value < DISTANCE_EDGES.x) {
         gl_FragColor = mask_color * TEXT_COLOR;
     } else if (value < DISTANCE_EDGES.y) {
-        lowp float t = smoothstep(DISTANCE_EDGES.x, DISTANCE_EDGES.y, value);
-        gl_FragColor = mask_color * mix(TEXT_COLOR, OUTLINE_COLOR, t);
+        if (DISTANCE_EDGES.z > DISTANCE_EDGES.x) {
+            lowp float t = smoothstep(DISTANCE_EDGES.x, DISTANCE_EDGES.y, value);
+            gl_FragColor = mask_color * mix(TEXT_COLOR, OUTLINE_COLOR, t);
+        } else {
+            lowp float a = 1.0 - smoothstep(DISTANCE_EDGES.x, DISTANCE_EDGES.y, value);
+            gl_FragColor = mask_color * vec4(TEXT_COLOR.xyz, a);
+        }
     } else if (value < DISTANCE_EDGES.z) {
         gl_FragColor = mask_color * OUTLINE_COLOR;
     } else if (value < DISTANCE_EDGES.w) {
