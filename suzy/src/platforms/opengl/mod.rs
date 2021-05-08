@@ -26,7 +26,7 @@ mod window;
 pub use buffer::{
     DualVertexBuffer, DualVertexBufferIndexed, SingleVertexBuffer,
 };
-pub use context::{OpenGlBindings, OpenGlContext};
+pub use context::{OpenGlBindings, OpenGlContext, DEBUG};
 pub use drawparams::DrawParams;
 pub use graphics::*;
 pub use matrix::Mat4;

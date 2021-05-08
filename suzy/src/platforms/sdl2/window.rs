@@ -85,7 +85,7 @@ impl Window {
         gl_attr.set_multisample_samples(4);
         gl_attr.set_context_profile(sdl2::video::GLProfile::GLES);
         gl_attr.set_context_version(2, 0);
-        if cfg!(debug_assertions) {
+        if opengl::DEBUG {
             gl_attr.set_context_flags().debug().set();
         }
         let (width, height) = builder.size();

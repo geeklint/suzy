@@ -11,6 +11,8 @@ use super::mask::Mask;
 use super::stdshaders::Shaders;
 use super::texture::TextureCache;
 
+pub const DEBUG: bool = option_env!("SUZY_GL_DEBUG").is_some();
+
 pub mod bindings {
     #![allow(bare_trait_objects)]
     #![allow(clippy::too_many_arguments)]
@@ -38,7 +40,7 @@ impl OpenGlContext {
         F: FnMut(&str) -> *const std::ffi::c_void,
     {
         let ptr = Rc::new(OpenGlBindings::load_with(loader));
-        if cfg!(debug_assertions) && ptr.DebugMessageCallback.is_loaded() {
+        if DEBUG && ptr.DebugMessageCallback.is_loaded() {
             unsafe {
                 ptr.Enable(bindings::DEBUG_OUTPUT);
                 ptr.DebugMessageCallback(
