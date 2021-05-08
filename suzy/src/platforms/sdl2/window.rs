@@ -262,7 +262,9 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         &mut self,
         first_pass: bool,
     ) -> DrawContext<opengl::OpenGlRenderPlatform> {
-        self.info.gl_win.clear();
+        if first_pass {
+            self.info.gl_win.clear();
+        }
         self.info.gl_win.prepare_draw(self.size(), first_pass)
     }
 
