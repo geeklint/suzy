@@ -24,7 +24,6 @@ enum ShaderExclusive {
     Standard,
     Sdf {
         text_color: Color,
-        outline_color: Color,
         distance_edges: (f32, f32, f32, f32),
         tex_chan_mask: (f32, f32, f32, f32),
     },
@@ -39,7 +38,6 @@ impl ShaderExclusive {
         if let Self::Standard = self {
             *self = Self::Sdf {
                 text_color: Color::WHITE,
-                outline_color: Color::create_rgba8(0xff, 0xff, 0xff, 0),
                 distance_edges: (0.465, 0.535, 0.0, 0.0),
                 tex_chan_mask: (0.0, 0.0, 0.0, 0.0),
             };
@@ -68,7 +66,6 @@ impl ShaderExclusive {
             }
             Self::Sdf {
                 mut text_color,
-                mut outline_color,
                 distance_edges,
                 tex_chan_mask,
             } => {
@@ -79,16 +76,10 @@ impl ShaderExclusive {
                     0,
                 );
                 text_color.tint(tint_color);
-                outline_color.tint(tint_color);
                 Shader::set_vec4(
                     &ctx.bindings,
                     ctx.shaders.sdf_uniforms.text_color,
                     text_color.rgba(),
-                );
-                Shader::set_vec4(
-                    &ctx.bindings,
-                    ctx.shaders.sdf_uniforms.outline_color,
-                    outline_color.rgba(),
                 );
                 Shader::set_vec4(
                     &ctx.bindings,
@@ -135,13 +126,11 @@ impl ShaderExclusive {
             (
                 Self::Sdf {
                     text_color: current_text_color,
-                    outline_color: current_outline_color,
                     distance_edges: current_distance_edges,
                     tex_chan_mask: current_tex_chan_mask,
                 },
                 Self::Sdf {
                     text_color: mut new_text_color,
-                    outline_color: mut new_outline_color,
                     distance_edges: new_distance_edges,
                     tex_chan_mask: new_tex_chan_mask,
                 },
@@ -154,16 +143,6 @@ impl ShaderExclusive {
                         &ctx.bindings,
                         ctx.shaders.sdf_uniforms.text_color,
                         new_text_color.rgba(),
-                    );
-                }
-                if new_tint_color != current_tint_color
-                    || new_outline_color != *current_outline_color
-                {
-                    new_outline_color.tint(new_tint_color);
-                    Shader::set_vec4(
-                        &ctx.bindings,
-                        ctx.shaders.sdf_uniforms.outline_color,
-                        new_outline_color.rgba(),
                     );
                 }
                 if new_distance_edges != current_distance_edges {
@@ -365,19 +344,6 @@ impl DrawParams {
     }
 
     #[rustfmt::skip]
-    pub fn outline_color(&mut self, color: Color) {
-        use ShaderExclusive::*;
-        if let Sdf { ref mut outline_color, .. } = self.shader_exclusive {
-            *outline_color = color;
-        } else {
-            debug_assert!(
-                false,
-                "DrawParams::outline_color should only be used with Sdf shader",
-            );
-        }
-    }
-
-    #[rustfmt::skip]
     pub fn tex_chan_mask(&mut self, mask: (u8, u8, u8, u8)) {
         use ShaderExclusive::*;
         if let Sdf { ref mut tex_chan_mask, .. } = self.shader_exclusive {
@@ -406,21 +372,6 @@ impl DrawParams {
             debug_assert!(
                 false,
                 "DrawParams::body_edge should only be used with Sdf shader",
-            );
-        }
-    }
-
-    #[rustfmt::skip]
-    pub fn outline_edge(&mut self, edge: f32, smoothing: f32) {
-        use ShaderExclusive::*;
-        if let Sdf { ref mut distance_edges, .. } = self.shader_exclusive {
-            let smoothing = smoothing.max(0.0) / 2.0;
-            distance_edges.2 = (edge - smoothing).max(0.0);
-            distance_edges.3 = edge + smoothing;
-        } else {
-            debug_assert!(
-                false,
-                "DrawParams::outline_edge should only be used with Sdf shader",
             );
         }
     }

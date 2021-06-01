@@ -256,20 +256,25 @@ impl<T> RawText<T> {
         ctx.push(|ctx| {
             ctx.params().sdf_mode();
             ctx.params().use_texture(self.texture.clone());
-            ctx.params().text_color(render_settings.text_color);
-            ctx.params().outline_color(render_settings.outline_color);
-            ctx.params().body_edge(
-                render_settings.pseudo_bold_level,
-                render_settings.smoothing,
-            );
-            ctx.params().outline_edge(
-                render_settings.outline_width,
-                render_settings.outline_smoothing,
-            );
             ctx.params().transform(Mat4::translate(
                 render_settings.x,
                 render_settings.y,
             ));
+            let opt_text = Some((
+                render_settings.text_color,
+                render_settings.pseudo_bold_level,
+                render_settings.smoothing,
+            ));
+            let opt_outline = (render_settings.outline_width
+                > render_settings.pseudo_bold_level)
+                .then(|| {
+                    (
+                        render_settings.outline_color,
+                        render_settings.outline_width,
+                        render_settings.outline_smoothing,
+                    )
+                });
+            let opt_shadow = None;
             if self.vertices.bind_if_ready(ctx) {
                 let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
                 let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
@@ -285,22 +290,30 @@ impl<T> RawText<T> {
                     );
                     gl.VertexAttribPointer(1, 2, FLOAT, FALSE, stride, offset);
                 }
-                for (mask, range) in self.channels.iter() {
-                    #[allow(clippy::len_zero)]
-                    if range.len() > 0 {
-                        ctx.push(|ctx| {
-                            ctx.params().tex_chan_mask(*mask);
-                            ctx.prepare_draw();
-                            let gl = &ctx.render_ctx().bindings;
-                            unsafe {
-                                gl.DrawArrays(
-                                    TRIANGLES,
-                                    range.start as GLsizei,
-                                    range.len() as GLsizei,
-                                );
+                for (color, edge, smoothing) in
+                    opt_shadow.into_iter().chain(opt_outline).chain(opt_text)
+                {
+                    ctx.push(|ctx| {
+                        ctx.params().text_color(color);
+                        ctx.params().body_edge(edge, smoothing);
+                        for (mask, range) in self.channels.iter() {
+                            #[allow(clippy::len_zero)]
+                            if range.len() > 0 {
+                                ctx.push(|ctx| {
+                                    ctx.params().tex_chan_mask(*mask);
+                                    ctx.prepare_draw();
+                                    let gl = &ctx.render_ctx().bindings;
+                                    unsafe {
+                                        gl.DrawArrays(
+                                            TRIANGLES,
+                                            range.start as GLsizei,
+                                            range.len() as GLsizei,
+                                        );
+                                    }
+                                });
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             } else {
                 self.texture.bind(ctx.render_ctx_mut());

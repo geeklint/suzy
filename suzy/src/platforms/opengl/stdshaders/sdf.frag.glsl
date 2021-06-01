@@ -5,7 +5,6 @@
 #version 100
 
 uniform lowp vec4 TEXT_COLOR;
-uniform lowp vec4 OUTLINE_COLOR;
 uniform mediump vec4 DISTANCE_EDGES;
 
 uniform sampler2D TEX_ID;
@@ -25,22 +24,12 @@ void main() {
     lowp float mask_alpha = texture2D(MASK_ID, mask_uv).a;
     mask_alpha = (mask_alpha - MASK_BOUNDS.x) * MASK_BOUNDS.y;
     lowp vec4 mask_color = vec4(1, 1, 1, mask_alpha);
-    lowp float value = 1.0 - length(TEX_CHAN_MASK * texture2D(TEX_ID, pass_uv));
+    lowp float value = 1.0 - dot(texture2D(TEX_ID, pass_uv), TEX_CHAN_MASK);
     if (value < DISTANCE_EDGES.x) {
         gl_FragColor = mask_color * TEXT_COLOR;
     } else if (value < DISTANCE_EDGES.y) {
-        if (DISTANCE_EDGES.z > DISTANCE_EDGES.x) {
-            lowp float t = smoothstep(DISTANCE_EDGES.x, DISTANCE_EDGES.y, value);
-            gl_FragColor = mask_color * mix(TEXT_COLOR, OUTLINE_COLOR, t);
-        } else {
-            lowp float a = 1.0 - smoothstep(DISTANCE_EDGES.x, DISTANCE_EDGES.y, value);
-            gl_FragColor = mask_color * vec4(TEXT_COLOR.xyz, a);
-        }
-    } else if (value < DISTANCE_EDGES.z) {
-        gl_FragColor = mask_color * OUTLINE_COLOR;
-    } else if (value < DISTANCE_EDGES.w) {
-        lowp float a = 1.0 - smoothstep(DISTANCE_EDGES.z, DISTANCE_EDGES.w, value);
-        gl_FragColor = mask_color * vec4(OUTLINE_COLOR.xyz, a);
+        lowp float a = 1.0 - smoothstep(DISTANCE_EDGES.x, DISTANCE_EDGES.y, value);
+        gl_FragColor = mask_color * vec4(TEXT_COLOR.xyz, a);
     } else {
         discard;
     }

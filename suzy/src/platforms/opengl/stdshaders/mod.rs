@@ -37,7 +37,6 @@ pub(super) struct StdUniforms {
 pub(super) struct SdfUniforms {
     pub(super) common: SharedUniforms,
     pub(super) text_color: UniformLoc,
-    pub(super) outline_color: UniformLoc,
     pub(super) distance_edges: UniformLoc,
     pub(super) tex_id: UniformLoc,
     pub(super) tex_chan_mask: UniformLoc,
@@ -64,7 +63,6 @@ impl Shaders {
             sdf_uniforms: SdfUniforms {
                 common: common(gl, &sdf),
                 text_color: sdf.uniform(gl, "TEXT_COLOR"),
-                outline_color: sdf.uniform(gl, "OUTLINE_COLOR"),
                 distance_edges: sdf.uniform(gl, "DISTANCE_EDGES"),
                 tex_id: sdf.uniform(gl, "TEX_ID"),
                 tex_chan_mask: sdf.uniform(gl, "TEX_CHAN_MASK"),
