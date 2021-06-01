@@ -7,7 +7,6 @@
 use crate::graphics;
 use crate::graphics::Color;
 
-use super::context::bindings::types::GLuint;
 use super::context::bindings::{
     CONSTANT_COLOR, FUNC_ADD, FUNC_REVERSE_SUBTRACT, ONE, ONE_MINUS_SRC_ALPHA,
     SRC_ALPHA, TEXTURE0, TEXTURE1, TEXTURE_2D,
@@ -19,152 +18,6 @@ use super::OpenGlContext;
 
 pub(super) const MASK_LEVELS: u8 = 4;
 
-#[derive(Clone)]
-enum ShaderExclusive {
-    Standard,
-    Sdf {
-        text_color: Color,
-        distance_edges: (f32, f32, f32, f32),
-        tex_chan_mask: (f32, f32, f32, f32),
-    },
-}
-
-impl ShaderExclusive {
-    fn make_standard(&mut self) {
-        *self = Self::Standard;
-    }
-
-    fn make_sdf(&mut self) {
-        if let Self::Standard = self {
-            *self = Self::Sdf {
-                text_color: Color::WHITE,
-                distance_edges: (0.465, 0.535, 0.0, 0.0),
-                tex_chan_mask: (0.0, 0.0, 0.0, 0.0),
-            };
-        }
-    }
-
-    fn apply_all(
-        &self,
-        tint_color: Color,
-        ctx: &OpenGlContext,
-        prev_attrs: Option<GLuint>,
-    ) {
-        match self {
-            Self::Standard => {
-                ctx.shaders.std.make_current(&ctx.bindings, prev_attrs);
-                Shader::set_opaque(
-                    &ctx.bindings,
-                    ctx.shaders.std_uniforms.tex_id,
-                    0,
-                );
-                Shader::set_vec4(
-                    &ctx.bindings,
-                    ctx.shaders.std_uniforms.tint_color,
-                    tint_color.rgba(),
-                );
-            }
-            Self::Sdf {
-                mut text_color,
-                distance_edges,
-                tex_chan_mask,
-            } => {
-                ctx.shaders.sdf.make_current(&ctx.bindings, prev_attrs);
-                Shader::set_opaque(
-                    &ctx.bindings,
-                    ctx.shaders.sdf_uniforms.tex_id,
-                    0,
-                );
-                text_color.tint(tint_color);
-                Shader::set_vec4(
-                    &ctx.bindings,
-                    ctx.shaders.sdf_uniforms.text_color,
-                    text_color.rgba(),
-                );
-                Shader::set_vec4(
-                    &ctx.bindings,
-                    ctx.shaders.sdf_uniforms.distance_edges,
-                    *distance_edges,
-                );
-                Shader::set_vec4(
-                    &ctx.bindings,
-                    ctx.shaders.sdf_uniforms.tex_chan_mask,
-                    *tex_chan_mask,
-                );
-            }
-        }
-    }
-
-    fn apply_change(
-        current: &Self,
-        new: &Self,
-        current_tint_color: Color,
-        new_tint_color: Color,
-        ctx: &OpenGlContext,
-    ) -> bool {
-        match (current, new) {
-            (Self::Standard, Self::Sdf { .. }) => {
-                let prev_attrs = Some(ctx.shaders.std.attrs());
-                new.apply_all(new_tint_color, ctx, prev_attrs);
-                true
-            }
-            (Self::Sdf { .. }, Self::Standard) => {
-                let prev_attrs = Some(ctx.shaders.sdf.attrs());
-                new.apply_all(new_tint_color, ctx, prev_attrs);
-                true
-            }
-            (Self::Standard, Self::Standard) => {
-                if new_tint_color != current_tint_color {
-                    Shader::set_vec4(
-                        &ctx.bindings,
-                        ctx.shaders.std_uniforms.tint_color,
-                        new_tint_color.rgba(),
-                    );
-                }
-                false
-            }
-            (
-                Self::Sdf {
-                    text_color: current_text_color,
-                    distance_edges: current_distance_edges,
-                    tex_chan_mask: current_tex_chan_mask,
-                },
-                Self::Sdf {
-                    text_color: mut new_text_color,
-                    distance_edges: new_distance_edges,
-                    tex_chan_mask: new_tex_chan_mask,
-                },
-            ) => {
-                if new_tint_color != current_tint_color
-                    || new_text_color != *current_text_color
-                {
-                    new_text_color.tint(new_tint_color);
-                    Shader::set_vec4(
-                        &ctx.bindings,
-                        ctx.shaders.sdf_uniforms.text_color,
-                        new_text_color.rgba(),
-                    );
-                }
-                if new_distance_edges != current_distance_edges {
-                    Shader::set_vec4(
-                        &ctx.bindings,
-                        ctx.shaders.sdf_uniforms.distance_edges,
-                        *new_distance_edges,
-                    );
-                }
-                if new_tex_chan_mask != current_tex_chan_mask {
-                    Shader::set_vec4(
-                        &ctx.bindings,
-                        ctx.shaders.sdf_uniforms.tex_chan_mask,
-                        *new_tex_chan_mask,
-                    );
-                }
-                false
-            }
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum MaskMode {
     Push,
@@ -173,40 +26,27 @@ enum MaskMode {
 }
 
 impl MaskMode {
-    fn apply_all(
-        &self,
-        uniforms: &super::stdshaders::SharedUniforms,
-        mask_level: u8,
-        ctx: &mut OpenGlContext,
-    ) {
-        Shader::set_opaque(&ctx.bindings, uniforms.mask_id, 1);
+    fn apply_all(&self, mask_level: u8, ctx: &mut OpenGlContext) {
+        Shader::set_opaque(&ctx.bindings, ctx.shaders.uniforms.mask_id, 1);
         Shader::set_vec4(
             &ctx.bindings,
-            uniforms.mask_bounds,
+            ctx.shaders.uniforms.mask_bounds,
             (-1.0, 1.0, ctx.mask.width, ctx.mask.height),
         );
-        Self::apply_change(
-            &Self::Masked,
-            self,
-            uniforms,
-            mask_level,
-            ctx,
-            false,
-        );
+        Self::apply_change(&Self::Masked, self, mask_level, ctx);
     }
 
     fn apply_change(
         current: &Self,
         new: &Self,
-        uniforms: &super::stdshaders::SharedUniforms,
         mask_level: u8,
         ctx: &mut OpenGlContext,
-        shader_changed: bool,
     ) {
         let mask_bounds_zero = (-1.0, 1.0, ctx.mask.width, ctx.mask.height);
         match (current, new) {
-            (Self::Masked, Self::Masked) if !shader_changed => (),
-            (Self::Push, Self::Push) | (Self::Pop, Self::Pop) => (),
+            (Self::Masked, Self::Masked)
+            | (Self::Push, Self::Push)
+            | (Self::Pop, Self::Pop) => (),
             (Self::Push, Self::Pop) => unsafe {
                 ctx.bindings.BlendEquation(FUNC_REVERSE_SUBTRACT);
             },
@@ -214,10 +54,14 @@ impl MaskMode {
                 ctx.bindings.BlendEquation(FUNC_ADD);
             },
             (Self::Masked, Self::Push) => {
-                Shader::set_opaque(&ctx.bindings, uniforms.mask_id, 1);
+                Shader::set_opaque(
+                    &ctx.bindings,
+                    ctx.shaders.uniforms.mask_id,
+                    1,
+                );
                 Shader::set_vec4(
                     &ctx.bindings,
-                    uniforms.mask_bounds,
+                    ctx.shaders.uniforms.mask_bounds,
                     mask_bounds_zero,
                 );
                 ctx.mask.bind_fbo(&ctx.bindings);
@@ -229,10 +73,14 @@ impl MaskMode {
                 }
             }
             (Self::Masked, Self::Pop) => {
-                Shader::set_opaque(&ctx.bindings, uniforms.mask_id, 1);
+                Shader::set_opaque(
+                    &ctx.bindings,
+                    ctx.shaders.uniforms.mask_id,
+                    1,
+                );
                 Shader::set_vec4(
                     &ctx.bindings,
-                    uniforms.mask_bounds,
+                    ctx.shaders.uniforms.mask_bounds,
                     mask_bounds_zero,
                 );
                 ctx.mask.bind_fbo(&ctx.bindings);
@@ -245,7 +93,11 @@ impl MaskMode {
             }
             (_, Self::Masked) => {
                 ctx.mask.restore_fbo(&ctx.bindings);
-                Shader::set_opaque(&ctx.bindings, uniforms.mask_id, 1);
+                Shader::set_opaque(
+                    &ctx.bindings,
+                    ctx.shaders.uniforms.mask_id,
+                    1,
+                );
                 let mask_bounds = if mask_level == 0 {
                     mask_bounds_zero
                 } else {
@@ -260,7 +112,7 @@ impl MaskMode {
                 };
                 Shader::set_vec4(
                     &ctx.bindings,
-                    uniforms.mask_bounds,
+                    ctx.shaders.uniforms.mask_bounds,
                     mask_bounds,
                 );
                 unsafe {
@@ -277,22 +129,24 @@ impl MaskMode {
 #[derive(Clone)]
 pub struct DrawParams {
     transform: Mat4,
-    tint_color: Color,
     texture: Texture,
-    shader_exclusive: ShaderExclusive,
+    tint_color: Color,
     mask_mode: MaskMode,
     mask_level: u8,
+    sdf_values: (f32, f32, f32, f32),
+    sdf_chan_mask: (f32, f32, f32, f32),
 }
 
 impl DrawParams {
     pub(crate) fn new() -> Self {
         Self {
             transform: Mat4::default(),
-            tint_color: Color::WHITE,
             texture: Texture::default(),
-            shader_exclusive: ShaderExclusive::Standard,
+            tint_color: Color::WHITE,
             mask_mode: MaskMode::Masked,
             mask_level: 0,
+            sdf_values: (0.0, 0.0, 0.0, 0.0),
+            sdf_chan_mask: (0.0, 0.0, 0.0, 0.0),
         }
     }
 
@@ -309,11 +163,11 @@ impl DrawParams {
     }
 
     pub fn standard_mode(&mut self) {
-        self.shader_exclusive.make_standard();
+        self.sdf_values.2 = 0.0;
     }
 
     pub fn sdf_mode(&mut self) {
-        self.shader_exclusive.make_sdf();
+        self.sdf_values.2 = 1.0;
     }
 
     pub fn push_mask(&mut self) {
@@ -331,23 +185,9 @@ impl DrawParams {
     }
 
     #[rustfmt::skip]
-    pub fn text_color(&mut self, color: Color) {
-        use ShaderExclusive::*;
-        if let Sdf { ref mut text_color, .. } = self.shader_exclusive {
-            *text_color = color;
-        } else {
-            debug_assert!(
-                false,
-                "DrawParams::text_color should only be used with Sdf shader",
-            );
-        }
-    }
-
-    #[rustfmt::skip]
-    pub fn tex_chan_mask(&mut self, mask: (u8, u8, u8, u8)) {
-        use ShaderExclusive::*;
-        if let Sdf { ref mut tex_chan_mask, .. } = self.shader_exclusive {
-            *tex_chan_mask = (
+    pub fn sdf_chan_mask(&mut self, mask: (u8, u8, u8, u8)) {
+        if self.sdf_values.2 > 0.0 {
+            self.sdf_chan_mask = (
                 mask.0 as f32 / 255.0,
                 mask.1 as f32 / 255.0,
                 mask.2 as f32 / 255.0,
@@ -356,18 +196,17 @@ impl DrawParams {
         } else {
             debug_assert!(
                 false,
-                "DrawParams::tex_chan_mask should only be used with Sdf shader",
+                "DrawParams::sdf_chan_mask should only be used in sdf mode",
             );
         }
     }
 
     #[rustfmt::skip]
-    pub fn body_edge(&mut self, edge: f32, smoothing: f32) {
-        use ShaderExclusive::*;
-        if let Sdf { ref mut distance_edges, .. } = self.shader_exclusive {
+    pub fn sdf_edge(&mut self, edge: f32, smoothing: f32) {
+        if self.sdf_values.2 > 0.0 {
             let smoothing = smoothing.max(0.0) / 2.0;
-            distance_edges.0 = (edge - smoothing).max(0.0);
-            distance_edges.1 = edge + smoothing;
+            self.sdf_values.0 = (edge - smoothing).max(0.0);
+            self.sdf_values.1 = edge + smoothing;
         } else {
             debug_assert!(
                 false,
@@ -379,51 +218,72 @@ impl DrawParams {
 
 impl graphics::DrawParams<OpenGlContext> for DrawParams {
     fn apply_all(&mut self, ctx: &mut OpenGlContext) {
-        self.shader_exclusive.apply_all(self.tint_color, &ctx, None);
-        let uniforms = match &self.shader_exclusive {
-            ShaderExclusive::Standard => ctx.shaders.std_uniforms.common,
-            ShaderExclusive::Sdf { .. } => ctx.shaders.sdf_uniforms.common,
-        };
+        ctx.shaders.shader.make_current(&ctx.bindings, None);
         Shader::set_mat4(
             &ctx.bindings,
-            uniforms.transform,
+            ctx.shaders.uniforms.transform,
             self.transform.as_ref(),
         );
+        Shader::set_opaque(&ctx.bindings, ctx.shaders.uniforms.tex_id, 0);
         unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
         self.texture.bind(ctx);
-        self.mask_mode.apply_all(&uniforms, self.mask_level, ctx);
+        Shader::set_vec4(
+            &ctx.bindings,
+            ctx.shaders.uniforms.tint_color,
+            self.tint_color.rgba(),
+        );
+        self.mask_mode.apply_all(self.mask_level, ctx);
+        Shader::set_vec4(
+            &ctx.bindings,
+            ctx.shaders.uniforms.sdf_values,
+            self.sdf_values,
+        );
+        Shader::set_vec4(
+            &ctx.bindings,
+            ctx.shaders.uniforms.sdf_chan_mask,
+            self.sdf_chan_mask,
+        );
     }
 
     fn apply_change(current: &Self, new: &mut Self, ctx: &mut OpenGlContext) {
-        let shader_changed = ShaderExclusive::apply_change(
-            &current.shader_exclusive,
-            &new.shader_exclusive,
-            current.tint_color,
-            new.tint_color,
-            &ctx,
-        );
-        let uniforms = match &new.shader_exclusive {
-            ShaderExclusive::Standard => ctx.shaders.std_uniforms.common,
-            ShaderExclusive::Sdf { .. } => ctx.shaders.sdf_uniforms.common,
-        };
-        if shader_changed || new.transform != current.transform {
+        if new.transform != current.transform {
             Shader::set_mat4(
                 &ctx.bindings,
-                uniforms.transform,
+                ctx.shaders.uniforms.transform,
                 new.transform.as_ref(),
             );
         }
-        if shader_changed || new.texture != current.texture {
+        if new.texture != current.texture {
+            Shader::set_opaque(&ctx.bindings, ctx.shaders.uniforms.tex_id, 0);
             unsafe { ctx.bindings.ActiveTexture(TEXTURE0) };
             new.texture.bind(ctx);
+        }
+        if new.tint_color != current.tint_color {
+            Shader::set_vec4(
+                &ctx.bindings,
+                ctx.shaders.uniforms.tint_color,
+                new.tint_color.rgba(),
+            );
         }
         MaskMode::apply_change(
             &current.mask_mode,
             &new.mask_mode,
-            &uniforms,
             new.mask_level,
             ctx,
-            shader_changed,
         );
+        if new.sdf_values != current.sdf_values {
+            Shader::set_vec4(
+                &ctx.bindings,
+                ctx.shaders.uniforms.sdf_values,
+                new.sdf_values,
+            );
+        }
+        if new.sdf_chan_mask != current.sdf_chan_mask {
+            Shader::set_vec4(
+                &ctx.bindings,
+                ctx.shaders.uniforms.sdf_chan_mask,
+                new.sdf_chan_mask,
+            );
+        }
     }
 }

@@ -294,13 +294,13 @@ impl<T> RawText<T> {
                     opt_shadow.into_iter().chain(opt_outline).chain(opt_text)
                 {
                     ctx.push(|ctx| {
-                        ctx.params().text_color(color);
-                        ctx.params().body_edge(edge, smoothing);
+                        ctx.params().tint(color);
+                        ctx.params().sdf_edge(edge, smoothing);
                         for (mask, range) in self.channels.iter() {
                             #[allow(clippy::len_zero)]
                             if range.len() > 0 {
                                 ctx.push(|ctx| {
-                                    ctx.params().tex_chan_mask(*mask);
+                                    ctx.params().sdf_chan_mask(*mask);
                                     ctx.prepare_draw();
                                     let gl = &ctx.render_ctx().bindings;
                                     unsafe {
