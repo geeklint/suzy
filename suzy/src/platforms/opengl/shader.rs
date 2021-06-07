@@ -183,10 +183,6 @@ impl Shader {
         Ok(shader)
     }
 
-    pub fn attrs(&self) -> GLuint {
-        self.attrs
-    }
-
     pub fn make_current(
         &self,
         gl: &OpenGlBindings,

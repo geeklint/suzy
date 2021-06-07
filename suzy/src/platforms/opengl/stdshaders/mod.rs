@@ -9,68 +9,39 @@ use super::OpenGlBindings;
 
 const STD_VERTEX_SOURCE: &[u8] = include_bytes!("std.vert.glsl");
 const STD_FRAGMENT_SOURCE: &[u8] = include_bytes!("std.frag.glsl");
-const SDF_FRAGMENT_SOURCE: &[u8] = include_bytes!("sdf.frag.glsl");
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct SharedUniforms {
+pub(super) struct Uniforms {
     pub(super) transform: UniformLoc,
-    pub(super) mask_id: UniformLoc,
-    pub(super) mask_bounds: UniformLoc,
-}
-
-fn common(gl: &OpenGlBindings, shader: &Shader) -> SharedUniforms {
-    SharedUniforms {
-        transform: shader.uniform(gl, "TRANSFORM"),
-        mask_id: shader.uniform(gl, "MASK_ID"),
-        mask_bounds: shader.uniform(gl, "MASK_BOUNDS"),
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub(super) struct StdUniforms {
-    pub(super) common: SharedUniforms,
     pub(super) tex_id: UniformLoc,
     pub(super) tint_color: UniformLoc,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub(super) struct SdfUniforms {
-    pub(super) common: SharedUniforms,
-    pub(super) text_color: UniformLoc,
-    pub(super) outline_color: UniformLoc,
-    pub(super) distance_edges: UniformLoc,
-    pub(super) tex_id: UniformLoc,
-    pub(super) tex_chan_mask: UniformLoc,
+    pub(super) mask_id: UniformLoc,
+    pub(super) mask_bounds: UniformLoc,
+    pub(super) sdf_values: UniformLoc,
+    pub(super) sdf_chan_mask: UniformLoc,
 }
 
 #[derive(Clone)]
 pub struct Shaders {
-    pub(super) std: Shader,
-    pub(super) sdf: Shader,
-    pub(super) std_uniforms: StdUniforms,
-    pub(super) sdf_uniforms: SdfUniforms,
+    pub(super) shader: Shader,
+    pub(super) uniforms: Uniforms,
 }
 
 impl Shaders {
     pub fn new(gl: &Rc<OpenGlBindings>) -> Result<Self, ProgramCompileError> {
-        let std = Shader::create(gl, STD_VERTEX_SOURCE, STD_FRAGMENT_SOURCE)?;
-        let sdf = Shader::create(gl, STD_VERTEX_SOURCE, SDF_FRAGMENT_SOURCE)?;
+        let shader =
+            Shader::create(gl, STD_VERTEX_SOURCE, STD_FRAGMENT_SOURCE)?;
         Ok(Self {
-            std_uniforms: StdUniforms {
-                common: common(gl, &std),
-                tex_id: std.uniform(gl, "TEX_ID"),
-                tint_color: std.uniform(gl, "TINT_COLOR"),
+            uniforms: Uniforms {
+                transform: shader.uniform(gl, "TRANSFORM"),
+                tex_id: shader.uniform(gl, "TEX_ID"),
+                tint_color: shader.uniform(gl, "TINT_COLOR"),
+                mask_id: shader.uniform(gl, "MASK_ID"),
+                mask_bounds: shader.uniform(gl, "MASK_BOUNDS"),
+                sdf_values: shader.uniform(gl, "SDF_VALUES"),
+                sdf_chan_mask: shader.uniform(gl, "SDF_CHAN_MASK"),
             },
-            sdf_uniforms: SdfUniforms {
-                common: common(gl, &sdf),
-                text_color: sdf.uniform(gl, "TEXT_COLOR"),
-                outline_color: sdf.uniform(gl, "OUTLINE_COLOR"),
-                distance_edges: sdf.uniform(gl, "DISTANCE_EDGES"),
-                tex_id: sdf.uniform(gl, "TEX_ID"),
-                tex_chan_mask: sdf.uniform(gl, "TEX_CHAN_MASK"),
-            },
-            std,
-            sdf,
+            shader,
         })
     }
 }
