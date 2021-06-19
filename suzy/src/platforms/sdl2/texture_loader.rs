@@ -1,24 +1,17 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+/* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
+/* Copyright © 2021 Violet Leonard */
 
-use std::path::Path;
+use std::convert::TryInto;
 use std::fmt;
 use std::fmt::{Display, Formatter};
-use std::convert::TryInto;
+use std::path::Path;
 
-use sdl2::surface::Surface;
 use sdl2::image::LoadSurface;
 use sdl2::pixels::PixelFormatEnum;
+use sdl2::surface::Surface;
 
-use crate::platforms::opengl::bindings::{
-    RGB,
-    RGBA,
-    UNSIGNED_BYTE,
-};
-use crate::platforms::opengl::image::{
-    TextureLoadResult, TextureBuilder
-};
+use crate::platforms::opengl::bindings::{RGB, RGBA, UNSIGNED_BYTE};
+use crate::platforms::opengl::image::{TextureBuilder, TextureLoadResult};
 
 #[derive(Debug)]
 struct SdlImageLoadError(String);
@@ -32,7 +25,9 @@ impl Display for SdlImageLoadError {
 impl std::error::Error for SdlImageLoadError {}
 
 impl From<String> for SdlImageLoadError {
-    fn from(msg: String) -> Self { Self(msg) }
+    fn from(msg: String) -> Self {
+        Self(msg)
+    }
 }
 
 pub fn load_texture(path: &Path) -> TextureLoadResult {
@@ -40,14 +35,13 @@ pub fn load_texture(path: &Path) -> TextureLoadResult {
         .map_err(|msg| Box::new(SdlImageLoadError(msg)))?;
     let (fmt, type_, surf, opaque) = match surf.pixel_format_enum() {
         PixelFormatEnum::BGR24 => (RGB, UNSIGNED_BYTE, surf, true),
-        PixelFormatEnum::ABGR8888 => {
-            (RGBA, UNSIGNED_BYTE, surf, false)
-        },
+        PixelFormatEnum::ABGR8888 => (RGBA, UNSIGNED_BYTE, surf, false),
         _ => {
-            let conv = surf.convert_format(PixelFormatEnum::ABGR8888)
+            let conv = surf
+                .convert_format(PixelFormatEnum::ABGR8888)
                 .map_err(|msg| Box::new(SdlImageLoadError(msg)))?;
             (RGBA, UNSIGNED_BYTE, conv, false)
-        },
+        }
     };
     let (width, height) = surf.size();
     let width = width.try_into().map_err(Box::new)?;
@@ -65,9 +59,12 @@ pub fn load_texture(path: &Path) -> TextureLoadResult {
             let row = &pixels[start..end];
             let yoffset = height - row_index;
             builder.sub_image(
-                0, yoffset,
-                width, 1,
-                fmt, type_,
+                0,
+                yoffset,
+                width,
+                1,
+                fmt,
+                type_,
                 row.as_ptr() as *const _,
             );
         }

@@ -8,7 +8,7 @@ homepage = "https://github.com/geeklint/suzy"
 repository = "https://github.com/geeklint/suzy"
 readme = "README.md"
 keywords = ["suzy"]
-license = "MPL-2.0"
+license = "Apache-2.0 OR MIT OR Zlib"
 
 [dependencies]
 rusttype = "0.9.1"

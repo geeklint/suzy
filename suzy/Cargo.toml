@@ -8,7 +8,7 @@ homepage = "https://github.com/geeklint/suzy"
 repository = "https://github.com/geeklint/suzy"
 readme = "README.md"
 keywords = ["gui", "kivy", "widgets"]
-license = "MPL-2.0"
+license = "Apache-2.0 OR MIT OR Zlib"
 
 [features]
 default = ["platform_sdl", "inline_tweak", "default_font"]

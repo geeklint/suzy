@@ -1,3 +1,6 @@
+/* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
+/* Copyright © 2021 Violet Leonard */
+
 use crate::graphics::Color;
 use crate::graphics::DrawContext;
 use crate::pointer::PointerEventData;
