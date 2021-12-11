@@ -24,6 +24,7 @@ mod internal;
 pub mod layout;
 mod receivers;
 mod rect;
+mod unique_handle;
 
 use internal::WidgetInternal;
 use receivers::{
@@ -40,6 +41,7 @@ pub use init::WidgetInit;
 pub use internal::WidgetExtra;
 pub use receivers::{WidgetChildReceiver, WidgetGraphicReceiver};
 pub use rect::WidgetRect;
+pub use unique_handle::{UniqueHandle, UniqueHandleId};
 
 pub(crate) type FindWidgetCallback<'a, P> =
     Option<Box<dyn FnOnce(&mut dyn AnonWidget<P>) + 'a>>;

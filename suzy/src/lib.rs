@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-#![warn(missing_docs)]
+//#![warn(missing_docs)]
 #![warn(clippy::clone_on_ref_ptr)]
 #![warn(clippy::todo)]
 #![warn(clippy::unimplemented)]
