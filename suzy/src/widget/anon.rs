@@ -8,7 +8,6 @@ use super::WidgetContent;
 use super::{Widget, WidgetId};
 
 mod private {
-    use super::super::FindWidgetCallback;
     use super::{WidgetContent, WidgetId};
     use crate::dims::DynRect;
     use crate::graphics::DrawContext;
@@ -20,11 +19,6 @@ mod private {
         fn draw(&mut self, ctx: &mut DrawContext<P>);
         fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
         fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
-        fn find_widget(
-            &mut self,
-            id: &WidgetId,
-            func: &mut FindWidgetCallback<P>,
-        );
         fn as_any(self: Box<Self>) -> Box<dyn std::any::Any>;
         fn as_any_ref(&self) -> &dyn std::any::Any;
         fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
@@ -49,14 +43,6 @@ mod private {
 
         fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool {
             super::Widget::pointer_event_self(self, event)
-        }
-
-        fn find_widget(
-            &mut self,
-            id: &WidgetId,
-            func: &mut FindWidgetCallback<P>,
-        ) {
-            super::Widget::find_widget(self, id, func);
         }
 
         fn as_any(self: Box<Self>) -> Box<dyn std::any::Any> {

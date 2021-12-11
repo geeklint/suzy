@@ -13,10 +13,8 @@ use drying_paint::{WatchContext, Watched};
 
 use crate::dims::{Dim, Rect, SimplePadding2d, SimpleRect};
 use crate::platform::{DefaultPlatform, Event, EventLoopState, Platform};
-use crate::pointer::{
-    PointerAction, PointerEvent, PointerEventData, PointerId,
-};
-use crate::widget::{AnonWidget, Widget, WidgetContent, WidgetId};
+use crate::pointer::{PointerEvent, PointerEventData, PointerId};
+use crate::widget::{AnonWidget, UniqueHandleId, Widget, WidgetContent};
 use crate::window;
 use window::{Window, WindowEvent, WindowSettings};
 
@@ -40,7 +38,7 @@ where
     window: P::Window,
     roots: Vec<Box<dyn AnonWidget<P::Renderer>>>,
     values: AppValues,
-    pointer_grab_map: HashMap<PointerId, WidgetId>,
+    pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
 }
 
 impl<P: Platform> App<P> {
@@ -177,7 +175,7 @@ where
 {
     window: Option<P::Window>,
     roots: Vec<Box<dyn AnonWidget<P::Renderer>>>,
-    pointer_grab_map: HashMap<PointerId, WidgetId>,
+    pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
 }
 
 impl<P: Platform> CurrentApp<P> {
@@ -320,42 +318,15 @@ impl<P: Platform> CurrentApp<P> {
 
     fn pointer_event(&mut self, pointer: PointerEventData) {
         let mut grab_map = std::mem::take(&mut self.pointer_grab_map);
-        let (stolen_from, mut grab_map) = self.access_roots(move |roots| {
-            let mut stolen_from = None;
-            let mut event =
-                PointerEvent::new(pointer, &mut grab_map, &mut stolen_from);
+        self.pointer_grab_map = self.access_roots(move |roots| {
+            let mut event = PointerEvent::new(pointer, &mut grab_map);
             let mut handled = false;
             let mut iter = roots.iter_mut().rev();
             while let (false, Some(root)) = (handled, iter.next()) {
                 handled = root.pointer_event(&mut event);
             }
-            (stolen_from, grab_map)
-        });
-        self.pointer_grab_map = if let Some(id) = stolen_from {
-            self.access_roots(move |roots| {
-                let mut found = false;
-                let mut iter = roots.iter_mut();
-                while let (false, Some(root)) = (found, iter.next()) {
-                    root.find_widget(
-                        &id,
-                        &mut Some(Box::new(|widget| {
-                            found = true;
-                            widget.pointer_event_self(&mut PointerEvent::new(
-                                PointerEventData {
-                                    action: PointerAction::GrabStolen,
-                                    ..pointer
-                                },
-                                &mut grab_map,
-                                &mut None,
-                            ));
-                        })),
-                    );
-                }
-                grab_map
-            })
-        } else {
             grab_map
-        };
+        });
     }
 
     /// Consume the current app, cleaning up its resources immediately.

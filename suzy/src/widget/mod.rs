@@ -29,7 +29,7 @@ mod unique_handle;
 use internal::WidgetInternal;
 use receivers::{
     DrawChildReceiver, DrawGraphicBeforeReceiver, DrawGraphicOrderedReceiver,
-    DrawGraphicUnorderedReceiver, FindWidgetReceiver,
+    DrawGraphicUnorderedReceiver,
     PointerEventChildReceiver,
 };
 
@@ -42,9 +42,6 @@ pub use internal::WidgetExtra;
 pub use receivers::{WidgetChildReceiver, WidgetGraphicReceiver};
 pub use rect::WidgetRect;
 pub use unique_handle::{UniqueHandle, UniqueHandleId};
-
-pub(crate) type FindWidgetCallback<'a, P> =
-    Option<Box<dyn FnOnce(&mut dyn AnonWidget<P>) + 'a>>;
 
 /// A basic structure to wrap some data and turn it into a widget.
 pub struct Widget<T, P = DefaultRenderPlatform>
@@ -163,22 +160,6 @@ where
                 target,
                 current: 0,
             });
-        }
-    }
-
-    pub(crate) fn find_widget(
-        this: &mut Self,
-        id: &WidgetId,
-        func: &mut FindWidgetCallback<P>,
-    ) {
-        if let Some(f) = func.take() {
-            if Widget::id(this) == *id {
-                f(this);
-            } else {
-                *func = Some(f);
-                let content: &mut T = this;
-                content.children(FindWidgetReceiver { id, func });
-            }
         }
     }
 

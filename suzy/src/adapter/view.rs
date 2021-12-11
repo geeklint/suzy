@@ -5,8 +5,8 @@ use crate::platform::RenderPlatform;
 use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
 use crate::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
-    WidgetInit,
+    UniqueHandle, Widget, WidgetChildReceiver, WidgetContent,
+    WidgetGraphicReceiver, WidgetInit,
 };
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
@@ -77,6 +77,7 @@ where
     position_flag: WatchedMeta,
     layout: Layout,
     current_pointers: PointerSet,
+    handle: UniqueHandle,
 }
 
 impl<Layout, Content, Platform> AdapterView<Layout, Content, Platform>
@@ -125,6 +126,7 @@ where
             position_flag: WatchedMeta::default(),
             layout,
             current_pointers: PointerSet::default(),
+            handle: UniqueHandle::default(),
         }
     }
 }
@@ -141,6 +143,12 @@ where
             this.position_flag.watched();
             this.data_flag.watched();
             this.layout.layout(this.inner.get_interface(rect));
+        });
+        init.watch(|this, _rect| {
+            let current_pointers = &mut this.current_pointers;
+            this.handle.handle_pointer_grab_stolen(|pointer_id| {
+                current_pointers.remove(pointer_id);
+            });
         });
     }
 
@@ -178,7 +186,7 @@ where
                         self.inner.move_content(*x, *y);
                         self.position_flag.trigger();
                     }
-                    event.force_grab(extra);
+                    event.force_grab(self.handle.id());
                     true
                 } else {
                     false
@@ -196,8 +204,8 @@ where
         use crate::pointer::PointerAction;
         match event.action() {
             PointerAction::Down => {
-                let grabbed =
-                    self.hittest(extra, event.pos()) && event.try_grab(extra);
+                let grabbed = self.hittest(extra, event.pos())
+                    && event.try_grab(self.handle.id());
                 if grabbed {
                     self.current_pointers.add_grabbed(event.id());
                 }
@@ -224,12 +232,8 @@ where
                     false
                 }
             }
-            PointerAction::GrabStolen => {
-                self.current_pointers.remove(event.id());
-                true
-            }
             PointerAction::Up => {
-                let ungrabbed = event.try_ungrab(extra.id());
+                let ungrabbed = event.try_ungrab(self.handle.id());
                 self.current_pointers.remove(event.id());
                 ungrabbed
             }

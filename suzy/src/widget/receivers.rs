@@ -5,9 +5,7 @@ use crate::graphics::{DrawContext, Graphic};
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
-use super::{
-    AnonWidget, FindWidgetCallback, Widget, WidgetContent, WidgetGraphic,
-};
+use super::{AnonWidget, Widget, WidgetContent, WidgetGraphic};
 
 /// An internal iterator style receiver.  Types of this trait are passed to
 /// [`WidgetContent::children`](trait.WidgetContent.html#tymethod.children).
@@ -141,23 +139,5 @@ where
             }
             self.current += 1;
         }
-    }
-}
-
-pub(super) struct FindWidgetReceiver<'a, 'b, P: ?Sized> {
-    pub id: &'a super::WidgetId,
-    pub func: &'a mut FindWidgetCallback<'b, P>,
-}
-
-impl<'a, 'b, P> WidgetChildReceiver<P> for FindWidgetReceiver<'a, 'b, P>
-where
-    P: RenderPlatform + ?Sized,
-{
-    fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
-        Widget::find_widget(child, self.id, self.func);
-    }
-
-    fn anon_child(&mut self, child: &mut dyn AnonWidget<P>) {
-        child.find_widget(self.id, self.func);
     }
 }

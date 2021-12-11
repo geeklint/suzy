@@ -8,7 +8,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent, PointerId};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
+    UniqueHandle, Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
     WidgetGraphicReceiver, WidgetInit,
 };
 
@@ -29,6 +29,7 @@ pub struct ButtonBehavior<T> {
     state: Watched<SelectionState>,
     interactable: Watched<bool>,
     pointers_down: usize,
+    handle: UniqueHandle,
     content: T,
 }
 
@@ -69,6 +70,20 @@ where
                 *button.state = SelectionState::normal();
             }
         });
+        init.watch(|button, _rect| {
+            let Self {
+                pointers_down,
+                state,
+                handle,
+                ..
+            } = button;
+            handle.handle_pointer_grab_stolen(|_pointer_id| {
+                *pointers_down -= 1;
+                if *pointers_down == 0 {
+                    **state = SelectionState::normal();
+                }
+            });
+        });
     }
 
     fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
@@ -90,8 +105,8 @@ where
     ) -> bool {
         match event.action() {
             PointerAction::Down => {
-                let grabbed =
-                    self.hittest(extra, event.pos()) && event.try_grab(extra);
+                let grabbed = self.hittest(extra, event.pos())
+                    && event.try_grab(self.handle.id());
                 if grabbed {
                     self.pointers_down += 1;
                     if *self.interactable {
@@ -102,7 +117,7 @@ where
             }
             PointerAction::Move(_, _) => {
                 let ungrabbed = !self.hittest(extra, event.pos())
-                    && event.try_ungrab(extra);
+                    && event.try_ungrab(self.handle.id());
                 if ungrabbed {
                     self.pointers_down -= 1;
                     if self.pointers_down == 0 {
@@ -111,15 +126,8 @@ where
                 }
                 ungrabbed
             }
-            PointerAction::GrabStolen => {
-                self.pointers_down -= 1;
-                if self.pointers_down == 0 {
-                    *self.state = SelectionState::normal();
-                }
-                true
-            }
             PointerAction::Up => {
-                let ungrabbed = event.try_ungrab(extra.id());
+                let ungrabbed = event.try_ungrab(self.handle.id());
                 if ungrabbed {
                     self.pointers_down -= 1;
                     if self.pointers_down == 0 {
@@ -160,6 +168,7 @@ impl<T: Default> Default for ButtonBehavior<T> {
             state: Watched::default(),
             interactable: Watched::new(true),
             pointers_down: 0,
+            handle: UniqueHandle::default(),
             content: T::default(),
         }
     }

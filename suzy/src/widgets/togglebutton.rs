@@ -9,8 +9,8 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
-    WidgetGraphicReceiver, WidgetId, WidgetInit,
+    UniqueHandle, Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
+    WidgetGraphicReceiver, WidgetInit,
 };
 
 /// A group of toggle buttons make members of the group mutually exclusive.
@@ -80,12 +80,6 @@ impl<T> ToggleButtonValue<()> for T {
     fn get_value(&self, _extra: &WidgetExtra) {}
 }
 
-impl<T> ToggleButtonValue<WidgetId> for T {
-    fn get_value(&self, extra: &WidgetExtra) -> WidgetId {
-        extra.id()
-    }
-}
-
 pub struct ToggleButtonContent<T, V = ()> {
     state: Watched<SelectionState>,
     group: Watched<Option<ToggleButtonGroup<V>>>,
@@ -94,6 +88,7 @@ pub struct ToggleButtonContent<T, V = ()> {
     pointers_down: usize,
     just_clicked: bool,
     currently_selected: bool,
+    handle: UniqueHandle,
     content: T,
 }
 
@@ -161,6 +156,21 @@ where
                 }
             }
         });
+        init.watch(|button, _rect| {
+            let base_state = button.base_state();
+            let Self {
+                pointers_down,
+                state,
+                handle,
+                ..
+            } = button;
+            handle.handle_pointer_grab_stolen(|_pointer_id| {
+                *pointers_down -= 1;
+                if *pointers_down == 0 {
+                    **state = base_state;
+                }
+            });
+        });
     }
 
     fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
@@ -183,7 +193,7 @@ where
         match event.action() {
             PointerAction::Down => {
                 let grabbed = self.hittest(extra, event.pos())
-                    && event.try_grab(extra.id());
+                    && event.try_grab(self.handle.id());
                 if grabbed {
                     eprintln!("down: {:?}", self.content.get_value(extra));
                     self.pointers_down += 1;
@@ -195,7 +205,7 @@ where
             }
             PointerAction::Move(_, _) => {
                 let ungrabbed = !self.hittest(extra, event.pos())
-                    && event.try_ungrab(extra);
+                    && event.try_ungrab(self.handle.id());
                 if ungrabbed {
                     self.pointers_down -= 1;
                     if self.pointers_down == 0 {
@@ -204,15 +214,8 @@ where
                 }
                 ungrabbed
             }
-            PointerAction::GrabStolen => {
-                self.pointers_down -= 1;
-                if self.pointers_down == 0 {
-                    *self.state = self.base_state();
-                }
-                true
-            }
             PointerAction::Up => {
-                let ungrabbed = event.try_ungrab(extra.id());
+                let ungrabbed = event.try_ungrab(self.handle.id());
                 if ungrabbed {
                     self.pointers_down -= 1;
                     if self.pointers_down == 0 {
@@ -236,14 +239,14 @@ where
             PointerAction::Hover(_, _) => {
                 match (self.state.v1(), self.hittest(extra, event.pos())) {
                     (SelectionStateV1::Normal, true) => {
-                        let grabbed = event.try_grab(extra);
+                        let grabbed = event.try_grab(self.handle.id());
                         if grabbed && *self.interactable {
                             *self.state = SelectionState::hover();
                         }
                         grabbed
                     }
                     (SelectionStateV1::Hover, false) => {
-                        let ungrabbed = event.try_ungrab(extra);
+                        let ungrabbed = event.try_ungrab(self.handle.id());
                         if ungrabbed {
                             *self.state = self.base_state();
                         }
@@ -267,6 +270,7 @@ impl<T: Default, V> Default for ToggleButtonContent<T, V> {
             pointers_down: 0,
             just_clicked: false,
             currently_selected: false,
+            handle: UniqueHandle::default(),
             content: T::default(),
         }
     }

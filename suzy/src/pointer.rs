@@ -10,7 +10,7 @@
 
 use std::collections::HashMap;
 
-use crate::widget::WidgetId;
+use crate::widget::UniqueHandleId;
 
 /// A unique id for a particular pointer
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
@@ -71,9 +71,6 @@ pub enum PointerAction {
     ///
     /// The parameters indicate the relative change in position.
     Hover(f32, f32),
-
-    /// A different widget forcefully grabbed this pointer.
-    GrabStolen,
 }
 
 mod internal {
@@ -117,8 +114,7 @@ pub use internal::PointerEvent as PointerEventData;
 /// This struct will get passed to the pointer_event method of widget content.
 pub struct PointerEvent<'a> {
     data: PointerEventData,
-    grab_map: &'a mut HashMap<PointerId, WidgetId>,
-    grab_stolen_from: &'a mut Option<WidgetId>,
+    grab_map: &'a mut HashMap<PointerId, UniqueHandleId>,
 }
 
 impl std::fmt::Debug for PointerEvent<'_> {
@@ -130,14 +126,9 @@ impl std::fmt::Debug for PointerEvent<'_> {
 impl<'a> PointerEvent<'a> {
     pub(crate) fn new(
         data: PointerEventData,
-        grab_map: &'a mut HashMap<PointerId, WidgetId>,
-        grab_stolen_from: &'a mut Option<WidgetId>,
+        grab_map: &'a mut HashMap<PointerId, UniqueHandleId>,
     ) -> Self {
-        PointerEvent {
-            data,
-            grab_map,
-            grab_stolen_from,
-        }
+        PointerEvent { data, grab_map }
     }
 }
 
@@ -167,13 +158,13 @@ impl PointerEvent<'_> {
         (self.data.x, self.data.y)
     }
 
-    /// Try to "grab" the pointer, indicating that the identified widget
+    /// Try to "grab" the pointer, indicating that the identified handle
     /// should be the primary handler of this pointer.
     ///
-    /// Returns false if a different widget has already grabbed the pointer.
+    /// Returns false if a different handle has already grabbed the pointer.
     pub fn try_grab<I>(&mut self, holder: I) -> bool
     where
-        I: Into<WidgetId>,
+        I: Into<UniqueHandleId>,
     {
         use std::collections::hash_map::Entry::*;
 
@@ -187,26 +178,26 @@ impl PointerEvent<'_> {
         }
     }
 
-    /// Focibly "grab" the pointer, indicating that the identified widget
+    /// Focibly "grab" the pointer, indicating that the identified handle
     /// should be the primary handler of this pointer.
     ///
-    /// The widget previously grabbing the pointer will be notified with a
+    /// The handle previously grabbing the pointer will be notified with a
     /// "GrabStolen" pointer event.
     pub fn force_grab<I>(&mut self, holder: I)
     where
-        I: Into<WidgetId>,
+        I: Into<UniqueHandleId>,
     {
-        let wid = holder.into();
-        let prev = self.grab_map.insert(self.id(), wid);
-        if let Some(prev_wid) = prev {
-            *self.grab_stolen_from = Some(prev_wid);
+        let handle_id = holder.into();
+        let prev = self.grab_map.insert(self.id(), handle_id);
+        if let Some(prev_handle_id) = prev {
+            prev_handle_id.notify_grab_stolen(self.id());
         }
     }
 
-    /// Check if this event is grabbed by the identified widget.
+    /// Check if this event is grabbed by the identified handle.
     pub fn is_grabbed_by<I>(&self, holder: I) -> bool
     where
-        I: Into<WidgetId>,
+        I: Into<UniqueHandleId>,
     {
         self.grab_map
             .get(&self.id())
@@ -217,10 +208,10 @@ impl PointerEvent<'_> {
     /// widget should no longer be considered the primary handler.
     ///
     /// Returns false if the grab was not previously held by the
-    /// identified widget.
+    /// identified handle.
     pub fn try_ungrab<I>(&mut self, holder: I) -> bool
     where
-        I: Into<WidgetId>,
+        I: Into<UniqueHandleId>,
     {
         use std::collections::hash_map::Entry::*;
 
