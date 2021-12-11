@@ -7,7 +7,7 @@
 use std::ops::{Deref, DerefMut};
 
 pub use drying_paint::Watched;
-use drying_paint::{Watcher, WatcherId};
+use drying_paint::Watcher;
 
 use crate::adapter::Adaptable;
 use crate::dims::{Dim, Rect};
@@ -135,15 +135,6 @@ where
         }
     }
 
-    /// Get a value representing a unique id for this Widget.  This value may
-    /// outlive the widget, and will never compare equal to a value returned
-    /// by the id method of a Widget other than this one.
-    pub fn id(this: &Self) -> WidgetId {
-        WidgetId {
-            id: this.watcher.id(),
-        }
-    }
-
     pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
         let wid_int = this.watcher.data_mut();
         let content = &mut wid_int.content;
@@ -167,10 +158,8 @@ where
         this: &mut Self,
         event: &mut PointerEvent,
     ) -> bool {
-        let id = Widget::id(this);
         let wid_int = this.watcher.data_mut();
         let mut extra = WidgetExtra {
-            id,
             rect: &mut wid_int.rect,
         };
         T::pointer_event_before(&mut wid_int.content, &mut extra, event)
@@ -189,10 +178,8 @@ where
         this: &mut Self,
         event: &mut PointerEvent,
     ) -> bool {
-        let id = Widget::id(this);
         let wid_int = this.watcher.data_mut();
         let mut extra = WidgetExtra {
-            id,
             rect: &mut wid_int.rect,
         };
         T::pointer_event(&mut wid_int.content, &mut extra, event)
@@ -240,30 +227,5 @@ where
         F: FnOnce(&mut Dim) -> R,
     {
         self.watcher.data_mut().rect.external_y_mut(f)
-    }
-}
-
-/// A unique id for a widget
-///
-/// This value may outlive the widget, and will never compare equal to a
-/// value obtained from a different widget.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct WidgetId {
-    id: WatcherId,
-}
-
-impl<P, T> From<&Widget<T, P>> for WidgetId
-where
-    P: RenderPlatform,
-    T: WidgetContent<P>,
-{
-    fn from(widget: &Widget<T, P>) -> Self {
-        widget.id()
-    }
-}
-
-impl From<&mut WidgetExtra<'_>> for WidgetId {
-    fn from(extra: &mut WidgetExtra) -> Self {
-        extra.id()
     }
 }

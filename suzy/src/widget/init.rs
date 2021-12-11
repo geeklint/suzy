@@ -5,7 +5,7 @@ use drying_paint::{WatcherInit, WatcherMeta};
 
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
-use super::{layout, WidgetContent, WidgetId, WidgetInternal, WidgetRect};
+use super::{layout, WidgetContent, WidgetInternal, WidgetRect};
 
 /// Instances of this trait are provided to
 /// [`WidgetContent::init`](trait.WidgetContent.html#tymethod.init).
@@ -17,12 +17,6 @@ where
     P: RenderPlatform + ?Sized,
     T: WidgetContent<P> + ?Sized,
 {
-    /// Get a value representing a unique id for the widget this WidgetInit
-    /// was created for. This value may outlive the widget, and will never
-    /// compare equal to a value returned by the id method of a Widget other
-    /// than this one.
-    fn widget_id(&self) -> WidgetId;
-
     /// Register a watch function associated with this widget.  See the
     /// [watch](../watch/index.html) module for more information.
     fn watch<F>(&mut self, func: F)
@@ -74,12 +68,6 @@ where
     O: WidgetContent<P>,
     T: WidgetContent<P>,
 {
-    fn widget_id(&self) -> WidgetId {
-        WidgetId {
-            id: self.watcher.id(),
-        }
-    }
-
     fn watch<F>(&mut self, func: F)
     where
         F: Fn(&mut T, &mut WidgetRect) + 'static,

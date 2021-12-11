@@ -4,7 +4,7 @@
 use crate::dims::{Dim, Rect};
 use crate::platform::RenderPlatform;
 
-use super::{WidgetContent, WidgetId, WidgetRect};
+use super::{WidgetContent, WidgetRect};
 
 pub(super) struct WidgetInternal<P, T>
 where
@@ -33,15 +33,7 @@ where
 /// This type is provided to widget event methods, providing access to the
 /// widget's Rect and other functionality.
 pub struct WidgetExtra<'a> {
-    pub(super) id: WidgetId,
     pub(super) rect: &'a mut WidgetRect,
-}
-
-impl WidgetExtra<'_> {
-    /// Get the id of the widget this WidgetExtra refers to.
-    pub fn id(&self) -> WidgetId {
-        self.id.clone()
-    }
 }
 
 impl Rect for WidgetExtra<'_> {

@@ -4,18 +4,17 @@
 use crate::dims::{Dim, Rect};
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
+use super::Widget;
 use super::WidgetContent;
-use super::{Widget, WidgetId};
 
 mod private {
-    use super::{WidgetContent, WidgetId};
+    use super::WidgetContent;
     use crate::dims::DynRect;
     use crate::graphics::DrawContext;
     use crate::platform::RenderPlatform;
     use crate::pointer::PointerEvent;
 
     pub trait Widget<P: RenderPlatform + ?Sized>: DynRect {
-        fn id(&self) -> WidgetId;
         fn draw(&mut self, ctx: &mut DrawContext<P>);
         fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
         fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
@@ -29,10 +28,6 @@ mod private {
         P: RenderPlatform + ?Sized,
         T: WidgetContent<P>,
     {
-        fn id(&self) -> WidgetId {
-            super::Widget::id(self)
-        }
-
         fn draw(&mut self, ctx: &mut DrawContext<P>) {
             super::Widget::draw(self, ctx);
         }
@@ -65,10 +60,6 @@ pub trait AnonWidget<P = DefaultRenderPlatform>: private::Widget<P>
 where
     P: RenderPlatform + ?Sized,
 {
-    /// Get this widget's id.
-    fn id(&self) -> WidgetId {
-        private::Widget::id(self)
-    }
 }
 
 impl<P, T> AnonWidget<P> for Widget<T, P>
