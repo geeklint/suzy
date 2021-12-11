@@ -30,12 +30,9 @@ struct PointerSet {
 
 impl PointerSet {
     fn primary_pointer(&self) -> Option<PointerId> {
-        self.data
-            .iter()
-            .filter_map(|entry| {
-                (entry.status == PointerStatus::Grabbed).then(|| entry.pointer)
-            })
-            .next()
+        self.data.iter().find_map(|entry| {
+            (entry.status == PointerStatus::Grabbed).then(|| entry.pointer)
+        })
     }
 
     fn contains(&self, pointer: PointerId) -> bool {
@@ -45,10 +42,7 @@ impl PointerSet {
     fn status(&self, pointer: PointerId) -> Option<PointerStatus> {
         self.data
             .iter()
-            .filter_map(|entry| {
-                (entry.pointer == pointer).then(|| entry.status)
-            })
-            .next()
+            .find_map(|entry| (entry.pointer == pointer).then(|| entry.status))
     }
 
     fn add_pending(&mut self, pointer: PointerId) {
@@ -146,7 +140,7 @@ where
         init.watch(|this, rect| {
             this.position_flag.watched();
             this.data_flag.watched();
-            this.layout.layout(this.inner.get_interface(&rect));
+            this.layout.layout(this.inner.get_interface(rect));
         });
     }
 

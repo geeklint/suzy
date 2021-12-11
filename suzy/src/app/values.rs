@@ -38,13 +38,7 @@ impl AppValues {
     where
         F: FnOnce(&AppValues) -> R,
     {
-        APP_STACK.with(|cell| {
-            if let Some(top) = cell.borrow().last() {
-                Some((func)(top))
-            } else {
-                None
-            }
-        })
+        APP_STACK.with(|cell| cell.borrow().last().map(func))
     }
 
     pub(crate) fn expect_current<F, R>(func: F) -> R

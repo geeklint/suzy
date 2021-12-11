@@ -71,7 +71,7 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
 
     /// Get the RenderPlatfrom context associated with this DrawContex.
     pub fn render_ctx(&self) -> &P::Context {
-        &self.context
+        self.context
     }
 
     /// Get a mutable reference to the RenderPlatfrom context associated with

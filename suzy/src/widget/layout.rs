@@ -64,7 +64,7 @@ impl<'a, T: ?Sized> std::ops::Deref for ContentRef<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
-        &self.content
+        self.content
     }
 }
 

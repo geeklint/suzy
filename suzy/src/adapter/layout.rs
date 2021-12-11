@@ -135,7 +135,7 @@ where
     ) -> impl AdapterLayoutInterface<Layout> + 'a {
         let prev = std::mem::take(&mut self.active);
         Interface {
-            rect: &rect,
+            rect,
             data: self,
             prev,
         }
@@ -179,7 +179,7 @@ where
     }
 
     fn bounds(&self) -> &WidgetRect {
-        &self.rect
+        self.rect
     }
 
     fn update_positions(

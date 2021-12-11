@@ -185,7 +185,7 @@ where
                 let grabbed = self.hittest(extra, event.pos())
                     && event.try_grab(extra.id());
                 if grabbed {
-                    eprintln!("down: {:?}", self.content.get_value(&extra));
+                    eprintln!("down: {:?}", self.content.get_value(extra));
                     self.pointers_down += 1;
                     if *self.interactable {
                         *self.state = SelectionState::pressed();

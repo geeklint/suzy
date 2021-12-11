@@ -286,7 +286,7 @@ impl<'a, T> FontCharCalc<'a, T> {
             TextAlignment::Right => remaining_in_line,
         };
         for (mask, buf) in self.bufs.iter_mut() {
-            let commit = self.commited.get_mut(&mask).unwrap();
+            let commit = self.commited.get_mut(mask).unwrap();
             for i in (*commit..buf.len()).step_by(4) {
                 buf[i] += shift;
             }

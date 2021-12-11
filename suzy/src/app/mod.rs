@@ -129,14 +129,16 @@ impl<P: Platform> App<P> {
             roots,
             pointer_grab_map,
         };
-        let _res = watch_ctx.with(|| {
-            values.with(|| {
-                platform.run(move |state, event| {
-                    current.handle_event(state, event);
+        watch_ctx
+            .with(|| {
+                values.with(|| {
+                    platform.run(move |state, event| {
+                        current.handle_event(state, event);
+                    })
                 })
             })
-        });
-        (_res.1).1
+            .1
+             .1
     }
 
     /// Create a test interface for this app, which allows simulating

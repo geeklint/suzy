@@ -108,9 +108,9 @@ fn compile_program(
     vert_text: &[u8],
     frag_text: &[u8],
 ) -> Result<ProgramObject, ProgramCompileError> {
-    let vert = compile_shader(&gl, VERTEX_SHADER, vert_text)
+    let vert = compile_shader(gl, VERTEX_SHADER, vert_text)
         .map_err(ProgramCompileError::Vertex)?;
-    let frag = compile_shader(&gl, FRAGMENT_SHADER, frag_text)
+    let frag = compile_shader(gl, FRAGMENT_SHADER, frag_text)
         .map_err(ProgramCompileError::Fragment)?;
     let (success, program) = unsafe {
         let program = ProgramObject {

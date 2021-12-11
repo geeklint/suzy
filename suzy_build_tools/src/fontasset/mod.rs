@@ -137,7 +137,7 @@ pub fn build_fontasset<P: AsRef<Path>>(
                 tex_size,
                 nchans,
             };
-            let (x, y) = uniform.0[&ch];
+            let (x, y) = uniform.0[ch];
             render_char(
                 &fonts.0,
                 render_char::CharToRender {
@@ -150,7 +150,7 @@ pub fn build_fontasset<P: AsRef<Path>>(
             );
             channel += 1;
             if let Some(font) = &fonts.1 {
-                let (x, y) = uniform.1.as_ref().unwrap()[&ch];
+                let (x, y) = uniform.1.as_ref().unwrap()[ch];
                 render_char(
                     font,
                     render_char::CharToRender {
@@ -164,7 +164,7 @@ pub fn build_fontasset<P: AsRef<Path>>(
                 channel += 1;
             }
             if let Some(font) = &fonts.2 {
-                let (x, y) = uniform.2.as_ref().unwrap()[&ch];
+                let (x, y) = uniform.2.as_ref().unwrap()[ch];
                 render_char(
                     font,
                     render_char::CharToRender {
@@ -178,7 +178,7 @@ pub fn build_fontasset<P: AsRef<Path>>(
                 channel += 1;
             }
             if let Some(font) = &fonts.3 {
-                let (x, y) = uniform.3.as_ref().unwrap()[&ch];
+                let (x, y) = uniform.3.as_ref().unwrap()[ch];
                 render_char(
                     font,
                     render_char::CharToRender {
