@@ -35,8 +35,7 @@
 //!     }
 //!
 //!     // ...
-//! #   fn children(&mut self, _receiver: impl WidgetChildReceiver) {
-//! #   }
+//! #   fn children(_receiver: impl WidgetChildReceiver<Self>) {}
 //! #   fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 //! }
 //! ```

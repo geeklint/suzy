@@ -30,10 +30,10 @@ impl WidgetContent for Root {
             .push(|this| &mut this.three);
     }
 
-    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
-        receiver.child(&mut self.one);
-        receiver.child(&mut self.two);
-        receiver.child(&mut self.three);
+    fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+        receiver.child(|this| &mut this.one);
+        receiver.child(|this| &mut this.two);
+        receiver.child(|this| &mut this.three);
     }
 
     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {

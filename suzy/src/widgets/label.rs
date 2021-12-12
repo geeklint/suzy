@@ -70,7 +70,7 @@ where
         });
     }
 
-    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) {
+    fn children(_receiver: impl WidgetChildReceiver<Self, P>) {
         // no children
     }
 

@@ -86,8 +86,8 @@ where
         });
     }
 
-    fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
-        self.content.children(receiver);
+    fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
+        receiver.recurse(|this| &mut this.content);
     }
 
     fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {
@@ -258,7 +258,7 @@ impl<P: RenderPlatform> WidgetContent<P> for DefaultButtonContent<P> {
         });
     }
 
-    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) {
+    fn children(_receiver: impl WidgetChildReceiver<Self, P>) {
         // no children
     }
 

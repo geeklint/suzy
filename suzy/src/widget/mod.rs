@@ -139,7 +139,7 @@ where
         let wid_int = this.watcher.data_mut();
         let content = &mut wid_int.content;
         content.graphics(DrawGraphicBeforeReceiver { ctx });
-        content.children(DrawChildReceiver { ctx });
+        T::children(DrawChildReceiver { content, ctx });
         let mut num_ordered = 0;
         content.graphics(DrawGraphicUnorderedReceiver {
             ctx,
@@ -162,16 +162,18 @@ where
         let mut extra = WidgetExtra {
             rect: &mut wid_int.rect,
         };
-        T::pointer_event_before(&mut wid_int.content, &mut extra, event)
+        let content = &mut wid_int.content;
+        T::pointer_event_before(content, &mut extra, event)
             || {
                 let mut handled_by_child = false;
-                wid_int.content.children(PointerEventChildReceiver {
+                T::children(PointerEventChildReceiver {
+                content,
                     event,
                     handled: &mut handled_by_child,
                 });
                 handled_by_child
             }
-            || T::pointer_event(&mut wid_int.content, &mut extra, event)
+            || T::pointer_event(content, &mut extra, event)
     }
 
     pub(crate) fn pointer_event_self(

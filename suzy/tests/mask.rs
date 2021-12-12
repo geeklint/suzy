@@ -38,8 +38,7 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
     }
 
     fn children(
-        &mut self,
-        _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+        _receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
     ) {
     }
 

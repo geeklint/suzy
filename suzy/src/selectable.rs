@@ -381,8 +381,8 @@ mod extra_impls {
             init.init_child_inline(|x| &mut x.data);
         }
 
-        fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
-            self.data.children(receiver);
+        fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
+            receiver.recurse(|this| &mut this.data);
         }
 
         fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {

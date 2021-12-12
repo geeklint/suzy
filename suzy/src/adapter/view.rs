@@ -152,10 +152,8 @@ where
         });
     }
 
-    fn children(&mut self, mut receiver: impl WidgetChildReceiver<Platform>) {
-        for child in self.inner.active_children() {
-            receiver.child(child);
-        }
+    fn children(mut receiver: impl WidgetChildReceiver<Self, Platform>) {
+        receiver.iter_children(|this| Box::new(this.inner.active_children()));
     }
 
     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<Platform>) {

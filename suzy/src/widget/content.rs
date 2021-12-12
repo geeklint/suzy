@@ -45,9 +45,9 @@ use super::{
 /// #   fn init(_init: impl WidgetInit<Self>) {}
 /// #   fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
 ///
-///     fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
-///         receiver.child(&mut self.button_one);
-///         receiver.child(&mut self.button_two);
+///     fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+///         receiver.child(|this| &mut this.button_one);
+///         receiver.child(|this| &mut this.button_two);
 ///     }
 /// }
 /// ```
@@ -65,7 +65,7 @@ use super::{
 /// impl WidgetContent for MyWidgetData {
 ///     // ...
 /// #   fn init(_init: impl WidgetInit<Self>) {}
-/// #   fn children(&mut self, _receiver: impl WidgetChildReceiver) {}
+/// #   fn children(_receiver: impl WidgetChildReceiver<Self>) {}
 ///
 ///     fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver) {
 ///         receiver.graphic(&mut self.graphic);
@@ -85,7 +85,7 @@ where
     /// Use this method to specify the children a custom widget contains.
     ///
     /// Call `receiver.child` for each child.
-    fn children(&mut self, receiver: impl WidgetChildReceiver<P>);
+    fn children(receiver: impl WidgetChildReceiver<Self, P>);
 
     /// Use this method to specify the graphics a custom widget contains.
     ///
@@ -137,7 +137,7 @@ where
 
 impl<P: RenderPlatform> WidgetContent<P> for () {
     fn init(_init: impl WidgetInit<Self, P>) {}
-    fn children(&mut self, _receiver: impl WidgetChildReceiver<P>) {}
+    fn children(_receiver: impl WidgetChildReceiver<Self, P>) {}
     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<P>) {}
 }
 

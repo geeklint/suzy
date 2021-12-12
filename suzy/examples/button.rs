@@ -19,8 +19,8 @@ impl WidgetContent for Root {
         });
     }
 
-    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
-        receiver.child(&mut self.button);
+    fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+        receiver.child(|this| &mut this.button);
     }
 
     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {

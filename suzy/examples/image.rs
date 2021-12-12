@@ -35,7 +35,7 @@ impl WidgetContent for ImageViewer {
         });
     }
 
-    fn children(&mut self, _receiver: impl WidgetChildReceiver) {
+    fn children(_receiver: impl WidgetChildReceiver<Self>) {
         // no widget children
     }
 

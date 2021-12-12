@@ -37,8 +37,7 @@ impl WidgetContent<TestRenderPlatform> for Root {
     }
 
     fn children(
-        &mut self,
-        _receiver: impl WidgetChildReceiver<TestRenderPlatform>,
+        _receiver: impl WidgetChildReceiver<Self, TestRenderPlatform>,
     ) {
     }
 

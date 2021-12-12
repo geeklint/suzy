@@ -39,8 +39,7 @@ impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
     }
 
     fn children(
-        &mut self,
-        _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+        _receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
     ) {
     }
 
@@ -68,10 +67,9 @@ impl WidgetContent<OpenGlRenderPlatform> for Root {
     }
 
     fn children(
-        &mut self,
-        mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+        mut receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
     ) {
-        receiver.child(&mut self.button);
+        receiver.child(|this| &mut this.button);
     }
 
     fn graphics(

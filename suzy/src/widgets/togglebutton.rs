@@ -173,8 +173,8 @@ where
         });
     }
 
-    fn children(&mut self, receiver: impl WidgetChildReceiver<P>) {
-        self.content.children(receiver);
+    fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
+        receiver.recurse(|this| &mut this.content);
     }
 
     fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {

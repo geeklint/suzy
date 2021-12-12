@@ -41,11 +41,11 @@ impl WidgetContent for Element {
             };
             let mut settings = TextSettings::default();
             settings.alignment = TextAlignment::Center;
-            this.text.set_text_plain(&*this.value, &pos, &settings);
+            this.text.set_text_plain(*this.value, &pos, &settings);
         });
     }
 
-    fn children(&mut self, _receiver: impl WidgetChildReceiver) {
+    fn children(_receiver: impl WidgetChildReceiver<Self>) {
         // no children
     }
 
@@ -70,8 +70,8 @@ impl WidgetContent for AdapterExample {
         });
     }
 
-    fn children(&mut self, mut receiver: impl WidgetChildReceiver) {
-        receiver.child(&mut self.layout);
+    fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+        receiver.child(|this| &mut this.layout);
     }
 
     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {

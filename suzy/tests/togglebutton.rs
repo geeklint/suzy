@@ -48,8 +48,7 @@ impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
     }
 
     fn children(
-        &mut self,
-        _receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+        _receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
     ) {
     }
 
@@ -110,12 +109,11 @@ impl WidgetContent<OpenGlRenderPlatform> for GroupRoot {
     }
 
     fn children(
-        &mut self,
-        mut receiver: impl WidgetChildReceiver<OpenGlRenderPlatform>,
+        mut receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
     ) {
-        receiver.child(&mut self.top);
-        receiver.child(&mut self.middle);
-        receiver.child(&mut self.bottom);
+        receiver.child(|this| &mut this.top);
+        receiver.child(|this| &mut this.middle);
+        receiver.child(|this| &mut this.bottom);
     }
 
     fn graphics(

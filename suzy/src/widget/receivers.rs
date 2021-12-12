@@ -9,15 +9,35 @@ use super::{AnonWidget, Widget, WidgetContent, WidgetGraphic};
 
 /// An internal iterator style receiver.  Types of this trait are passed to
 /// [`WidgetContent::children`](trait.WidgetContent.html#tymethod.children).
-pub trait WidgetChildReceiver<P = DefaultRenderPlatform>
-where
-    P: RenderPlatform + ?Sized,
+pub trait WidgetChildReceiver<
+    T: ?Sized,
+    P: ?Sized + RenderPlatform = DefaultRenderPlatform,
+>
 {
     /// Receive a child.
-    fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>);
+    fn child<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
+        Child: WidgetContent<P>;
+
+    fn iter_children<F, Child>(&mut self, iter_fn: F)
+    where
+        F: for<'a> FnOnce(
+            &'a mut T,
+        ) -> Box<
+            dyn 'a + Iterator<Item = &'a mut Widget<Child, P>>,
+        >,
+        Child: WidgetContent<P>;
 
     /// Receive a child with an anonymous type.
-    fn anon_child(&mut self, child: &mut dyn AnonWidget<P>);
+    fn anon_child<F>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut dyn AnonWidget<P>;
+
+    fn recurse<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Child,
+        Child: WidgetContent<P>;
 }
 
 /// An internal iterator style receiver.  Types of this trait are passed to
@@ -30,43 +50,121 @@ where
     fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T);
 }
 
-pub(super) struct DrawChildReceiver<'a, 'b, P: RenderPlatform + ?Sized> {
+pub(super) struct DrawChildReceiver<
+    'a,
+    'b,
+    T: ?Sized + WidgetContent<P>,
+    P: RenderPlatform + ?Sized,
+> {
+    pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, P> WidgetChildReceiver<P> for DrawChildReceiver<'a, 'b, P>
+impl<'a, 'b, T, P> WidgetChildReceiver<T, P>
+    for DrawChildReceiver<'a, 'b, T, P>
 where
+    T: ?Sized + WidgetContent<P>,
     P: RenderPlatform + ?Sized,
 {
-    fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
-        Widget::draw(child, self.ctx);
+    fn child<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
+        Child: WidgetContent<P>,
+    {
+        Widget::draw(map_fn(self.content), self.ctx);
     }
 
-    fn anon_child(&mut self, child: &mut dyn AnonWidget<P>) {
-        child.draw(self.ctx);
+    fn iter_children<F, Child>(&mut self, iter_fn: F)
+    where
+        F: for<'i> FnOnce(
+            &'i mut T,
+        ) -> Box<
+            dyn 'i + Iterator<Item = &'i mut Widget<Child, P>>,
+        >,
+        Child: WidgetContent<P>,
+    {
+        for child in iter_fn(self.content) {
+            Widget::draw(child, self.ctx);
+        }
+    }
+
+    fn anon_child<F>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut dyn AnonWidget<P>,
+    {
+        map_fn(self.content).draw(self.ctx);
+    }
+
+    fn recurse<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Child,
+        Child: WidgetContent<P>,
+    {
+        Child::children(DrawChildReceiver {
+            content: map_fn(self.content),
+            ctx: self.ctx,
+        });
     }
 }
 
-pub(super) struct PointerEventChildReceiver<'a, 'b, 'c> {
+pub(super) struct PointerEventChildReceiver<'a, 'b, 'c, T: ?Sized> {
+    pub content: &'a mut T,
     pub event: &'a mut PointerEvent<'c>,
     pub handled: &'b mut bool,
 }
 
-impl<'a, 'b, 'c, P> WidgetChildReceiver<P>
-    for PointerEventChildReceiver<'a, 'b, 'c>
+impl<'a, 'b, 'c, T, P> WidgetChildReceiver<T, P>
+    for PointerEventChildReceiver<'a, 'b, 'c, T>
 where
+    T: ?Sized + WidgetContent<P>,
     P: RenderPlatform + ?Sized,
 {
-    fn child<T: WidgetContent<P>>(&mut self, child: &mut Widget<T, P>) {
+    fn child<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
+        Child: WidgetContent<P>,
+    {
         if !*self.handled {
-            *self.handled = Widget::pointer_event(child, self.event);
+            *self.handled =
+                Widget::pointer_event(map_fn(self.content), self.event);
         }
     }
 
-    fn anon_child(&mut self, child: &mut dyn AnonWidget<P>) {
-        if !*self.handled {
-            *self.handled = child.pointer_event(self.event);
+    fn iter_children<F, Child>(&mut self, iter_fn: F)
+    where
+        F: for<'i> FnOnce(
+            &'i mut T,
+        ) -> Box<
+            dyn 'i + Iterator<Item = &'i mut Widget<Child, P>>,
+        >,
+        Child: WidgetContent<P>,
+    {
+        for child in iter_fn(self.content) {
+            if !*self.handled {
+                *self.handled = Widget::pointer_event(child, self.event);
+            }
         }
+    }
+
+    fn anon_child<F>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut dyn AnonWidget<P>,
+    {
+        if !*self.handled {
+            *self.handled = map_fn(self.content).pointer_event(self.event);
+        }
+    }
+
+    fn recurse<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Child,
+        Child: WidgetContent<P>,
+    {
+        Child::children(PointerEventChildReceiver {
+            content: map_fn(self.content),
+            event: self.event,
+            handled: self.handled,
+        });
     }
 }
 
