@@ -9,10 +9,10 @@ use super::{AnonWidget, Widget, WidgetContent, WidgetGraphic};
 
 /// An internal iterator style receiver.  Types of this trait are passed to
 /// [`WidgetContent::children`](trait.WidgetContent.html#tymethod.children).
-pub trait WidgetChildReceiver<
+pub trait WidgetChildReceiver<T, P = DefaultRenderPlatform>
+where
     T: ?Sized,
-    P: ?Sized + RenderPlatform = DefaultRenderPlatform,
->
+    P: ?Sized + RenderPlatform,
 {
     /// Receive a child.
     fn child<F, Child>(&mut self, map_fn: F)
