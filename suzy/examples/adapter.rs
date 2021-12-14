@@ -9,7 +9,7 @@ use suzy::platform::graphics::Text as _TextTrait;
 use suzy::platforms::opengl::Text;
 use suzy::text::{TextAlignment, TextPosition, TextSettings};
 use suzy::watch::Watched;
-use suzy::widget::*;
+use suzy::widget::{self, *};
 
 const WORDS: &str = include_str!("words.txt");
 
@@ -31,7 +31,7 @@ impl Adaptable<&'static str> for Element {
     }
 }
 
-impl WidgetContent for Element {
+impl widget::Content for Element {
     fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, rect| {
             let pos = TextPosition {
@@ -59,7 +59,7 @@ struct AdapterExample {
     layout: DownwardVecAdapter<&'static str, Element>,
 }
 
-impl WidgetContent for AdapterExample {
+impl widget::Content for AdapterExample {
     fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
             this.layout.data_mut().clear();

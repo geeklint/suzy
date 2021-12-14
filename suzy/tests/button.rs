@@ -13,8 +13,7 @@ use suzy::platforms::TestPlatform;
 use suzy::pointer::{PointerAction, PointerEventData, PointerId};
 use suzy::selectable::{Selectable, SelectionState};
 use suzy::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
-    WidgetInit,
+    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
 };
 use suzy::widgets::Button;
 use suzy::window::WindowSettings;
@@ -31,7 +30,7 @@ impl Selectable for ButtonContent {
     }
 }
 
-impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
+impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
@@ -59,7 +58,7 @@ struct Root {
     button: Button<ButtonContent>,
 }
 
-impl WidgetContent<OpenGlRenderPlatform> for Root {
+impl widget::Content<OpenGlRenderPlatform> for Root {
     fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|root, rect| {
             root.button.set_fill(rect, &SimplePadding2d::zero());

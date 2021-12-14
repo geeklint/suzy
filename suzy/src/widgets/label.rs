@@ -7,8 +7,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::text::{TextPosition, TextSettings};
 use crate::watch::Watched;
 use crate::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
-    WidgetInit,
+    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
 };
 
 /// A widget which displays some text
@@ -55,7 +54,7 @@ where
     }
 }
 
-impl<P> WidgetContent<P> for LabelContent<P>
+impl<P> widget::Content<P> for LabelContent<P>
 where
     P: RenderPlatform,
 {

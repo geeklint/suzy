@@ -14,7 +14,7 @@ use drying_paint::{WatchContext, Watched};
 use crate::dims::{Dim, Rect, SimplePadding2d, SimpleRect};
 use crate::platform::{DefaultPlatform, Event, EventLoopState, Platform};
 use crate::pointer::{PointerEvent, PointerEventData, PointerId};
-use crate::widget::{AnonWidget, UniqueHandleId, Widget, WidgetContent};
+use crate::widget::{self, AnonWidget, UniqueHandleId, Widget};
 use crate::window;
 use window::{Window, WindowEvent, WindowSettings};
 
@@ -192,7 +192,7 @@ impl<P: Platform> CurrentApp<P> {
     pub fn add_root<F, T>(&mut self, f: F)
     where
         F: 'static + FnOnce() -> Widget<T, P::Renderer>,
-        T: WidgetContent<P::Renderer>,
+        T: widget::Content<P::Renderer>,
     {
         let (width, height) = self.window().size();
         let rect = SimpleRect::with_size(width, height);

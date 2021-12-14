@@ -33,7 +33,7 @@
 //! button will be updated to match.
 //!
 //! ```rust
-//! # use suzy::widget::*;
+//! # use suzy::widget::{self, *};
 //! # use suzy::dims::Rect;
 //! # use suzy::selectable::SelectableIgnored;
 //! # type ButtonContent = SelectableIgnored<()>;
@@ -43,7 +43,7 @@
 //!     button: Button<ButtonContent>,
 //! }
 //!
-//! impl WidgetContent for MyWidgetData {
+//! impl widget::Content for MyWidgetData {
 //!     fn init(mut init: impl WidgetInit<Self>) {
 //!         init.watch(|this, rect| {
 //!             this.button.set_width(200.0);

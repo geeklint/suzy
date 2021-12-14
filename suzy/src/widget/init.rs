@@ -5,17 +5,17 @@ use drying_paint::{WatcherInit, WatcherMeta};
 
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
-use super::{layout, WidgetContent, WidgetInternal, WidgetRect};
+use super::{layout, WidgetInternal, WidgetRect};
 
 /// Instances of this trait are provided to
-/// [`WidgetContent::init`](trait.WidgetContent.html#tymethod.init).
+/// [`widget::Content::init`](trait.widget::Content.html#tymethod.init).
 ///
 /// It's primary use is to provide the `watch` method, which custom widgets
 /// use to submit watch closures.
 pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P> + ?Sized,
+    T: super::Content<P> + ?Sized,
 {
     /// Register a watch function associated with this widget.  See the
     /// [watch](../watch/index.html) module for more information.
@@ -46,7 +46,7 @@ where
     #[doc(hidden)]
     fn init_child_inline<F, C>(&mut self, getter: F)
     where
-        C: WidgetContent<P>,
+        C: super::Content<P>,
         F: 'static + Clone + Fn(&mut T) -> &mut C;
 }
 
@@ -54,8 +54,8 @@ struct WidgetInitImpl<'a, 'b, O, T, G, P>
 where
     P: RenderPlatform + ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
-    O: WidgetContent<P>,
-    T: WidgetContent<P>,
+    O: super::Content<P>,
+    T: super::Content<P>,
 {
     watcher: &'a mut WatcherMeta<'b, WidgetInternal<P, O>>,
     getter: G,
@@ -65,8 +65,8 @@ impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
 where
     P: RenderPlatform + ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
-    O: WidgetContent<P>,
-    T: WidgetContent<P>,
+    O: super::Content<P>,
+    T: super::Content<P>,
 {
     fn watch<F>(&mut self, func: F)
     where
@@ -81,11 +81,11 @@ where
 
     fn init_child_inline<F, C>(&mut self, getter: F)
     where
-        C: WidgetContent<P>,
+        C: super::Content<P>,
         F: 'static + Clone + Fn(&mut T) -> &mut C,
     {
         let current_getter = self.getter.clone();
-        WidgetContent::init(WidgetInitImpl {
+        super::Content::init(WidgetInitImpl {
             watcher: self.watcher,
             getter: move |base| getter(current_getter(base)),
         });
@@ -95,10 +95,10 @@ where
 impl<P, T> WatcherInit for WidgetInternal<P, T>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P>,
+    T: super::Content<P>,
 {
     fn init(watcher: &mut WatcherMeta<Self>) {
-        WidgetContent::init(WidgetInitImpl {
+        super::Content::init(WidgetInitImpl {
             watcher,
             getter: |x| x,
         });

@@ -12,8 +12,7 @@ use suzy::app::{App, AppBuilder};
 use suzy::graphics::Color;
 use suzy::platform::{TestPlatform, TestRenderPlatform};
 use suzy::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
-    WidgetInit,
+    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
 };
 use suzy::window::WindowSettings;
 
@@ -23,7 +22,7 @@ struct Root {
     value_feedback: Rc<Cell<f32>>,
 }
 
-impl WidgetContent<TestRenderPlatform> for Root {
+impl widget::Content<TestRenderPlatform> for Root {
     fn init(mut init: impl WidgetInit<Self, TestRenderPlatform>) {
         init.watch(|root, _rect| {
             let mut value = root.value_feedback.get();

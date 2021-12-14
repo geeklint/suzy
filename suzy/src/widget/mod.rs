@@ -34,7 +34,7 @@ use receivers::{
 };
 
 pub use anon::AnonWidget;
-pub use content::WidgetContent;
+pub use content::{Content, RunAsApp};
 pub use coroutine::Coroutine;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
@@ -47,7 +47,7 @@ pub use unique_handle::{UniqueHandle, UniqueHandleId};
 pub struct Widget<T, P = DefaultRenderPlatform>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P> + ?Sized,
+    T: Content<P> + ?Sized,
 {
     watcher: Watcher<WidgetInternal<P, T>>,
 }
@@ -55,7 +55,7 @@ where
 impl<T, P, Data> Adaptable<Data> for Widget<T, P>
 where
     P: RenderPlatform,
-    T: WidgetContent<P> + Adaptable<Data>,
+    T: Content<P> + Adaptable<Data>,
 {
     fn adapt(&mut self, data: &Data) {
         self.watcher.data_mut().content.adapt(data);
@@ -69,7 +69,7 @@ where
 impl<T, P> Default for Widget<T, P>
 where
     P: RenderPlatform,
-    T: WidgetContent<P> + Default + ?Sized,
+    T: Content<P> + Default + ?Sized,
 {
     fn default() -> Self {
         Self {
@@ -81,7 +81,7 @@ where
 impl<T, P> Deref for Widget<T, P>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P>,
+    T: Content<P>,
 {
     type Target = T;
     fn deref(&self) -> &T {
@@ -92,7 +92,7 @@ where
 impl<T, P> DerefMut for Widget<T, P>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P>,
+    T: Content<P>,
 {
     fn deref_mut(&mut self) -> &mut T {
         &mut self.watcher.data_mut().content
@@ -102,7 +102,7 @@ where
 impl<P, T> Widget<T, P>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P>,
+    T: Content<P>,
 {
     /// Create a new widget, populating it's content using the adaptable
     /// trait.
@@ -191,7 +191,7 @@ where
 impl<P, T> Widget<T, P>
 where
     P: RenderPlatform,
-    T: WidgetContent<P> + Default,
+    T: Content<P> + Default,
 {
     /// Create a Widget with a specified initial position and size
     pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
@@ -208,7 +208,7 @@ where
 impl<P, T> Rect for Widget<T, P>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P>,
+    T: Content<P>,
 {
     fn x(&self) -> Dim {
         self.watcher.data().rect.x()

@@ -15,14 +15,14 @@
 //!
 //! ```rust
 //! # use suzy::animation::Animation;
-//! # use suzy::widget::*;
+//! # use suzy::widget::{self, *};
 //! # use suzy::graphics::Color;
 //! struct MyWidgetData {
 //!     current_color: Color,
 //!     animation: Animation<Color>,
 //! }
 //!
-//! impl WidgetContent for MyWidgetData {
+//! impl widget::Content for MyWidgetData {
 //!     fn init(mut init: impl WidgetInit<Self>) {
 //!         init.watch(|this, rect| {
 //!             this.animation.set_speed(1.0);

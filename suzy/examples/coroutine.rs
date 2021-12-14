@@ -3,7 +3,9 @@
 
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::widget::{
-    Coroutine, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
+    self,
+    RunAsApp,
+    Coroutine, WidgetChildReceiver, WidgetGraphicReceiver,
     WidgetInit,
 };
 use suzy::widgets::Button;
@@ -14,7 +16,7 @@ struct Root {
     coroutine: Coroutine<()>,
 }
 
-impl WidgetContent for Root {
+impl widget::Content for Root {
     fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, rect| {
             this.button.set_fill(&rect, &SimplePadding2d::uniform(20.0));

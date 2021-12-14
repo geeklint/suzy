@@ -30,7 +30,7 @@ use super::{
 /// For example, if a custom widget contains two buttons as children:
 ///
 /// ```rust
-/// # use suzy::widget::*;
+/// # use suzy::widget::{self, *};
 /// # use suzy::selectable::SelectableIgnored;
 /// # type ButtonContent = SelectableIgnored<()>;
 /// use suzy::widgets::Button;
@@ -40,7 +40,7 @@ use super::{
 ///     button_two: Button<ButtonContent>,
 /// }
 ///
-/// impl WidgetContent for MyWidgetData {
+/// impl widget::Content for MyWidgetData {
 ///     // ...
 /// #   fn init(_init: impl WidgetInit<Self>) {}
 /// #   fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
@@ -55,14 +55,14 @@ use super::{
 /// Or, if the custom widget only has a single graphic:
 ///
 /// ```rust
-/// # use suzy::widget::*;
+/// # use suzy::widget::{self, *};
 /// # type MyGraphic = ();
 ///
 /// struct MyWidgetData {
 ///     graphic: MyGraphic,
 /// }
 ///
-/// impl WidgetContent for MyWidgetData {
+/// impl widget::Content for MyWidgetData {
 ///     // ...
 /// #   fn init(_init: impl WidgetInit<Self>) {}
 /// #   fn children(_receiver: impl WidgetChildReceiver<Self>) {}
@@ -73,7 +73,7 @@ use super::{
 /// }
 /// ```
 ///
-pub trait WidgetContent<P = DefaultRenderPlatform>
+pub trait Content<P = DefaultRenderPlatform>
 where
     P: RenderPlatform + ?Sized,
     Self: 'static,
@@ -124,48 +124,48 @@ where
         let _unused = (extra, event);
         false
     }
-
-    /// This is a convience function to create and run an App with this
-    /// content as the only initial root widget.
-    fn run_as_app() -> !
-    where
-        Self: Default + WidgetContent<DefaultRenderPlatform>,
-    {
-        run_widget_as_app::<Self>()
-    }
 }
 
-impl<P: RenderPlatform> WidgetContent<P> for () {
+impl<P: RenderPlatform> Content<P> for () {
     fn init(_init: impl WidgetInit<Self, P>) {}
     fn children(_receiver: impl WidgetChildReceiver<Self, P>) {}
     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<P>) {}
 }
 
-fn run_widget_as_app<T>() -> !
-where
-    T: Default + WidgetContent<DefaultRenderPlatform>,
-{
-    use crate::app::{App, AppBuilder};
-    use crate::window::WindowSettings;
+/// This is a convience function to create and run an App with this
+/// content as the only initial root widget.
+pub trait RunAsApp {
+    fn run_as_app() -> !;
+}
 
-    let name = std::any::type_name::<T>()
-        .rsplit("::")
-        .next()
-        .expect("Iterator Returnned by str::rsplit was empty.");
-    let (_, title) =
-        name.chars()
-            .fold((false, String::new()), |(prev, mut title), ch| {
+impl<T> RunAsApp for T
+where
+    T: Default + Content<DefaultRenderPlatform>,
+{
+    fn run_as_app() -> ! {
+        use crate::app::{App, AppBuilder};
+        use crate::window::WindowSettings;
+
+        let name = std::any::type_name::<T>()
+            .rsplit("::")
+            .next()
+            .expect("Iterator Returned by str::rsplit was empty.");
+        let (_, title) = name.chars().fold(
+            (false, String::new()),
+            |(prev, mut title), ch| {
                 if prev && ch.is_uppercase() {
                     title.push(' ');
                 }
                 title.push(ch);
                 (ch.is_lowercase(), title)
-            });
-    let mut builder = AppBuilder::default();
-    builder.set_title(title);
-    let app: App<DefaultPlatform> = builder.build();
-    let (app, _) = app.with(|current| {
-        current.add_root(super::Widget::<T>::default);
-    });
-    app.run();
+            },
+        );
+        let mut builder = AppBuilder::default();
+        builder.set_title(title);
+        let app: App<DefaultPlatform> = builder.build();
+        let (app, _) = app.with(|current| {
+            current.add_root(super::Widget::<T>::default);
+        });
+        app.run();
+    }
 }

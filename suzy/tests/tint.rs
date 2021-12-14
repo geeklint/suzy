@@ -11,8 +11,7 @@ use suzy::graphics::Color;
 use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage, Tint};
 use suzy::platforms::TestPlatform;
 use suzy::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
-    WidgetInit,
+    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
 };
 use suzy::window::WindowSettings;
 
@@ -25,7 +24,7 @@ struct Root {
     image: SlicedImage,
 }
 
-impl WidgetContent<OpenGlRenderPlatform> for Root {
+impl widget::Content<OpenGlRenderPlatform> for Root {
     fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|root, _rect| {
             root.tint.set_tint_color(Color::RED);

@@ -4,12 +4,12 @@
 use crate::dims::{Dim, Rect};
 use crate::platform::RenderPlatform;
 
-use super::{WidgetContent, WidgetRect};
+use super::WidgetRect;
 
 pub(super) struct WidgetInternal<P, T>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P> + ?Sized,
+    T: super::Content<P> + ?Sized,
 {
     pub(super) rect: WidgetRect,
     pub(super) _platform: std::marker::PhantomData<P>,
@@ -19,7 +19,7 @@ where
 impl<P, T> Default for WidgetInternal<P, T>
 where
     P: RenderPlatform,
-    T: WidgetContent<P> + Default + ?Sized,
+    T: super::Content<P> + Default + ?Sized,
 {
     fn default() -> Self {
         Self {

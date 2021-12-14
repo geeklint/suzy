@@ -368,14 +368,14 @@ mod extra_impls {
     use crate::platform::RenderPlatform;
     use crate::pointer::PointerEvent;
     use crate::widget::{
-        WidgetChildReceiver, WidgetContent, WidgetExtra,
-        WidgetGraphicReceiver, WidgetInit,
+        self, WidgetChildReceiver, WidgetExtra, WidgetGraphicReceiver,
+        WidgetInit,
     };
 
-    impl<T, P> WidgetContent<P> for SelectableIgnored<T>
+    impl<T, P> widget::Content<P> for SelectableIgnored<T>
     where
         P: RenderPlatform,
-        T: WidgetContent<P>,
+        T: widget::Content<P>,
     {
         fn init(mut init: impl WidgetInit<Self, P>) {
             init.init_child_inline(|x| &mut x.data);

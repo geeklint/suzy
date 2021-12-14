@@ -5,8 +5,8 @@ use crate::platform::RenderPlatform;
 use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
 use crate::widget::{
-    UniqueHandle, Widget, WidgetChildReceiver, WidgetContent,
-    WidgetGraphicReceiver, WidgetInit,
+    self, UniqueHandle, Widget, WidgetChildReceiver, WidgetGraphicReceiver,
+    WidgetInit,
 };
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
@@ -69,7 +69,7 @@ impl PointerSet {
 pub struct AdapterView<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     inner: AdapterLayoutData<Layout, Content, Platform>,
@@ -83,7 +83,7 @@ where
 impl<Layout, Content, Platform> AdapterView<Layout, Content, Platform>
 where
     Layout: 'static + AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     /// Get the data collection stored by the layout.
@@ -115,7 +115,7 @@ impl<Layout, Content, Platform> Default
     for AdapterView<Layout, Content, Platform>
 where
     Layout: 'static + AdapterLayout + Default,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     fn default() -> Self {
@@ -131,11 +131,11 @@ where
     }
 }
 
-impl<Layout, Content, Platform> WidgetContent<Platform>
+impl<Layout, Content, Platform> widget::Content<Platform>
     for AdapterView<Layout, Content, Platform>
 where
     Layout: 'static + AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     fn init(mut init: impl WidgetInit<Self, Platform>) {

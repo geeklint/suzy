@@ -17,11 +17,11 @@
 //! The most basic app template will look something like this:
 //!
 //! ```rust,no_run
-//! # use suzy::widget::*;
+//! # use suzy::widget::{self, *};
 //! #[derive(Default)]
 //! struct Data { }
 //!
-//! impl WidgetContent for Data {
+//! impl widget::Content for Data {
 //!     fn init(_init: impl WidgetInit<Self>) {}
 //!     fn children(_receiver: impl WidgetChildReceiver<Self>) {}
 //!     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
@@ -42,10 +42,10 @@
 //! parent:
 //!
 //! ```rust
-//! # use suzy::widget::*;
+//! # use suzy::widget::{self, *};
 //! # use suzy::dims::Rect;
 //! # struct Data { child: Widget<()> }
-//! # impl WidgetContent for Data {
+//! # impl widget::Content for Data {
 //! #     fn init(mut init: impl WidgetInit<Self>) {
 //! init.watch(|this, rect| {
 //!     this.child.set_width(rect.width() / 2.0);
@@ -83,7 +83,8 @@ pub mod prelude {
     pub use crate::dims::Rect;
     pub use crate::watch::Watched;
     pub use crate::widget::{
-        Widget, WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver,
+        self,
+        Widget, WidgetChildReceiver, WidgetGraphicReceiver,
         WidgetInit,
     };
 }

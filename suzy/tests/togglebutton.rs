@@ -12,8 +12,8 @@ use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platforms::TestPlatform;
 use suzy::selectable::{Selectable, SelectionState};
 use suzy::widget::{
-    Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
-    WidgetGraphicReceiver, WidgetInit,
+    self, Widget, WidgetChildReceiver, WidgetExtra, WidgetGraphicReceiver,
+    WidgetInit,
 };
 use suzy::widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
 use suzy::window::WindowSettings;
@@ -40,7 +40,7 @@ impl ToggleButtonValue<i32> for ButtonContent {
     }
 }
 
-impl WidgetContent<OpenGlRenderPlatform> for ButtonContent {
+impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
@@ -71,7 +71,7 @@ struct GroupRoot {
     bottom: ToggleButton<ButtonContent, i32>,
 }
 
-impl WidgetContent<OpenGlRenderPlatform> for GroupRoot {
+impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
     fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|root, _rect| {
             root.value_feedback.set(root.group.value());

@@ -9,7 +9,7 @@ use std::time;
 use crate::app::App;
 use crate::platform::DefaultPlatform;
 use crate::watch::{AtomicWatchedMeta, AtomicWatchedMetaTrigger, Watched};
-use crate::widget::{WidgetContent, WidgetInit};
+use crate::widget::WidgetInit;
 
 #[derive(Clone, Copy)]
 struct NextFrame {
@@ -103,14 +103,14 @@ impl<T> Default for State<T> {
 ///
 /// ```rust,no_run
 /// # use suzy::dims::{Rect, SimplePadding2d};
-/// # use suzy::widget::*;
+/// # use suzy::widget::{self, *};
 /// # use suzy::widgets::Button;
 /// struct Root {
 ///     button: Button,
 ///     coroutine: Coroutine<()>,
 /// }
 ///
-/// impl WidgetContent for Root {
+/// impl widget::Content for Root {
 ///     fn init(mut init: impl WidgetInit<Self>) {
 ///         init.watch(|this, _rect| {
 ///             if let Some(()) = this.button.on_click() {
@@ -180,7 +180,7 @@ impl<T> Coroutine<T> {
     ) where
         Get: 'static + Fn(&mut Wid) -> &mut Self,
         Plat: crate::platform::RenderPlatform + ?Sized,
-        Wid: WidgetContent<Plat> + ?Sized,
+        Wid: super::Content<Plat> + ?Sized,
         Init: WidgetInit<Wid, Plat> + ?Sized,
         Fut: 'static + Future<Output = ()>,
         Fac: 'static + Fn(T) -> Fut,

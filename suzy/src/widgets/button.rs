@@ -8,7 +8,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent, PointerId};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    UniqueHandle, Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
+    self, UniqueHandle, Widget, WidgetChildReceiver, WidgetExtra,
     WidgetGraphicReceiver, WidgetInit,
 };
 
@@ -55,10 +55,10 @@ impl<T> ButtonBehavior<T> {
     }
 }
 
-impl<T, P> WidgetContent<P> for ButtonBehavior<T>
+impl<T, P> widget::Content<P> for ButtonBehavior<T>
 where
     P: RenderPlatform,
-    T: Selectable + WidgetContent<P>,
+    T: Selectable + widget::Content<P>,
 {
     fn init(mut init: impl WidgetInit<Self, P>) {
         init.init_child_inline(|button| &mut button.content);
@@ -217,7 +217,7 @@ impl<P: RenderPlatform> Selectable for DefaultButtonContent<P> {
     }
 }
 
-impl<P: RenderPlatform> WidgetContent<P> for DefaultButtonContent<P> {
+impl<P: RenderPlatform> widget::Content<P> for DefaultButtonContent<P> {
     fn init(mut init: impl WidgetInit<Self, P>) {
         use crate::dims::{Rect, SimplePadding2d};
         use crate::platform::graphics::{

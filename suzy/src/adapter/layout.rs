@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use crate::dims::Rect;
 use crate::platform::RenderPlatform;
 use crate::watch::WatchedMeta;
-use crate::widget::{Widget, WidgetContent, WidgetRect};
+use crate::widget::{self, Widget, WidgetRect};
 
 use super::Adaptable;
 
@@ -83,7 +83,7 @@ pub trait AdapterLayout {
 pub(super) struct AdapterLayoutData<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     active: HashMap<Layout::ElementKey, Widget<Content, Platform>>,
@@ -97,7 +97,7 @@ impl<Layout, Content, Platform> Default
     for AdapterLayoutData<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     fn default() -> Self {
@@ -114,7 +114,7 @@ where
 impl<Layout, Content, Platform> AdapterLayoutData<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     pub fn clear_active_children(&mut self) {
@@ -156,7 +156,7 @@ where
 struct Interface<'a, Layout, Content, Platform>
 where
     Layout: AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     rect: &'a WidgetRect,
@@ -168,7 +168,7 @@ impl<'a, Layout, Content, Platform> AdapterLayoutInterface<Layout>
     for Interface<'a, Layout, Content, Platform>
 where
     Layout: AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     type Bounds = WidgetRect;
@@ -232,7 +232,7 @@ impl<'a, Layout, Content, Platform> Drop
     for Interface<'a, Layout, Content, Platform>
 where
     Layout: AdapterLayout,
-    Content: WidgetContent<Platform> + Adaptable<Layout::ElementData>,
+    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
     Platform: RenderPlatform,
 {
     fn drop(&mut self) {

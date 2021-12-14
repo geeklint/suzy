@@ -4,11 +4,10 @@
 use crate::dims::{Dim, Rect};
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
-use super::Widget;
-use super::WidgetContent;
+use super::{Content, Widget};
 
 mod private {
-    use super::WidgetContent;
+    use super::Content;
     use crate::dims::DynRect;
     use crate::graphics::DrawContext;
     use crate::platform::RenderPlatform;
@@ -26,7 +25,7 @@ mod private {
     impl<P, T> Widget<P> for super::Widget<T, P>
     where
         P: RenderPlatform + ?Sized,
-        T: WidgetContent<P>,
+        T: Content<P>,
     {
         fn draw(&mut self, ctx: &mut DrawContext<P>) {
             super::Widget::draw(self, ctx);
@@ -65,7 +64,7 @@ where
 impl<P, T> AnonWidget<P> for Widget<T, P>
 where
     P: RenderPlatform + ?Sized,
-    T: WidgetContent<P>,
+    T: Content<P>,
 {
 }
 
@@ -73,7 +72,7 @@ impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
     /// Returns the widget if its content is of type `T`.
     pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T, P>>
     where
-        T: WidgetContent<P>,
+        T: Content<P>,
     {
         self.as_any().downcast().ok().map(|w| *w)
     }
@@ -81,7 +80,7 @@ impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
     /// Returns a reference to the widget if its content is of type `T`.
     pub fn downcast_widget_ref<T>(&self) -> Option<&Widget<T, P>>
     where
-        T: WidgetContent<P>,
+        T: Content<P>,
     {
         self.as_any_ref().downcast_ref()
     }
@@ -90,7 +89,7 @@ impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
     /// type `T`.
     pub fn downcast_widget_mut<T>(&mut self) -> Option<&mut Widget<T, P>>
     where
-        T: WidgetContent<P>,
+        T: Content<P>,
     {
         self.as_any_mut().downcast_mut()
     }

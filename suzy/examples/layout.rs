@@ -3,7 +3,7 @@
 
 use suzy::dims::Rect;
 use suzy::widget::{
-    WidgetChildReceiver, WidgetContent, WidgetGraphicReceiver, WidgetInit,
+    self, RunAsApp, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
 };
 use suzy::widgets::{Button, TextContent};
 
@@ -14,7 +14,7 @@ struct Root {
     three: Button,
 }
 
-impl WidgetContent for Root {
+impl widget::Content for Root {
     fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
             this.one.content_mut().set_text("One");

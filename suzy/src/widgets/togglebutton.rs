@@ -9,7 +9,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    UniqueHandle, Widget, WidgetChildReceiver, WidgetContent, WidgetExtra,
+    self, UniqueHandle, Widget, WidgetChildReceiver, WidgetExtra,
     WidgetGraphicReceiver, WidgetInit,
 };
 
@@ -124,10 +124,10 @@ impl<T, V> ToggleButtonContent<T, V> {
     }
 }
 
-impl<T, V, P> WidgetContent<P> for ToggleButtonContent<T, V>
+impl<T, V, P> widget::Content<P> for ToggleButtonContent<T, V>
 where
     P: RenderPlatform,
-    T: Selectable + WidgetContent<P> + ToggleButtonValue<V>,
+    T: Selectable + widget::Content<P> + ToggleButtonValue<V>,
     V: 'static + std::fmt::Debug + Copy,
 {
     fn init(mut init: impl WidgetInit<Self, P>) {

@@ -6,7 +6,7 @@ extern crate suzy;
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::platforms::opengl::SlicedImage;
 use suzy::platforms::opengl::Texture;
-use suzy::widget::*;
+use suzy::widget::{self, *};
 
 const IMAGE: &[u8] = include_bytes!("cute.data");
 const IMAGE_WIDTH: u16 = 384;
@@ -19,7 +19,7 @@ struct ImageViewer {
     image: SlicedImage,
 }
 
-impl WidgetContent for ImageViewer {
+impl widget::Content for ImageViewer {
     fn init(mut init: impl WidgetInit<Self>) {
         init.watch(|this, _rect| {
             this.image.set_image(
