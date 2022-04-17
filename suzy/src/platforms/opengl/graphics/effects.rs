@@ -49,18 +49,18 @@ where
     }
 }
 
-impl<'a, 'b, T> WidgetGraphic<'a, 'b, OpenGlRenderPlatform> for BaseEffect<T>
+impl<T> WidgetGraphic<OpenGlRenderPlatform> for BaseEffect<T>
 where
-    T: 'a + 'b + Effect + ?Sized,
+    T: Effect + ?Sized,
 {
-    type Before = BaseEffectPush<'b, T>;
-    type After = BaseEffectPop<'a, T>;
+    type BeforeGetter = fn(&mut ()) -> BaseEffectPush<'_, T>;
+    type AfterGetter = fn(&mut ()) -> BaseEffectPop<'_, T>;
 
-    fn before_children(&'b mut self) -> Self::Before {
+    fn before_children(&mut self) -> BaseEffectPush<'_, T> {
         BaseEffectPush { inner: self }
     }
 
-    fn after_children(&'a mut self) -> Self::After {
+    fn after_children(&mut self) -> BaseEffectPop<'_, T> {
         BaseEffectPop { inner: self }
     }
 }
@@ -100,15 +100,15 @@ impl Tint {
     }
 }
 
-impl<'a, 'b> WidgetGraphic<'a, 'b, OpenGlRenderPlatform> for Tint {
-    type Before = BaseEffectPush<'b, TintEffect>;
-    type After = BaseEffectPop<'a, TintEffect>;
+impl WidgetGraphic<OpenGlRenderPlatform> for Tint {
+    type BeforeGetter = fn(&mut ()) -> BaseEffectPush<'_, TintEffect>;
+    type AfterGetter = fn(&mut ()) -> BaseEffectPop<'_, TintEffect>;
 
-    fn before_children(&'b mut self) -> Self::Before {
+    fn before_children(&mut self) -> BaseEffectPush<'_, TintEffect> {
         self.inner.before_children()
     }
 
-    fn after_children(&'a mut self) -> Self::After {
+    fn after_children(&mut self) -> BaseEffectPop<'_, TintEffect> {
         self.inner.after_children()
     }
 }

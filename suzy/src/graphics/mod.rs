@@ -46,3 +46,9 @@ impl<P: RenderPlatform + ?Sized, T: Graphic<P>> Graphic<P> for [T] {
         }
     }
 }
+
+impl<P: RenderPlatform + ?Sized, T: Graphic<P>> Graphic<P> for &mut T {
+    fn draw(&mut self, ctx: &mut DrawContext<P>) {
+        T::draw(self, ctx)
+    }
+}

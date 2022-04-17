@@ -53,18 +53,24 @@ impl<T: ?Sized> Masker<T> {
     }
 }
 
-impl<'a, 'b, T> WidgetGraphic<'a, 'b, OpenGlRenderPlatform> for Masker<T>
+impl<T> WidgetGraphic<OpenGlRenderPlatform> for Masker<T>
 where
-    T: 'a + 'b + Graphic + ?Sized,
+    T: Graphic + ?Sized,
 {
-    type Before = super::effects::BaseEffectPush<'b, MaskEffect<T>>;
-    type After = super::effects::BaseEffectPop<'a, MaskEffect<T>>;
+    type BeforeGetter =
+        fn(&mut ()) -> super::effects::BaseEffectPush<'_, MaskEffect<T>>;
+    type AfterGetter =
+        fn(&mut ()) -> super::effects::BaseEffectPop<'_, MaskEffect<T>>;
 
-    fn before_children(&'b mut self) -> Self::Before {
+    fn before_children(
+        &mut self,
+    ) -> super::effects::BaseEffectPush<'_, MaskEffect<T>> {
         self.inner.before_children()
     }
 
-    fn after_children(&'a mut self) -> Self::After {
+    fn after_children(
+        &mut self,
+    ) -> super::effects::BaseEffectPop<'_, MaskEffect<T>> {
         self.inner.after_children()
     }
 }

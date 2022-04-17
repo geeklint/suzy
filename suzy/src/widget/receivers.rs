@@ -47,7 +47,7 @@ where
     P: RenderPlatform + ?Sized,
 {
     /// Receive a graphic.
-    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(&mut self, graphic: &'g mut T);
+    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T);
 }
 
 pub(super) struct DrawChildReceiver<
@@ -180,10 +180,7 @@ impl<'a, 'b, P> WidgetGraphicReceiver<P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(
-        &mut self,
-        graphic: &'g mut T,
-    ) {
+    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
         graphic.before_children().draw(self.ctx);
     }
 }
@@ -201,10 +198,7 @@ impl<'a, 'b, P> WidgetGraphicReceiver<P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(
-        &mut self,
-        graphic: &'g mut T,
-    ) {
+    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
         if T::ordered() {
             *self.num_ordered += 1;
         } else {
@@ -227,10 +221,7 @@ impl<'a, 'b, P> WidgetGraphicReceiver<P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<'g, T: WidgetGraphic<'g, 'g, P>>(
-        &mut self,
-        graphic: &'g mut T,
-    ) {
+    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
         if T::ordered() {
             if self.current == self.target {
                 graphic.after_children().draw(self.ctx);

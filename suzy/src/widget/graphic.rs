@@ -4,6 +4,22 @@
 use crate::graphics::Graphic;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
+pub trait GetGraphicMethod<'a, P>
+where
+    P: RenderPlatform + ?Sized,
+{
+    type Graphic: Graphic<P>;
+}
+
+impl<'a, G, F, P> GetGraphicMethod<'a, P> for F
+where
+    F: FnOnce(&'a mut ()) -> G,
+    G: Graphic<P>,
+    P: RenderPlatform + ?Sized,
+{
+    type Graphic = G;
+}
+
 /// A trait which represents a graphic a widget might contain.
 ///
 /// Automatically implemented for anything which implements
@@ -13,21 +29,25 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 /// children, and one after.  The typical behavior is to ignore the second
 /// pass, however some functionality may require it, for instance to revert
 /// a state-change applied in the first pass.
-pub trait WidgetGraphic<'a, 'b, P = DefaultRenderPlatform>
+pub trait WidgetGraphic<P = DefaultRenderPlatform>
 where
     P: RenderPlatform + ?Sized,
 {
     /// The type of graphic to render before the widget's children.
-    type Before: Graphic<P> + 'b;
+    type BeforeGetter: for<'a> GetGraphicMethod<'a, P>;
 
     /// The type of graphic to render after the widget's children.
-    type After: Graphic<P> + 'a;
+    type AfterGetter: for<'a> GetGraphicMethod<'a, P>;
 
     /// Get the graphic to render before the widget's children.
-    fn before_children(&'b mut self) -> Self::Before;
+    fn before_children(
+        &mut self,
+    ) -> <Self::BeforeGetter as GetGraphicMethod<'_, P>>::Graphic;
 
     /// Get the graphic to render after the widget's children.
-    fn after_children(&'a mut self) -> Self::After;
+    fn after_children(
+        &mut self,
+    ) -> <Self::AfterGetter as GetGraphicMethod<'_, P>>::Graphic;
 
     /// If this graphic is strongly ordered, such that `after_children` should
     /// be called in reverse order as `before_children`, relative to other
@@ -37,38 +57,24 @@ where
     }
 }
 
-impl<'a, 'b, P, T> WidgetGraphic<'a, 'b, P> for T
+impl<P, T> WidgetGraphic<P> for T
 where
     Self: Sized,
-    T: Graphic<P> + 'b,
+    T: Graphic<P>,
     P: RenderPlatform,
 {
-    type Before = WidgetGraphicProxy<'b, T>;
-    type After = WidgetGraphicProxy<'a, [(); 0]>;
+    type BeforeGetter = fn(&mut ()) -> &mut T;
+    type AfterGetter = fn(&mut ()) -> &mut [(); 0];
 
-    fn before_children(&'b mut self) -> Self::Before {
-        WidgetGraphicProxy { graphic: self }
+    fn before_children(&mut self) -> &mut T {
+        self
     }
 
-    fn after_children(&'a mut self) -> Self::After {
-        WidgetGraphicProxy { graphic: &mut [] }
+    fn after_children(&mut self) -> &mut [(); 0] {
+        &mut []
     }
 
     fn ordered() -> bool {
         false
-    }
-}
-
-pub struct WidgetGraphicProxy<'a, T> {
-    graphic: &'a mut T,
-}
-
-impl<'a, P, T> Graphic<P> for WidgetGraphicProxy<'a, T>
-where
-    P: RenderPlatform,
-    T: Graphic<P>,
-{
-    fn draw(&mut self, ctx: &mut crate::graphics::DrawContext<P>) {
-        self.graphic.draw(ctx);
     }
 }
