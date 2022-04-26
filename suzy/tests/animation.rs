@@ -41,8 +41,7 @@ impl widget::Content<TestRenderPlatform> for Root {
     }
 
     fn graphics(
-        &mut self,
-        _receiver: impl WidgetGraphicReceiver<TestRenderPlatform>,
+        _receiver: impl WidgetGraphicReceiver<Self, TestRenderPlatform>,
     ) {
     }
 }

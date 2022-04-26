@@ -42,12 +42,21 @@ where
 
 /// An internal iterator style receiver.  Types of this trait are passed to
 /// [`widget::Content::graphics`](crate::widget::Content::graphics).
-pub trait WidgetGraphicReceiver<P = DefaultRenderPlatform>
+pub trait WidgetGraphicReceiver<T, P = DefaultRenderPlatform>
 where
-    P: RenderPlatform + ?Sized,
+    T: ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     /// Receive a graphic.
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T);
+    fn graphic<F, Gr>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Gr,
+        Gr: super::WidgetGraphic<P>;
+
+    fn recurse<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Child,
+        Child: super::Content<P>;
 }
 
 pub(super) struct DrawChildReceiver<
@@ -168,65 +177,116 @@ where
     }
 }
 
-pub(super) struct DrawGraphicBeforeReceiver<'a, 'b, P>
+pub(super) struct DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
+    pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, P> WidgetGraphicReceiver<P>
-    for DrawGraphicBeforeReceiver<'a, 'b, P>
+impl<'a, 'b, T, P> WidgetGraphicReceiver<T, P>
+    for DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
-        graphic.before_children().draw(self.ctx);
+    fn graphic<F, Gr>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Gr,
+        Gr: super::WidgetGraphic<P>,
+    {
+        map_fn(self.content).before_children().draw(self.ctx);
+    }
+
+    fn recurse<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Child,
+        Child: super::Content<P>,
+    {
+        Child::graphics(DrawGraphicBeforeReceiver {
+            content: map_fn(self.content),
+            ctx: self.ctx,
+        });
     }
 }
 
-pub(super) struct DrawGraphicUnorderedReceiver<'a, 'b, P>
+pub(super) struct DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
+    pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
     pub num_ordered: &'a mut u32,
 }
 
-impl<'a, 'b, P> WidgetGraphicReceiver<P>
-    for DrawGraphicUnorderedReceiver<'a, 'b, P>
+impl<'a, 'b, T, P> WidgetGraphicReceiver<T, P>
+    for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
-        if T::ordered() {
+    fn graphic<F, Gr>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Gr,
+        Gr: super::WidgetGraphic<P>,
+    {
+        if Gr::ordered() {
             *self.num_ordered += 1;
         } else {
-            graphic.after_children().draw(self.ctx);
+            map_fn(self.content).after_children().draw(self.ctx);
         }
+    }
+
+    fn recurse<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Child,
+        Child: super::Content<P>,
+    {
+        Child::graphics(DrawGraphicUnorderedReceiver {
+            content: map_fn(self.content),
+            ctx: self.ctx,
+            num_ordered: self.num_ordered,
+        });
     }
 }
 
-pub(super) struct DrawGraphicOrderedReceiver<'a, 'b, P>
+pub(super) struct DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
+    pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
     pub target: u32,
     pub current: u32,
 }
 
-impl<'a, 'b, P> WidgetGraphicReceiver<P>
-    for DrawGraphicOrderedReceiver<'a, 'b, P>
+impl<'a, 'b, T, P> WidgetGraphicReceiver<T, P>
+    for DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
-    fn graphic<T: WidgetGraphic<P>>(&mut self, graphic: &mut T) {
-        if T::ordered() {
+    fn graphic<F, Gr>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Gr,
+        Gr: super::WidgetGraphic<P>,
+    {
+        if Gr::ordered() {
             if self.current == self.target {
-                graphic.after_children().draw(self.ctx);
+                map_fn(self.content).after_children().draw(self.ctx);
             }
             self.current += 1;
         }
+    }
+
+    fn recurse<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Child,
+        Child: super::Content<P>,
+    {
+        Child::graphics(DrawGraphicOrderedReceiver {
+            content: map_fn(self.content),
+            ctx: self.ctx,
+            target: self.target,
+            current: self.current,
+        });
     }
 }

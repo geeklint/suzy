@@ -40,11 +40,10 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
     }
 
     fn graphics(
-        &mut self,
-        mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+        mut receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
     ) {
-        receiver.graphic(&mut self.tint);
-        receiver.graphic(&mut self.image);
+        receiver.graphic(|this| &mut this.tint);
+        receiver.graphic(|this| &mut this.image);
     }
 }
 

@@ -385,8 +385,8 @@ mod extra_impls {
             receiver.recurse(|this| &mut this.data);
         }
 
-        fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {
-            self.data.graphics(receiver);
+        fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+            receiver.recurse(|this| &mut this.data);
         }
 
         fn hittest(

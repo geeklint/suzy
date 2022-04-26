@@ -156,7 +156,7 @@ where
         receiver.iter_children(|this| Box::new(this.inner.active_children()));
     }
 
-    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<Platform>) {
+    fn graphics(_receiver: impl WidgetGraphicReceiver<Self, Platform>) {
         // no graphics
     }
 

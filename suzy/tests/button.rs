@@ -43,13 +43,16 @@ impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     }
 
     fn graphics(
-        &mut self,
-        mut receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+        mut receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
     ) {
-        println!("ButtonContent draw: {}", self.show_image);
-        if self.show_image {
-            receiver.graphic(&mut self.image);
-        }
+        receiver.graphic(|this| {
+            println!("ButtonContent draw: {}", this.show_image);
+            if this.show_image {
+                &mut this.image
+            } else {
+                todo!()
+            }
+        });
     }
 }
 
@@ -72,8 +75,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
     }
 
     fn graphics(
-        &mut self,
-        _receiver: impl WidgetGraphicReceiver<OpenGlRenderPlatform>,
+        _receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
     ) {
     }
 }

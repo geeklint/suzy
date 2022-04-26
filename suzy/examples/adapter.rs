@@ -49,8 +49,8 @@ impl widget::Content for Element {
         // no children
     }
 
-    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver) {
-        receiver.graphic(&mut self.text);
+    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self>) {
+        receiver.graphic(|this| &mut this.text);
     }
 }
 
@@ -74,7 +74,7 @@ impl widget::Content for AdapterExample {
         receiver.child(|this| &mut this.layout);
     }
 
-    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
+    fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {
         // no graphics
     }
 }

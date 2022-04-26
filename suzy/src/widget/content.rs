@@ -90,7 +90,7 @@ where
     /// Use this method to specify the graphics a custom widget contains.
     ///
     /// Call `receiver.graphic` for each graphic.
-    fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>);
+    fn graphics(receiver: impl WidgetGraphicReceiver<Self, P>);
 
     /// Override this method to define a custom shape for the widget.
     ///
@@ -129,7 +129,7 @@ where
 impl<P: RenderPlatform> Content<P> for () {
     fn init(_init: impl WidgetInit<Self, P>) {}
     fn children(_receiver: impl WidgetChildReceiver<Self, P>) {}
-    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver<P>) {}
+    fn graphics(_receiver: impl WidgetGraphicReceiver<Self, P>) {}
 }
 
 /// This is a convience function to create and run an App with this

@@ -138,15 +138,17 @@ where
     pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
         let wid_int = this.watcher.data_mut();
         let content = &mut wid_int.content;
-        content.graphics(DrawGraphicBeforeReceiver { ctx });
+        T::graphics(DrawGraphicBeforeReceiver { content, ctx });
         T::children(DrawChildReceiver { content, ctx });
         let mut num_ordered = 0;
-        content.graphics(DrawGraphicUnorderedReceiver {
+        T::graphics(DrawGraphicUnorderedReceiver {
+            content,
             ctx,
             num_ordered: &mut num_ordered,
         });
         for target in (0..num_ordered).rev() {
-            content.graphics(DrawGraphicOrderedReceiver {
+            T::graphics(DrawGraphicOrderedReceiver {
+                content,
                 ctx,
                 target,
                 current: 0,

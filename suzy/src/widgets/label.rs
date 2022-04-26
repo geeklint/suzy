@@ -73,7 +73,7 @@ where
         // no children
     }
 
-    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<P>) {
-        receiver.graphic(&mut self.graphic);
+    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+        receiver.graphic(|this| &mut this.graphic);
     }
 }

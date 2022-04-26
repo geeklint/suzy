@@ -90,8 +90,8 @@ where
         receiver.recurse(|this| &mut this.content);
     }
 
-    fn graphics(&mut self, receiver: impl WidgetGraphicReceiver<P>) {
-        self.content.graphics(receiver);
+    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+        receiver.recurse(|this| &mut this.content);
     }
 
     fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
@@ -262,8 +262,8 @@ impl<P: RenderPlatform> widget::Content<P> for DefaultButtonContent<P> {
         // no children
     }
 
-    fn graphics(&mut self, mut receiver: impl WidgetGraphicReceiver<P>) {
-        receiver.graphic(&mut self.image);
-        receiver.graphic(&mut self.text_graphic);
+    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+        receiver.graphic(|this| &mut this.image);
+        receiver.graphic(|this| &mut this.text_graphic);
     }
 }
