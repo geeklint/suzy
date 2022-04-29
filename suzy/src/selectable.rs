@@ -367,10 +367,7 @@ mod extra_impls {
     use crate::graphics::{DrawContext, Graphic};
     use crate::platform::RenderPlatform;
     use crate::pointer::PointerEvent;
-    use crate::widget::{
-        self, WidgetChildReceiver, WidgetExtra, WidgetGraphicReceiver,
-        WidgetInit,
-    };
+    use crate::widget::{self, WidgetDescReceiver, WidgetExtra, WidgetInit};
 
     impl<T, P> widget::Content<P> for SelectableIgnored<T>
     where
@@ -381,11 +378,7 @@ mod extra_impls {
             init.init_child_inline(|x| &mut x.data);
         }
 
-        fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
-            receiver.bare_child(|this| &mut this.data);
-        }
-
-        fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+        fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
             receiver.bare_child(|this| &mut this.data);
         }
 

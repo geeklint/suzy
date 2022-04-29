@@ -6,9 +6,7 @@ use crate::platform::graphics::Text;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::text::{TextPosition, TextSettings};
 use crate::watch::Watched;
-use crate::widget::{
-    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
-};
+use crate::widget::{self, Widget, WidgetDescReceiver, WidgetInit};
 
 /// A widget which displays some text
 pub type Label<P = DefaultRenderPlatform> = Widget<LabelContent<P>>;
@@ -69,11 +67,7 @@ where
         });
     }
 
-    fn children(_receiver: impl WidgetChildReceiver<Self, P>) {
-        // no children
-    }
-
-    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
         receiver.graphic(|this| &mut this.graphic);
     }
 }

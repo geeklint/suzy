@@ -35,8 +35,7 @@
 //!     }
 //!
 //!     // ...
-//! #   fn children(_receiver: impl WidgetChildReceiver<Self>) {}
-//! #   fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {}
+//! #   fn desc(_receiver: impl WidgetDescReceiver<Self>) {}
 //! }
 //! ```
 

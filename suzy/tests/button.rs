@@ -12,9 +12,7 @@ use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platforms::TestPlatform;
 use suzy::pointer::{PointerAction, PointerEventData, PointerId};
 use suzy::selectable::{Selectable, SelectionState};
-use suzy::widget::{
-    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
-};
+use suzy::widget::{self, Widget, WidgetDescReceiver, WidgetInit};
 use suzy::widgets::Button;
 use suzy::window::WindowSettings;
 
@@ -36,13 +34,8 @@ impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
         });
     }
 
-    fn children(
-        _receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-    }
-
-    fn graphics(
-        mut receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
+    fn desc(
+        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
     ) {
         receiver.graphic(|this| &mut this.image);
     }
@@ -60,15 +53,10 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children(
-        mut receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
+    fn desc(
+        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
     ) {
         receiver.child(|this| &mut this.button);
-    }
-
-    fn graphics(
-        _receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
-    ) {
     }
 }
 

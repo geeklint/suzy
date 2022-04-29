@@ -13,8 +13,7 @@
 //! use suzy::widget::{
 //!     self,
 //!     WidgetInit,
-//!     WidgetChildReceiver,
-//!     WidgetGraphicReceiver,
+//!     WidgetDescReceiver,
 //! };
 //! use suzy::widgets::{Button, TextContent};
 //!
@@ -37,12 +36,10 @@
 //!     }
 //!
 //!     // ...
-//! #   fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+//! #   fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
 //! #        receiver.child(|this| &mut this.one);
 //! #        receiver.child(|this| &mut this.two);
 //! #        receiver.child(|this| &mut this.three);
-//! #    }
-//! #    fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {
 //! #    }
 //! }
 

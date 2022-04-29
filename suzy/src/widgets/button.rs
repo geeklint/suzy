@@ -8,8 +8,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent, PointerId};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    self, UniqueHandle, Widget, WidgetChildReceiver, WidgetExtra,
-    WidgetGraphicReceiver, WidgetInit,
+    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra, WidgetInit,
 };
 
 const IMAGE_DATA: &[u8] = include_bytes!("button-all.data");
@@ -86,11 +85,7 @@ where
         });
     }
 
-    fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
-        receiver.bare_child(|this| &mut this.content);
-    }
-
-    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
         receiver.bare_child(|this| &mut this.content);
     }
 
@@ -258,11 +253,7 @@ impl<P: RenderPlatform> widget::Content<P> for DefaultButtonContent<P> {
         });
     }
 
-    fn children(_receiver: impl WidgetChildReceiver<Self, P>) {
-        // no children
-    }
-
-    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
         receiver.graphic(|this| &mut this.image);
         receiver.graphic(|this| &mut this.text_graphic);
     }

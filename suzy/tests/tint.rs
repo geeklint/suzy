@@ -10,9 +10,7 @@ use suzy::dims::{Rect, SimplePadding2d};
 use suzy::graphics::Color;
 use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage, Tint};
 use suzy::platforms::TestPlatform;
-use suzy::widget::{
-    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
-};
+use suzy::widget::{self, Widget, WidgetDescReceiver, WidgetInit};
 use suzy::window::WindowSettings;
 
 mod utils;
@@ -34,13 +32,8 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
         });
     }
 
-    fn children(
-        _receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-    }
-
-    fn graphics(
-        mut receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
+    fn desc(
+        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
     ) {
         receiver.graphic(|this| &mut this.tint);
         receiver.graphic(|this| &mut this.image);

@@ -9,8 +9,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    self, UniqueHandle, Widget, WidgetChildReceiver, WidgetExtra,
-    WidgetGraphicReceiver, WidgetInit,
+    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra, WidgetInit,
 };
 
 /// A group of toggle buttons make members of the group mutually exclusive.
@@ -173,11 +172,7 @@ where
         });
     }
 
-    fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
-        receiver.bare_child(|this| &mut this.content);
-    }
-
-    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
         receiver.bare_child(|this| &mut this.content);
     }
 

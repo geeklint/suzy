@@ -12,8 +12,7 @@ use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platforms::TestPlatform;
 use suzy::selectable::{Selectable, SelectionState};
 use suzy::widget::{
-    self, Widget, WidgetChildReceiver, WidgetExtra, WidgetGraphicReceiver,
-    WidgetInit,
+    self, Widget, WidgetDescReceiver, WidgetExtra, WidgetInit,
 };
 use suzy::widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
 use suzy::window::WindowSettings;
@@ -46,13 +45,8 @@ impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
         });
     }
 
-    fn children(
-        _receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-    }
-
-    fn graphics(
-        mut receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
+    fn desc(
+        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
     ) {
         receiver.graphic(|this| &mut this.image);
     }
@@ -104,17 +98,12 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
         });
     }
 
-    fn children(
-        mut receiver: impl WidgetChildReceiver<Self, OpenGlRenderPlatform>,
+    fn desc(
+        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
     ) {
         receiver.child(|this| &mut this.top);
         receiver.child(|this| &mut this.middle);
         receiver.child(|this| &mut this.bottom);
-    }
-
-    fn graphics(
-        _receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
-    ) {
     }
 }
 

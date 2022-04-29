@@ -2,9 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::widget::{
-    self, RunAsApp, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
-};
+use suzy::widget::{self, RunAsApp, WidgetDescReceiver, WidgetInit};
 use suzy::widgets::Button;
 
 #[derive(Default)]
@@ -19,12 +17,8 @@ impl widget::Content for Root {
         });
     }
 
-    fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
         receiver.child(|this| &mut this.button);
-    }
-
-    fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {
-        // no graphics
     }
 }
 

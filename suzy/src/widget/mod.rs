@@ -39,7 +39,7 @@ pub use coroutine::Coroutine;
 pub use graphic::WidgetGraphic;
 pub use init::WidgetInit;
 pub use internal::WidgetExtra;
-pub use receivers::{WidgetChildReceiver, WidgetGraphicReceiver};
+pub use receivers::WidgetDescReceiver;
 pub use rect::WidgetRect;
 pub use unique_handle::{UniqueHandle, UniqueHandleId};
 
@@ -138,16 +138,16 @@ where
     pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
         let wid_int = this.watcher.data_mut();
         let content = &mut wid_int.content;
-        T::graphics(DrawGraphicBeforeReceiver { content, ctx });
-        T::children(DrawChildReceiver { content, ctx });
+        T::desc(DrawGraphicBeforeReceiver { content, ctx });
+        T::desc(DrawChildReceiver { content, ctx });
         let mut num_ordered = 0;
-        T::graphics(DrawGraphicUnorderedReceiver {
+        T::desc(DrawGraphicUnorderedReceiver {
             content,
             ctx,
             num_ordered: &mut num_ordered,
         });
         for target in (0..num_ordered).rev() {
-            T::graphics(DrawGraphicOrderedReceiver {
+            T::desc(DrawGraphicOrderedReceiver {
                 content,
                 ctx,
                 target,
@@ -168,7 +168,7 @@ where
         T::pointer_event_before(content, &mut extra, event)
             || {
                 let mut handled_by_child = false;
-                T::children(PointerEventChildReceiver {
+                T::desc(PointerEventChildReceiver {
                 content,
                     event,
                     handled: &mut handled_by_child,

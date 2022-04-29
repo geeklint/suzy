@@ -45,11 +45,7 @@ impl widget::Content for Element {
         });
     }
 
-    fn children(_receiver: impl WidgetChildReceiver<Self>) {
-        // no children
-    }
-
-    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
         receiver.graphic(|this| &mut this.text);
     }
 }
@@ -70,12 +66,8 @@ impl widget::Content for AdapterExample {
         });
     }
 
-    fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
         receiver.child(|this| &mut this.layout);
-    }
-
-    fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {
-        // no graphics
     }
 }
 

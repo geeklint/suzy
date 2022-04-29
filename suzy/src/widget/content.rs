@@ -7,9 +7,7 @@ use crate::platform::{
 };
 use crate::pointer::PointerEvent;
 
-use super::{
-    WidgetChildReceiver, WidgetExtra, WidgetGraphicReceiver, WidgetInit,
-};
+use super::{WidgetDescReceiver, WidgetExtra, WidgetInit};
 
 /// This trait provides the "glue" between the data you define in custom
 /// widgets and the behavior suzy defines for widgets.  There are three
@@ -43,9 +41,8 @@ use super::{
 /// impl widget::Content for MyWidgetData {
 ///     // ...
 /// #   fn init(_init: impl WidgetInit<Self>) {}
-/// #   fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {}
 ///
-///     fn children(mut receiver: impl WidgetChildReceiver<Self>) {
+///     fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
 ///         receiver.child(|this| &mut this.button_one);
 ///         receiver.child(|this| &mut this.button_two);
 ///     }
@@ -65,9 +62,8 @@ use super::{
 /// impl widget::Content for MyWidgetData {
 ///     // ...
 /// #   fn init(_init: impl WidgetInit<Self>) {}
-/// #   fn children(_receiver: impl WidgetChildReceiver<Self>) {}
 ///
-///     fn graphics(mut receiver: impl WidgetGraphicReceiver<Self>) {
+///     fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
 ///         receiver.graphic(|this| &mut this.graphic);
 ///     }
 /// }
@@ -85,12 +81,7 @@ where
     /// Use this method to specify the children a custom widget contains.
     ///
     /// Call `receiver.child` for each child.
-    fn children(receiver: impl WidgetChildReceiver<Self, P>);
-
-    /// Use this method to specify the graphics a custom widget contains.
-    ///
-    /// Call `receiver.graphic` for each graphic.
-    fn graphics(receiver: impl WidgetGraphicReceiver<Self, P>);
+    fn desc(receiver: impl WidgetDescReceiver<Self, P>);
 
     /// Override this method to define a custom shape for the widget.
     ///
@@ -128,8 +119,7 @@ where
 
 impl<P: RenderPlatform> Content<P> for () {
     fn init(_init: impl WidgetInit<Self, P>) {}
-    fn children(_receiver: impl WidgetChildReceiver<Self, P>) {}
-    fn graphics(_receiver: impl WidgetGraphicReceiver<Self, P>) {}
+    fn desc(_receiver: impl WidgetDescReceiver<Self, P>) {}
 }
 
 /// This is a convience function to create and run an App with this

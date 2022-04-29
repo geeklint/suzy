@@ -23,8 +23,7 @@
 //!
 //! impl widget::Content for Data {
 //!     fn init(_init: impl WidgetInit<Self>) {}
-//!     fn children(_receiver: impl WidgetChildReceiver<Self>) {}
-//!     fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {}
+//!     fn desc(_receiver: impl WidgetDescReceiver<Self>) {}
 //! }
 //!
 //! fn main() {
@@ -51,8 +50,7 @@
 //!     this.child.set_width(rect.width() / 2.0);
 //! });
 //! #     }
-//! #     fn children(_receiver: impl WidgetChildReceiver<Self>) {}
-//! #     fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {}
+//! #     fn desc(_receiver: impl WidgetDescReceiver<Self>) {}
 //! # }
 //! ```
 //!
@@ -84,7 +82,7 @@ pub mod prelude {
     pub use crate::watch::Watched;
     pub use crate::widget::{
         self,
-        Widget, WidgetChildReceiver, WidgetGraphicReceiver,
+        Widget, WidgetDescReceiver,
         WidgetInit,
     };
 }

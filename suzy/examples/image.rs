@@ -35,11 +35,7 @@ impl widget::Content for ImageViewer {
         });
     }
 
-    fn children(_receiver: impl WidgetChildReceiver<Self>) {
-        // no widget children
-    }
-
-    fn graphics(mut receiver: impl WidgetGraphicReceiver<Self>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
         receiver.graphic(|this| &mut this.image);
     }
 }

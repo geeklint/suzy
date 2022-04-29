@@ -5,8 +5,7 @@ use crate::platform::RenderPlatform;
 use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
 use crate::widget::{
-    self, UniqueHandle, Widget, WidgetChildReceiver, WidgetGraphicReceiver,
-    WidgetInit,
+    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetInit,
 };
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
@@ -152,12 +151,8 @@ where
         });
     }
 
-    fn children(mut receiver: impl WidgetChildReceiver<Self, Platform>) {
+    fn desc(mut receiver: impl WidgetDescReceiver<Self, Platform>) {
         receiver.iter_children(|this| Box::new(this.inner.active_children()));
-    }
-
-    fn graphics(_receiver: impl WidgetGraphicReceiver<Self, Platform>) {
-        // no graphics
     }
 
     fn pointer_event_before(

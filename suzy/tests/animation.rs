@@ -11,9 +11,7 @@ use suzy::animation::Animation;
 use suzy::app::{App, AppBuilder};
 use suzy::graphics::Color;
 use suzy::platform::{TestPlatform, TestRenderPlatform};
-use suzy::widget::{
-    self, Widget, WidgetChildReceiver, WidgetGraphicReceiver, WidgetInit,
-};
+use suzy::widget::{self, Widget, WidgetDescReceiver, WidgetInit};
 use suzy::window::WindowSettings;
 
 #[derive(Default)]
@@ -35,15 +33,7 @@ impl widget::Content<TestRenderPlatform> for Root {
         });
     }
 
-    fn children(
-        _receiver: impl WidgetChildReceiver<Self, TestRenderPlatform>,
-    ) {
-    }
-
-    fn graphics(
-        _receiver: impl WidgetGraphicReceiver<Self, TestRenderPlatform>,
-    ) {
-    }
+    fn desc(_receiver: impl WidgetDescReceiver<Self, TestRenderPlatform>) {}
 }
 
 #[test]

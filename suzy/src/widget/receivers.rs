@@ -9,7 +9,7 @@ use super::{AnonWidget, Widget, WidgetGraphic};
 
 /// An internal iterator style receiver.  Types of this trait are passed to
 /// [`widget::Content::children`](crate::widget::Content::children).
-pub trait WidgetChildReceiver<T, P = DefaultRenderPlatform>
+pub trait WidgetDescReceiver<T, P = DefaultRenderPlatform>
 where
     T: ?Sized,
     P: ?Sized + RenderPlatform,
@@ -38,25 +38,48 @@ where
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>;
-}
 
-/// An internal iterator style receiver.  Types of this trait are passed to
-/// [`widget::Content::graphics`](crate::widget::Content::graphics).
-pub trait WidgetGraphicReceiver<T, P = DefaultRenderPlatform>
-where
-    T: ?Sized,
-    P: ?Sized + RenderPlatform,
-{
     /// Receive a graphic.
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Gr,
-        Gr: super::WidgetGraphic<P>;
+        Gr: WidgetGraphic<P>;
+}
 
-    fn bare_child<F, Child>(&mut self, map_fn: F)
-    where
-        F: FnOnce(&mut T) -> &mut Child,
-        Child: super::Content<P>;
+macro_rules! impl_empty {
+    ($T:ident; $P:ident; child) => {
+        fn child<F, Child>(&mut self, _map_fn: F)
+        where
+            F: FnOnce(&mut $T) -> &mut Widget<Child, $P>,
+            Child: super::Content<$P> {}
+    };
+    ($T:ident; $P:ident; iter_children) => {
+        fn iter_children<F, Child>(&mut self, _iter_fn: F)
+        where
+            F: for<'iter_children> FnOnce(
+                &'iter_children mut $T,
+            ) -> Box<
+                dyn 'iter_children + Iterator<Item = &'iter_children mut Widget<Child, $P>>,
+            >,
+            Child: super::Content<$P> {}
+    };
+    ($T:ident; $P:ident; anon_child) => {
+        fn anon_child<F>(&mut self, _map_fn: F)
+        where
+            F: FnOnce(&mut $T) -> &mut dyn AnonWidget<$P> {}
+    };
+
+    ($T:ident; $P:ident; graphic) => {
+        fn graphic<F, Gr>(&mut self, _map_fn: F)
+        where
+            F: FnOnce(&mut $T) -> &mut Gr,
+            Gr: WidgetGraphic<$P> {}
+    };
+    ($T:ident; $P:ident; $($method:ident)*) => {
+        $(
+            impl_empty!{ $T; $P; $method }
+        )*
+    }
 }
 
 pub(super) struct DrawChildReceiver<
@@ -69,12 +92,13 @@ pub(super) struct DrawChildReceiver<
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, T, P> WidgetChildReceiver<T, P>
-    for DrawChildReceiver<'a, 'b, T, P>
+impl<'a, 'b, T, P> WidgetDescReceiver<T, P> for DrawChildReceiver<'a, 'b, T, P>
 where
     T: ?Sized + super::Content<P>,
     P: RenderPlatform + ?Sized,
 {
+    impl_empty! { T; P; graphic }
+
     fn child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Widget<Child, P>,
@@ -109,7 +133,7 @@ where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
     {
-        Child::children(DrawChildReceiver {
+        Child::desc(DrawChildReceiver {
             content: map_fn(self.content),
             ctx: self.ctx,
         });
@@ -122,12 +146,14 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c, T: ?Sized> {
     pub handled: &'b mut bool,
 }
 
-impl<'a, 'b, 'c, T, P> WidgetChildReceiver<T, P>
+impl<'a, 'b, 'c, T, P> WidgetDescReceiver<T, P>
     for PointerEventChildReceiver<'a, 'b, 'c, T>
 where
     T: ?Sized + super::Content<P>,
     P: RenderPlatform + ?Sized,
 {
+    impl_empty! { T; P; graphic }
+
     fn child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Widget<Child, P>,
@@ -169,7 +195,7 @@ where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
     {
-        Child::children(PointerEventChildReceiver {
+        Child::desc(PointerEventChildReceiver {
             content: map_fn(self.content),
             event: self.event,
             handled: self.handled,
@@ -185,15 +211,17 @@ where
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, T, P> WidgetGraphicReceiver<T, P>
+impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
+    impl_empty! { T; P; child iter_children anon_child }
+
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Gr,
-        Gr: super::WidgetGraphic<P>,
+        Gr: WidgetGraphic<P>,
     {
         map_fn(self.content).before_children().draw(self.ctx);
     }
@@ -203,7 +231,7 @@ where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
     {
-        Child::graphics(DrawGraphicBeforeReceiver {
+        Child::desc(DrawGraphicBeforeReceiver {
             content: map_fn(self.content),
             ctx: self.ctx,
         });
@@ -219,15 +247,17 @@ where
     pub num_ordered: &'a mut u32,
 }
 
-impl<'a, 'b, T, P> WidgetGraphicReceiver<T, P>
+impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
+    impl_empty! { T; P; child iter_children anon_child }
+
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Gr,
-        Gr: super::WidgetGraphic<P>,
+        Gr: WidgetGraphic<P>,
     {
         if Gr::ordered() {
             *self.num_ordered += 1;
@@ -241,7 +271,7 @@ where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
     {
-        Child::graphics(DrawGraphicUnorderedReceiver {
+        Child::desc(DrawGraphicUnorderedReceiver {
             content: map_fn(self.content),
             ctx: self.ctx,
             num_ordered: self.num_ordered,
@@ -259,15 +289,17 @@ where
     pub current: u32,
 }
 
-impl<'a, 'b, T, P> WidgetGraphicReceiver<T, P>
+impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform + ?Sized,
 {
+    impl_empty! { T; P; child iter_children anon_child }
+
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Gr,
-        Gr: super::WidgetGraphic<P>,
+        Gr: WidgetGraphic<P>,
     {
         if Gr::ordered() {
             if self.current == self.target {
@@ -282,7 +314,7 @@ where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
     {
-        Child::graphics(DrawGraphicOrderedReceiver {
+        Child::desc(DrawGraphicOrderedReceiver {
             content: map_fn(self.content),
             ctx: self.ctx,
             target: self.target,
