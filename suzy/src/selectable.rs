@@ -382,11 +382,11 @@ mod extra_impls {
         }
 
         fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
-            receiver.recurse(|this| &mut this.data);
+            receiver.bare_child(|this| &mut this.data);
         }
 
         fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
-            receiver.recurse(|this| &mut this.data);
+            receiver.bare_child(|this| &mut this.data);
         }
 
         fn hittest(

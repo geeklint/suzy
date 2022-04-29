@@ -174,11 +174,11 @@ where
     }
 
     fn children(mut receiver: impl WidgetChildReceiver<Self, P>) {
-        receiver.recurse(|this| &mut this.content);
+        receiver.bare_child(|this| &mut this.content);
     }
 
     fn graphics(mut receiver: impl WidgetGraphicReceiver<Self, P>) {
-        receiver.recurse(|this| &mut this.content);
+        receiver.bare_child(|this| &mut this.content);
     }
 
     fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {

@@ -34,7 +34,7 @@ where
     where
         F: FnOnce(&mut T) -> &mut dyn AnonWidget<P>;
 
-    fn recurse<F, Child>(&mut self, map_fn: F)
+    fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>;
@@ -53,7 +53,7 @@ where
         F: FnOnce(&mut T) -> &mut Gr,
         Gr: super::WidgetGraphic<P>;
 
-    fn recurse<F, Child>(&mut self, map_fn: F)
+    fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>;
@@ -104,7 +104,7 @@ where
         map_fn(self.content).draw(self.ctx);
     }
 
-    fn recurse<F, Child>(&mut self, map_fn: F)
+    fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
@@ -164,7 +164,7 @@ where
         }
     }
 
-    fn recurse<F, Child>(&mut self, map_fn: F)
+    fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
@@ -198,7 +198,7 @@ where
         map_fn(self.content).before_children().draw(self.ctx);
     }
 
-    fn recurse<F, Child>(&mut self, map_fn: F)
+    fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
@@ -236,7 +236,7 @@ where
         }
     }
 
-    fn recurse<F, Child>(&mut self, map_fn: F)
+    fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
@@ -277,7 +277,7 @@ where
         }
     }
 
-    fn recurse<F, Child>(&mut self, map_fn: F)
+    fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>,
