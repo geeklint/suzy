@@ -128,7 +128,7 @@ impl<T> Default for State<T> {
 /// #    fn children(mut receiver: impl WidgetChildReceiver<Self>) {
 /// #        receiver.child(|this| &mut this.button);
 /// #    }
-/// #    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
+/// #    fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {
 /// #    }
 /// }
 /// ```

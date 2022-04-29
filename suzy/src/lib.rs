@@ -24,7 +24,7 @@
 //! impl widget::Content for Data {
 //!     fn init(_init: impl WidgetInit<Self>) {}
 //!     fn children(_receiver: impl WidgetChildReceiver<Self>) {}
-//!     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
+//!     fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {}
 //! }
 //!
 //! fn main() {
@@ -52,7 +52,7 @@
 //! });
 //! #     }
 //! #     fn children(_receiver: impl WidgetChildReceiver<Self>) {}
-//! #     fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {}
+//! #     fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {}
 //! # }
 //! ```
 //!

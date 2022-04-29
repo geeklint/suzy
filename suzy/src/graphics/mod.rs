@@ -52,3 +52,25 @@ impl<P: RenderPlatform + ?Sized, T: Graphic<P>> Graphic<P> for &mut T {
         T::draw(self, ctx)
     }
 }
+
+pub struct Conditional<T> {
+    pub enable: bool,
+    pub graphic: T,
+}
+
+impl<T: Default> Default for Conditional<T> {
+    fn default() -> Self {
+        Self {
+            enable: true,
+            graphic: T::default(),
+        }
+    }
+}
+
+impl<P: RenderPlatform + ?Sized, T: Graphic<P>> Graphic<P> for Conditional<T> {
+    fn draw(&mut self, ctx: &mut DrawContext<P>) {
+        if self.enable {
+            self.graphic.draw(ctx);
+        }
+    }
+}

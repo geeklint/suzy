@@ -42,7 +42,7 @@
 //! #        receiver.child(|this| &mut this.two);
 //! #        receiver.child(|this| &mut this.three);
 //! #    }
-//! #    fn graphics(&mut self, _receiver: impl WidgetGraphicReceiver) {
+//! #    fn graphics(_receiver: impl WidgetGraphicReceiver<Self>) {
 //! #    }
 //! }
 

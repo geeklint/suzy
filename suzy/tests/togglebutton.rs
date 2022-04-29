@@ -7,7 +7,7 @@ extern crate suzy;
 
 use suzy::app::{App, AppBuilder};
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::graphics::Color;
+use suzy::graphics::{Color, Conditional};
 use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platforms::TestPlatform;
 use suzy::selectable::{Selectable, SelectionState};
@@ -23,14 +23,13 @@ use utils::*;
 
 #[derive(Default)]
 struct ButtonContent {
-    show_image: bool,
-    image: SlicedImage,
+    image: Conditional<SlicedImage>,
     value: i32,
 }
 
 impl Selectable for ButtonContent {
     fn selection_changed(&mut self, state: SelectionState) {
-        self.show_image = state == SelectionState::active();
+        self.image.enable = state == SelectionState::active();
     }
 }
 
@@ -43,7 +42,7 @@ impl ToggleButtonValue<i32> for ButtonContent {
 impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
         init.watch(|this, rect| {
-            this.image.set_fill(&rect, &SimplePadding2d::zero());
+            this.image.graphic.set_fill(&rect, &SimplePadding2d::zero());
         });
     }
 
@@ -55,14 +54,7 @@ impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     fn graphics(
         mut receiver: impl WidgetGraphicReceiver<Self, OpenGlRenderPlatform>,
     ) {
-        receiver.graphic(|this| {
-            println!("ButtonContent draw: {}", this.show_image);
-            if this.show_image {
-                &mut this.image
-            } else {
-                todo!()
-            }
-        });
+        receiver.graphic(|this| &mut this.image);
     }
 }
 
