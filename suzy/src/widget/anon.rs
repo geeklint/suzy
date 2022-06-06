@@ -2,7 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use crate::dims::{Dim, Rect};
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::platform::DefaultRenderPlatform;
 
 use super::{Content, Widget};
 
@@ -13,8 +13,13 @@ mod private {
     use crate::platform::RenderPlatform;
     use crate::pointer::PointerEvent;
 
-    pub trait Widget<P: RenderPlatform + ?Sized>: DynRect {
-        fn draw(&mut self, ctx: &mut DrawContext<P>);
+    pub trait Widget<P>: DynRect
+    where
+        P: ?Sized,
+    {
+        fn draw(&mut self, ctx: &mut DrawContext<P>)
+        where
+            P: RenderPlatform;
         fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
         fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
         fn as_any(self: Box<Self>) -> Box<dyn std::any::Any>;
@@ -24,10 +29,14 @@ mod private {
 
     impl<P, T> Widget<P> for super::Widget<T, P>
     where
-        P: RenderPlatform + ?Sized,
+        Self: 'static,
+        P: ?Sized,
         T: Content<P>,
     {
-        fn draw(&mut self, ctx: &mut DrawContext<P>) {
+        fn draw(&mut self, ctx: &mut DrawContext<P>)
+        where
+            P: RenderPlatform,
+        {
             super::Widget::draw(self, ctx);
         }
 
@@ -57,18 +66,22 @@ mod private {
 /// a heterogeneous collection of Widgets.
 pub trait AnonWidget<P = DefaultRenderPlatform>: private::Widget<P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
 {
 }
 
 impl<P, T> AnonWidget<P> for Widget<T, P>
 where
-    P: RenderPlatform + ?Sized,
+    Self: 'static,
+    P: ?Sized,
     T: Content<P>,
 {
 }
 
-impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
+impl<P> dyn AnonWidget<P>
+where
+    P: 'static + ?Sized,
+{
     /// Returns the widget if its content is of type `T`.
     pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T, P>>
     where
@@ -95,7 +108,7 @@ impl<P: RenderPlatform + ?Sized> dyn AnonWidget<P> {
     }
 }
 
-impl<P: RenderPlatform> Rect for dyn AnonWidget<P> {
+impl<P> Rect for dyn AnonWidget<P> {
     fn x(&self) -> Dim {
         (*self).x()
     }

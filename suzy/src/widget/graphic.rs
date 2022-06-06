@@ -6,7 +6,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
 pub trait GetGraphicMethod<'a, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     type Graphic: Graphic<P>;
 }
@@ -15,7 +15,7 @@ impl<'a, G, F, P> GetGraphicMethod<'a, P> for F
 where
     F: FnOnce(&'a mut ()) -> G,
     G: Graphic<P>,
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     type Graphic = G;
 }
@@ -31,7 +31,7 @@ where
 /// a state-change applied in the first pass.
 pub trait WidgetGraphic<P = DefaultRenderPlatform>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     /// The type of graphic to render before the widget's children.
     type BeforeGetter: for<'a> GetGraphicMethod<'a, P>;
@@ -61,7 +61,7 @@ impl<P, T> WidgetGraphic<P> for T
 where
     Self: Sized,
     T: Graphic<P>,
-    P: RenderPlatform,
+    P: ?Sized + RenderPlatform,
 {
     type BeforeGetter = fn(&mut ()) -> &mut T;
     type AfterGetter = fn(&mut ()) -> &mut [(); 0];

@@ -12,7 +12,7 @@ use super::{AnonWidget, Widget, WidgetGraphic};
 pub trait WidgetDescReceiver<T, P = DefaultRenderPlatform>
 where
     T: ?Sized,
-    P: ?Sized + RenderPlatform,
+    P: ?Sized,
 {
     /// Receive a child.
     fn child<F, Child>(&mut self, map_fn: F)
@@ -42,6 +42,7 @@ where
     /// Receive a graphic.
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
+        P: RenderPlatform,
         F: FnOnce(&mut T) -> &mut Gr,
         Gr: WidgetGraphic<P>;
 }
@@ -73,7 +74,8 @@ macro_rules! impl_empty {
         fn graphic<F, Gr>(&mut self, _map_fn: F)
         where
             F: FnOnce(&mut $T) -> &mut Gr,
-            Gr: WidgetGraphic<$P> {}
+            Gr: WidgetGraphic<$P>,
+            P: RenderPlatform, {}
     };
     ($T:ident; $P:ident; $($method:ident)*) => {
         $(
@@ -86,7 +88,7 @@ pub(super) struct DrawChildReceiver<
     'a,
     'b,
     T: ?Sized + super::Content<P>,
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 > {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -95,7 +97,7 @@ pub(super) struct DrawChildReceiver<
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P> for DrawChildReceiver<'a, 'b, T, P>
 where
     T: ?Sized + super::Content<P>,
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     impl_empty! { T; P; graphic }
 
@@ -150,7 +152,7 @@ impl<'a, 'b, 'c, T, P> WidgetDescReceiver<T, P>
     for PointerEventChildReceiver<'a, 'b, 'c, T>
 where
     T: ?Sized + super::Content<P>,
-    P: RenderPlatform + ?Sized,
+    P: 'static + ?Sized,
 {
     impl_empty! { T; P; graphic }
 
@@ -205,7 +207,7 @@ where
 
 pub(super) struct DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -214,7 +216,7 @@ where
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     impl_empty! { T; P; child iter_children anon_child }
 
@@ -240,7 +242,7 @@ where
 
 pub(super) struct DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -250,7 +252,7 @@ where
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     impl_empty! { T; P; child iter_children anon_child }
 
@@ -281,7 +283,7 @@ where
 
 pub(super) struct DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -292,7 +294,7 @@ where
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     impl_empty! { T; P; child iter_children anon_child }
 

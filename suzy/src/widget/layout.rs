@@ -46,7 +46,6 @@
 use std::marker::PhantomData;
 
 use crate::dims::Rect;
-use crate::platform::RenderPlatform;
 
 use super::{WidgetInit, WidgetRect};
 
@@ -403,7 +402,7 @@ where
     Direction: StackLayoutDirection + ?Sized,
     Init: WidgetInit<Content, Platform> + ?Sized,
     Content: super::Content<Platform> + ?Sized,
-    Platform: RenderPlatform + ?Sized,
+    Platform: ?Sized,
     Spacing: Clone + LayoutValue<Content>,
     Value: LayoutValue<Content>,
 {

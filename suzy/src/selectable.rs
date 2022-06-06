@@ -364,14 +364,16 @@ impl<T> Selectable for SelectableIgnored<T> {
 
 mod extra_impls {
     use super::*;
-    use crate::graphics::{DrawContext, Graphic};
-    use crate::platform::RenderPlatform;
-    use crate::pointer::PointerEvent;
-    use crate::widget::{self, WidgetDescReceiver, WidgetExtra, WidgetInit};
+    use crate::{
+        graphics::{DrawContext, Graphic},
+        platform::RenderPlatform,
+        pointer::PointerEvent,
+        widget::{self, WidgetDescReceiver, WidgetExtra, WidgetInit},
+    };
 
     impl<T, P> widget::Content<P> for SelectableIgnored<T>
     where
-        P: RenderPlatform,
+        P: ?Sized,
         T: widget::Content<P>,
     {
         fn init(mut init: impl WidgetInit<Self, P>) {
@@ -401,7 +403,7 @@ mod extra_impls {
 
     impl<T, P> Graphic<P> for SelectableIgnored<T>
     where
-        P: RenderPlatform,
+        P: ?Sized + RenderPlatform,
         T: Graphic<P>,
     {
         fn draw(&mut self, ctx: &mut DrawContext<P>) {
@@ -411,7 +413,7 @@ mod extra_impls {
 
     impl<T, P> Graphic<P> for SelectableData<T>
     where
-        P: RenderPlatform,
+        P: ?Sized + RenderPlatform,
         T: Graphic<P>,
     {
         fn draw(&mut self, ctx: &mut DrawContext<P>) {

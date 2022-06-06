@@ -56,7 +56,7 @@ impl<T> ButtonBehavior<T> {
 
 impl<T, P> widget::Content<P> for ButtonBehavior<T>
 where
-    P: RenderPlatform,
+    P: ?Sized,
     T: Selectable + widget::Content<P>,
 {
     fn init(mut init: impl WidgetInit<Self, P>) {
@@ -177,14 +177,20 @@ pub type Button<
     P = DefaultRenderPlatform,
 > = Widget<ButtonBehavior<T>, P>;
 
-pub struct DefaultButtonContent<P: RenderPlatform> {
+pub struct DefaultButtonContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
     image: P::SelectableSlicedImage,
     text_graphic: P::Text,
     text_color: Watched<Color>,
     text: Watched<String>,
 }
 
-impl<P: RenderPlatform> Default for DefaultButtonContent<P> {
+impl<P> Default for DefaultButtonContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
     fn default() -> Self {
         Self {
             image: P::SelectableSlicedImage::default(),
@@ -195,13 +201,19 @@ impl<P: RenderPlatform> Default for DefaultButtonContent<P> {
     }
 }
 
-impl<P: RenderPlatform> super::TextContent for DefaultButtonContent<P> {
+impl<P> super::TextContent for DefaultButtonContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
     fn set_text(&mut self, text: &str) {
         *self.text = text.to_string();
     }
 }
 
-impl<P: RenderPlatform> Selectable for DefaultButtonContent<P> {
+impl<P> Selectable for DefaultButtonContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
     fn selection_changed(&mut self, state: SelectionState) {
         use crate::selectable::SelectionStateV0;
         self.image.selection_changed(state);
@@ -212,7 +224,10 @@ impl<P: RenderPlatform> Selectable for DefaultButtonContent<P> {
     }
 }
 
-impl<P: RenderPlatform> widget::Content<P> for DefaultButtonContent<P> {
+impl<P> widget::Content<P> for DefaultButtonContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
     fn init(mut init: impl WidgetInit<Self, P>) {
         use crate::dims::{Rect, SimplePadding2d};
         use crate::platform::graphics::{

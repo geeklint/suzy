@@ -12,13 +12,19 @@ use crate::widget::{self, Widget, WidgetDescReceiver, WidgetInit};
 pub type Label<P = DefaultRenderPlatform> = Widget<LabelContent<P>>;
 
 /// The content for a widget which displays some text
-pub struct LabelContent<P: RenderPlatform> {
+pub struct LabelContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
     text: Watched<String>,
     graphic: P::Text,
     settings: Watched<TextSettings>,
 }
 
-impl<P: RenderPlatform> Default for LabelContent<P> {
+impl<P> Default for LabelContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
     fn default() -> Self {
         Self {
             text: Watched::default(),
@@ -30,7 +36,7 @@ impl<P: RenderPlatform> Default for LabelContent<P> {
 
 impl<P> super::TextContent for LabelContent<P>
 where
-    P: RenderPlatform,
+    P: ?Sized + RenderPlatform,
 {
     fn set_text(&mut self, text: &str) {
         *self.text = text.to_owned();
@@ -39,7 +45,7 @@ where
 
 impl<P> LabelContent<P>
 where
-    P: RenderPlatform,
+    P: ?Sized + RenderPlatform,
 {
     /// Get a reference to the current text settings
     pub fn settings(&self) -> &TextSettings {
@@ -54,7 +60,7 @@ where
 
 impl<P> widget::Content<P> for LabelContent<P>
 where
-    P: RenderPlatform,
+    P: ?Sized + RenderPlatform,
 {
     fn init(mut init: impl WidgetInit<Self, P>) {
         init.watch(|this, rect| {

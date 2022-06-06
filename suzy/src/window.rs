@@ -114,7 +114,10 @@ impl WindowSettings for WindowBuilder {
 }
 
 /// A trait which represents a window.
-pub trait Window<P: RenderPlatform>: WindowSettings {
+pub trait Window<P>: WindowSettings
+where
+    P: ?Sized + RenderPlatform,
+{
     /// Get the pixel density of the window as displayed
     fn pixels_per_dp(&self) -> f32;
 

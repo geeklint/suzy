@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::platform::RenderPlatform;
 use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
 use crate::widget::{
@@ -69,7 +68,7 @@ pub struct AdapterView<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: ?Sized,
 {
     inner: AdapterLayoutData<Layout, Content, Platform>,
     data_flag: WatchedMeta,
@@ -83,7 +82,7 @@ impl<Layout, Content, Platform> AdapterView<Layout, Content, Platform>
 where
     Layout: 'static + AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: 'static + ?Sized,
 {
     /// Get the data collection stored by the layout.
     pub fn data(&self) -> &Layout::Collection {
@@ -115,7 +114,7 @@ impl<Layout, Content, Platform> Default
 where
     Layout: 'static + AdapterLayout + Default,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: ?Sized,
 {
     fn default() -> Self {
         let layout = Layout::default();
@@ -133,9 +132,10 @@ where
 impl<Layout, Content, Platform> widget::Content<Platform>
     for AdapterView<Layout, Content, Platform>
 where
-    Layout: 'static + AdapterLayout,
+    Self: 'static,
+    Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: ?Sized,
 {
     fn init(mut init: impl WidgetInit<Self, Platform>) {
         init.watch(|this, rect| {

@@ -3,7 +3,7 @@
 
 use drying_paint::{WatcherInit, WatcherMeta};
 
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::platform::DefaultRenderPlatform;
 
 use super::{layout, WidgetInternal, WidgetRect};
 
@@ -14,7 +14,7 @@ use super::{layout, WidgetInternal, WidgetRect};
 /// use to submit watch closures.
 pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
     T: super::Content<P> + ?Sized,
 {
     /// Register a watch function associated with this widget.  See the
@@ -52,7 +52,7 @@ where
 
 struct WidgetInitImpl<'a, 'b, O, T, G, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: super::Content<P>,
     T: super::Content<P>,
@@ -63,10 +63,11 @@ where
 
 impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: super::Content<P>,
     T: super::Content<P>,
+    WidgetInternal<P, O>: 'static,
 {
     fn watch<F>(&mut self, func: F)
     where
@@ -94,8 +95,9 @@ where
 
 impl<P, T> WatcherInit for WidgetInternal<P, T>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
     T: super::Content<P>,
+    Self: 'static,
 {
     fn init(watcher: &mut WatcherMeta<Self>) {
         super::Content::init(WidgetInitImpl {

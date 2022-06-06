@@ -2,13 +2,12 @@
 /* Copyright © 2021 Violet Leonard */
 
 use crate::dims::{Dim, Rect};
-use crate::platform::RenderPlatform;
 
 use super::WidgetRect;
 
 pub(super) struct WidgetInternal<P, T>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
     T: super::Content<P> + ?Sized,
 {
     pub(super) rect: WidgetRect,
@@ -18,7 +17,7 @@ where
 
 impl<P, T> Default for WidgetInternal<P, T>
 where
-    P: RenderPlatform,
+    P: ?Sized,
     T: super::Content<P> + Default + ?Sized,
 {
     fn default() -> Self {

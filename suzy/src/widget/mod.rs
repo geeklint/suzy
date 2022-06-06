@@ -29,8 +29,7 @@ mod unique_handle;
 use internal::WidgetInternal;
 use receivers::{
     DrawChildReceiver, DrawGraphicBeforeReceiver, DrawGraphicOrderedReceiver,
-    DrawGraphicUnorderedReceiver,
-    PointerEventChildReceiver,
+    DrawGraphicUnorderedReceiver, PointerEventChildReceiver,
 };
 
 pub use anon::AnonWidget;
@@ -46,7 +45,7 @@ pub use unique_handle::{UniqueHandle, UniqueHandleId};
 /// A basic structure to wrap some data and turn it into a widget.
 pub struct Widget<T, P = DefaultRenderPlatform>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
     T: Content<P> + ?Sized,
 {
     watcher: Watcher<WidgetInternal<P, T>>,
@@ -54,7 +53,7 @@ where
 
 impl<T, P, Data> Adaptable<Data> for Widget<T, P>
 where
-    P: RenderPlatform,
+    P: 'static + ?Sized,
     T: Content<P> + Adaptable<Data>,
 {
     fn adapt(&mut self, data: &Data) {
@@ -68,7 +67,7 @@ where
 
 impl<T, P> Default for Widget<T, P>
 where
-    P: RenderPlatform,
+    P: 'static + ?Sized,
     T: Content<P> + Default + ?Sized,
 {
     fn default() -> Self {
@@ -80,7 +79,7 @@ where
 
 impl<T, P> Deref for Widget<T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: 'static + ?Sized,
     T: Content<P>,
 {
     type Target = T;
@@ -91,7 +90,7 @@ where
 
 impl<T, P> DerefMut for Widget<T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: 'static + ?Sized,
     T: Content<P>,
 {
     fn deref_mut(&mut self) -> &mut T {
@@ -101,7 +100,7 @@ where
 
 impl<P, T> Widget<T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: 'static + ?Sized,
     T: Content<P>,
 {
     /// Create a new widget, populating it's content using the adaptable
@@ -135,27 +134,6 @@ where
         }
     }
 
-    pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
-        let wid_int = this.watcher.data_mut();
-        let content = &mut wid_int.content;
-        T::desc(DrawGraphicBeforeReceiver { content, ctx });
-        T::desc(DrawChildReceiver { content, ctx });
-        let mut num_ordered = 0;
-        T::desc(DrawGraphicUnorderedReceiver {
-            content,
-            ctx,
-            num_ordered: &mut num_ordered,
-        });
-        for target in (0..num_ordered).rev() {
-            T::desc(DrawGraphicOrderedReceiver {
-                content,
-                ctx,
-                target,
-                current: 0,
-            });
-        }
-    }
-
     pub(crate) fn pointer_event(
         this: &mut Self,
         event: &mut PointerEvent,
@@ -169,7 +147,7 @@ where
             || {
                 let mut handled_by_child = false;
                 T::desc(PointerEventChildReceiver {
-                content,
+                    content,
                     event,
                     handled: &mut handled_by_child,
                 });
@@ -192,7 +170,34 @@ where
 
 impl<P, T> Widget<T, P>
 where
-    P: RenderPlatform,
+    P: ?Sized + RenderPlatform,
+    T: Content<P>,
+{
+    pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
+        let wid_int = this.watcher.data_mut();
+        let content = &mut wid_int.content;
+        T::desc(DrawGraphicBeforeReceiver { content, ctx });
+        T::desc(DrawChildReceiver { content, ctx });
+        let mut num_ordered = 0;
+        T::desc(DrawGraphicUnorderedReceiver {
+            content,
+            ctx,
+            num_ordered: &mut num_ordered,
+        });
+        for target in (0..num_ordered).rev() {
+            T::desc(DrawGraphicOrderedReceiver {
+                content,
+                ctx,
+                target,
+                current: 0,
+            });
+        }
+    }
+}
+
+impl<P, T> Widget<T, P>
+where
+    P: 'static + ?Sized,
     T: Content<P> + Default,
 {
     /// Create a Widget with a specified initial position and size
@@ -209,7 +214,7 @@ where
 
 impl<P, T> Rect for Widget<T, P>
 where
-    P: RenderPlatform + ?Sized,
+    P: 'static + ?Sized,
     T: Content<P>,
 {
     fn x(&self) -> Dim {

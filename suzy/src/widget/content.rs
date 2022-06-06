@@ -2,9 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use crate::dims::Rect;
-use crate::platform::{
-    DefaultPlatform, DefaultRenderPlatform, RenderPlatform,
-};
+use crate::platform::{DefaultPlatform, DefaultRenderPlatform};
 use crate::pointer::PointerEvent;
 
 use super::{WidgetDescReceiver, WidgetExtra, WidgetInit};
@@ -71,7 +69,7 @@ use super::{WidgetDescReceiver, WidgetExtra, WidgetInit};
 ///
 pub trait Content<P = DefaultRenderPlatform>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized,
     Self: 'static,
 {
     /// This method provides a convient place to register functions which
@@ -117,7 +115,7 @@ where
     }
 }
 
-impl<P: RenderPlatform> Content<P> for () {
+impl<P> Content<P> for () {
     fn init(_init: impl WidgetInit<Self, P>) {}
     fn desc(_receiver: impl WidgetDescReceiver<Self, P>) {}
 }

@@ -4,7 +4,6 @@
 use std::collections::HashMap;
 
 use crate::dims::Rect;
-use crate::platform::RenderPlatform;
 use crate::watch::WatchedMeta;
 use crate::widget::{self, Widget, WidgetRect};
 
@@ -84,7 +83,7 @@ pub(super) struct AdapterLayoutData<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: ?Sized,
 {
     active: HashMap<Layout::ElementKey, Widget<Content, Platform>>,
     inactive: Vec<Widget<Content, Platform>>,
@@ -98,7 +97,7 @@ impl<Layout, Content, Platform> Default
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: ?Sized,
 {
     fn default() -> Self {
         AdapterLayoutData {
@@ -115,7 +114,7 @@ impl<Layout, Content, Platform> AdapterLayoutData<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: 'static + ?Sized,
 {
     pub fn clear_active_children(&mut self) {
         let old = std::mem::take(&mut self.active);
@@ -157,7 +156,7 @@ struct Interface<'a, Layout, Content, Platform>
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: ?Sized,
 {
     rect: &'a WidgetRect,
     data: &'a mut AdapterLayoutData<Layout, Content, Platform>,
@@ -169,7 +168,7 @@ impl<'a, Layout, Content, Platform> AdapterLayoutInterface<Layout>
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: 'static + ?Sized,
 {
     type Bounds = WidgetRect;
     type Element = Widget<Content, Platform>;
@@ -233,7 +232,7 @@ impl<'a, Layout, Content, Platform> Drop
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: RenderPlatform,
+    Platform: ?Sized,
 {
     fn drop(&mut self) {
         let remaining = std::mem::take(&mut self.prev);

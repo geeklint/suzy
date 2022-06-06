@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use drying_paint::{Watched, WatchedCell};
 
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::platform::DefaultRenderPlatform;
 use crate::pointer::{PointerAction, PointerEvent};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
@@ -125,7 +125,7 @@ impl<T, V> ToggleButtonContent<T, V> {
 
 impl<T, V, P> widget::Content<P> for ToggleButtonContent<T, V>
 where
-    P: RenderPlatform,
+    P: ?Sized,
     T: Selectable + widget::Content<P> + ToggleButtonValue<V>,
     V: 'static + std::fmt::Debug + Copy,
 {

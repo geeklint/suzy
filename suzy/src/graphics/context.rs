@@ -36,7 +36,7 @@ pub enum DrawPass {
 #[derive(Debug)]
 pub struct DrawContext<'a, P = DefaultRenderPlatform>
 where
-    P: RenderPlatform + ?Sized,
+    P: ?Sized + RenderPlatform,
 {
     context: &'a mut P::Context,
     current: P::DrawParams,
@@ -44,7 +44,10 @@ where
     pass: DrawPass,
 }
 
-impl<'a, P: RenderPlatform> DrawContext<'a, P> {
+impl<'a, P> DrawContext<'a, P>
+where
+    P: ?Sized + RenderPlatform,
+{
     pub(crate) fn new(
         ctx: &'a mut P::Context,
         starting: P::DrawParams,
@@ -129,7 +132,7 @@ impl<'a, P: RenderPlatform> DrawContext<'a, P> {
 
 impl<'a, P> DrawContext<'a, P>
 where
-    P: RenderPlatform,
+    P: ?Sized + RenderPlatform,
     P::DrawParams: Clone,
 {
     /// Apply all pending changes to the current draw params.
@@ -175,7 +178,10 @@ where
     }
 }
 
-impl<P: RenderPlatform + ?Sized> Drop for DrawContext<'_, P> {
+impl<P> Drop for DrawContext<'_, P>
+where
+    P: ?Sized + RenderPlatform,
+{
     fn drop(&mut self) {
         if self.pass != DrawPass::UpdateContext {
             if let Some(old) = self.last_applied.take() {

@@ -177,7 +177,7 @@ impl<T> Coroutine<T> {
         factory: Fac,
     ) where
         Get: 'static + Fn(&mut Wid) -> &mut Self,
-        Plat: crate::platform::RenderPlatform + ?Sized,
+        Plat: ?Sized,
         Wid: super::Content<Plat> + ?Sized,
         Init: WidgetInit<Wid, Plat> + ?Sized,
         Fut: 'static + Future<Output = ()>,
