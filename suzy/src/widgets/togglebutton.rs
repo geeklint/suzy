@@ -125,7 +125,6 @@ impl<T, V> ToggleButtonContent<T, V> {
 
 impl<T, V, P> widget::Content<P> for ToggleButtonContent<T, V>
 where
-    P: ?Sized,
     T: Selectable + widget::Content<P> + ToggleButtonValue<V>,
     V: 'static + std::fmt::Debug + Copy,
 {

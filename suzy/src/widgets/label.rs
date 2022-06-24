@@ -60,7 +60,7 @@ where
 
 impl<P> widget::Content<P> for LabelContent<P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     fn init(mut init: impl WidgetInit<Self, P>) {
         init.watch(|this, rect| {

@@ -373,7 +373,6 @@ mod extra_impls {
 
     impl<T, P> widget::Content<P> for SelectableIgnored<T>
     where
-        P: ?Sized,
         T: widget::Content<P>,
     {
         fn init(mut init: impl WidgetInit<Self, P>) {
@@ -403,7 +402,7 @@ mod extra_impls {
 
     impl<T, P> Graphic<P> for SelectableIgnored<T>
     where
-        P: ?Sized + RenderPlatform,
+        P: RenderPlatform,
         T: Graphic<P>,
     {
         fn draw(&mut self, ctx: &mut DrawContext<P>) {
@@ -413,7 +412,7 @@ mod extra_impls {
 
     impl<T, P> Graphic<P> for SelectableData<T>
     where
-        P: ?Sized + RenderPlatform,
+        P: RenderPlatform,
         T: Graphic<P>,
     {
         fn draw(&mut self, ctx: &mut DrawContext<P>) {

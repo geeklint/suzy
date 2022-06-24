@@ -12,7 +12,6 @@ use super::{AnonWidget, Widget, WidgetGraphic};
 pub trait WidgetDescReceiver<T, P = DefaultRenderPlatform>
 where
     T: ?Sized,
-    P: ?Sized,
 {
     /// Receive a child.
     fn child<F, Child>(&mut self, map_fn: F)
@@ -88,7 +87,7 @@ pub(super) struct DrawChildReceiver<
     'a,
     'b,
     T: ?Sized + super::Content<P>,
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 > {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -97,7 +96,7 @@ pub(super) struct DrawChildReceiver<
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P> for DrawChildReceiver<'a, 'b, T, P>
 where
     T: ?Sized + super::Content<P>,
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     impl_empty! { T; P; graphic }
 
@@ -152,7 +151,7 @@ impl<'a, 'b, 'c, T, P> WidgetDescReceiver<T, P>
     for PointerEventChildReceiver<'a, 'b, 'c, T>
 where
     T: ?Sized + super::Content<P>,
-    P: 'static + ?Sized,
+    P: 'static,
 {
     impl_empty! { T; P; graphic }
 
@@ -216,7 +215,7 @@ where
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     impl_empty! { T; P; child iter_children anon_child }
 
@@ -242,7 +241,7 @@ where
 
 pub(super) struct DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -252,7 +251,7 @@ where
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     impl_empty! { T; P; child iter_children anon_child }
 
@@ -283,7 +282,7 @@ where
 
 pub(super) struct DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -294,7 +293,7 @@ where
 impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
     for DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     impl_empty! { T; P; child iter_children anon_child }
 

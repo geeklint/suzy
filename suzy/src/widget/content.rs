@@ -69,7 +69,6 @@ use super::{WidgetDescReceiver, WidgetExtra, WidgetInit};
 ///
 pub trait Content<P = DefaultRenderPlatform>
 where
-    P: ?Sized,
     Self: 'static,
 {
     /// This method provides a convient place to register functions which

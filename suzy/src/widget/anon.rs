@@ -13,10 +13,7 @@ mod private {
     use crate::platform::RenderPlatform;
     use crate::pointer::PointerEvent;
 
-    pub trait Widget<P>: DynRect
-    where
-        P: ?Sized,
-    {
+    pub trait Widget<P>: DynRect {
         fn draw(&mut self, ctx: &mut DrawContext<P>)
         where
             P: RenderPlatform;
@@ -30,7 +27,6 @@ mod private {
     impl<P, T> Widget<P> for super::Widget<T, P>
     where
         Self: 'static,
-        P: ?Sized,
         T: Content<P>,
     {
         fn draw(&mut self, ctx: &mut DrawContext<P>)
@@ -64,24 +60,16 @@ mod private {
 ///
 /// This can be used for the same patterns trait-objects usually are, e.g.
 /// a heterogeneous collection of Widgets.
-pub trait AnonWidget<P = DefaultRenderPlatform>: private::Widget<P>
-where
-    P: ?Sized,
-{
-}
+pub trait AnonWidget<P = DefaultRenderPlatform>: private::Widget<P> {}
 
 impl<P, T> AnonWidget<P> for Widget<T, P>
 where
     Self: 'static,
-    P: ?Sized,
     T: Content<P>,
 {
 }
 
-impl<P> dyn AnonWidget<P>
-where
-    P: 'static + ?Sized,
-{
+impl<P: 'static> dyn AnonWidget<P> {
     /// Returns the widget if its content is of type `T`.
     pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T, P>>
     where

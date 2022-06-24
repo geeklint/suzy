@@ -46,7 +46,7 @@ where
 
 impl<'a, P> DrawContext<'a, P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     pub(crate) fn new(
         ctx: &'a mut P::Context,

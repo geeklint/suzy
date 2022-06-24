@@ -402,7 +402,6 @@ where
     Direction: StackLayoutDirection + ?Sized,
     Init: WidgetInit<Content, Platform> + ?Sized,
     Content: super::Content<Platform> + ?Sized,
-    Platform: ?Sized,
     Spacing: Clone + LayoutValue<Content>,
     Value: LayoutValue<Content>,
 {

@@ -14,7 +14,6 @@ use super::{layout, WidgetInternal, WidgetRect};
 /// use to submit watch closures.
 pub trait WidgetInit<T, P = DefaultRenderPlatform>
 where
-    P: ?Sized,
     T: super::Content<P> + ?Sized,
 {
     /// Register a watch function associated with this widget.  See the
@@ -52,7 +51,6 @@ where
 
 struct WidgetInitImpl<'a, 'b, O, T, G, P>
 where
-    P: ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: super::Content<P>,
     T: super::Content<P>,
@@ -63,7 +61,6 @@ where
 
 impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
 where
-    P: ?Sized,
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: super::Content<P>,
     T: super::Content<P>,
@@ -95,7 +92,6 @@ where
 
 impl<P, T> WatcherInit for WidgetInternal<P, T>
 where
-    P: ?Sized,
     T: super::Content<P>,
     Self: 'static,
 {

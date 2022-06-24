@@ -56,7 +56,6 @@ impl<T> ButtonBehavior<T> {
 
 impl<T, P> widget::Content<P> for ButtonBehavior<T>
 where
-    P: ?Sized,
     T: Selectable + widget::Content<P>,
 {
     fn init(mut init: impl WidgetInit<Self, P>) {
@@ -226,7 +225,7 @@ where
 
 impl<P> widget::Content<P> for DefaultButtonContent<P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     fn init(mut init: impl WidgetInit<Self, P>) {
         use crate::dims::{Rect, SimplePadding2d};

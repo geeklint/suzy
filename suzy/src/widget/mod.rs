@@ -45,7 +45,6 @@ pub use unique_handle::{UniqueHandle, UniqueHandleId};
 /// A basic structure to wrap some data and turn it into a widget.
 pub struct Widget<T, P = DefaultRenderPlatform>
 where
-    P: ?Sized,
     T: Content<P> + ?Sized,
 {
     watcher: Watcher<WidgetInternal<P, T>>,
@@ -53,7 +52,7 @@ where
 
 impl<T, P, Data> Adaptable<Data> for Widget<T, P>
 where
-    P: 'static + ?Sized,
+    P: 'static,
     T: Content<P> + Adaptable<Data>,
 {
     fn adapt(&mut self, data: &Data) {
@@ -67,7 +66,7 @@ where
 
 impl<T, P> Default for Widget<T, P>
 where
-    P: 'static + ?Sized,
+    P: 'static,
     T: Content<P> + Default + ?Sized,
 {
     fn default() -> Self {
@@ -79,7 +78,7 @@ where
 
 impl<T, P> Deref for Widget<T, P>
 where
-    P: 'static + ?Sized,
+    P: 'static,
     T: Content<P>,
 {
     type Target = T;
@@ -90,7 +89,7 @@ where
 
 impl<T, P> DerefMut for Widget<T, P>
 where
-    P: 'static + ?Sized,
+    P: 'static,
     T: Content<P>,
 {
     fn deref_mut(&mut self) -> &mut T {
@@ -100,7 +99,7 @@ where
 
 impl<P, T> Widget<T, P>
 where
-    P: 'static + ?Sized,
+    P: 'static,
     T: Content<P>,
 {
     /// Create a new widget, populating it's content using the adaptable
@@ -170,7 +169,7 @@ where
 
 impl<P, T> Widget<T, P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
     T: Content<P>,
 {
     pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
@@ -197,7 +196,7 @@ where
 
 impl<P, T> Widget<T, P>
 where
-    P: 'static + ?Sized,
+    P: 'static,
     T: Content<P> + Default,
 {
     /// Create a Widget with a specified initial position and size
@@ -214,7 +213,7 @@ where
 
 impl<P, T> Rect for Widget<T, P>
 where
-    P: 'static + ?Sized,
+    P: 'static,
     T: Content<P>,
 {
     fn x(&self) -> Dim {

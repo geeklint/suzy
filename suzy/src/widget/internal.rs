@@ -7,7 +7,6 @@ use super::WidgetRect;
 
 pub(super) struct WidgetInternal<P, T>
 where
-    P: ?Sized,
     T: super::Content<P> + ?Sized,
 {
     pub(super) rect: WidgetRect,
@@ -17,7 +16,6 @@ where
 
 impl<P, T> Default for WidgetInternal<P, T>
 where
-    P: ?Sized,
     T: super::Content<P> + Default + ?Sized,
 {
     fn default() -> Self {

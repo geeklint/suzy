@@ -68,7 +68,6 @@ pub struct AdapterView<Layout, Content, Platform>
 where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: ?Sized,
 {
     inner: AdapterLayoutData<Layout, Content, Platform>,
     data_flag: WatchedMeta,
@@ -80,9 +79,9 @@ where
 
 impl<Layout, Content, Platform> AdapterView<Layout, Content, Platform>
 where
-    Layout: 'static + AdapterLayout,
+    Self: 'static,
+    Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: 'static + ?Sized,
 {
     /// Get the data collection stored by the layout.
     pub fn data(&self) -> &Layout::Collection {
@@ -114,7 +113,6 @@ impl<Layout, Content, Platform> Default
 where
     Layout: 'static + AdapterLayout + Default,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: ?Sized,
 {
     fn default() -> Self {
         let layout = Layout::default();
@@ -135,7 +133,6 @@ where
     Self: 'static,
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: ?Sized,
 {
     fn init(mut init: impl WidgetInit<Self, Platform>) {
         init.watch(|this, rect| {
