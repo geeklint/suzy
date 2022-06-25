@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
+use drying_paint::{WatcherInit, WatcherMeta};
+
 use crate::dims::{Dim, Rect};
 
 use super::WidgetRect;
@@ -24,6 +26,19 @@ where
             _platform: std::marker::PhantomData,
             content: T::default(),
         }
+    }
+}
+
+impl<P, T> WatcherInit for WidgetInternal<P, T>
+where
+    T: super::Content<P>,
+    Self: 'static,
+{
+    fn init(watcher: &mut WatcherMeta<Self>) {
+        super::Content::desc(super::receivers::WidgetInitImpl {
+            watcher,
+            getter: |x| x,
+        });
     }
 }
 

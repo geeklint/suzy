@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use drying_paint::{WatcherInit, WatcherMeta};
+use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
-use crate::platform::DefaultRenderPlatform;
-
-use super::{layout, WidgetInternal, WidgetRect};
+use super::{layout, Widget, WidgetGraphic, WidgetRect};
 
 /// Instances of this trait are provided to
 /// [`widget::Content::init`](trait.widget::Content.html#tymethod.init).
@@ -14,7 +12,7 @@ use super::{layout, WidgetInternal, WidgetRect};
 /// use to submit watch closures.
 pub trait Desc<T, P = DefaultRenderPlatform>
 where
-    T: super::Content<P> + ?Sized,
+    T: ?Sized,
 {
     /// Register a watch function associated with this widget.  See the
     /// [watch](../watch/index.html) module for more information.
@@ -22,9 +20,25 @@ where
     where
         F: Fn(&mut T, &mut WidgetRect) + 'static;
 
+    /// Register a child of this widget.
+    fn child<F, Child>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
+        Child: super::Content<P>;
+
+    /// Register a graphic member of this widget.
+    fn graphic<F, Gr>(&mut self, map_fn: F)
+    where
+        P: RenderPlatform,
+        F: FnOnce(&mut T) -> &mut Gr,
+        Gr: WidgetGraphic<P>;
+
     /// Create a layout group which a provides a shorthand for organizing
     /// widgets in common configurations.
-    fn create_layout_group(&mut self) -> layout::LayoutTypes<Self, T, P> {
+    fn create_layout_group(&mut self) -> layout::LayoutTypes<Self, T, P>
+    where
+        Self: Sized,
+    {
         layout::LayoutTypes::new(self)
     }
 
@@ -42,63 +56,24 @@ where
         super::Coroutine::register(coroutine, self, factory);
     }
 
+    /// Register a variable number of children
+    fn iter_children<F, Child>(&mut self, iter_fn: F)
+    where
+        F: for<'a> FnOnce(
+            &'a mut T,
+        ) -> Box<
+            dyn 'a + Iterator<Item = &'a mut Widget<Child, P>>,
+        >,
+        Child: super::Content<P>;
+
+    /// Register a child with an anonymous type.
+    fn anon_child<F>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut T) -> &mut dyn super::AnonWidget<P>;
+
     #[doc(hidden)]
-    fn init_child_inline<F, C>(&mut self, getter: F)
+    fn bare_child<F, Child>(&mut self, getter: F)
     where
-        C: super::Content<P>,
-        F: 'static + Clone + Fn(&mut T) -> &mut C;
-}
-
-struct WidgetInitImpl<'a, 'b, O, T, G, P>
-where
-    G: 'static + Clone + Fn(&mut O) -> &mut T,
-    O: super::Content<P>,
-    T: super::Content<P>,
-{
-    watcher: &'a mut WatcherMeta<'b, WidgetInternal<P, O>>,
-    getter: G,
-}
-
-impl<O, T, G, P> Desc<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
-where
-    G: 'static + Clone + Fn(&mut O) -> &mut T,
-    O: super::Content<P>,
-    T: super::Content<P>,
-    WidgetInternal<P, O>: 'static,
-{
-    fn watch<F>(&mut self, func: F)
-    where
-        F: Fn(&mut T, &mut WidgetRect) + 'static,
-    {
-        let getter = self.getter.clone();
-        self.watcher.watch(move |wid_int| {
-            let content = getter(&mut wid_int.content);
-            (func)(content, &mut wid_int.rect);
-        });
-    }
-
-    fn init_child_inline<F, C>(&mut self, getter: F)
-    where
-        C: super::Content<P>,
-        F: 'static + Clone + Fn(&mut T) -> &mut C,
-    {
-        let current_getter = self.getter.clone();
-        super::Content::init(WidgetInitImpl {
-            watcher: self.watcher,
-            getter: move |base| getter(current_getter(base)),
-        });
-    }
-}
-
-impl<P, T> WatcherInit for WidgetInternal<P, T>
-where
-    T: super::Content<P>,
-    Self: 'static,
-{
-    fn init(watcher: &mut WatcherMeta<Self>) {
-        super::Content::init(WidgetInitImpl {
-            watcher,
-            getter: |x| x,
-        });
-    }
+        Child: super::Content<P>,
+        F: 'static + Clone + Fn(&mut T) -> &mut Child;
 }

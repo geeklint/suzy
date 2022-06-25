@@ -368,19 +368,15 @@ mod extra_impls {
         graphics::{DrawContext, Graphic},
         platform::RenderPlatform,
         pointer::PointerEvent,
-        widget::{self, WidgetDescReceiver, WidgetExtra},
+        widget::{self, WidgetExtra},
     };
 
     impl<T, P> widget::Content<P> for SelectableIgnored<T>
     where
         T: widget::Content<P>,
     {
-        fn init(mut init: impl widget::Desc<Self, P>) {
-            init.init_child_inline(|x| &mut x.data);
-        }
-
-        fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
-            receiver.bare_child(|this| &mut this.data);
+        fn desc(mut desc: impl widget::Desc<Self, P>) {
+            desc.bare_child(|this| &mut this.data);
         }
 
         fn hittest(

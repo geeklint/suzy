@@ -5,7 +5,7 @@ use crate::dims::Rect;
 use crate::platform::{DefaultPlatform, DefaultRenderPlatform};
 use crate::pointer::PointerEvent;
 
-use super::{WidgetDescReceiver, WidgetExtra};
+use super::WidgetExtra;
 
 /// This trait provides the "glue" between the data you define in custom
 /// widgets and the behavior suzy defines for widgets.  There are three
@@ -37,12 +37,9 @@ use super::{WidgetDescReceiver, WidgetExtra};
 /// }
 ///
 /// impl widget::Content for MyWidgetData {
-///     // ...
-/// #   fn init(_init: impl widget::Desc<Self>) {}
-///
-///     fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-///         receiver.child(|this| &mut this.button_one);
-///         receiver.child(|this| &mut this.button_two);
+///     fn desc(mut desc: impl widget::Desc<Self>) {
+///         desc.child(|this| &mut this.button_one);
+///         desc.child(|this| &mut this.button_two);
 ///     }
 /// }
 /// ```
@@ -58,11 +55,8 @@ use super::{WidgetDescReceiver, WidgetExtra};
 /// }
 ///
 /// impl widget::Content for MyWidgetData {
-///     // ...
-/// #   fn init(_init: impl widget::Desc<Self>) {}
-///
-///     fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-///         receiver.graphic(|this| &mut this.graphic);
+///     fn desc(mut desc: impl widget::Desc<Self>) {
+///         desc.graphic(|this| &mut this.graphic);
 ///     }
 /// }
 /// ```
@@ -71,14 +65,9 @@ pub trait Content<P = DefaultRenderPlatform>
 where
     Self: 'static,
 {
-    /// This method provides a convient place to register functions which
-    /// watch values and update parts of the widget when they change.
-    fn init(init: impl super::Desc<Self, P>);
-
-    /// Use this method to specify the children a custom widget contains.
-    ///
-    /// Call `receiver.child` for each child.
-    fn desc(receiver: impl WidgetDescReceiver<Self, P>);
+    /// This method should be implemented to describe a custom widget, including
+    /// watch functions, children, graphics, and more.
+    fn desc(desc: impl super::Desc<Self, P>);
 
     /// Override this method to define a custom shape for the widget.
     ///
@@ -115,8 +104,7 @@ where
 }
 
 impl<P> Content<P> for () {
-    fn init(_init: impl super::Desc<Self, P>) {}
-    fn desc(_receiver: impl WidgetDescReceiver<Self, P>) {}
+    fn desc(_desc: impl super::Desc<Self, P>) {}
 }
 
 /// This is a convience function to create and run an App with this

@@ -2,7 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::widget::{self, RunAsApp, WidgetDescReceiver};
+use suzy::widget::{self, RunAsApp};
 use suzy::widgets::Button;
 
 #[derive(Default)]
@@ -11,14 +11,11 @@ struct Root {
 }
 
 impl widget::Content for Root {
-    fn init(mut init: impl widget::Desc<Self>) {
-        init.watch(|this, rect| {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, rect| {
             this.button.set_fill(&rect, &SimplePadding2d::uniform(20.0));
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-        receiver.child(|this| &mut this.button);
+        desc.child(|this| &mut this.button);
     }
 }
 

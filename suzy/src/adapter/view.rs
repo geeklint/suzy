@@ -3,7 +3,7 @@
 
 use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
-use crate::widget::{self, UniqueHandle, Widget, WidgetDescReceiver};
+use crate::widget::{self, UniqueHandle, Widget};
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
 
@@ -132,22 +132,19 @@ where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
-    fn init(mut init: impl widget::Desc<Self, Platform>) {
-        init.watch(|this, rect| {
+    fn desc(mut desc: impl widget::Desc<Self, Platform>) {
+        desc.watch(|this, rect| {
             this.position_flag.watched();
             this.data_flag.watched();
             this.layout.layout(this.inner.get_interface(rect));
         });
-        init.watch(|this, _rect| {
+        desc.watch(|this, _rect| {
             let current_pointers = &mut this.current_pointers;
             this.handle.handle_pointer_grab_stolen(|pointer_id| {
                 current_pointers.remove(pointer_id);
             });
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self, Platform>) {
-        receiver.iter_children(|this| Box::new(this.inner.active_children()));
+        desc.iter_children(|this| Box::new(this.inner.active_children()));
     }
 
     fn pointer_event_before(

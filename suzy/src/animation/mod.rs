@@ -23,19 +23,16 @@
 //! }
 //!
 //! impl widget::Content for MyWidgetData {
-//!     fn init(mut init: impl widget::Desc<Self>) {
-//!         init.watch(|this, rect| {
+//!     fn desc(mut desc: impl widget::Desc<Self>) {
+//!         desc.watch(|this, rect| {
 //!             this.animation.set_speed(1.0);
 //!             this.animation.animate_to(Color::GREEN);
 //!         });
-//!         init.watch(|this, rect| {
+//!         desc.watch(|this, rect| {
 //!             this.animation.apply(&mut this.current_color);
 //!             println!("current color value: {:x}", this.current_color);
 //!         });
 //!     }
-//!
-//!     // ...
-//! #   fn desc(_receiver: impl WidgetDescReceiver<Self>) {}
 //! }
 //! ```
 

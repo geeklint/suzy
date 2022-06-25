@@ -10,7 +10,7 @@ use suzy::dims::{Rect, SimplePadding2d};
 use suzy::graphics::Color;
 use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage, Tint};
 use suzy::platforms::TestPlatform;
-use suzy::widget::{self, Widget, WidgetDescReceiver};
+use suzy::widget::{self, Widget};
 use suzy::window::WindowSettings;
 
 mod utils;
@@ -23,20 +23,15 @@ struct Root {
 }
 
 impl widget::Content<OpenGlRenderPlatform> for Root {
-    fn init(mut init: impl widget::Desc<Self, OpenGlRenderPlatform>) {
-        init.watch(|root, _rect| {
+    fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
+        desc.watch(|root, _rect| {
             root.tint.set_tint_color(Color::RED);
         });
-        init.watch(|root, rect| {
+        desc.watch(|root, rect| {
             root.image.set_fill(&rect, &SimplePadding2d::zero());
         });
-    }
-
-    fn desc(
-        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-        receiver.graphic(|this| &mut this.tint);
-        receiver.graphic(|this| &mut this.image);
+        desc.graphic(|this| &mut this.tint);
+        desc.graphic(|this| &mut this.image);
     }
 }
 

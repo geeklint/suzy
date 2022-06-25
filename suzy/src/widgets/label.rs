@@ -6,7 +6,7 @@ use crate::platform::graphics::Text;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::text::{TextPosition, TextSettings};
 use crate::watch::Watched;
-use crate::widget::{self, Widget, WidgetDescReceiver};
+use crate::widget::{self, Widget};
 
 /// A widget which displays some text
 pub type Label<P = DefaultRenderPlatform> = Widget<LabelContent<P>>;
@@ -62,8 +62,8 @@ impl<P> widget::Content<P> for LabelContent<P>
 where
     P: RenderPlatform,
 {
-    fn init(mut init: impl widget::Desc<Self, P>) {
-        init.watch(|this, rect| {
+    fn desc(mut desc: impl widget::Desc<Self, P>) {
+        desc.watch(|this, rect| {
             let pos = TextPosition {
                 left: rect.left(),
                 top: rect.top(),
@@ -71,9 +71,6 @@ where
             };
             this.graphic.set_text_rich(&this.text, &pos, &this.settings);
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
-        receiver.graphic(|this| &mut this.graphic);
+        desc.graphic(|this| &mut this.graphic);
     }
 }

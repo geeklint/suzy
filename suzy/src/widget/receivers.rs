@@ -5,7 +5,7 @@ use crate::graphics::{DrawContext, Graphic};
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::PointerEvent;
 
-use super::{AnonWidget, Widget, WidgetGraphic};
+use super::{AnonWidget, Desc, Widget, WidgetGraphic, WidgetRect};
 
 /// An internal iterator style receiver.  Types of this trait are passed to
 /// [`widget::Content::children`](crate::widget::Content::children).
@@ -13,6 +13,7 @@ pub trait WidgetDescReceiver<T, P = DefaultRenderPlatform>
 where
     T: ?Sized,
 {
+    /*
     /// Receive a child.
     fn child<F, Child>(&mut self, map_fn: F)
     where
@@ -35,7 +36,7 @@ where
 
     fn bare_child<F, Child>(&mut self, map_fn: F)
     where
-        F: FnOnce(&mut T) -> &mut Child,
+        F: 'static + Clone + FnOnce(&mut T) -> &mut Child,
         Child: super::Content<P>;
 
     /// Receive a graphic.
@@ -44,14 +45,27 @@ where
         P: RenderPlatform,
         F: FnOnce(&mut T) -> &mut Gr,
         Gr: WidgetGraphic<P>;
+        */
 }
 
 macro_rules! impl_empty {
+    ($T:ident; $P:ident; watch) => {
+        fn watch<F>(&mut self, _func: F)
+        where
+            F: Fn(&mut T, &mut WidgetRect) + 'static {}
+    };
     ($T:ident; $P:ident; child) => {
         fn child<F, Child>(&mut self, _map_fn: F)
         where
             F: FnOnce(&mut $T) -> &mut Widget<Child, $P>,
             Child: super::Content<$P> {}
+    };
+    ($T:ident; $P:ident; graphic) => {
+        fn graphic<F, Gr>(&mut self, _map_fn: F)
+        where
+            F: FnOnce(&mut $T) -> &mut Gr,
+            Gr: WidgetGraphic<$P>,
+            P: RenderPlatform, {}
     };
     ($T:ident; $P:ident; iter_children) => {
         fn iter_children<F, Child>(&mut self, _iter_fn: F)
@@ -68,18 +82,54 @@ macro_rules! impl_empty {
         where
             F: FnOnce(&mut $T) -> &mut dyn AnonWidget<$P> {}
     };
-
-    ($T:ident; $P:ident; graphic) => {
-        fn graphic<F, Gr>(&mut self, _map_fn: F)
-        where
-            F: FnOnce(&mut $T) -> &mut Gr,
-            Gr: WidgetGraphic<$P>,
-            P: RenderPlatform, {}
-    };
     ($T:ident; $P:ident; $($method:ident)*) => {
         $(
             impl_empty!{ $T; $P; $method }
         )*
+    }
+}
+
+pub(super) struct WidgetInitImpl<'a, 'b, O, T, G, P>
+where
+    G: 'static + Clone + Fn(&mut O) -> &mut T,
+    O: super::Content<P>,
+    T: super::Content<P>,
+{
+    pub watcher:
+        &'a mut drying_paint::WatcherMeta<'b, super::WidgetInternal<P, O>>,
+    pub getter: G,
+}
+
+impl<O, T, G, P> Desc<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
+where
+    G: 'static + Clone + Fn(&mut O) -> &mut T,
+    O: super::Content<P>,
+    T: super::Content<P>,
+    super::WidgetInternal<P, O>: 'static,
+{
+    impl_empty! { T; P; child graphic iter_children anon_child }
+
+    fn watch<F>(&mut self, func: F)
+    where
+        F: Fn(&mut T, &mut WidgetRect) + 'static,
+    {
+        let getter = self.getter.clone();
+        self.watcher.watch(move |wid_int| {
+            let content = getter(&mut wid_int.content);
+            (func)(content, &mut wid_int.rect);
+        });
+    }
+
+    fn bare_child<F, Child>(&mut self, getter: F)
+    where
+        Child: super::Content<P>,
+        F: 'static + Clone + Fn(&mut T) -> &mut Child,
+    {
+        let current_getter = self.getter.clone();
+        super::Content::desc(WidgetInitImpl {
+            watcher: self.watcher,
+            getter: move |base| getter(current_getter(base)),
+        });
     }
 }
 
@@ -93,12 +143,12 @@ pub(super) struct DrawChildReceiver<
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, T, P> WidgetDescReceiver<T, P> for DrawChildReceiver<'a, 'b, T, P>
+impl<'a, 'b, T, P> Desc<T, P> for DrawChildReceiver<'a, 'b, T, P>
 where
     T: ?Sized + super::Content<P>,
     P: RenderPlatform,
 {
-    impl_empty! { T; P; graphic }
+    impl_empty! { T; P; watch graphic }
 
     fn child<F, Child>(&mut self, map_fn: F)
     where
@@ -147,13 +197,12 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c, T: ?Sized> {
     pub handled: &'b mut bool,
 }
 
-impl<'a, 'b, 'c, T, P> WidgetDescReceiver<T, P>
-    for PointerEventChildReceiver<'a, 'b, 'c, T>
+impl<'a, 'b, 'c, T, P> Desc<T, P> for PointerEventChildReceiver<'a, 'b, 'c, T>
 where
     T: ?Sized + super::Content<P>,
     P: 'static,
 {
-    impl_empty! { T; P; graphic }
+    impl_empty! { T; P; watch graphic }
 
     fn child<F, Child>(&mut self, map_fn: F)
     where
@@ -212,12 +261,11 @@ where
     pub ctx: &'a mut DrawContext<'b, P>,
 }
 
-impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
-    for DrawGraphicBeforeReceiver<'a, 'b, T, P>
+impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform,
 {
-    impl_empty! { T; P; child iter_children anon_child }
+    impl_empty! { T; P; watch child iter_children anon_child }
 
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
@@ -248,12 +296,11 @@ where
     pub num_ordered: &'a mut u32,
 }
 
-impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
-    for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
+impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform,
 {
-    impl_empty! { T; P; child iter_children anon_child }
+    impl_empty! { T; P; watch child iter_children anon_child }
 
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
@@ -290,12 +337,11 @@ where
     pub current: u32,
 }
 
-impl<'a, 'b, T, P> WidgetDescReceiver<T, P>
-    for DrawGraphicOrderedReceiver<'a, 'b, T, P>
+impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform,
 {
-    impl_empty! { T; P; child iter_children anon_child }
+    impl_empty! { T; P; watch child iter_children anon_child }
 
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where

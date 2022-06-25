@@ -11,7 +11,7 @@ use suzy::animation::Animation;
 use suzy::app::{App, AppBuilder};
 use suzy::graphics::Color;
 use suzy::platform::{TestPlatform, TestRenderPlatform};
-use suzy::widget::{self, Widget, WidgetDescReceiver};
+use suzy::widget::{self, Widget};
 use suzy::window::WindowSettings;
 
 #[derive(Default)]
@@ -21,19 +21,17 @@ struct Root {
 }
 
 impl widget::Content<TestRenderPlatform> for Root {
-    fn init(mut init: impl widget::Desc<Self, TestRenderPlatform>) {
-        init.watch(|root, _rect| {
+    fn desc(mut desc: impl widget::Desc<Self, TestRenderPlatform>) {
+        desc.watch(|root, _rect| {
             let mut value = root.value_feedback.get();
             root.anim.apply(&mut value);
             root.value_feedback.set(value);
         });
-        init.watch(|root, _rect| {
+        desc.watch(|root, _rect| {
             root.anim.set_duration(Duration::from_secs(1));
             root.anim.animate_to(261.0);
         });
     }
-
-    fn desc(_receiver: impl WidgetDescReceiver<Self, TestRenderPlatform>) {}
 }
 
 #[test]

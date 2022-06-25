@@ -23,8 +23,11 @@
 //! }
 //!
 //! impl widget::Content for CustomWidget {
-//!     fn init(mut init: impl widget::Desc<Self>) {
-//!         init.create_layout_group()
+//!     fn desc(mut desc: impl widget::Desc<Self>) {
+//!         desc.child(|this| &mut this.one);
+//!         desc.child(|this| &mut this.two);
+//!         desc.child(|this| &mut this.three);
+//!         desc.create_layout_group()
 //!             .stack_right()
 //!             .start_at(|this| this.left())
 //!             .spacing(|_| 10.0)
@@ -33,13 +36,6 @@
 //!             .push(|this| &mut this.three)
 //!         ;
 //!     }
-//!
-//!     // ...
-//! #   fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-//! #        receiver.child(|this| &mut this.one);
-//! #        receiver.child(|this| &mut this.two);
-//! #        receiver.child(|this| &mut this.three);
-//! #    }
 //! }
 
 use std::marker::PhantomData;
@@ -116,25 +112,21 @@ where
 /// The base type returned from WidgetInit::create_layout_group, used to
 /// create a variety of types of layouts.
 #[derive(Debug)]
-pub struct LayoutTypes<'a, I, T, P>
+pub struct LayoutTypes<'a, Desc, T, P>
 where
-    I: ?Sized,
     T: ?Sized,
-    P: ?Sized,
 {
-    init: &'a mut I,
+    desc: &'a mut Desc,
     _types: PhantomData<(&'a T, &'a P)>,
 }
 
-impl<'a, I, T, P> LayoutTypes<'a, I, T, P>
+impl<'a, Desc, T, P> LayoutTypes<'a, Desc, T, P>
 where
-    I: ?Sized,
     T: ?Sized,
-    P: ?Sized,
 {
-    pub(super) fn new(init: &'a mut I) -> Self {
+    pub(super) fn new(desc: &'a mut Desc) -> Self {
         LayoutTypes {
-            init,
+            desc,
             _types: PhantomData,
         }
     }
@@ -144,7 +136,7 @@ where
     ) -> StackLayout<
         'a,
         D,
-        I,
+        Desc,
         T,
         P,
         impl Clone + LayoutValue<T>,
@@ -157,7 +149,7 @@ where
             f: |_: &mut ContentRef<T>| -> f32 { 0.0 },
         };
         StackLayout {
-            init: self.init,
+            desc: self.desc,
             spacing,
             prev,
             _types: PhantomData,
@@ -171,7 +163,7 @@ where
     ) -> StackLayout<
         'a,
         Up,
-        I,
+        Desc,
         T,
         P,
         impl Clone + LayoutValue<T>,
@@ -187,7 +179,7 @@ where
     ) -> StackLayout<
         'a,
         Down,
-        I,
+        Desc,
         T,
         P,
         impl Clone + LayoutValue<T>,
@@ -203,7 +195,7 @@ where
     ) -> StackLayout<
         'a,
         Left,
-        I,
+        Desc,
         T,
         P,
         impl Clone + LayoutValue<T>,
@@ -219,7 +211,7 @@ where
     ) -> StackLayout<
         'a,
         Right,
-        I,
+        Desc,
         T,
         P,
         impl Clone + LayoutValue<T>,
@@ -323,26 +315,23 @@ impl StackLayoutDirection for Right {
 #[derive(Debug)]
 pub struct StackLayout<
     'a,
-    Direction: ?Sized,
-    Init: ?Sized,
+    Direction,
+    Desc,
     Content: ?Sized,
-    Platform: ?Sized,
+    Platform,
     Spacing,
     Value,
 > {
-    init: &'a mut Init,
+    desc: &'a mut Desc,
     spacing: Spacing,
     prev: Value,
     _types: PhantomData<(&'a Content, &'a Platform, Direction)>,
 }
 
-impl<'a, Direction, Init, Content, Platform, Spacing, Value>
-    StackLayout<'a, Direction, Init, Content, Platform, Spacing, Value>
+impl<'a, Direction, Desc, Content, Platform, Spacing, Value>
+    StackLayout<'a, Direction, Desc, Content, Platform, Spacing, Value>
 where
-    Direction: ?Sized,
-    Init: ?Sized,
     Content: ?Sized,
-    Platform: ?Sized,
 {
     /// Specify the position the layout stack should start from.
     pub fn start_at<F>(
@@ -351,7 +340,7 @@ where
     ) -> StackLayout<
         'a,
         Direction,
-        Init,
+        Desc,
         Content,
         Platform,
         Spacing,
@@ -363,7 +352,7 @@ where
         let prev = ValueImpl { f };
         StackLayout {
             spacing: self.spacing,
-            init: self.init,
+            desc: self.desc,
             prev,
             _types: PhantomData,
         }
@@ -376,7 +365,7 @@ where
     ) -> StackLayout<
         'a,
         Direction,
-        Init,
+        Desc,
         Content,
         Platform,
         impl Clone + LayoutValue<Content>,
@@ -388,18 +377,18 @@ where
         let spacing = ValueImpl { f };
         StackLayout {
             spacing,
-            init: self.init,
+            desc: self.desc,
             prev: self.prev,
             _types: PhantomData,
         }
     }
 }
 
-impl<'a, Direction, Init, Content, Platform, Spacing, Value>
-    StackLayout<'a, Direction, Init, Content, Platform, Spacing, Value>
+impl<'a, Direction, Desc, Content, Platform, Spacing, Value>
+    StackLayout<'a, Direction, Desc, Content, Platform, Spacing, Value>
 where
-    Direction: StackLayoutDirection + ?Sized,
-    Init: super::Desc<Content, Platform> + ?Sized,
+    Direction: StackLayoutDirection,
+    Desc: super::Desc<Content, Platform>,
     Content: super::Content<Platform> + ?Sized,
     Spacing: Clone + LayoutValue<Content>,
     Value: LayoutValue<Content>,
@@ -411,7 +400,7 @@ where
     ) -> StackLayout<
         'a,
         Direction,
-        Init,
+        Desc,
         Content,
         Platform,
         Spacing,
@@ -425,12 +414,12 @@ where
     {
         let Self {
             spacing,
-            init,
+            desc,
             prev,
             ..
         } = self;
         let spacing_clone = spacing.clone();
-        init.watch(move |content, rect| {
+        desc.watch(move |content, rect| {
             let start = prev.value(content, rect);
             let mut cr = ContentRef { content, rect };
             let rect = f(&mut cr);
@@ -447,7 +436,7 @@ where
         };
         StackLayout {
             spacing,
-            init,
+            desc,
             prev,
             _types: PhantomData,
         }

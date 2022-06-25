@@ -12,7 +12,7 @@ use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platforms::TestPlatform;
 use suzy::pointer::{PointerAction, PointerEventData, PointerId};
 use suzy::selectable::{Selectable, SelectionState};
-use suzy::widget::{self, Widget, WidgetDescReceiver};
+use suzy::widget::{self, Widget};
 use suzy::widgets::Button;
 use suzy::window::WindowSettings;
 
@@ -28,16 +28,11 @@ impl Selectable for ButtonContent {
 }
 
 impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
-    fn init(mut init: impl widget::Desc<Self, OpenGlRenderPlatform>) {
-        init.watch(|this, rect| {
+    fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
+        desc.watch(|this, rect| {
             this.image.graphic.set_fill(&rect, &SimplePadding2d::zero());
         });
-    }
-
-    fn desc(
-        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-        receiver.graphic(|this| &mut this.image);
+        desc.graphic(|this| &mut this.image);
     }
 }
 
@@ -47,16 +42,11 @@ struct Root {
 }
 
 impl widget::Content<OpenGlRenderPlatform> for Root {
-    fn init(mut init: impl widget::Desc<Self, OpenGlRenderPlatform>) {
-        init.watch(|root, rect| {
+    fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
+        desc.watch(|root, rect| {
             root.button.set_fill(rect, &SimplePadding2d::zero());
         });
-    }
-
-    fn desc(
-        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-        receiver.child(|this| &mut this.button);
+        desc.child(|this| &mut this.button);
     }
 }
 

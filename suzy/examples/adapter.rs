@@ -32,8 +32,8 @@ impl Adaptable<&'static str> for Element {
 }
 
 impl widget::Content for Element {
-    fn init(mut init: impl widget::Desc<Self>) {
-        init.watch(|this, rect| {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, rect| {
             let pos = TextPosition {
                 left: rect.left(),
                 top: rect.center_y() + 12.0,
@@ -43,10 +43,7 @@ impl widget::Content for Element {
             settings.alignment = TextAlignment::Center;
             this.text.set_text_plain(*this.value, &pos, &settings);
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-        receiver.graphic(|this| &mut this.text);
+        desc.graphic(|this| &mut this.text);
     }
 }
 
@@ -56,18 +53,15 @@ struct AdapterExample {
 }
 
 impl widget::Content for AdapterExample {
-    fn init(mut init: impl widget::Desc<Self>) {
-        init.watch(|this, _rect| {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, _rect| {
             this.layout.data_mut().clear();
             this.layout.data_mut().extend(WORDS.split_whitespace());
         });
-        init.watch(|this, rect| {
+        desc.watch(|this, rect| {
             this.layout.set_fill(&rect, &SimplePadding2d::zero());
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-        receiver.child(|this| &mut this.layout);
+        desc.child(|this| &mut this.layout);
     }
 }
 

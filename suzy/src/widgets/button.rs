@@ -7,9 +7,7 @@ use crate::graphics::Color;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent, PointerId};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
-use crate::widget::{
-    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra,
-};
+use crate::widget::{self, UniqueHandle, Widget, WidgetExtra};
 
 const IMAGE_DATA: &[u8] = include_bytes!("button-all.data");
 const IMAGE_WIDTH: u16 = 112;
@@ -58,17 +56,17 @@ impl<T, P> widget::Content<P> for ButtonBehavior<T>
 where
     T: Selectable + widget::Content<P>,
 {
-    fn init(mut init: impl widget::Desc<Self, P>) {
-        init.init_child_inline(|button| &mut button.content);
-        init.watch(|button, _rect| {
+    fn desc(mut desc: impl widget::Desc<Self, P>) {
+        desc.bare_child(|button| &mut button.content);
+        desc.watch(|button, _rect| {
             button.content.selection_changed(*button.state);
         });
-        init.watch(|button, _rect| {
+        desc.watch(|button, _rect| {
             if !*button.interactable {
                 *button.state = SelectionState::normal();
             }
         });
-        init.watch(|button, _rect| {
+        desc.watch(|button, _rect| {
             let Self {
                 pointers_down,
                 state,
@@ -82,10 +80,6 @@ where
                 }
             });
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
-        receiver.bare_child(|this| &mut this.content);
     }
 
     fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
@@ -227,17 +221,17 @@ impl<P> widget::Content<P> for DefaultButtonContent<P>
 where
     P: RenderPlatform,
 {
-    fn init(mut init: impl widget::Desc<Self, P>) {
+    fn desc(mut desc: impl widget::Desc<Self, P>) {
         use crate::dims::{Rect, SimplePadding2d};
         use crate::platform::graphics::{
             SelectableSlicedImage, Text, Texture,
         };
         use crate::text::{TextAlignment, TextPosition, TextSettings};
 
-        init.watch(|this, rect| {
+        desc.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
         });
-        init.watch(|this, rect| {
+        desc.watch(|this, rect| {
             let pos = TextPosition {
                 left: rect.left(),
                 top: rect.center_y() + 12.0,
@@ -252,7 +246,7 @@ where
             };
             this.text_graphic.set_text_rich(&this.text, &pos, &settings);
         });
-        init.watch(|this, _rect| {
+        desc.watch(|this, _rect| {
             let texture = P::Texture::load_static(
                 IMAGE_WIDTH,
                 IMAGE_HEIGHT,
@@ -265,10 +259,7 @@ where
                 IMAGE_STATES,
             );
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
-        receiver.graphic(|this| &mut this.image);
-        receiver.graphic(|this| &mut this.text_graphic);
+        desc.graphic(|this| &mut this.image);
+        desc.graphic(|this| &mut this.text_graphic);
     }
 }

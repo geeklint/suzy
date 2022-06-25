@@ -2,7 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::widget::{self, Coroutine, RunAsApp, WidgetDescReceiver};
+use suzy::widget::{self, Coroutine, RunAsApp};
 use suzy::widgets::Button;
 
 #[derive(Default)]
@@ -12,26 +12,23 @@ struct Root {
 }
 
 impl widget::Content for Root {
-    fn init(mut init: impl widget::Desc<Self>) {
-        init.watch(|this, rect| {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, rect| {
             this.button.set_fill(&rect, &SimplePadding2d::uniform(20.0));
         });
-        init.watch(|this, _rect| {
+        desc.watch(|this, _rect| {
             if let Some(()) = this.button.on_click() {
                 this.coroutine.start(());
             }
         });
-        init.register_coroutine(
+        desc.register_coroutine(
             |this| &mut this.coroutine,
             |()| async {
                 Coroutine::delay_secs(5.0).await;
                 println!("Button clicked after delay");
             },
         );
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-        receiver.child(|this| &mut this.button);
+        desc.child(|this| &mut this.button);
     }
 }
 

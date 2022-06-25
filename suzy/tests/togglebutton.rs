@@ -11,7 +11,7 @@ use suzy::graphics::{Color, Conditional};
 use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platforms::TestPlatform;
 use suzy::selectable::{Selectable, SelectionState};
-use suzy::widget::{self, Widget, WidgetDescReceiver, WidgetExtra};
+use suzy::widget::{self, Widget, WidgetExtra};
 use suzy::widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
 use suzy::window::WindowSettings;
 
@@ -37,16 +37,11 @@ impl ToggleButtonValue<i32> for ButtonContent {
 }
 
 impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
-    fn init(mut init: impl widget::Desc<Self, OpenGlRenderPlatform>) {
-        init.watch(|this, rect| {
+    fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
+        desc.watch(|this, rect| {
             this.image.graphic.set_fill(&rect, &SimplePadding2d::zero());
         });
-    }
-
-    fn desc(
-        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-        receiver.graphic(|this| &mut this.image);
+        desc.graphic(|this| &mut this.image);
     }
 }
 
@@ -60,11 +55,11 @@ struct GroupRoot {
 }
 
 impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
-    fn init(mut init: impl widget::Desc<Self, OpenGlRenderPlatform>) {
-        init.watch(|root, _rect| {
+    fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
+        desc.watch(|root, _rect| {
             root.value_feedback.set(root.group.value());
         });
-        init.watch(|root, _rect| {
+        desc.watch(|root, _rect| {
             root.top.content_mut().value = 1;
             root.top.add_to_group(&root.group);
 
@@ -74,7 +69,7 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
             root.bottom.content_mut().value = 3;
             root.bottom.add_to_group(&root.group);
         });
-        init.watch(|root, rect| {
+        desc.watch(|root, rect| {
             root.top.set_width(rect.width());
             root.top.set_center_x(rect.center_x());
 
@@ -84,7 +79,7 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
             root.bottom.set_width(rect.width());
             root.bottom.set_center_x(rect.center_x());
         });
-        init.watch(|root, rect| {
+        desc.watch(|root, rect| {
             root.top.set_height(rect.height() / 3.0);
             root.top.set_top(rect.top());
 
@@ -94,14 +89,9 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
             root.bottom.set_height(rect.height() / 3.0);
             root.bottom.set_bottom(rect.bottom());
         });
-    }
-
-    fn desc(
-        mut receiver: impl WidgetDescReceiver<Self, OpenGlRenderPlatform>,
-    ) {
-        receiver.child(|this| &mut this.top);
-        receiver.child(|this| &mut this.middle);
-        receiver.child(|this| &mut this.bottom);
+        desc.child(|this| &mut this.top);
+        desc.child(|this| &mut this.middle);
+        desc.child(|this| &mut this.bottom);
     }
 }
 

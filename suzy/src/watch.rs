@@ -44,19 +44,15 @@
 //! }
 //!
 //! impl widget::Content for MyWidgetData {
-//!     fn init(mut init: impl widget::Desc<Self>) {
-//!         init.watch(|this, rect| {
+//!     fn desc(mut desc: impl widget::Desc<Self>) {
+//!         desc.watch(|this, rect| {
 //!             this.button.set_width(200.0);
 //!             this.button.set_height(100.0);
 //!             this.button.set_left(rect.left() + 50.0);
 //!             this.button.set_bottom(rect.bottom() + 50.0);
 //!         });
+//!         desc.child(|this| &mut this.button);
 //!     }
-//!
-//!     // ...
-//! #     fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-//! #       receiver.child(|this| &mut this.button);
-//! #   }
 //! }
 
 pub use drying_paint::{

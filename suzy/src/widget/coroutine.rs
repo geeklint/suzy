@@ -110,23 +110,21 @@ impl<T> Default for State<T> {
 /// }
 ///
 /// impl widget::Content for Root {
-///     fn init(mut init: impl widget::Desc<Self>) {
-///         init.watch(|this, _rect| {
+///     fn desc(mut desc: impl widget::Desc<Self>) {
+///         desc.watch(|this, _rect| {
 ///             if let Some(()) = this.button.on_click() {
 ///                 this.coroutine.start(());
 ///             }
 ///         });
-///         init.register_coroutine(
+///         desc.register_coroutine(
 ///             |this| &mut this.coroutine,
 ///             |()| async {
 ///                 Coroutine::delay_secs(5.0).await;
 ///                 println!("Button clicked after delay");
 ///             },
 ///         );
+///         desc.child(|this| &mut this.button);
 ///     }
-/// #    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-/// #        receiver.child(|this| &mut this.button);
-/// #    }
 /// }
 /// ```
 #[derive(Default)]
@@ -170,18 +168,18 @@ impl Coroutine<()> {
 }
 
 impl<T> Coroutine<T> {
-    pub(crate) fn register<Get, Init, Fac, Wid, Plat, Fut>(
+    pub(crate) fn register<Get, Desc, Fac, Wid, Plat, Fut>(
         getter: Get,
-        init: &mut Init,
+        desc: &mut Desc,
         factory: Fac,
     ) where
         Get: 'static + Fn(&mut Wid) -> &mut Self,
-        Wid: super::Content<Plat> + ?Sized,
-        Init: super::Desc<Wid, Plat> + ?Sized,
+        Wid: ?Sized,
+        Desc: super::Desc<Wid, Plat> + ?Sized,
         Fut: 'static + Future<Output = ()>,
         Fac: 'static + Fn(T) -> Fut,
     {
-        init.watch(move |wid_content, _rect| {
+        desc.watch(move |wid_content, _rect| {
             let coroutine = getter(wid_content);
             let mut future = match std::mem::take(&mut *coroutine.state) {
                 State::Inactive => return,

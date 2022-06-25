@@ -20,23 +20,20 @@ struct ImageViewer {
 }
 
 impl widget::Content for ImageViewer {
-    fn init(mut init: impl widget::Desc<Self>) {
-        init.watch(|this, _rect| {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, _rect| {
             this.image.set_image(
                 Texture::from_rgb(IMAGE_WIDTH, IMAGE_HEIGHT, 1, IMAGE),
                 SimplePadding2d::zero(),
             );
         });
-        init.watch(|this, rect| {
+        desc.watch(|this, rect| {
             // fill the screen with the image
             this.image.set_fill(&rect, &SimplePadding2d::zero());
             // but shrink it so it stays the same aspect ratio
             this.image.shrink_to_aspect(IMAGE_ASPECT);
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
-        receiver.graphic(|this| &mut this.image);
+        desc.graphic(|this| &mut this.image);
     }
 }
 

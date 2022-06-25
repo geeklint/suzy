@@ -8,9 +8,7 @@ use drying_paint::{Watched, WatchedCell};
 use crate::platform::DefaultRenderPlatform;
 use crate::pointer::{PointerAction, PointerEvent};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
-use crate::widget::{
-    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra,
-};
+use crate::widget::{self, UniqueHandle, Widget, WidgetExtra};
 
 /// A group of toggle buttons make members of the group mutually exclusive.
 ///
@@ -128,17 +126,17 @@ where
     T: Selectable + widget::Content<P> + ToggleButtonValue<V>,
     V: 'static + std::fmt::Debug + Copy,
 {
-    fn init(mut init: impl widget::Desc<Self, P>) {
-        init.init_child_inline(|button| &mut button.content);
-        init.watch(|button, _rect| {
+    fn desc(mut desc: impl widget::Desc<Self, P>) {
+        desc.bare_child(|button| &mut button.content);
+        desc.watch(|button, _rect| {
             button.content.selection_changed(*button.state);
         });
-        init.watch(|button, _rect| {
+        desc.watch(|button, _rect| {
             if !*button.interactable {
                 *button.state = button.base_state();
             }
         });
-        init.watch(|button, _rect| {
+        desc.watch(|button, _rect| {
             if let Some(group) = &*button.group {
                 group.ptr.watched();
                 // when the group changes, reset ourselves
@@ -154,7 +152,7 @@ where
                 }
             }
         });
-        init.watch(|button, _rect| {
+        desc.watch(|button, _rect| {
             let base_state = button.base_state();
             let Self {
                 pointers_down,
@@ -169,10 +167,6 @@ where
                 }
             });
         });
-    }
-
-    fn desc(mut receiver: impl WidgetDescReceiver<Self, P>) {
-        receiver.bare_child(|this| &mut this.content);
     }
 
     fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {

@@ -22,8 +22,7 @@
 //! struct Data { }
 //!
 //! impl widget::Content for Data {
-//!     fn init(_init: impl widget::Desc<Self>) {}
-//!     fn desc(_receiver: impl WidgetDescReceiver<Self>) {}
+//!     fn desc(_desc: impl widget::Desc<Self>) {}
 //! }
 //!
 //! fn main() {
@@ -45,12 +44,11 @@
 //! # use suzy::dims::Rect;
 //! # struct Data { child: Widget<()> }
 //! # impl widget::Content for Data {
-//! #     fn init(mut init: impl widget::Desc<Self>) {
-//! init.watch(|this, rect| {
+//! #     fn desc(mut desc: impl widget::Desc<Self>) {
+//! desc.watch(|this, rect| {
 //!     this.child.set_width(rect.width() / 2.0);
 //! });
 //! #     }
-//! #     fn desc(_receiver: impl WidgetDescReceiver<Self>) {}
 //! # }
 //! ```
 //!
