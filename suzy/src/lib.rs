@@ -78,7 +78,7 @@ pub mod window;
 pub mod prelude {
     pub use crate::dims::Rect;
     pub use crate::watch::Watched;
-    pub use crate::widget::{self, Widget, WidgetDescReceiver};
+    pub use crate::widget::{self, Widget};
 }
 
 /// A version of the tweak! macro from the crate

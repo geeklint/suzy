@@ -2,51 +2,10 @@
 /* Copyright © 2021 Violet Leonard */
 
 use crate::graphics::{DrawContext, Graphic};
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::platform::RenderPlatform;
 use crate::pointer::PointerEvent;
 
 use super::{AnonWidget, Desc, Widget, WidgetGraphic, WidgetRect};
-
-/// An internal iterator style receiver.  Types of this trait are passed to
-/// [`widget::Content::children`](crate::widget::Content::children).
-pub trait WidgetDescReceiver<T, P = DefaultRenderPlatform>
-where
-    T: ?Sized,
-{
-    /*
-    /// Receive a child.
-    fn child<F, Child>(&mut self, map_fn: F)
-    where
-        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
-        Child: super::Content<P>;
-
-    fn iter_children<F, Child>(&mut self, iter_fn: F)
-    where
-        F: for<'a> FnOnce(
-            &'a mut T,
-        ) -> Box<
-            dyn 'a + Iterator<Item = &'a mut Widget<Child, P>>,
-        >,
-        Child: super::Content<P>;
-
-    /// Receive a child with an anonymous type.
-    fn anon_child<F>(&mut self, map_fn: F)
-    where
-        F: FnOnce(&mut T) -> &mut dyn AnonWidget<P>;
-
-    fn bare_child<F, Child>(&mut self, map_fn: F)
-    where
-        F: 'static + Clone + FnOnce(&mut T) -> &mut Child,
-        Child: super::Content<P>;
-
-    /// Receive a graphic.
-    fn graphic<F, Gr>(&mut self, map_fn: F)
-    where
-        P: RenderPlatform,
-        F: FnOnce(&mut T) -> &mut Gr,
-        Gr: WidgetGraphic<P>;
-        */
-}
 
 macro_rules! impl_empty {
     ($T:ident; $P:ident; watch) => {

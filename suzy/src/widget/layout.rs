@@ -10,10 +10,7 @@
 //!
 //! ```rust
 //! use suzy::dims::Rect;
-//! use suzy::widget::{
-//!     self,
-//!     WidgetDescReceiver,
-//! };
+//! use suzy::widget;
 //! use suzy::widgets::{Button, TextContent};
 //!
 //! struct CustomWidget {

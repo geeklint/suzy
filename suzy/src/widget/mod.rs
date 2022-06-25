@@ -38,7 +38,6 @@ pub use coroutine::Coroutine;
 pub use desc::Desc;
 pub use graphic::WidgetGraphic;
 pub use internal::WidgetExtra;
-pub use receivers::WidgetDescReceiver;
 pub use rect::WidgetRect;
 pub use unique_handle::{UniqueHandle, UniqueHandleId};
 
