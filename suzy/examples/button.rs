@@ -2,7 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use suzy::dims::{Rect, SimplePadding2d};
-use suzy::widget::{self, RunAsApp, WidgetDescReceiver, WidgetInit};
+use suzy::widget::{self, RunAsApp, WidgetDescReceiver};
 use suzy::widgets::Button;
 
 #[derive(Default)]
@@ -11,7 +11,7 @@ struct Root {
 }
 
 impl widget::Content for Root {
-    fn init(mut init: impl WidgetInit<Self>) {
+    fn init(mut init: impl widget::Desc<Self>) {
         init.watch(|this, rect| {
             this.button.set_fill(&rect, &SimplePadding2d::uniform(20.0));
         });

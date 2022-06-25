@@ -2,7 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use suzy::dims::Rect;
-use suzy::widget::{self, RunAsApp, WidgetDescReceiver, WidgetInit};
+use suzy::widget::{self, RunAsApp, WidgetDescReceiver};
 use suzy::widgets::{Button, TextContent};
 
 #[derive(Default)]
@@ -13,7 +13,7 @@ struct Root {
 }
 
 impl widget::Content for Root {
-    fn init(mut init: impl WidgetInit<Self>) {
+    fn init(mut init: impl widget::Desc<Self>) {
         init.watch(|this, _rect| {
             this.one.content_mut().set_text("One");
             this.two.content_mut().set_text("Two");

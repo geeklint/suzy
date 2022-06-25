@@ -368,14 +368,14 @@ mod extra_impls {
         graphics::{DrawContext, Graphic},
         platform::RenderPlatform,
         pointer::PointerEvent,
-        widget::{self, WidgetDescReceiver, WidgetExtra, WidgetInit},
+        widget::{self, WidgetDescReceiver, WidgetExtra},
     };
 
     impl<T, P> widget::Content<P> for SelectableIgnored<T>
     where
         T: widget::Content<P>,
     {
-        fn init(mut init: impl WidgetInit<Self, P>) {
+        fn init(mut init: impl widget::Desc<Self, P>) {
             init.init_child_inline(|x| &mut x.data);
         }
 

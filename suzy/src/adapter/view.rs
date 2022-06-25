@@ -3,9 +3,7 @@
 
 use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
-use crate::widget::{
-    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetInit,
-};
+use crate::widget::{self, UniqueHandle, Widget, WidgetDescReceiver};
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
 
@@ -134,7 +132,7 @@ where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
-    fn init(mut init: impl WidgetInit<Self, Platform>) {
+    fn init(mut init: impl widget::Desc<Self, Platform>) {
         init.watch(|this, rect| {
             this.position_flag.watched();
             this.data_flag.watched();

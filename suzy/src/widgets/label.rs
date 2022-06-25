@@ -6,7 +6,7 @@ use crate::platform::graphics::Text;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::text::{TextPosition, TextSettings};
 use crate::watch::Watched;
-use crate::widget::{self, Widget, WidgetDescReceiver, WidgetInit};
+use crate::widget::{self, Widget, WidgetDescReceiver};
 
 /// A widget which displays some text
 pub type Label<P = DefaultRenderPlatform> = Widget<LabelContent<P>>;
@@ -62,7 +62,7 @@ impl<P> widget::Content<P> for LabelContent<P>
 where
     P: RenderPlatform,
 {
-    fn init(mut init: impl WidgetInit<Self, P>) {
+    fn init(mut init: impl widget::Desc<Self, P>) {
         init.watch(|this, rect| {
             let pos = TextPosition {
                 left: rect.left(),

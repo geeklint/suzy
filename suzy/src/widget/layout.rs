@@ -12,7 +12,6 @@
 //! use suzy::dims::Rect;
 //! use suzy::widget::{
 //!     self,
-//!     WidgetInit,
 //!     WidgetDescReceiver,
 //! };
 //! use suzy::widgets::{Button, TextContent};
@@ -24,7 +23,7 @@
 //! }
 //!
 //! impl widget::Content for CustomWidget {
-//!     fn init(mut init: impl WidgetInit<Self>) {
+//!     fn init(mut init: impl widget::Desc<Self>) {
 //!         init.create_layout_group()
 //!             .stack_right()
 //!             .start_at(|this| this.left())
@@ -47,7 +46,7 @@ use std::marker::PhantomData;
 
 use crate::dims::Rect;
 
-use super::{WidgetInit, WidgetRect};
+use super::WidgetRect;
 
 /// A combined reference to a widget's content and it's Rect, which is passed
 /// to the closures used to customize layouts.
@@ -400,7 +399,7 @@ impl<'a, Direction, Init, Content, Platform, Spacing, Value>
     StackLayout<'a, Direction, Init, Content, Platform, Spacing, Value>
 where
     Direction: StackLayoutDirection + ?Sized,
-    Init: WidgetInit<Content, Platform> + ?Sized,
+    Init: super::Desc<Content, Platform> + ?Sized,
     Content: super::Content<Platform> + ?Sized,
     Spacing: Clone + LayoutValue<Content>,
     Value: LayoutValue<Content>,

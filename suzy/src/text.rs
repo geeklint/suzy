@@ -161,7 +161,7 @@ impl<'a> Iterator for RichTextParser<'a> {
                 self.text = next;
                 text
             } else {
-                std::mem::replace(&mut self.text, "")
+                std::mem::take(&mut self.text)
             };
             let cow = if text.contains('&') {
                 Cow::Owned(text.replace("&lt;", "<").replace("&amp;", "&"))

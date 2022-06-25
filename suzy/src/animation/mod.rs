@@ -23,7 +23,7 @@
 //! }
 //!
 //! impl widget::Content for MyWidgetData {
-//!     fn init(mut init: impl WidgetInit<Self>) {
+//!     fn init(mut init: impl widget::Desc<Self>) {
 //!         init.watch(|this, rect| {
 //!             this.animation.set_speed(1.0);
 //!             this.animation.animate_to(Color::GREEN);

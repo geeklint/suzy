@@ -286,7 +286,10 @@ impl<'a, T> FontCharCalc<'a, T> {
             TextAlignment::Right => remaining_in_line,
         };
         for (mask, buf) in self.bufs.iter_mut() {
-            let commit = self.commited.get_mut(mask).unwrap();
+            let commit = self
+                .commited
+                .get_mut(mask)
+                .expect("unexpected channel mask while processing text");
             for i in (*commit..buf.len()).step_by(4) {
                 buf[i] += shift;
             }
@@ -304,7 +307,9 @@ impl<'a, T> FontCharCalc<'a, T> {
         let mask = self.font_family.channel_mask(self.current_style);
         Self::populate_vertices(
             self.settings.font_size,
-            self.bufs.get_mut(&mask).unwrap(),
+            self.bufs
+                .get_mut(&mask)
+                .expect("unexpected channel mask while processing text"),
             self.x_offset,
             self.y_offset,
             metrics,
@@ -430,7 +435,10 @@ impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
             }
         }
         let mask = self.font_family.channel_mask(self.current_style);
-        self.bufs.get_mut(&mask).unwrap().append(&mut verts);
+        self.bufs
+            .get_mut(&mask)
+            .expect("unexpected channel mask while processing text")
+            .append(&mut verts);
         self.char_locs.append(char_locs);
         self.x_offset = x_offset;
     }

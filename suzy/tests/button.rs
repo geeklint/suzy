@@ -12,7 +12,7 @@ use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
 use suzy::platforms::TestPlatform;
 use suzy::pointer::{PointerAction, PointerEventData, PointerId};
 use suzy::selectable::{Selectable, SelectionState};
-use suzy::widget::{self, Widget, WidgetDescReceiver, WidgetInit};
+use suzy::widget::{self, Widget, WidgetDescReceiver};
 use suzy::widgets::Button;
 use suzy::window::WindowSettings;
 
@@ -28,7 +28,7 @@ impl Selectable for ButtonContent {
 }
 
 impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
-    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
+    fn init(mut init: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         init.watch(|this, rect| {
             this.image.graphic.set_fill(&rect, &SimplePadding2d::zero());
         });
@@ -47,7 +47,7 @@ struct Root {
 }
 
 impl widget::Content<OpenGlRenderPlatform> for Root {
-    fn init(mut init: impl WidgetInit<Self, OpenGlRenderPlatform>) {
+    fn init(mut init: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         init.watch(|root, rect| {
             root.button.set_fill(rect, &SimplePadding2d::zero());
         });

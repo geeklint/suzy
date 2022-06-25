@@ -12,7 +12,7 @@ use super::{layout, WidgetInternal, WidgetRect};
 ///
 /// It's primary use is to provide the `watch` method, which custom widgets
 /// use to submit watch closures.
-pub trait WidgetInit<T, P = DefaultRenderPlatform>
+pub trait Desc<T, P = DefaultRenderPlatform>
 where
     T: super::Content<P> + ?Sized,
 {
@@ -59,7 +59,7 @@ where
     getter: G,
 }
 
-impl<O, T, G, P> WidgetInit<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
+impl<O, T, G, P> Desc<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
 where
     G: 'static + Clone + Fn(&mut O) -> &mut T,
     O: super::Content<P>,

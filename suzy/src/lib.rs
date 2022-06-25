@@ -22,7 +22,7 @@
 //! struct Data { }
 //!
 //! impl widget::Content for Data {
-//!     fn init(_init: impl WidgetInit<Self>) {}
+//!     fn init(_init: impl widget::Desc<Self>) {}
 //!     fn desc(_receiver: impl WidgetDescReceiver<Self>) {}
 //! }
 //!
@@ -45,7 +45,7 @@
 //! # use suzy::dims::Rect;
 //! # struct Data { child: Widget<()> }
 //! # impl widget::Content for Data {
-//! #     fn init(mut init: impl WidgetInit<Self>) {
+//! #     fn init(mut init: impl widget::Desc<Self>) {
 //! init.watch(|this, rect| {
 //!     this.child.set_width(rect.width() / 2.0);
 //! });
@@ -80,11 +80,7 @@ pub mod window;
 pub mod prelude {
     pub use crate::dims::Rect;
     pub use crate::watch::Watched;
-    pub use crate::widget::{
-        self,
-        Widget, WidgetDescReceiver,
-        WidgetInit,
-    };
+    pub use crate::widget::{self, Widget, WidgetDescReceiver};
 }
 
 /// A version of the tweak! macro from the crate

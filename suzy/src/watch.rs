@@ -44,7 +44,7 @@
 //! }
 //!
 //! impl widget::Content for MyWidgetData {
-//!     fn init(mut init: impl WidgetInit<Self>) {
+//!     fn init(mut init: impl widget::Desc<Self>) {
 //!         init.watch(|this, rect| {
 //!             this.button.set_width(200.0);
 //!             this.button.set_height(100.0);

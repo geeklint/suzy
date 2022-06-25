@@ -32,7 +32,7 @@ impl Adaptable<&'static str> for Element {
 }
 
 impl widget::Content for Element {
-    fn init(mut init: impl WidgetInit<Self>) {
+    fn init(mut init: impl widget::Desc<Self>) {
         init.watch(|this, rect| {
             let pos = TextPosition {
                 left: rect.left(),
@@ -56,7 +56,7 @@ struct AdapterExample {
 }
 
 impl widget::Content for AdapterExample {
-    fn init(mut init: impl WidgetInit<Self>) {
+    fn init(mut init: impl widget::Desc<Self>) {
         init.watch(|this, _rect| {
             this.layout.data_mut().clear();
             this.layout.data_mut().extend(WORDS.split_whitespace());

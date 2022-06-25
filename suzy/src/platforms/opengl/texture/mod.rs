@@ -470,7 +470,7 @@ impl Texture {
                 pair[1] = (pair[1] / scale_y) + offset_y;
             }
 
-            &uvs[..]
+            &*uvs
         })
     }
 }

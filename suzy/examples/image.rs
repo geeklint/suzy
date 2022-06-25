@@ -20,7 +20,7 @@ struct ImageViewer {
 }
 
 impl widget::Content for ImageViewer {
-    fn init(mut init: impl WidgetInit<Self>) {
+    fn init(mut init: impl widget::Desc<Self>) {
         init.watch(|this, _rect| {
             this.image.set_image(
                 Texture::from_rgb(IMAGE_WIDTH, IMAGE_HEIGHT, 1, IMAGE),

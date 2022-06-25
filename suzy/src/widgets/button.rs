@@ -8,7 +8,7 @@ use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 use crate::pointer::{PointerAction, PointerEvent, PointerId};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra, WidgetInit,
+    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra,
 };
 
 const IMAGE_DATA: &[u8] = include_bytes!("button-all.data");
@@ -58,7 +58,7 @@ impl<T, P> widget::Content<P> for ButtonBehavior<T>
 where
     T: Selectable + widget::Content<P>,
 {
-    fn init(mut init: impl WidgetInit<Self, P>) {
+    fn init(mut init: impl widget::Desc<Self, P>) {
         init.init_child_inline(|button| &mut button.content);
         init.watch(|button, _rect| {
             button.content.selection_changed(*button.state);
@@ -227,7 +227,7 @@ impl<P> widget::Content<P> for DefaultButtonContent<P>
 where
     P: RenderPlatform,
 {
-    fn init(mut init: impl WidgetInit<Self, P>) {
+    fn init(mut init: impl widget::Desc<Self, P>) {
         use crate::dims::{Rect, SimplePadding2d};
         use crate::platform::graphics::{
             SelectableSlicedImage, Text, Texture,

@@ -9,7 +9,6 @@ use std::time;
 use crate::app::App;
 use crate::platform::DefaultPlatform;
 use crate::watch::{AtomicWatchedMeta, AtomicWatchedMetaTrigger, Watched};
-use crate::widget::WidgetInit;
 
 #[derive(Clone, Copy)]
 struct NextFrame {
@@ -111,7 +110,7 @@ impl<T> Default for State<T> {
 /// }
 ///
 /// impl widget::Content for Root {
-///     fn init(mut init: impl WidgetInit<Self>) {
+///     fn init(mut init: impl widget::Desc<Self>) {
 ///         init.watch(|this, _rect| {
 ///             if let Some(()) = this.button.on_click() {
 ///                 this.coroutine.start(());
@@ -178,7 +177,7 @@ impl<T> Coroutine<T> {
     ) where
         Get: 'static + Fn(&mut Wid) -> &mut Self,
         Wid: super::Content<Plat> + ?Sized,
-        Init: WidgetInit<Wid, Plat> + ?Sized,
+        Init: super::Desc<Wid, Plat> + ?Sized,
         Fut: 'static + Future<Output = ()>,
         Fac: 'static + Fn(T) -> Fut,
     {

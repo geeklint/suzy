@@ -9,7 +9,7 @@ use crate::platform::DefaultRenderPlatform;
 use crate::pointer::{PointerAction, PointerEvent};
 use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
 use crate::widget::{
-    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra, WidgetInit,
+    self, UniqueHandle, Widget, WidgetDescReceiver, WidgetExtra,
 };
 
 /// A group of toggle buttons make members of the group mutually exclusive.
@@ -128,7 +128,7 @@ where
     T: Selectable + widget::Content<P> + ToggleButtonValue<V>,
     V: 'static + std::fmt::Debug + Copy,
 {
-    fn init(mut init: impl WidgetInit<Self, P>) {
+    fn init(mut init: impl widget::Desc<Self, P>) {
         init.init_child_inline(|button| &mut button.content);
         init.watch(|button, _rect| {
             button.content.selection_changed(*button.state);

@@ -5,7 +5,7 @@ use crate::dims::Rect;
 use crate::platform::{DefaultPlatform, DefaultRenderPlatform};
 use crate::pointer::PointerEvent;
 
-use super::{WidgetDescReceiver, WidgetExtra, WidgetInit};
+use super::{WidgetDescReceiver, WidgetExtra};
 
 /// This trait provides the "glue" between the data you define in custom
 /// widgets and the behavior suzy defines for widgets.  There are three
@@ -38,7 +38,7 @@ use super::{WidgetDescReceiver, WidgetExtra, WidgetInit};
 ///
 /// impl widget::Content for MyWidgetData {
 ///     // ...
-/// #   fn init(_init: impl WidgetInit<Self>) {}
+/// #   fn init(_init: impl widget::Desc<Self>) {}
 ///
 ///     fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
 ///         receiver.child(|this| &mut this.button_one);
@@ -59,7 +59,7 @@ use super::{WidgetDescReceiver, WidgetExtra, WidgetInit};
 ///
 /// impl widget::Content for MyWidgetData {
 ///     // ...
-/// #   fn init(_init: impl WidgetInit<Self>) {}
+/// #   fn init(_init: impl widget::Desc<Self>) {}
 ///
 ///     fn desc(mut receiver: impl WidgetDescReceiver<Self>) {
 ///         receiver.graphic(|this| &mut this.graphic);
@@ -73,7 +73,7 @@ where
 {
     /// This method provides a convient place to register functions which
     /// watch values and update parts of the widget when they change.
-    fn init(init: impl WidgetInit<Self, P>);
+    fn init(init: impl super::Desc<Self, P>);
 
     /// Use this method to specify the children a custom widget contains.
     ///
@@ -115,7 +115,7 @@ where
 }
 
 impl<P> Content<P> for () {
-    fn init(_init: impl WidgetInit<Self, P>) {}
+    fn init(_init: impl super::Desc<Self, P>) {}
     fn desc(_receiver: impl WidgetDescReceiver<Self, P>) {}
 }
 
