@@ -23,7 +23,7 @@ where
     /// Register a child of this widget.
     fn child<F, Child>(&mut self, map_fn: F)
     where
-        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
+        F: 'static + Clone + FnOnce(&mut T) -> &mut Widget<Child, P>,
         Child: super::Content<P>;
 
     /// Register a graphic member of this widget.
@@ -69,7 +69,7 @@ where
     /// Register a child with an anonymous type.
     fn anon_child<F>(&mut self, map_fn: F)
     where
-        F: FnOnce(&mut T) -> &mut dyn super::AnonWidget<P>;
+        F: Clone + FnOnce(&mut T) -> &mut dyn super::AnonWidget<P>;
 
     #[doc(hidden)]
     fn bare_child<F, Child>(&mut self, getter: F)

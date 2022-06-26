@@ -86,7 +86,7 @@ where
 {
     active: HashMap<Layout::ElementKey, Widget<Content, Platform>>,
     inactive: Vec<Widget<Content, Platform>>,
-    child_flag: WatchedMeta,
+    child_flag: WatchedMeta<'static>,
     position: (f32, f32),
     rest_position: (f32, f32),
 }
@@ -122,7 +122,7 @@ where
     pub fn watch_each_child(
         &self,
     ) -> impl Iterator<Item = &Widget<Content, Platform>> {
-        self.child_flag.watched();
+        self.child_flag.watched_auto();
         self.active.values().chain(&self.inactive)
     }
 
@@ -215,7 +215,7 @@ where
                     })
                     // otherwise, create a new widget
                     .unwrap_or_else(|| {
-                        child_flag.trigger();
+                        child_flag.trigger_auto();
                         Adaptable::from(data)
                     });
                 bucket.insert(element)

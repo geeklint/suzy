@@ -211,7 +211,7 @@ pub trait Selectable {
 ///
 /// This type dereferences to the the best instance of the value
 /// corosponding to the current selection state.
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct SelectableData<T> {
     state: drying_paint::Watched<SelectionState>,
     normal: T,
@@ -292,7 +292,7 @@ impl<T> std::ops::DerefMut for SelectableData<T> {
 }
 
 /// A builder enables populating the selectable data.
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct SelectableDataBuilder<T> {
     content: SelectableData<T>,
 }

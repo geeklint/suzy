@@ -1,11 +1,17 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::graphics::{DrawContext, Graphic};
-use crate::platform::RenderPlatform;
-use crate::pointer::PointerEvent;
+use crate::{
+    graphics::{DrawContext, Graphic},
+    platform::RenderPlatform,
+    pointer::PointerEvent,
+    watch,
+};
 
-use super::{AnonWidget, Desc, Widget, WidgetGraphic, WidgetRect};
+use super::{
+    internal::WidgetInternal, AnonWidget, Desc, Widget, WidgetGraphic,
+    WidgetRect,
+};
 
 macro_rules! impl_empty {
     ($T:ident; $P:ident; watch) => {
@@ -24,7 +30,7 @@ macro_rules! impl_empty {
         where
             F: FnOnce(&mut $T) -> &mut Gr,
             Gr: WidgetGraphic<$P>,
-            P: RenderPlatform, {}
+            $P: RenderPlatform, {}
     };
     ($T:ident; $P:ident; iter_children) => {
         fn iter_children<F, Child>(&mut self, _iter_fn: F)
@@ -48,46 +54,88 @@ macro_rules! impl_empty {
     }
 }
 
-pub(super) struct WidgetInitImpl<'a, 'b, O, T, G, P>
+pub(super) struct WidgetInitImpl<'a, Init, Getter, Base, Leaf>
 where
-    G: 'static + Clone + Fn(&mut O) -> &mut T,
-    O: super::Content<P>,
-    T: super::Content<P>,
+    Getter: 'static + Clone + Fn(&mut Base) -> &mut Leaf,
 {
-    pub watcher:
-        &'a mut drying_paint::WatcherMeta<'b, super::WidgetInternal<P, O>>,
-    pub getter: G,
+    pub init: &'a mut Init,
+    pub getter: Getter,
+    pub _marker: std::marker::PhantomData<&'a mut Base>,
 }
 
-impl<O, T, G, P> Desc<T, P> for WidgetInitImpl<'_, '_, O, T, G, P>
+impl<'a, Init, Base, Leaf, Plat, Getter> Desc<Leaf, Plat>
+    for WidgetInitImpl<'a, Init, Getter, Base, Leaf>
 where
-    G: 'static + Clone + Fn(&mut O) -> &mut T,
-    O: super::Content<P>,
-    T: super::Content<P>,
-    super::WidgetInternal<P, O>: 'static,
+    Init: watch::WatcherInit<'static, WidgetInternal<Plat, Base>>,
+    Base: super::Content<Plat>,
+    Leaf: super::Content<Plat>,
+    Plat: 'static,
+    Getter: 'static + Clone + Fn(&mut Base) -> &mut Leaf,
 {
-    impl_empty! { T; P; child graphic iter_children anon_child }
+    impl_empty! { Leaf; Plat; graphic }
 
     fn watch<F>(&mut self, func: F)
     where
-        F: Fn(&mut T, &mut WidgetRect) + 'static,
+        F: Fn(&mut Leaf, &mut WidgetRect) + 'static,
     {
         let getter = self.getter.clone();
-        self.watcher.watch(move |wid_int| {
+        self.init.watch(move |wid_int| {
             let content = getter(&mut wid_int.content);
             (func)(content, &mut wid_int.rect);
         });
     }
 
+    fn child<F, Child>(&mut self, map_fn: F)
+    where
+        F: 'static + Clone + FnOnce(&mut Leaf) -> &mut Widget<Child, Plat>,
+        Child: super::Content<Plat>,
+    {
+        let getter = self.getter.clone();
+        self.init.init_child(move |wid_int| {
+            &mut (map_fn.clone())(getter(&mut wid_int.content)).internal
+        });
+    }
+
+    fn iter_children<F, Child>(&mut self, iter_fn: F)
+    where
+        F: for<'b> FnOnce(
+            &'b mut Leaf,
+        ) -> Box<
+            dyn 'b + Iterator<Item = &'b mut Widget<Child, Plat>>,
+        >,
+        Child: super::Content<Plat>,
+    {
+        todo!()
+        /*
+        let getter = self.getter.clone();
+        self.init.watch_for_new_child(|wid_int| {
+            let content = getter(&mut wid_int.content);
+            let mut iter = iter_fn(content);
+            iter.filter_map(|wid| {
+                (!wid.internal.initialized).then_some(wid.internal)
+            })
+            .next()
+        });
+        */
+    }
+
+    fn anon_child<F>(&mut self, map_fn: F)
+    where
+        F: FnOnce(&mut Leaf) -> &mut dyn super::AnonWidget<Plat>,
+    {
+        todo!()
+    }
+
     fn bare_child<F, Child>(&mut self, getter: F)
     where
-        Child: super::Content<P>,
-        F: 'static + Clone + Fn(&mut T) -> &mut Child,
+        Child: super::Content<Plat>,
+        F: 'static + Clone + Fn(&mut Leaf) -> &mut Child,
     {
         let current_getter = self.getter.clone();
         super::Content::desc(WidgetInitImpl {
-            watcher: self.watcher,
+            init: self.init,
             getter: move |base| getter(current_getter(base)),
+            _marker: std::marker::PhantomData,
         });
     }
 }

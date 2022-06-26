@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use drying_paint::{WatcherInit, WatcherMeta};
-
-use crate::dims::{Dim, Rect};
+use crate::{
+    dims::{Dim, Rect},
+    watch,
+};
 
 use super::WidgetRect;
 
@@ -11,6 +12,7 @@ pub(super) struct WidgetInternal<P, T>
 where
     T: super::Content<P> + ?Sized,
 {
+    pub(super) initialized: bool,
     pub(super) rect: WidgetRect,
     pub(super) _platform: std::marker::PhantomData<P>,
     pub(super) content: T,
@@ -22,6 +24,7 @@ where
 {
     fn default() -> Self {
         Self {
+            initialized: false,
             rect: WidgetRect::default(),
             _platform: std::marker::PhantomData,
             content: T::default(),
@@ -29,15 +32,19 @@ where
     }
 }
 
-impl<P, T> WatcherInit for WidgetInternal<P, T>
+impl<P, T> watch::Watcher<'static> for WidgetInternal<P, T>
 where
     T: super::Content<P>,
     Self: 'static,
 {
-    fn init(watcher: &mut WatcherMeta<Self>) {
+    fn init(mut init: impl watch::WatcherInit<'static, Self>) {
         super::Content::desc(super::receivers::WidgetInitImpl {
-            watcher,
+            init: &mut init,
             getter: |x| x,
+            _marker: std::marker::PhantomData,
+        });
+        init.watch(|this| {
+            this.initialized = true;
         });
     }
 }

@@ -6,14 +6,13 @@
 
 use std::ops::{Deref, DerefMut};
 
-pub use drying_paint::Watched;
-use drying_paint::Watcher;
-
-use crate::adapter::Adaptable;
-use crate::dims::{Dim, Rect};
-use crate::graphics::DrawContext;
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
-use crate::pointer::PointerEvent;
+use crate::{
+    adapter::Adaptable,
+    dims::{Dim, Rect},
+    graphics::DrawContext,
+    platform::{DefaultRenderPlatform, RenderPlatform},
+    pointer::PointerEvent,
+};
 
 mod anon;
 mod content;
@@ -46,7 +45,7 @@ pub struct Widget<T, P = DefaultRenderPlatform>
 where
     T: Content<P> + ?Sized,
 {
-    watcher: Watcher<WidgetInternal<P, T>>,
+    internal: WidgetInternal<P, T>,
 }
 
 impl<T, P, Data> Adaptable<Data> for Widget<T, P>
@@ -55,7 +54,7 @@ where
     T: Content<P> + Adaptable<Data>,
 {
     fn adapt(&mut self, data: &Data) {
-        self.watcher.data_mut().content.adapt(data);
+        self.internal.content.adapt(data);
     }
 
     fn from(data: &Data) -> Self {
@@ -70,7 +69,7 @@ where
 {
     fn default() -> Self {
         Self {
-            watcher: Watcher::default(),
+            internal: WidgetInternal::default(),
         }
     }
 }
@@ -82,7 +81,7 @@ where
 {
     type Target = T;
     fn deref(&self) -> &T {
-        &self.watcher.data().content
+        &self.internal.content
     }
 }
 
@@ -92,7 +91,7 @@ where
     T: Content<P>,
 {
     fn deref_mut(&mut self) -> &mut T {
-        &mut self.watcher.data_mut().content
+        &mut self.internal.content
     }
 }
 
@@ -108,11 +107,12 @@ where
         T: Adaptable<Data>,
     {
         Widget {
-            watcher: Watcher::create(WidgetInternal {
+            internal: WidgetInternal {
+                initialized: false,
                 rect: WidgetRect::default(),
                 content: Adaptable::from(data),
                 _platform: std::marker::PhantomData,
-            }),
+            },
         }
     }
 
@@ -124,11 +124,12 @@ where
         R: Rect,
     {
         Widget {
-            watcher: Watcher::create(WidgetInternal {
+            internal: WidgetInternal {
+                initialized: false,
                 rect: WidgetRect::external_from(rect),
                 content: Adaptable::from(data),
                 _platform: std::marker::PhantomData,
-            }),
+            },
         }
     }
 
@@ -136,7 +137,7 @@ where
         this: &mut Self,
         event: &mut PointerEvent,
     ) -> bool {
-        let wid_int = this.watcher.data_mut();
+        let wid_int = &mut this.internal;
         let mut extra = WidgetExtra {
             rect: &mut wid_int.rect,
         };
@@ -158,11 +159,15 @@ where
         this: &mut Self,
         event: &mut PointerEvent,
     ) -> bool {
-        let wid_int = this.watcher.data_mut();
+        let wid_int = &mut this.internal;
         let mut extra = WidgetExtra {
             rect: &mut wid_int.rect,
         };
         T::pointer_event(&mut wid_int.content, &mut extra, event)
+    }
+
+    pub(crate) fn into_root(self) -> RootWidget<Self> {
+        RootWidget { widget: self }
     }
 }
 
@@ -172,7 +177,7 @@ where
     T: Content<P>,
 {
     pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
-        let wid_int = this.watcher.data_mut();
+        let wid_int = &mut this.internal;
         let content = &mut wid_int.content;
         T::desc(DrawGraphicBeforeReceiver { content, ctx });
         T::desc(DrawChildReceiver { content, ctx });
@@ -201,11 +206,12 @@ where
     /// Create a Widget with a specified initial position and size
     pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
         Widget {
-            watcher: Watcher::create(WidgetInternal {
+            internal: WidgetInternal {
+                initialized: false,
                 rect: WidgetRect::external_from(rect),
                 content: T::default(),
                 _platform: std::marker::PhantomData,
-            }),
+            },
         }
     }
 }
@@ -216,23 +222,37 @@ where
     T: Content<P>,
 {
     fn x(&self) -> Dim {
-        self.watcher.data().rect.x()
+        self.internal.rect.x()
     }
     fn y(&self) -> Dim {
-        self.watcher.data().rect.y()
+        self.internal.rect.y()
     }
 
     fn x_mut<F, R>(&mut self, f: F) -> R
     where
         F: FnOnce(&mut Dim) -> R,
     {
-        self.watcher.data_mut().rect.external_x_mut(f)
+        self.internal.rect.external_x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
     where
         F: FnOnce(&mut Dim) -> R,
     {
-        self.watcher.data_mut().rect.external_y_mut(f)
+        self.internal.rect.external_y_mut(f)
+    }
+}
+
+pub(crate) struct RootWidget<W: ?Sized> {
+    pub widget: W,
+}
+
+impl<T, P> crate::watch::Watcher<'static> for RootWidget<Widget<T, P>>
+where
+    P: 'static,
+    T: Content<P>,
+{
+    fn init(mut init: impl crate::watch::WatcherInit<'static, Self>) {
+        init.init_child(|this| &mut this.widget.internal);
     }
 }

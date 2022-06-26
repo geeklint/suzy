@@ -100,18 +100,12 @@ fn togglebutton_group() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
-    let app: App<TestPlatform> = builder.build();
+    let mut app: App<TestPlatform> = builder.build();
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
-    let app = app
-        .with(|app| {
-            app.add_root(move || {
-                let mut root = Widget::<GroupRoot>::default();
-                root.value_feedback = group_value_feedback;
-                root
-            });
-        })
-        .0;
+    let mut root = Widget::<GroupRoot>::default();
+    root.value_feedback = group_value_feedback;
+    app.add_root(root);
     app.test(|mut app| {
         let capture = app.take_screenshot();
         assert_eq!(group_value_output.get(), None);

@@ -7,7 +7,7 @@ use crate::platform::{Event, Platform, SimpleEventLoopState};
 use crate::pointer::PointerEventData;
 use crate::window::WindowEvent;
 
-use super::{App, CurrentApp};
+use super::App;
 
 /// An interface to enable some automated testing of an app.
 ///
@@ -15,13 +15,13 @@ use super::{App, CurrentApp};
 pub struct AppTesterInterface<'a, P: Platform> {
     start_time: time::Instant,
     state: SimpleEventLoopState,
-    app: &'a mut CurrentApp<P>,
+    app: &'a mut App<P>,
     needs_draw: bool,
 }
 
 impl<'a, P: Platform> AppTesterInterface<'a, P> {
     /// Create a tester interface from a CurrentApp.
-    pub fn new(app: &'a mut CurrentApp<P>) -> Self {
+    pub fn new(app: &'a mut App<P>) -> Self {
         let start_time = App::<P>::time();
         let mut state = SimpleEventLoopState::default();
         app.handle_event(&mut state, Event::StartFrame(start_time));

@@ -20,7 +20,7 @@ default_font = ["platform_opengl"]
 platform_sdl = ["sdl2", "platform_opengl"]
 
 [dependencies]
-drying_paint = "0.4.6"
+drying_paint = "0.5.0"
 inline_tweak = { version = "1.0.8", optional = true }
 
 [dependencies.sdl2]

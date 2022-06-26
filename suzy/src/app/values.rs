@@ -9,7 +9,7 @@ thread_local! {
     static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) struct AppValues {
     pub frame_start: Watched<time::Instant>,
     pub coarse_time: Watched<time::Instant>,
@@ -20,6 +20,17 @@ pub(crate) struct AppValues {
 
 impl AppValues {
     pub const COARSE_STEP: time::Duration = time::Duration::from_secs(1);
+
+    pub(crate) fn new_now(width: f32, height: f32) -> Self {
+        let now = time::Instant::now();
+        Self {
+            frame_start: Watched::new(now),
+            coarse_time: Watched::new(now),
+            cell_size: Watched::new(get_cell_size(width, height)),
+            px_per_dp: Watched::new(1.0),
+            window_size: (width, height),
+        }
+    }
 
     pub(super) fn with<F: FnOnce() -> R, R>(self, func: F) -> (Self, R) {
         APP_STACK.with(|cell| cell.borrow_mut().push(self));

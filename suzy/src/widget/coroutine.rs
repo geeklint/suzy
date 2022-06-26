@@ -6,9 +6,11 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time;
 
-use crate::app::App;
-use crate::platform::DefaultPlatform;
-use crate::watch::{AtomicWatchedMeta, AtomicWatchedMetaTrigger, Watched};
+use crate::{
+    app::App,
+    platform::DefaultPlatform,
+    watch::{self, Watched},
+};
 
 #[derive(Clone, Copy)]
 struct NextFrame {
@@ -67,11 +69,11 @@ impl Future for Timer {
 }
 
 struct WatchedWaker {
-    trigger: AtomicWatchedMetaTrigger,
+    trigger: watch::SyncTrigger,
 }
 
 impl WatchedWaker {
-    fn from_meta(meta: &AtomicWatchedMeta) -> std::sync::Arc<Self> {
+    fn from_meta(meta: &watch::SyncWatchedMeta) -> std::sync::Arc<Self> {
         std::sync::Arc::new(Self {
             trigger: meta.create_trigger(),
         })
@@ -112,9 +114,10 @@ impl<T> Default for State<T> {
 /// impl widget::Content for Root {
 ///     fn desc(mut desc: impl widget::Desc<Self>) {
 ///         desc.watch(|this, _rect| {
-///             if let Some(()) = this.button.on_click() {
-///                 this.coroutine.start(());
-///             }
+///             let Self { button, coroutine } = this;
+///             button.on_click(|| {
+///                 coroutine.start(());
+///             });
 ///         });
 ///         desc.register_coroutine(
 ///             |this| &mut this.coroutine,
@@ -129,7 +132,7 @@ impl<T> Default for State<T> {
 /// ```
 #[derive(Default)]
 pub struct Coroutine<T> {
-    wake_meta: AtomicWatchedMeta,
+    wake_meta: watch::SyncWatchedMeta,
     paused: Watched<bool>,
     state: Watched<State<T>>,
 }
@@ -187,7 +190,9 @@ impl<T> Coroutine<T> {
                 State::Running(fut) => fut,
             };
             if !*coroutine.paused {
-                coroutine.wake_meta.watched();
+                watch::WatchArg::try_with_current(|arg| {
+                    coroutine.wake_meta.watched(arg);
+                });
                 let waker =
                     WatchedWaker::from_meta(&coroutine.wake_meta).into();
                 let mut ctx = Context::from_waker(&waker);

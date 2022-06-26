@@ -6,11 +6,11 @@ use std::{
     rc::{Rc, Weak},
 };
 
-use crate::{pointer::PointerId, watch::WatchedEvent};
+use crate::{pointer::PointerId, watch::WatchedQueue};
 
 #[derive(Default)]
 struct HandleContents {
-    grab_stolen: RefCell<WatchedEvent<PointerId>>,
+    grab_stolen: RefCell<WatchedQueue<'static, PointerId>>,
 }
 
 #[derive(Default)]
@@ -30,9 +30,11 @@ impl UniqueHandle {
     }
 
     pub fn handle_pointer_grab_stolen<F: FnOnce(PointerId)>(&self, f: F) {
-        if let Some(&id) = self.ptr.grab_stolen.borrow().bind() {
-            f(id);
-        }
+        crate::watch::WatchArg::try_with_current(|arg| {
+            self.ptr.grab_stolen.borrow().handle_item(arg, |id| {
+                f(*id);
+            });
+        });
     }
 }
 
@@ -44,7 +46,14 @@ pub struct UniqueHandleId {
 impl UniqueHandleId {
     pub fn notify_grab_stolen(&self, pointer: PointerId) {
         if let Some(strong) = self.ptr.upgrade() {
-            strong.grab_stolen.borrow_mut().dispatch(pointer);
+            let mut pushed = false;
+            crate::watch::WatchArg::try_with_current(|arg| {
+                strong.grab_stolen.borrow_mut().push(arg, pointer);
+                pushed = true;
+            });
+            if !pushed {
+                strong.grab_stolen.borrow_mut().push_external(pointer);
+            }
         }
     }
 }

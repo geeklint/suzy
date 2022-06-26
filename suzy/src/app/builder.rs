@@ -2,14 +2,11 @@
 /* Copyright © 2021 Violet Leonard */
 
 use std::collections::HashMap;
-use std::time;
-
-use drying_paint::Watched;
 
 use crate::platform::Platform;
 use crate::window::{WindowBuilder, WindowSettings};
 
-use super::{get_cell_size, App, AppValues};
+use super::App;
 
 /// Enables customizing an app before it is run.
 #[derive(Default)]
@@ -26,23 +23,11 @@ impl AppBuilder {
             .expect("Failed to create window");
         let watch_ctx = drying_paint::WatchContext::new();
 
-        let (width, height) = window.size();
-
-        let now = time::Instant::now();
-
-        let values = AppValues {
-            frame_start: Watched::new(now),
-            coarse_time: Watched::new(now),
-            cell_size: Watched::new(get_cell_size(width, height)),
-            px_per_dp: Watched::new(1.0),
-            window_size: (width, height),
-        };
         App {
-            platform,
+            platform: Some(platform),
             watch_ctx,
             window,
             roots: Vec::new(),
-            values,
             pointer_grab_map: HashMap::new(),
         }
     }

@@ -68,8 +68,8 @@ where
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
     inner: AdapterLayoutData<Layout, Content, Platform>,
-    data_flag: WatchedMeta,
-    position_flag: WatchedMeta,
+    data_flag: WatchedMeta<'static>,
+    position_flag: WatchedMeta<'static>,
     layout: Layout,
     current_pointers: PointerSet,
     handle: UniqueHandle,
@@ -83,7 +83,7 @@ where
 {
     /// Get the data collection stored by the layout.
     pub fn data(&self) -> &Layout::Collection {
-        self.data_flag.watched();
+        self.data_flag.watched_auto();
         self.layout.data()
     }
 
@@ -91,8 +91,8 @@ where
     pub fn data_mut(&mut self) -> &mut Layout::Collection {
         // if data is modified, flush the active children
         self.inner.clear_active_children();
-        self.data_flag.trigger();
-        self.data_flag.watched();
+        self.data_flag.trigger_auto();
+        self.data_flag.watched_auto();
         self.layout.data_mut()
     }
 
@@ -134,8 +134,8 @@ where
 {
     fn desc(mut desc: impl widget::Desc<Self, Platform>) {
         desc.watch(|this, rect| {
-            this.position_flag.watched();
-            this.data_flag.watched();
+            this.position_flag.watched_auto();
+            this.data_flag.watched_auto();
             this.layout.layout(this.inner.get_interface(rect));
         });
         desc.watch(|this, _rect| {
@@ -169,7 +169,7 @@ where
                         == Some(event.id())
                     {
                         self.inner.move_content(*x, *y);
-                        self.position_flag.trigger();
+                        self.position_flag.trigger_auto();
                     }
                     event.force_grab(self.handle.id());
                     true
@@ -200,7 +200,7 @@ where
                 if Some(event.id()) == self.current_pointers.primary_pointer()
                 {
                     self.inner.move_content(*x, *y);
-                    self.position_flag.trigger();
+                    self.position_flag.trigger_auto();
                     true
                 } else {
                     false
@@ -211,7 +211,7 @@ where
                     && self.hittest(extra, event.pos())
                 {
                     self.inner.move_content(*x, *y);
-                    self.position_flag.trigger();
+                    self.position_flag.trigger_auto();
                     true
                 } else {
                     false

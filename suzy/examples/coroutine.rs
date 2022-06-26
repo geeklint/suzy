@@ -17,9 +17,10 @@ impl widget::Content for Root {
             this.button.set_fill(&rect, &SimplePadding2d::uniform(20.0));
         });
         desc.watch(|this, _rect| {
-            if let Some(()) = this.button.on_click() {
-                this.coroutine.start(());
-            }
+            let Self { button, coroutine } = this;
+            button.on_click(|| {
+                coroutine.start(());
+            });
         });
         desc.register_coroutine(
             |this| &mut this.coroutine,

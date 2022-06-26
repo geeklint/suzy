@@ -55,11 +55,7 @@
 //!     }
 //! }
 
-pub use drying_paint::{
-    watched_channel, AtomicWatchedMeta, AtomicWatchedMetaTrigger, Watched,
-    WatchedCell, WatchedEvent, WatchedMeta, WatchedReceiver, WatchedSender,
-    Watcher, WatcherId, WatcherMeta,
-};
+pub use drying_paint::*;
 
 #[cfg(feature = "inline_tweak")]
 #[cfg(debug_assertions)]

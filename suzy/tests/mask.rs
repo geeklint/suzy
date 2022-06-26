@@ -42,12 +42,8 @@ fn mask_right_half() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
-    let app: App<TestPlatform> = builder.build();
-    let app = app
-        .with(|app| {
-            app.add_root(Widget::<Root>::default);
-        })
-        .0;
+    let mut app: App<TestPlatform> = builder.build();
+    app.add_root(Widget::<Root>::default());
     app.test(|mut app| {
         let capture = app.take_screenshot();
         let index = (capture.len() / 2) & ALIGN_MASK;

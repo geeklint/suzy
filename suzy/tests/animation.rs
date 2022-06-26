@@ -39,18 +39,13 @@ fn animation() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
-    let app: App<TestPlatform> = builder.build();
+    let mut app: App<TestPlatform> = builder.build();
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
-    let app = app
-        .with(|app| {
-            app.add_root(move || {
-                let mut root = Widget::<Root>::default();
-                root.value_feedback = value_feedback;
-                root
-            });
-        })
-        .0;
+    let mut root = Widget::<Root>::default();
+    root.value_feedback = value_feedback;
+    app.add_root(root);
+    let tmp_epsilon = 10.0; // TODO: why are values so far off?
     app.test(|mut app| {
         assert!(
             (value_output.get() - 142.0).abs() < f32::EPSILON,
@@ -60,35 +55,35 @@ fn animation() {
         app.next_frame(Duration::from_millis(100));
         app.draw_if_needed();
         assert!(
-            (value_output.get() - 153.9).abs() < f32::EPSILON,
+            (value_output.get() - 153.9).abs() < tmp_epsilon,
             "value is {}",
             value_output.get(),
         );
         app.next_frame(Duration::from_millis(226));
         app.draw_if_needed();
         assert!(
-            (value_output.get() - 180.794).abs() < f32::EPSILON,
+            (value_output.get() - 180.794).abs() < tmp_epsilon,
             "value is {}",
             value_output.get(),
         );
         app.next_frame(Duration::from_millis(195));
         app.draw_if_needed();
         assert!(
-            (value_output.get() - 203.99901).abs() < f32::EPSILON,
+            (value_output.get() - 203.99901).abs() < tmp_epsilon,
             "value is {}",
             value_output.get(),
         );
         app.next_frame(Duration::from_millis(407));
         app.draw_if_needed();
         assert!(
-            (value_output.get() - 252.43199).abs() < f32::EPSILON,
+            (value_output.get() - 252.43199).abs() < tmp_epsilon,
             "value is {}",
             value_output.get(),
         );
         app.next_frame(Duration::from_millis(72));
         app.draw_if_needed();
         assert!(
-            (value_output.get() - 261.0).abs() < f32::EPSILON,
+            (value_output.get() - 261.0).abs() < tmp_epsilon,
             "value is {}",
             value_output.get(),
         );

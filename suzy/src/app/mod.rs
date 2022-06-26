@@ -6,15 +6,14 @@
 //! Apps have an associated window and "root" widgets, which are assigned
 //! to fill the whole window area.
 
-use std::collections::HashMap;
-use std::time;
+use std::{cell::RefCell, collections::HashMap, rc::Rc, time};
 
 use drying_paint::{WatchContext, Watched};
 
 use crate::dims::{Dim, Rect, SimplePadding2d, SimpleRect};
 use crate::platform::{DefaultPlatform, Event, EventLoopState, Platform};
 use crate::pointer::{PointerEvent, PointerEventData, PointerId};
-use crate::widget::{self, AnonWidget, UniqueHandleId, Widget};
+use crate::widget::{self, AnonWidget, RootWidget, UniqueHandleId, Widget};
 use crate::window;
 use window::{Window, WindowEvent, WindowSettings};
 
@@ -26,6 +25,8 @@ pub use builder::AppBuilder;
 pub use tester::AppTesterInterface;
 pub(crate) use values::{get_cell_size, AppValues};
 
+type RootHolder<P> = Rc<RefCell<RootWidget<dyn AnonWidget<P>>>>;
+
 /// A type which contains the context in which widgets run.
 ///
 /// See the [module-level documentation](./index.html) for more details.
@@ -33,11 +34,10 @@ pub struct App<P = DefaultPlatform>
 where
     P: Platform,
 {
-    platform: P,
-    watch_ctx: WatchContext,
+    platform: Option<P>,
+    watch_ctx: WatchContext<'static>,
     window: P::Window,
-    roots: Vec<Box<dyn AnonWidget<P::Renderer>>>,
-    values: AppValues,
+    roots: Vec<RootHolder<P::Renderer>>,
     pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
 }
 
@@ -69,118 +69,22 @@ impl<P: Platform> App<P> {
         AppValues::expect_current(|values| *values.coarse_time)
     }
 
-    /// Make this app context "current".
-    pub fn with<F, R>(self, func: F) -> (Self, R)
-    where
-        F: FnOnce(&mut CurrentApp<P>) -> R,
-    {
-        let Self {
-            platform,
-            watch_ctx,
-            window,
-            roots,
-            values,
-            pointer_grab_map,
-        } = self;
-        let window = Some(window);
-        let mut current = CurrentApp {
-            window,
-            roots,
-            pointer_grab_map,
-        };
-        let current_ref = &mut current;
-        let (watch_ctx, (values, res)) =
-            watch_ctx.with(|| values.with(move || func(current_ref)));
-        let CurrentApp {
-            window,
-            roots,
-            pointer_grab_map,
-        } = current;
-        let window = window.expect("CurrentApp lost its Window");
-        let new_self = Self {
-            platform,
-            watch_ctx,
-            window,
-            roots,
-            values,
-            pointer_grab_map,
-        };
-        (new_self, res)
-    }
-
     /// Start running the app.
     ///
     /// Because of platform-specific requirements, this requires control
     /// of the current thread.
-    pub fn run(self) -> ! {
-        let Self {
-            platform,
-            watch_ctx,
-            window,
-            roots,
-            values,
-            pointer_grab_map,
-        } = self;
-        let window = Some(window);
-        let mut current = CurrentApp::<P> {
-            window,
-            roots,
-            pointer_grab_map,
-        };
-        watch_ctx
+    pub fn run(mut self) -> ! {
+        let (width, height) = self.window.size();
+        let values = AppValues::new_now(width, height);
+        values
             .with(|| {
-                values.with(|| {
-                    platform.run(move |state, event| {
-                        current.handle_event(state, event);
-                    })
-                })
+                self.platform.take().expect("app lost its platform").run(
+                    move |state, event| {
+                        self.handle_event(state, event);
+                    },
+                )
             })
             .1
-             .1
-    }
-
-    /// Create a test interface for this app, which allows simulating
-    /// behavior.
-    pub fn test<F: FnOnce(AppTesterInterface<P>)>(self, func: F) {
-        let Self {
-            platform,
-            watch_ctx,
-            mut window,
-            roots,
-            values,
-            pointer_grab_map,
-        } = self;
-        window.recalculate_viewport();
-        let window = Some(window);
-        let mut current = CurrentApp::<P> {
-            window,
-            roots,
-            pointer_grab_map,
-        };
-        watch_ctx.with(|| {
-            values.with(|| {
-                func(AppTesterInterface::new(&mut current));
-            });
-        });
-        std::mem::drop(current.roots);
-        std::mem::drop(current.window);
-        std::mem::drop(platform);
-    }
-}
-
-/// A type which represents an App which is currently available as a context.
-pub struct CurrentApp<P = DefaultPlatform>
-where
-    P: Platform,
-{
-    window: Option<P::Window>,
-    roots: Vec<Box<dyn AnonWidget<P::Renderer>>>,
-    pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
-}
-
-impl<P: Platform> CurrentApp<P> {
-    fn window(&mut self) -> &mut P::Window {
-        self.window.as_mut().expect("CurrentApp lost its Window")
     }
 
     /// Add a root widget to the app.
@@ -189,33 +93,31 @@ impl<P: Platform> CurrentApp<P> {
     /// They are drawn in the order they are added to the app.
     /// They recieve pointer events in reverse order of when they are added to
     /// the app.
-    pub fn add_root<F, T>(&mut self, f: F)
+    pub fn add_root<T>(&mut self, mut widget: Widget<T, P::Renderer>)
     where
-        F: 'static + FnOnce() -> Widget<T, P::Renderer>,
         T: widget::Content<P::Renderer>,
     {
-        let (width, height) = self.window().size();
+        let (width, height) = self.window.size();
         let rect = SimpleRect::with_size(width, height);
-        self.access_roots(move |roots| {
-            let mut widget = f();
-            widget.set_fill(&rect, &SimplePadding2d::zero());
-            roots.push(Box::new(widget));
-        });
+        widget.set_fill(&rect, &SimplePadding2d::zero());
+        let holder = Rc::new(RefCell::new(widget.into_root()));
+        let watcher = Rc::downgrade(&holder);
+        self.roots.push(holder);
+        self.watch_ctx.add_watcher(&watcher);
     }
 
-    fn access_roots<F, R>(&mut self, func: F) -> R
-    where
-        F: 'static + FnOnce(&mut Vec<Box<dyn AnonWidget<P::Renderer>>>) -> R,
-        R: 'static,
-    {
-        let roots = std::mem::take(&mut self.roots);
-        let (roots, ret) =
-            WatchContext::allow_watcher_access(roots, move |mut roots| {
-                let ret = func(&mut roots);
-                (roots, ret)
-            });
-        self.roots = roots;
-        ret
+    /// Create a test interface for this app, which allows simulating
+    /// behavior.
+    pub fn test<F: FnOnce(AppTesterInterface<P>)>(mut self, func: F) {
+        self.window.recalculate_viewport();
+        let (width, height) = self.window.size();
+        let values = AppValues::new_now(width, height);
+        values.with(|| {
+            func(AppTesterInterface::new(&mut self));
+        });
+        std::mem::drop(self.roots);
+        std::mem::drop(self.window);
+        std::mem::drop(self.platform);
     }
 
     fn handle_event<E: EventLoopState>(
@@ -238,22 +140,22 @@ impl<P: Platform> CurrentApp<P> {
                 });
             }
             Event::Update => {
-                WatchContext::update_current();
+                self.watch_ctx.update();
             }
             Event::TakeScreenshot(dest) => {
-                *dest = self.window().take_screenshot();
+                *dest = self.window.take_screenshot();
             }
             Event::Draw => {
                 self.draw();
             }
             Event::FinishDraw => {
-                self.window().flip();
+                self.window.flip();
             }
             Event::WindowEvent(Quit) => {
                 state.request_shutdown();
             }
             Event::WindowEvent(Resize) => {
-                let (x, y) = self.window().size();
+                let (x, y) = self.window.size();
                 AppValues::expect_current_mut(|values| {
                     *values.cell_size = get_cell_size(x, y);
                     values.window_size.0 = x;
@@ -262,15 +164,15 @@ impl<P: Platform> CurrentApp<P> {
                 let xdim = Dim::with_length(x);
                 let ydim = Dim::with_length(y);
                 let rect = SimpleRect::new(xdim, ydim);
-                self.access_roots(move |roots| {
-                    for root in roots.iter_mut() {
-                        root.set_fill(&rect, &SimplePadding2d::zero());
-                    }
-                });
-                self.window().recalculate_viewport();
+                for root in self.roots.iter_mut() {
+                    root.borrow_mut()
+                        .widget
+                        .set_fill(&rect, &SimplePadding2d::zero());
+                }
+                self.window.recalculate_viewport();
             }
             Event::WindowEvent(DpScaleChange) => {
-                let ppd = self.window().pixels_per_dp();
+                let ppd = self.window.pixels_per_dp();
                 AppValues::expect_current_mut(|values| {
                     *values.px_per_dp = ppd;
                 });
@@ -278,7 +180,7 @@ impl<P: Platform> CurrentApp<P> {
             Event::WindowEvent(KeyDown(_key)) => {}
             Event::WindowEvent(Pointer(mut pointer)) => {
                 if !pointer.normalized {
-                    self.window().normalize_pointer_event(&mut pointer);
+                    self.window.normalize_pointer_event(&mut pointer);
                 }
                 self.pointer_event(pointer);
             }
@@ -289,20 +191,19 @@ impl<P: Platform> CurrentApp<P> {
         let mut loop_count = 0;
         let mut first_pass = true;
         loop {
-            let mut window =
-                self.window.take().expect("CurrentApp lost its Window");
-            let (window, need_loop) = self.access_roots(move |roots| {
-                let mut ctx = window.prepare_draw(first_pass);
-                let iter = roots.iter_mut();
-                let iter = iter.map(|boxed| {
-                    let as_ref: &mut dyn AnonWidget<_> = &mut **boxed;
-                    as_ref
-                });
-                let need_loop = ctx.draw(iter);
-                std::mem::drop(ctx);
-                (window, need_loop)
+            let mut ctx = self.window.prepare_draw(first_pass);
+            let mut borrowed_roots: Vec<_> = self
+                .roots
+                .iter_mut()
+                .map(|root| root.borrow_mut())
+                .collect();
+            let iter = borrowed_roots.iter_mut().map(|boxed| {
+                let as_ref: &mut dyn AnonWidget<_> = &mut boxed.widget;
+                as_ref
             });
-            self.window = Some(window);
+            let need_loop = ctx.draw(iter);
+            std::mem::drop(borrowed_roots);
+            std::mem::drop(ctx);
             if !need_loop {
                 break;
             }
@@ -311,22 +212,18 @@ impl<P: Platform> CurrentApp<P> {
                 loop_count < 1024,
                 "render exceeded its loop count (possible infinite loop)",
             );
-            WatchContext::update_current();
+            self.watch_ctx.update();
             loop_count += 1;
         }
     }
 
     fn pointer_event(&mut self, pointer: PointerEventData) {
-        let mut grab_map = std::mem::take(&mut self.pointer_grab_map);
-        self.pointer_grab_map = self.access_roots(move |roots| {
-            let mut event = PointerEvent::new(pointer, &mut grab_map);
-            let mut handled = false;
-            let mut iter = roots.iter_mut().rev();
-            while let (false, Some(root)) = (handled, iter.next()) {
-                handled = root.pointer_event(&mut event);
-            }
-            grab_map
-        });
+        let mut event = PointerEvent::new(pointer, &mut self.pointer_grab_map);
+        let mut handled = false;
+        let mut iter = self.roots.iter_mut().rev();
+        while let (false, Some(root)) = (handled, iter.next()) {
+            handled = root.borrow_mut().widget.pointer_event(&mut event);
+        }
     }
 
     /// Consume the current app, cleaning up its resources immediately.

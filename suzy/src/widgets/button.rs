@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use drying_paint::{Watched, WatchedEvent};
+use drying_paint::{Watched, WatchedQueue};
 
 use crate::graphics::Color;
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
@@ -22,7 +22,7 @@ const IMAGE_STATES: &[SelectionState] = &[
 
 /// A Widget providing the behavior of a button.
 pub struct ButtonBehavior<T> {
-    on_click: WatchedEvent<()>,
+    on_click: WatchedQueue<'static, ()>,
     state: Watched<SelectionState>,
     interactable: Watched<bool>,
     pointers_down: usize,
@@ -46,9 +46,10 @@ impl<T> ButtonBehavior<T> {
         *self.state
     }
 
-    /// Returns Some(()) in a watch closure when the button is clicked.
-    pub fn on_click(&self) -> Option<()> {
-        self.on_click.bind().copied()
+    pub fn on_click<F: FnOnce()>(&self, f: F) {
+        crate::watch::WatchArg::try_with_current(|arg| {
+            self.on_click.handle_item(arg, |()| f());
+        });
     }
 }
 
@@ -124,7 +125,7 @@ where
                         } else {
                             SelectionState::normal()
                         };
-                        self.on_click.dispatch(());
+                        self.on_click.push_external(());
                     }
                 }
                 ungrabbed
@@ -152,7 +153,7 @@ where
 impl<T: Default> Default for ButtonBehavior<T> {
     fn default() -> Self {
         Self {
-            on_click: WatchedEvent::default(),
+            on_click: WatchedQueue::default(),
             state: Watched::default(),
             interactable: Watched::new(true),
             pointers_down: 0,

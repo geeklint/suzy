@@ -22,7 +22,7 @@ gl_object! { ThreeBufferData, GenBuffers, DeleteBuffers, 3 }
 
 pub struct SingleVertexBuffer<T> {
     obj: SingleBufferData,
-    tracker: WatchedMeta,
+    tracker: WatchedMeta<'static>,
     dyn_draw: bool,
     remaining_to_draw: bool,
     _data: PhantomData<[T]>,
@@ -63,7 +63,7 @@ impl<T> SingleVertexBuffer<T> {
             },
             Some(false) => {
                 draw_ctx.graphic_not_ready();
-                self.tracker.trigger();
+                self.tracker.trigger_auto();
                 false
             }
             None => false,
@@ -76,7 +76,7 @@ impl<T> SingleVertexBuffer<T> {
         T: 'a,
         OptT: Into<Option<&'a [T]>>,
     {
-        self.tracker.watched();
+        self.tracker.watched_auto();
         if let Some((ids, gl)) = self.obj.get() {
             if let Some(data) = (make_data)(&gl).into() {
                 unsafe {
@@ -100,7 +100,7 @@ impl<T> SingleVertexBuffer<T> {
 
 pub struct DualVertexBuffer<T> {
     obj: TwoBufferData,
-    tracker: WatchedMeta,
+    tracker: WatchedMeta<'static>,
     dyn_draw: [bool; 2],
     ready: [bool; 2],
     remaining_to_draw: bool,
@@ -146,13 +146,13 @@ impl<T> DualVertexBuffer<T> {
             }
             (_, _, Some(true)) => {
                 draw_ctx.graphic_not_ready();
-                self.tracker.trigger();
+                self.tracker.trigger_auto();
                 None
             }
             (_, _, Some(false)) => {
                 self.ready = [false, false];
                 draw_ctx.graphic_not_ready();
-                self.tracker.trigger();
+                self.tracker.trigger_auto();
                 None
             }
             (_, _, None) => None,
@@ -183,7 +183,7 @@ impl<T> DualVertexBuffer<T> {
         T: 'a,
         OptT: Into<Option<&'a [T]>>,
     {
-        self.tracker.watched();
+        self.tracker.watched_auto();
         if let Some((ids, gl)) = self.obj.get() {
             if let Some(data) = (make_data)(&gl).into() {
                 unsafe {
@@ -229,7 +229,7 @@ impl ReadyDualVertexBuffer<'_> {
 
 pub struct DualVertexBufferIndexed<T> {
     obj: ThreeBufferData,
-    tracker: WatchedMeta,
+    tracker: WatchedMeta<'static>,
     dyn_draw: [bool; 3],
     ready: [bool; 3],
     remaining_to_draw: bool,
@@ -279,13 +279,13 @@ impl<T> DualVertexBufferIndexed<T> {
             }
             (_, _, Some(true)) => {
                 draw_ctx.graphic_not_ready();
-                self.tracker.trigger();
+                self.tracker.trigger_auto();
                 None
             }
             (_, _, Some(false)) => {
                 self.ready = [false, false, false];
                 draw_ctx.graphic_not_ready();
-                self.tracker.trigger();
+                self.tracker.trigger_auto();
                 None
             }
             (_, _, None) => None,
@@ -329,7 +329,7 @@ impl<T> DualVertexBufferIndexed<T> {
         U: 'a,
         OptU: Into<Option<&'a [U]>>,
     {
-        self.tracker.watched();
+        self.tracker.watched_auto();
         if let Some((ids, gl)) = self.obj.get() {
             if let Some(data) = (make_data)(&gl).into() {
                 unsafe {

@@ -137,10 +137,8 @@ where
         );
         let mut builder = AppBuilder::default();
         builder.set_title(title);
-        let app: App<DefaultPlatform> = builder.build();
-        let (app, _) = app.with(|current| {
-            current.add_root(super::Widget::<T>::default);
-        });
+        let mut app: App<DefaultPlatform> = builder.build();
+        app.add_root(super::Widget::<T>::default());
         app.run();
     }
 }
