@@ -42,11 +42,6 @@ macro_rules! impl_empty {
             >,
             Child: super::Content<$P> {}
     };
-    ($T:ident; $P:ident; anon_child) => {
-        fn anon_child<F>(&mut self, _map_fn: F)
-        where
-            F: FnOnce(&mut $T) -> &mut dyn AnonWidget<$P> {}
-    };
     ($T:ident; $P:ident; $($method:ident)*) => {
         $(
             impl_empty!{ $T; $P; $method }
@@ -119,13 +114,6 @@ where
         */
     }
 
-    fn anon_child<F>(&mut self, map_fn: F)
-    where
-        F: FnOnce(&mut Leaf) -> &mut dyn super::AnonWidget<Plat>,
-    {
-        todo!()
-    }
-
     fn bare_child<F, Child>(&mut self, getter: F)
     where
         Child: super::Content<Plat>,
@@ -177,13 +165,6 @@ where
         for child in iter_fn(self.content) {
             Widget::draw(child, self.ctx);
         }
-    }
-
-    fn anon_child<F>(&mut self, map_fn: F)
-    where
-        F: FnOnce(&mut T) -> &mut dyn AnonWidget<P>,
-    {
-        map_fn(self.content).draw(self.ctx);
     }
 
     fn bare_child<F, Child>(&mut self, map_fn: F)
@@ -238,15 +219,6 @@ where
         }
     }
 
-    fn anon_child<F>(&mut self, map_fn: F)
-    where
-        F: FnOnce(&mut T) -> &mut dyn AnonWidget<P>,
-    {
-        if !*self.handled {
-            *self.handled = map_fn(self.content).pointer_event(self.event);
-        }
-    }
-
     fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
@@ -272,7 +244,7 @@ impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform,
 {
-    impl_empty! { T; P; watch child iter_children anon_child }
+    impl_empty! { T; P; watch child iter_children }
 
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
@@ -307,7 +279,7 @@ impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform,
 {
-    impl_empty! { T; P; watch child iter_children anon_child }
+    impl_empty! { T; P; watch child iter_children }
 
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where
@@ -348,7 +320,7 @@ impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
     P: RenderPlatform,
 {
-    impl_empty! { T; P; watch child iter_children anon_child }
+    impl_empty! { T; P; watch child iter_children }
 
     fn graphic<F, Gr>(&mut self, map_fn: F)
     where

@@ -66,11 +66,6 @@ where
         >,
         Child: super::Content<P>;
 
-    /// Register a child with an anonymous type.
-    fn anon_child<F>(&mut self, map_fn: F)
-    where
-        F: Clone + FnOnce(&mut T) -> &mut dyn super::AnonWidget<P>;
-
     #[doc(hidden)]
     fn bare_child<F, Child>(&mut self, getter: F)
     where
