@@ -52,7 +52,7 @@ fn get_edge_pixels(source: SourceBitmap<'_>) -> EdgePixels {
             ];
             // if any of our neighbors are different than us,
             // we are on an edge; add to appropriate list
-            if others.iter().any(|b| *b != state) {
+            if others.iter().copied().any(|b| b != state) {
                 let list = if state {
                     &mut edge_pixels_in
                 } else {
@@ -60,6 +60,24 @@ fn get_edge_pixels(source: SourceBitmap<'_>) -> EdgePixels {
                 };
                 list.push((x as f64, y as f64));
             }
+        }
+    }
+    // add to the "out" list values that are outside the image where the edge of
+    // the glyph is against the edge
+    for y in 0..=ylim {
+        if bitmap[(y * pitch)] {
+            edge_pixels_out.push((-1.0, y as f64));
+        }
+        if bitmap[y * pitch + xlim] {
+            edge_pixels_out.push((pitch as f64, y as f64));
+        }
+    }
+    for x in 0..=xlim {
+        if bitmap[x] {
+            edge_pixels_out.push((x as f64, -1.0));
+        }
+        if bitmap[ylim * pitch + x] {
+            edge_pixels_out.push((x as f64, (ylim + 1) as f64));
         }
     }
     EdgePixels {
