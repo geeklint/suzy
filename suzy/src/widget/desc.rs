@@ -3,7 +3,7 @@
 
 use crate::platform::{DefaultRenderPlatform, RenderPlatform};
 
-use super::{layout, Widget, WidgetGraphic, WidgetRect};
+use super::{layout, Ephemeral, Widget, WidgetGraphic, WidgetRect};
 
 /// Instances of this trait are provided to
 /// [`widget::Content::init`](trait.widget::Content.html#tymethod.init).
@@ -59,10 +59,11 @@ where
     /// Register a variable number of children
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
-        F: for<'a> FnOnce(
+        F: 'static,
+        F: for<'a> Fn(
             &'a mut T,
         ) -> Box<
-            dyn 'a + Iterator<Item = &'a mut Widget<Child, P>>,
+            dyn 'a + Iterator<Item = &'a mut Ephemeral<Child, P>>,
         >,
         Child: super::Content<P>;
 

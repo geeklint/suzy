@@ -18,6 +18,7 @@ mod anon;
 mod content;
 mod coroutine;
 mod desc;
+mod ephemeral;
 mod graphic;
 mod internal;
 pub mod layout;
@@ -35,6 +36,7 @@ pub use anon::AnonWidget;
 pub use content::{Content, RunAsApp};
 pub use coroutine::Coroutine;
 pub use desc::Desc;
+pub use ephemeral::Ephemeral;
 pub use graphic::WidgetGraphic;
 pub use internal::WidgetExtra;
 pub use rect::WidgetRect;
@@ -43,15 +45,14 @@ pub use unique_handle::{UniqueHandle, UniqueHandleId};
 /// A basic structure to wrap some data and turn it into a widget.
 pub struct Widget<T, P = DefaultRenderPlatform>
 where
-    T: Content<P> + ?Sized,
+    T: ?Sized,
 {
     internal: WidgetInternal<P, T>,
 }
 
 impl<T, P, Data> Adaptable<Data> for Widget<T, P>
 where
-    P: 'static,
-    T: Content<P> + Adaptable<Data>,
+    T: Adaptable<Data>,
 {
     fn adapt(&mut self, data: &Data) {
         self.internal.content.adapt(data);
@@ -64,8 +65,7 @@ where
 
 impl<T, P> Default for Widget<T, P>
 where
-    P: 'static,
-    T: Content<P> + Default + ?Sized,
+    T: Default,
 {
     fn default() -> Self {
         Self {
@@ -95,20 +95,55 @@ where
     }
 }
 
-impl<P, T> Widget<T, P>
-where
-    P: 'static,
-    T: Content<P>,
-{
+// Constructors
+impl<T, P> Widget<T, P> {
+    pub fn new(content: T) -> Self {
+        Widget {
+            internal: WidgetInternal {
+                rect: WidgetRect::default(),
+                content,
+                _platform: std::marker::PhantomData,
+            },
+        }
+    }
+
+    pub fn new_with_rect<R>(content: T, rect: &R) -> Self
+    where
+        R: ?Sized + Rect,
+    {
+        Widget {
+            internal: WidgetInternal {
+                rect: WidgetRect::external_from(rect),
+                content,
+                _platform: std::marker::PhantomData,
+            },
+        }
+    }
+
+    /// Create a Widget with a specified initial position and size
+    pub fn default_with_rect<R>(rect: &R) -> Self
+    where
+        T: Default,
+        R: ?Sized + Rect,
+    {
+        Widget {
+            internal: WidgetInternal {
+                rect: WidgetRect::external_from(rect),
+                content: T::default(),
+                _platform: std::marker::PhantomData,
+            },
+        }
+    }
+
     /// Create a new widget, populating it's content using the adaptable
     /// trait.
     pub fn create_from<Data>(data: &Data) -> Self
     where
         T: Adaptable<Data>,
+        Data: ?Sized,
     {
         Widget {
             internal: WidgetInternal {
-                initialized: false,
                 rect: WidgetRect::default(),
                 content: Adaptable::from(data),
                 _platform: std::marker::PhantomData,
@@ -121,18 +156,24 @@ where
     pub fn create_with_rect<Data, R>(data: &Data, rect: &R) -> Self
     where
         T: Adaptable<Data>,
-        R: Rect,
+        Data: ?Sized,
+        R: ?Sized + Rect,
     {
         Widget {
             internal: WidgetInternal {
-                initialized: false,
                 rect: WidgetRect::external_from(rect),
                 content: Adaptable::from(data),
                 _platform: std::marker::PhantomData,
             },
         }
     }
+}
 
+impl<P, T> Widget<T, P>
+where
+    P: 'static,
+    T: Content<P>,
+{
     pub(crate) fn pointer_event(
         this: &mut Self,
         event: &mut PointerEvent,
@@ -198,28 +239,9 @@ where
     }
 }
 
-impl<P, T> Widget<T, P>
-where
-    P: 'static,
-    T: Content<P> + Default,
-{
-    /// Create a Widget with a specified initial position and size
-    pub fn default_with_rect<R: Rect>(rect: &R) -> Self {
-        Widget {
-            internal: WidgetInternal {
-                initialized: false,
-                rect: WidgetRect::external_from(rect),
-                content: T::default(),
-                _platform: std::marker::PhantomData,
-            },
-        }
-    }
-}
-
 impl<P, T> Rect for Widget<T, P>
 where
-    P: 'static,
-    T: Content<P>,
+    T: ?Sized,
 {
     fn x(&self) -> Dim {
         self.internal.rect.x()

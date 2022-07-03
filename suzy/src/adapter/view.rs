@@ -3,7 +3,7 @@
 
 use crate::pointer::PointerId;
 use crate::watch::WatchedMeta;
-use crate::widget::{self, UniqueHandle, Widget};
+use crate::widget::{self, UniqueHandle};
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
 
@@ -101,7 +101,7 @@ where
     /// to listen to events from the content Widgets.
     pub fn watch_each_child(
         &self,
-    ) -> impl Iterator<Item = &Widget<Content, Platform>> {
+    ) -> impl Iterator<Item = &widget::Ephemeral<Content, Platform>> {
         self.inner.watch_each_child()
     }
 }

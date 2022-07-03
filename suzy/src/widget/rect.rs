@@ -95,7 +95,7 @@ impl WidgetRect {
         self.y.mut_external(f)
     }
 
-    pub(super) fn external_from<T: Rect>(rect: &T) -> Self {
+    pub(super) fn external_from<T: ?Sized + Rect>(rect: &T) -> Self {
         Self {
             x: Watched::new(rect.x().into()),
             y: Watched::new(rect.y().into()),

@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    internal::WidgetInternal, AnonWidget, Desc, Widget, WidgetGraphic,
+    internal::WidgetInternal, Desc, Ephemeral, Widget, WidgetGraphic,
     WidgetRect,
 };
 
@@ -35,10 +35,10 @@ macro_rules! impl_empty {
     ($T:ident; $P:ident; iter_children) => {
         fn iter_children<F, Child>(&mut self, _iter_fn: F)
         where
-            F: for<'iter_children> FnOnce(
+            F: for<'iter_children> Fn(
                 &'iter_children mut $T,
             ) -> Box<
-                dyn 'iter_children + Iterator<Item = &'iter_children mut Widget<Child, $P>>,
+                dyn 'iter_children + Iterator<Item = &'iter_children mut Ephemeral<Child, $P>>,
             >,
             Child: super::Content<$P> {}
     };
@@ -93,25 +93,27 @@ where
 
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
-        F: for<'b> FnOnce(
+        F: 'static,
+        F: for<'b> Fn(
             &'b mut Leaf,
         ) -> Box<
-            dyn 'b + Iterator<Item = &'b mut Widget<Child, Plat>>,
+            dyn 'b + Iterator<Item = &'b mut Ephemeral<Child, Plat>>,
         >,
         Child: super::Content<Plat>,
     {
-        todo!()
-        /*
+        use crate::watch::{DefaultOwner, WatchedMeta};
         let getter = self.getter.clone();
-        self.init.watch_for_new_child(|wid_int| {
+        let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
+        self.init.watch_for_new_child(move |wid_int| {
+            maybe_more.watched_auto();
             let content = getter(&mut wid_int.content);
-            let mut iter = iter_fn(content);
-            iter.filter_map(|wid| {
-                (!wid.internal.initialized).then_some(wid.internal)
-            })
-            .next()
+            let holder =
+                iter_fn(content).filter_map(|e| e.uninit_holder()).next();
+            if holder.is_some() {
+                maybe_more.trigger_external();
+            }
+            holder
         });
-        */
     }
 
     fn bare_child<F, Child>(&mut self, getter: F)
@@ -155,15 +157,18 @@ where
 
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
-        F: for<'i> FnOnce(
+        F: for<'i> Fn(
             &'i mut T,
         ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Widget<Child, P>>,
+            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child, P>>,
         >,
         Child: super::Content<P>,
     {
-        for child in iter_fn(self.content) {
-            Widget::draw(child, self.ctx);
+        let Self { content, ctx } = self;
+        for child in iter_fn(content) {
+            child.access_mut(|widget| {
+                Widget::draw(widget, ctx);
+            });
         }
     }
 
@@ -205,16 +210,22 @@ where
 
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
-        F: for<'i> FnOnce(
+        F: for<'i> Fn(
             &'i mut T,
         ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Widget<Child, P>>,
+            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child, P>>,
         >,
         Child: super::Content<P>,
     {
-        for child in iter_fn(self.content) {
-            if !*self.handled {
-                *self.handled = Widget::pointer_event(child, self.event);
+        let Self {
+            content,
+            event,
+            handled,
+        } = self;
+        for child in iter_fn(content) {
+            if !**handled {
+                **handled = child
+                    .access_mut(|widget| Widget::pointer_event(widget, event));
             }
         }
     }

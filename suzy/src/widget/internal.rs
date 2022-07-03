@@ -10,9 +10,8 @@ use super::WidgetRect;
 
 pub(super) struct WidgetInternal<P, T>
 where
-    T: super::Content<P> + ?Sized,
+    T: ?Sized,
 {
-    pub(super) initialized: bool,
     pub(super) rect: WidgetRect,
     pub(super) _platform: std::marker::PhantomData<P>,
     pub(super) content: T,
@@ -20,11 +19,10 @@ where
 
 impl<P, T> Default for WidgetInternal<P, T>
 where
-    T: super::Content<P> + Default + ?Sized,
+    T: Default,
 {
     fn default() -> Self {
         Self {
-            initialized: false,
             rect: WidgetRect::default(),
             _platform: std::marker::PhantomData,
             content: T::default(),
@@ -42,9 +40,6 @@ where
             init: &mut init,
             getter: |x| x,
             _marker: std::marker::PhantomData,
-        });
-        init.watch(|this| {
-            this.initialized = true;
         });
     }
 }

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use crate::dims::Rect;
 use crate::watch::WatchedMeta;
-use crate::widget::{self, Widget, WidgetRect};
+use crate::widget::{self, WidgetRect};
 
 use super::Adaptable;
 
@@ -84,8 +84,8 @@ where
     Layout: AdapterLayout,
     Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
-    active: HashMap<Layout::ElementKey, Widget<Content, Platform>>,
-    inactive: Vec<Widget<Content, Platform>>,
+    active: HashMap<Layout::ElementKey, widget::Ephemeral<Content, Platform>>,
+    inactive: Vec<widget::Ephemeral<Content, Platform>>,
     child_flag: WatchedMeta<'static>,
     position: (f32, f32),
     rest_position: (f32, f32),
@@ -121,7 +121,7 @@ where
 
     pub fn watch_each_child(
         &self,
-    ) -> impl Iterator<Item = &Widget<Content, Platform>> {
+    ) -> impl Iterator<Item = &widget::Ephemeral<Content, Platform>> {
         self.child_flag.watched_auto();
         self.active.values().chain(&self.inactive)
     }
@@ -140,7 +140,8 @@ where
 
     pub fn active_children(
         &mut self,
-    ) -> impl Iterator<Item = &mut Widget<Content, Platform>> {
+    ) -> impl Iterator<Item = &mut widget::Ephemeral<Content, Platform>> {
+        self.child_flag.watched_auto();
         self.active.iter_mut().map(|(_k, child)| child)
     }
 
@@ -157,7 +158,7 @@ where
 {
     rect: &'a WidgetRect,
     data: &'a mut AdapterLayoutData<Layout, Content, Platform>,
-    prev: HashMap<Layout::ElementKey, Widget<Content, Platform>>,
+    prev: HashMap<Layout::ElementKey, widget::Ephemeral<Content, Platform>>,
 }
 
 impl<'a, Layout, Content, Platform> AdapterLayoutInterface<Layout>
@@ -168,7 +169,7 @@ where
     Platform: 'static,
 {
     type Bounds = WidgetRect;
-    type Element = Widget<Content, Platform>;
+    type Element = widget::Ephemeral<Content, Platform>;
 
     fn reference_position(&self) -> (f32, f32) {
         self.data.position
