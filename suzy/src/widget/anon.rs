@@ -24,7 +24,7 @@ mod private {
         fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
     }
 
-    impl<P, T> Widget<P> for super::Widget<T, P>
+    impl<P, T> Widget<P> for super::Widget<T>
     where
         Self: 'static,
         T: Content<P>,
@@ -62,7 +62,7 @@ mod private {
 /// a heterogeneous collection of Widgets.
 pub trait AnonWidget<P = DefaultRenderPlatform>: private::Widget<P> {}
 
-impl<P, T> AnonWidget<P> for Widget<T, P>
+impl<P, T> AnonWidget<P> for Widget<T>
 where
     Self: 'static,
     T: Content<P>,
@@ -71,7 +71,7 @@ where
 
 impl<P: 'static> dyn AnonWidget<P> {
     /// Returns the widget if its content is of type `T`.
-    pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T, P>>
+    pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T>>
     where
         T: Content<P>,
     {
@@ -79,7 +79,7 @@ impl<P: 'static> dyn AnonWidget<P> {
     }
 
     /// Returns a reference to the widget if its content is of type `T`.
-    pub fn downcast_widget_ref<T>(&self) -> Option<&Widget<T, P>>
+    pub fn downcast_widget_ref<T>(&self) -> Option<&Widget<T>>
     where
         T: Content<P>,
     {
@@ -88,7 +88,7 @@ impl<P: 'static> dyn AnonWidget<P> {
 
     /// Returns a mutable reference to the widget if its content is of
     /// type `T`.
-    pub fn downcast_widget_mut<T>(&mut self) -> Option<&mut Widget<T, P>>
+    pub fn downcast_widget_mut<T>(&mut self) -> Option<&mut Widget<T>>
     where
         T: Content<P>,
     {

@@ -6,20 +6,20 @@ use std::{
     rc::Rc,
 };
 
-use crate::{adapter::Adaptable, dims::Rect, platform::DefaultRenderPlatform};
+use crate::{adapter::Adaptable, dims::Rect};
 
 use super::Widget;
 
-struct Inner<T: ?Sized, P> {
+struct Inner<T: ?Sized> {
     initialized: Cell<bool>,
-    widget: RefCell<Widget<T, P>>,
+    widget: RefCell<Widget<T>>,
 }
 
-pub struct Ephemeral<T: ?Sized, P = DefaultRenderPlatform> {
-    ptr: Rc<Inner<T, P>>,
+pub struct Ephemeral<T: ?Sized> {
+    ptr: Rc<Inner<T>>,
 }
 
-impl<T, P, Data> Adaptable<Data> for Ephemeral<T, P>
+impl<T, Data> Adaptable<Data> for Ephemeral<T>
 where
     T: Adaptable<Data>,
 {
@@ -37,7 +37,7 @@ where
     }
 }
 
-impl<T, P> Default for Ephemeral<T, P>
+impl<T> Default for Ephemeral<T>
 where
     T: Default,
 {
@@ -52,8 +52,8 @@ where
 }
 
 // Constructors
-impl<T, P> Ephemeral<T, P> {
-    fn from_widget(widget: Widget<T, P>) -> Self {
+impl<T> Ephemeral<T> {
+    fn from_widget(widget: Widget<T>) -> Self {
         Self {
             ptr: Rc::new(Inner {
                 initialized: Cell::new(false),
@@ -99,13 +99,13 @@ impl<T, P> Ephemeral<T, P> {
     }
 }
 
-impl<T, P> Ephemeral<T, P>
+impl<T> Ephemeral<T>
 where
     T: ?Sized,
 {
     pub fn access<F, R>(&self, f: F) -> R
     where
-        F: FnOnce(&Widget<T, P>) -> R,
+        F: FnOnce(&Widget<T>) -> R,
     {
         let wid_ref = self.ptr.widget.borrow();
         f(&*wid_ref)
@@ -113,23 +113,24 @@ where
 
     pub fn access_mut<F, R>(&mut self, f: F) -> R
     where
-        F: FnOnce(&mut Widget<T, P>) -> R,
+        F: FnOnce(&mut Widget<T>) -> R,
     {
         let mut wid_ref = self.ptr.widget.borrow_mut();
         f(&mut *wid_ref)
     }
 
-    pub(super) fn uninit_holder(&self) -> Option<EphemeralHolder<T, P>> {
+    pub(super) fn uninit_holder<P>(&self) -> Option<EphemeralHolder<T, P>> {
         (!self.ptr.initialized.get()).then(|| {
             self.ptr.initialized.set(true);
             EphemeralHolder {
                 ptr: Rc::downgrade(&self.ptr),
+                marker: std::marker::PhantomData,
             }
         })
     }
 }
 
-impl<T, P> Rect for Ephemeral<T, P>
+impl<T> Rect for Ephemeral<T>
 where
     T: ?Sized,
 {
@@ -168,7 +169,8 @@ mod holder {
         widget,
     };
     pub(in crate::widget) struct EphemeralHolder<T: ?Sized, P> {
-        pub(super) ptr: Weak<Inner<T, P>>,
+        pub(super) ptr: Weak<Inner<T>>,
+        pub(super) marker: std::marker::PhantomData<fn() -> P>,
     }
 
     impl<T, P> Clone for EphemeralHolder<T, P>
@@ -177,16 +179,20 @@ mod holder {
     {
         fn clone(&self) -> Self {
             let ptr = Weak::clone(&self.ptr);
-            Self { ptr }
+            let marker = std::marker::PhantomData;
+            Self { ptr, marker }
         }
     }
 
     impl<T, P> WatcherHolder<'static, DefaultOwner> for EphemeralHolder<T, P>
     where
-        T: widget::Content<P>,
+        T: ?Sized + widget::Content<P>,
         P: 'static,
     {
-        type Content = widget::WidgetInternal<P, T>;
+        type Content = widget::internal::WatcherImpl<
+            widget::internal::WidgetInternal<T>,
+            P,
+        >;
 
         fn get_mut<F, R>(&self, _owner: &mut DefaultOwner, f: F) -> Option<R>
         where
@@ -194,7 +200,7 @@ mod holder {
         {
             self.ptr.upgrade().map(|strong| {
                 let mut wid_ref = strong.widget.borrow_mut();
-                f(&mut wid_ref.internal)
+                f(wid_ref.internal.as_watcher())
             })
         }
     }

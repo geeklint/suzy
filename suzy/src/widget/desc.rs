@@ -23,7 +23,7 @@ where
     /// Register a child of this widget.
     fn child<F, Child>(&mut self, map_fn: F)
     where
-        F: 'static + Clone + FnOnce(&mut T) -> &mut Widget<Child, P>,
+        F: 'static + Clone + FnOnce(&mut T) -> &mut Widget<Child>,
         Child: super::Content<P>;
 
     /// Register a graphic member of this widget.
@@ -63,7 +63,7 @@ where
         F: for<'a> Fn(
             &'a mut T,
         ) -> Box<
-            dyn 'a + Iterator<Item = &'a mut Ephemeral<Child, P>>,
+            dyn 'a + Iterator<Item = &'a mut Ephemeral<Child>>,
         >,
         Child: super::Content<P>;
 

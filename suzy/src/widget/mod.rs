@@ -10,7 +10,7 @@ use crate::{
     adapter::Adaptable,
     dims::{Dim, Rect},
     graphics::DrawContext,
-    platform::{DefaultRenderPlatform, RenderPlatform},
+    platform::RenderPlatform,
     pointer::PointerEvent,
 };
 
@@ -43,14 +43,14 @@ pub use rect::WidgetRect;
 pub use unique_handle::{UniqueHandle, UniqueHandleId};
 
 /// A basic structure to wrap some data and turn it into a widget.
-pub struct Widget<T, P = DefaultRenderPlatform>
+pub struct Widget<T>
 where
     T: ?Sized,
 {
-    internal: WidgetInternal<P, T>,
+    internal: WidgetInternal<T>,
 }
 
-impl<T, P, Data> Adaptable<Data> for Widget<T, P>
+impl<T, Data> Adaptable<Data> for Widget<T>
 where
     T: Adaptable<Data>,
 {
@@ -63,7 +63,7 @@ where
     }
 }
 
-impl<T, P> Default for Widget<T, P>
+impl<T> Default for Widget<T>
 where
     T: Default,
 {
@@ -74,35 +74,26 @@ where
     }
 }
 
-impl<T, P> Deref for Widget<T, P>
-where
-    P: 'static,
-    T: Content<P>,
-{
+impl<T> Deref for Widget<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &self.internal.content
     }
 }
 
-impl<T, P> DerefMut for Widget<T, P>
-where
-    P: 'static,
-    T: Content<P>,
-{
+impl<T> DerefMut for Widget<T> {
     fn deref_mut(&mut self) -> &mut T {
         &mut self.internal.content
     }
 }
 
 // Constructors
-impl<T, P> Widget<T, P> {
+impl<T> Widget<T> {
     pub fn new(content: T) -> Self {
         Widget {
             internal: WidgetInternal {
                 rect: WidgetRect::default(),
                 content,
-                _platform: std::marker::PhantomData,
             },
         }
     }
@@ -115,7 +106,6 @@ impl<T, P> Widget<T, P> {
             internal: WidgetInternal {
                 rect: WidgetRect::external_from(rect),
                 content,
-                _platform: std::marker::PhantomData,
             },
         }
     }
@@ -130,7 +120,6 @@ impl<T, P> Widget<T, P> {
             internal: WidgetInternal {
                 rect: WidgetRect::external_from(rect),
                 content: T::default(),
-                _platform: std::marker::PhantomData,
             },
         }
     }
@@ -146,7 +135,6 @@ impl<T, P> Widget<T, P> {
             internal: WidgetInternal {
                 rect: WidgetRect::default(),
                 content: Adaptable::from(data),
-                _platform: std::marker::PhantomData,
             },
         }
     }
@@ -163,61 +151,24 @@ impl<T, P> Widget<T, P> {
             internal: WidgetInternal {
                 rect: WidgetRect::external_from(rect),
                 content: Adaptable::from(data),
-                _platform: std::marker::PhantomData,
             },
+        }
+    }
+
+    pub(crate) fn into_root<P>(self) -> RootWidget<Self, P> {
+        RootWidget {
+            platform: std::marker::PhantomData,
+            widget: self,
         }
     }
 }
 
-impl<P, T> Widget<T, P>
-where
-    P: 'static,
-    T: Content<P>,
-{
-    pub(crate) fn pointer_event(
-        this: &mut Self,
-        event: &mut PointerEvent,
-    ) -> bool {
-        let wid_int = &mut this.internal;
-        let mut extra = WidgetExtra {
-            rect: &mut wid_int.rect,
-        };
-        let content = &mut wid_int.content;
-        T::pointer_event_before(content, &mut extra, event)
-            || {
-                let mut handled_by_child = false;
-                T::desc(PointerEventChildReceiver {
-                    content,
-                    event,
-                    handled: &mut handled_by_child,
-                });
-                handled_by_child
-            }
-            || T::pointer_event(content, &mut extra, event)
-    }
-
-    pub(crate) fn pointer_event_self(
-        this: &mut Self,
-        event: &mut PointerEvent,
-    ) -> bool {
-        let wid_int = &mut this.internal;
-        let mut extra = WidgetExtra {
-            rect: &mut wid_int.rect,
-        };
-        T::pointer_event(&mut wid_int.content, &mut extra, event)
-    }
-
-    pub(crate) fn into_root(self) -> RootWidget<Self> {
-        RootWidget { widget: self }
-    }
-}
-
-impl<P, T> Widget<T, P>
-where
-    P: RenderPlatform,
-    T: Content<P>,
-{
-    pub(crate) fn draw(this: &mut Self, ctx: &mut DrawContext<P>) {
+impl<T: ?Sized> Widget<T> {
+    pub(crate) fn draw<P>(this: &mut Self, ctx: &mut DrawContext<P>)
+    where
+        T: Content<P>,
+        P: RenderPlatform,
+    {
         let wid_int = &mut this.internal;
         let content = &mut wid_int.content;
         T::desc(DrawGraphicBeforeReceiver { content, ctx });
@@ -237,9 +188,48 @@ where
             });
         }
     }
+
+    pub(crate) fn pointer_event<P>(
+        this: &mut Self,
+        event: &mut PointerEvent,
+    ) -> bool
+    where
+        T: Content<P>,
+    {
+        let wid_int = &mut this.internal;
+        let mut extra = WidgetExtra {
+            rect: &mut wid_int.rect,
+        };
+        let content = &mut wid_int.content;
+        T::pointer_event_before(content, &mut extra, event)
+            || {
+                let mut handled_by_child = false;
+                T::desc(PointerEventChildReceiver {
+                    content,
+                    event,
+                    handled: &mut handled_by_child,
+                });
+                handled_by_child
+            }
+            || T::pointer_event(content, &mut extra, event)
+    }
+
+    pub(crate) fn pointer_event_self<P>(
+        this: &mut Self,
+        event: &mut PointerEvent,
+    ) -> bool
+    where
+        T: Content<P>,
+    {
+        let wid_int = &mut this.internal;
+        let mut extra = WidgetExtra {
+            rect: &mut wid_int.rect,
+        };
+        T::pointer_event(&mut wid_int.content, &mut extra, event)
+    }
 }
 
-impl<P, T> Rect for Widget<T, P>
+impl<T> Rect for Widget<T>
 where
     T: ?Sized,
 {
@@ -265,16 +255,17 @@ where
     }
 }
 
-pub(crate) struct RootWidget<W: ?Sized> {
+pub(crate) struct RootWidget<W: ?Sized, P> {
+    pub platform: std::marker::PhantomData<fn() -> P>,
     pub widget: W,
 }
 
-impl<T, P> crate::watch::Watcher<'static> for RootWidget<Widget<T, P>>
+impl<T, P> crate::watch::Watcher<'static> for RootWidget<Widget<T>, P>
 where
     P: 'static,
     T: Content<P>,
 {
     fn init(mut init: impl crate::watch::WatcherInit<'static, Self>) {
-        init.init_child(|this| &mut this.widget.internal);
+        init.init_child(|this| this.widget.internal.as_watcher());
     }
 }

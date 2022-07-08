@@ -5,10 +5,11 @@ use std::rc::Rc;
 
 use drying_paint::{Watched, WatchedCell};
 
-use crate::platform::DefaultRenderPlatform;
-use crate::pointer::{PointerAction, PointerEvent};
-use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
-use crate::widget::{self, UniqueHandle, Widget, WidgetExtra};
+use crate::{
+    pointer::{PointerAction, PointerEvent},
+    selectable::{Selectable, SelectionState, SelectionStateV1},
+    widget::{self, UniqueHandle, Widget, WidgetExtra},
+};
 
 /// A group of toggle buttons make members of the group mutually exclusive.
 ///
@@ -265,5 +266,4 @@ impl<T: Default, V> Default for ToggleButtonContent<T, V> {
 }
 
 /// A button which remains in an active state after being selected.
-pub type ToggleButton<T, V = (), P = DefaultRenderPlatform> =
-    Widget<ToggleButtonContent<T, V>, P>;
+pub type ToggleButton<T, V = ()> = Widget<ToggleButtonContent<T, V>>;

@@ -8,10 +8,7 @@ use crate::{
     watch,
 };
 
-use super::{
-    internal::WidgetInternal, Desc, Ephemeral, Widget, WidgetGraphic,
-    WidgetRect,
-};
+use super::{Desc, Ephemeral, Widget, WidgetGraphic, WidgetRect};
 
 macro_rules! impl_empty {
     ($T:ident; $P:ident; watch) => {
@@ -22,7 +19,7 @@ macro_rules! impl_empty {
     ($T:ident; $P:ident; child) => {
         fn child<F, Child>(&mut self, _map_fn: F)
         where
-            F: FnOnce(&mut $T) -> &mut Widget<Child, $P>,
+            F: FnOnce(&mut $T) -> &mut Widget<Child>,
             Child: super::Content<$P> {}
     };
     ($T:ident; $P:ident; graphic) => {
@@ -38,7 +35,7 @@ macro_rules! impl_empty {
             F: for<'iter_children> Fn(
                 &'iter_children mut $T,
             ) -> Box<
-                dyn 'iter_children + Iterator<Item = &'iter_children mut Ephemeral<Child, $P>>,
+                dyn 'iter_children + Iterator<Item = &'iter_children mut Ephemeral<Child>>,
             >,
             Child: super::Content<$P> {}
     };
@@ -51,7 +48,9 @@ macro_rules! impl_empty {
 
 pub(super) struct WidgetInitImpl<'a, Init, Getter, Base, Leaf>
 where
-    Getter: 'static + Clone + Fn(&mut Base) -> &mut Leaf,
+    Base: ?Sized,
+    Leaf: ?Sized,
+    Getter: 'static + Clone + Fn(&mut Base) -> (&mut Leaf, &mut WidgetRect),
 {
     pub init: &'a mut Init,
     pub getter: Getter,
@@ -61,11 +60,11 @@ where
 impl<'a, Init, Base, Leaf, Plat, Getter> Desc<Leaf, Plat>
     for WidgetInitImpl<'a, Init, Getter, Base, Leaf>
 where
-    Init: watch::WatcherInit<'static, WidgetInternal<Plat, Base>>,
-    Base: super::Content<Plat>,
-    Leaf: super::Content<Plat>,
+    Init: watch::WatcherInit<'static, Base>,
+    Base: ?Sized,
+    Leaf: ?Sized + super::Content<Plat>,
     Plat: 'static,
-    Getter: 'static + Clone + Fn(&mut Base) -> &mut Leaf,
+    Getter: 'static + Clone + Fn(&mut Base) -> (&mut Leaf, &mut WidgetRect),
 {
     impl_empty! { Leaf; Plat; graphic }
 
@@ -74,20 +73,22 @@ where
         F: Fn(&mut Leaf, &mut WidgetRect) + 'static,
     {
         let getter = self.getter.clone();
-        self.init.watch(move |wid_int| {
-            let content = getter(&mut wid_int.content);
-            (func)(content, &mut wid_int.rect);
+        self.init.watch(move |base| {
+            let (content, rect) = getter(base);
+            (func)(content, rect);
         });
     }
 
     fn child<F, Child>(&mut self, map_fn: F)
     where
-        F: 'static + Clone + FnOnce(&mut Leaf) -> &mut Widget<Child, Plat>,
+        F: 'static + Clone + FnOnce(&mut Leaf) -> &mut Widget<Child>,
         Child: super::Content<Plat>,
     {
         let getter = self.getter.clone();
-        self.init.init_child(move |wid_int| {
-            &mut (map_fn.clone())(getter(&mut wid_int.content)).internal
+        self.init.init_child(move |base| {
+            (map_fn.clone())(getter(base).0)
+                .internal
+                .as_watcher::<Plat>()
         });
     }
 
@@ -97,16 +98,16 @@ where
         F: for<'b> Fn(
             &'b mut Leaf,
         ) -> Box<
-            dyn 'b + Iterator<Item = &'b mut Ephemeral<Child, Plat>>,
+            dyn 'b + Iterator<Item = &'b mut Ephemeral<Child>>,
         >,
         Child: super::Content<Plat>,
     {
         use crate::watch::{DefaultOwner, WatchedMeta};
         let getter = self.getter.clone();
         let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
-        self.init.watch_for_new_child(move |wid_int| {
+        self.init.watch_for_new_child(move |base| {
             maybe_more.watched_auto();
-            let content = getter(&mut wid_int.content);
+            let (content, _rect) = getter(base);
             let holder =
                 iter_fn(content).filter_map(|e| e.uninit_holder()).next();
             if holder.is_some() {
@@ -124,7 +125,10 @@ where
         let current_getter = self.getter.clone();
         super::Content::desc(WidgetInitImpl {
             init: self.init,
-            getter: move |base| getter(current_getter(base)),
+            getter: move |base| {
+                let (base_content, rect) = current_getter(base);
+                (getter(base_content), rect)
+            },
             _marker: std::marker::PhantomData,
         });
     }
@@ -149,7 +153,7 @@ where
 
     fn child<F, Child>(&mut self, map_fn: F)
     where
-        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
+        F: FnOnce(&mut T) -> &mut Widget<Child>,
         Child: super::Content<P>,
     {
         Widget::draw(map_fn(self.content), self.ctx);
@@ -160,7 +164,7 @@ where
         F: for<'i> Fn(
             &'i mut T,
         ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child, P>>,
+            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
         >,
         Child: super::Content<P>,
     {
@@ -193,13 +197,12 @@ pub(super) struct PointerEventChildReceiver<'a, 'b, 'c, T: ?Sized> {
 impl<'a, 'b, 'c, T, P> Desc<T, P> for PointerEventChildReceiver<'a, 'b, 'c, T>
 where
     T: ?Sized + super::Content<P>,
-    P: 'static,
 {
     impl_empty! { T; P; watch graphic }
 
     fn child<F, Child>(&mut self, map_fn: F)
     where
-        F: FnOnce(&mut T) -> &mut Widget<Child, P>,
+        F: FnOnce(&mut T) -> &mut Widget<Child>,
         Child: super::Content<P>,
     {
         if !*self.handled {
@@ -213,7 +216,7 @@ where
         F: for<'i> Fn(
             &'i mut T,
         ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child, P>>,
+            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
         >,
         Child: super::Content<P>,
     {
@@ -245,7 +248,8 @@ where
 
 pub(super) struct DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
-    P: ?Sized + RenderPlatform,
+    T: ?Sized,
+    P: RenderPlatform,
 {
     pub content: &'a mut T,
     pub ctx: &'a mut DrawContext<'b, P>,
@@ -253,6 +257,7 @@ where
 
 impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicBeforeReceiver<'a, 'b, T, P>
 where
+    T: ?Sized,
     P: RenderPlatform,
 {
     impl_empty! { T; P; watch child iter_children }
@@ -279,6 +284,7 @@ where
 
 pub(super) struct DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
+    T: ?Sized,
     P: RenderPlatform,
 {
     pub content: &'a mut T,
@@ -288,6 +294,7 @@ where
 
 impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicUnorderedReceiver<'a, 'b, T, P>
 where
+    T: ?Sized,
     P: RenderPlatform,
 {
     impl_empty! { T; P; watch child iter_children }
@@ -319,6 +326,7 @@ where
 
 pub(super) struct DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
+    T: ?Sized,
     P: RenderPlatform,
 {
     pub content: &'a mut T,
@@ -329,6 +337,7 @@ where
 
 impl<'a, 'b, T, P> Desc<T, P> for DrawGraphicOrderedReceiver<'a, 'b, T, P>
 where
+    T: ?Sized,
     P: RenderPlatform,
 {
     impl_empty! { T; P; watch child iter_children }

@@ -79,23 +79,20 @@ pub trait AdapterLayout {
     ) -> Option<(f32, f32)>;
 }
 
-pub(super) struct AdapterLayoutData<Layout, Content, Platform>
+pub(super) struct AdapterLayoutData<Layout, Content>
 where
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
-    active: HashMap<Layout::ElementKey, widget::Ephemeral<Content, Platform>>,
-    inactive: Vec<widget::Ephemeral<Content, Platform>>,
+    active: HashMap<Layout::ElementKey, widget::Ephemeral<Content>>,
+    inactive: Vec<widget::Ephemeral<Content>>,
     child_flag: WatchedMeta<'static>,
     position: (f32, f32),
     rest_position: (f32, f32),
 }
 
-impl<Layout, Content, Platform> Default
-    for AdapterLayoutData<Layout, Content, Platform>
+impl<Layout, Content> Default for AdapterLayoutData<Layout, Content>
 where
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
     fn default() -> Self {
         AdapterLayoutData {
@@ -108,11 +105,10 @@ where
     }
 }
 
-impl<Layout, Content, Platform> AdapterLayoutData<Layout, Content, Platform>
+impl<Layout, Content> AdapterLayoutData<Layout, Content>
 where
     Self: 'static,
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
     pub fn clear_active_children(&mut self) {
         let old = std::mem::take(&mut self.active);
@@ -121,7 +117,7 @@ where
 
     pub fn watch_each_child(
         &self,
-    ) -> impl Iterator<Item = &widget::Ephemeral<Content, Platform>> {
+    ) -> impl Iterator<Item = &widget::Ephemeral<Content>> {
         self.child_flag.watched_auto();
         self.active.values().chain(&self.inactive)
     }
@@ -129,7 +125,10 @@ where
     pub fn get_interface<'a>(
         &'a mut self,
         rect: &'a WidgetRect,
-    ) -> impl AdapterLayoutInterface<Layout> + 'a {
+    ) -> impl AdapterLayoutInterface<Layout> + 'a
+    where
+        Content: Adaptable<Layout::ElementData>,
+    {
         let prev = std::mem::take(&mut self.active);
         Interface {
             rect,
@@ -140,7 +139,7 @@ where
 
     pub fn active_children(
         &mut self,
-    ) -> impl Iterator<Item = &mut widget::Ephemeral<Content, Platform>> {
+    ) -> impl Iterator<Item = &mut widget::Ephemeral<Content>> {
         self.child_flag.watched_auto();
         self.active.iter_mut().map(|(_k, child)| child)
     }
@@ -151,25 +150,23 @@ where
     }
 }
 
-struct Interface<'a, Layout, Content, Platform>
+struct Interface<'a, Layout, Content>
 where
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
     rect: &'a WidgetRect,
-    data: &'a mut AdapterLayoutData<Layout, Content, Platform>,
-    prev: HashMap<Layout::ElementKey, widget::Ephemeral<Content, Platform>>,
+    data: &'a mut AdapterLayoutData<Layout, Content>,
+    prev: HashMap<Layout::ElementKey, widget::Ephemeral<Content>>,
 }
 
-impl<'a, Layout, Content, Platform> AdapterLayoutInterface<Layout>
-    for Interface<'a, Layout, Content, Platform>
+impl<'a, Layout, Content> AdapterLayoutInterface<Layout>
+    for Interface<'a, Layout, Content>
 where
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
-    Platform: 'static,
+    Content: Adaptable<Layout::ElementData>,
 {
     type Bounds = WidgetRect;
-    type Element = widget::Ephemeral<Content, Platform>;
+    type Element = widget::Ephemeral<Content>;
 
     fn reference_position(&self) -> (f32, f32) {
         self.data.position
@@ -225,11 +222,9 @@ where
     }
 }
 
-impl<'a, Layout, Content, Platform> Drop
-    for Interface<'a, Layout, Content, Platform>
+impl<'a, Layout, Content> Drop for Interface<'a, Layout, Content>
 where
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
     fn drop(&mut self) {
         let remaining = std::mem::take(&mut self.prev);

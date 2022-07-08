@@ -25,7 +25,7 @@ pub use builder::AppBuilder;
 pub use tester::AppTesterInterface;
 pub(crate) use values::{get_cell_size, AppValues};
 
-type RootHolder<P> = Rc<RefCell<RootWidget<dyn AnonWidget<P>>>>;
+type RootHolder<P> = Rc<RefCell<RootWidget<dyn AnonWidget<P>, P>>>;
 
 /// A type which contains the context in which widgets run.
 ///
@@ -93,7 +93,7 @@ impl<P: Platform> App<P> {
     /// They are drawn in the order they are added to the app.
     /// They recieve pointer events in reverse order of when they are added to
     /// the app.
-    pub fn add_root<T>(&mut self, mut widget: Widget<T, P::Renderer>)
+    pub fn add_root<T>(&mut self, mut widget: Widget<T>)
     where
         T: widget::Content<P::Renderer>,
     {

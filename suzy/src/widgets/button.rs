@@ -166,10 +166,8 @@ impl<T: Default> Default for ButtonBehavior<T> {
 /// A simple button.
 ///
 /// Use `Button::on_click` like a WatchedEvent to handle button clicks
-pub type Button<
-    T = DefaultButtonContent<DefaultRenderPlatform>,
-    P = DefaultRenderPlatform,
-> = Widget<ButtonBehavior<T>, P>;
+pub type Button<T = DefaultButtonContent<DefaultRenderPlatform>> =
+    Widget<ButtonBehavior<T>>;
 
 pub struct DefaultButtonContent<P>
 where

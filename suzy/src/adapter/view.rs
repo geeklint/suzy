@@ -62,12 +62,11 @@ impl PointerSet {
 }
 
 /// Base adapter view.
-pub struct AdapterView<Layout, Content, Platform>
+pub struct AdapterView<Layout, Content>
 where
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
-    inner: AdapterLayoutData<Layout, Content, Platform>,
+    inner: AdapterLayoutData<Layout, Content>,
     data_flag: WatchedMeta<'static>,
     position_flag: WatchedMeta<'static>,
     layout: Layout,
@@ -75,11 +74,10 @@ where
     handle: UniqueHandle,
 }
 
-impl<Layout, Content, Platform> AdapterView<Layout, Content, Platform>
+impl<Layout, Content> AdapterView<Layout, Content>
 where
     Self: 'static,
     Layout: AdapterLayout,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
     /// Get the data collection stored by the layout.
     pub fn data(&self) -> &Layout::Collection {
@@ -101,16 +99,14 @@ where
     /// to listen to events from the content Widgets.
     pub fn watch_each_child(
         &self,
-    ) -> impl Iterator<Item = &widget::Ephemeral<Content, Platform>> {
+    ) -> impl Iterator<Item = &widget::Ephemeral<Content>> {
         self.inner.watch_each_child()
     }
 }
 
-impl<Layout, Content, Platform> Default
-    for AdapterView<Layout, Content, Platform>
+impl<Layout, Content> Default for AdapterView<Layout, Content>
 where
     Layout: 'static + AdapterLayout + Default,
-    Content: widget::Content<Platform> + Adaptable<Layout::ElementData>,
 {
     fn default() -> Self {
         let layout = Layout::default();
@@ -126,7 +122,7 @@ where
 }
 
 impl<Layout, Content, Platform> widget::Content<Platform>
-    for AdapterView<Layout, Content, Platform>
+    for AdapterView<Layout, Content>
 where
     Self: 'static,
     Layout: AdapterLayout,

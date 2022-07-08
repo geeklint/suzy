@@ -8,39 +8,23 @@ use crate::{
 
 use super::WidgetRect;
 
-pub(super) struct WidgetInternal<P, T>
+pub(super) struct WidgetInternal<T>
 where
     T: ?Sized,
 {
     pub(super) rect: WidgetRect,
-    pub(super) _platform: std::marker::PhantomData<P>,
     pub(super) content: T,
 }
 
-impl<P, T> Default for WidgetInternal<P, T>
+impl<T> Default for WidgetInternal<T>
 where
     T: Default,
 {
     fn default() -> Self {
         Self {
             rect: WidgetRect::default(),
-            _platform: std::marker::PhantomData,
             content: T::default(),
         }
-    }
-}
-
-impl<P, T> watch::Watcher<'static> for WidgetInternal<P, T>
-where
-    T: super::Content<P>,
-    Self: 'static,
-{
-    fn init(mut init: impl watch::WatcherInit<'static, Self>) {
-        super::Content::desc(super::receivers::WidgetInitImpl {
-            init: &mut init,
-            getter: |x| x,
-            _marker: std::marker::PhantomData,
-        });
     }
 }
 
@@ -70,5 +54,37 @@ impl Rect for WidgetExtra<'_> {
         F: FnOnce(&mut Dim) -> R,
     {
         self.rect.y_mut(f)
+    }
+}
+
+#[repr(transparent)]
+pub(super) struct WatcherImpl<T: ?Sized, P> {
+    _platform: std::marker::PhantomData<fn() -> P>,
+    internal: T,
+}
+
+impl<T: ?Sized> WidgetInternal<T> {
+    pub fn as_watcher<P>(&mut self) -> &mut WatcherImpl<Self, P>
+    where
+        T: super::Content<P>,
+    {
+        let ptr = self as *mut WidgetInternal<T> as *mut WatcherImpl<Self, P>;
+        unsafe { &mut *ptr }
+    }
+}
+
+impl<T, P> watch::Watcher<'static> for WatcherImpl<WidgetInternal<T>, P>
+where
+    T: ?Sized + super::Content<P>,
+    Self: 'static,
+{
+    fn init(mut init: impl watch::WatcherInit<'static, Self>) {
+        super::Content::desc(super::receivers::WidgetInitImpl {
+            init: &mut init,
+            getter: |this: &mut Self| {
+                (&mut this.internal.content, &mut this.internal.rect)
+            },
+            _marker: std::marker::PhantomData,
+        });
     }
 }

@@ -12,9 +12,7 @@
 //! The Adaptable trait is the primary way for a Widget to update it's visuals
 //! in response to a change in an external data source.
 
-use crate::dims::Rect;
-use crate::platform::DefaultRenderPlatform;
-use crate::widget::Widget;
+use crate::{dims::Rect, widget::Widget};
 
 mod layout;
 mod view;
@@ -35,8 +33,8 @@ pub trait Adaptable<T: ?Sized> {
 }
 
 /// An adapter view which displays the contents of a Vec growing downwards.
-pub type DownwardVecAdapter<T, W, P = DefaultRenderPlatform> =
-    Widget<AdapterView<DownwardVecLayout<T>, W, P>, P>;
+pub type DownwardVecAdapter<T, W> =
+    Widget<AdapterView<DownwardVecLayout<T>, W>>;
 
 /// An adapter layout which lays out elements from a Vec growing downwards.
 #[derive(Default)]
