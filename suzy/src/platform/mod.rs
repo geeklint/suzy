@@ -49,11 +49,12 @@ pub trait Platform: 'static {
 
 /// A RenderPlatform provides tools to create Graphics.
 pub trait RenderPlatform: 'static {
+    type DrawPassInfo;
     /// The shared context passed along to draw calls.
-    type Context: 'static;
-
-    /// The parameters passed to draw calls.
-    type DrawParams: crate::graphics::DrawParams<Self::Context>;
+    type DrawContextBuilder: for<'a> crate::graphics::BuildDrawContext<
+        'a,
+        Self::DrawPassInfo,
+    >;
 
     /// The platform's texture primitive.
     type Texture: graphics::Texture + Default;

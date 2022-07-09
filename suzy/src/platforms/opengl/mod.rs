@@ -44,8 +44,8 @@ pub use window::Window;
 pub struct OpenGlRenderPlatform;
 
 impl crate::platform::RenderPlatform for OpenGlRenderPlatform {
-    type Context = OpenGlContext;
-    type DrawParams = drawparams::DrawParams;
+    type DrawPassInfo = ();
+    type DrawContextBuilder = fn(&mut ()) -> DrawContext<'_>;
 
     type Texture = Texture;
     type SlicedImage = SlicedImage;

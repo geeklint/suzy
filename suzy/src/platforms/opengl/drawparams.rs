@@ -3,17 +3,17 @@
 
 #![allow(missing_docs)]
 
-use crate::graphics;
 use crate::graphics::Color;
 
-use super::context::bindings::{
-    CONSTANT_COLOR, FUNC_ADD, FUNC_REVERSE_SUBTRACT, ONE, ONE_MINUS_SRC_ALPHA,
-    SRC_ALPHA, TEXTURE0, TEXTURE1, TEXTURE_2D,
+use super::{
+    context::bindings::{
+        CONSTANT_COLOR, FUNC_ADD, FUNC_REVERSE_SUBTRACT, ONE,
+        ONE_MINUS_SRC_ALPHA, SRC_ALPHA, TEXTURE0, TEXTURE1, TEXTURE_2D,
+    },
+    shader::Shader,
+    texture::Texture,
+    Mat4, OpenGlContext,
 };
-use super::shader::Shader;
-use super::texture::Texture;
-use super::Mat4;
-use super::OpenGlContext;
 
 pub(super) const MASK_LEVELS: u8 = 4;
 
@@ -213,10 +213,8 @@ impl DrawParams {
             );
         }
     }
-}
 
-impl graphics::DrawParams<OpenGlContext> for DrawParams {
-    fn apply_all(&mut self, ctx: &mut OpenGlContext) {
+    pub fn apply_all(&mut self, ctx: &mut OpenGlContext) {
         ctx.shaders.shader.make_current(&ctx.bindings, None);
         Shader::set_mat4(
             &ctx.bindings,
@@ -244,7 +242,11 @@ impl graphics::DrawParams<OpenGlContext> for DrawParams {
         );
     }
 
-    fn apply_change(current: &Self, new: &mut Self, ctx: &mut OpenGlContext) {
+    pub fn apply_change(
+        current: &Self,
+        new: &mut Self,
+        ctx: &mut OpenGlContext,
+    ) {
         if new.transform != current.transform {
             Shader::set_mat4(
                 &ctx.bindings,

@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::dims::Rect;
-use crate::graphics::{DrawContext, DrawPass, Graphic};
-use crate::widget::WidgetGraphic;
+use crate::{
+    dims::Rect,
+    graphics::{DrawContext, Graphic},
+    widget::WidgetGraphic,
+};
 
-use super::super::OpenGlRenderPlatform;
+use super::super::{DrawPass, OpenGlRenderPlatform};
 
 #[derive(Default)]
 pub struct MaskEffect<T: ?Sized> {

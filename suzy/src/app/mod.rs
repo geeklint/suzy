@@ -10,12 +10,14 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc, time};
 
 use drying_paint::{WatchContext, Watched};
 
-use crate::dims::{Dim, Rect, SimplePadding2d, SimpleRect};
-use crate::platform::{DefaultPlatform, Event, EventLoopState, Platform};
-use crate::pointer::{PointerEvent, PointerEventData, PointerId};
-use crate::widget::{self, AnonWidget, RootWidget, UniqueHandleId, Widget};
-use crate::window;
-use window::{Window, WindowEvent, WindowSettings};
+use crate::{
+    dims::{Dim, Rect, SimplePadding2d, SimpleRect},
+    graphics::PlatformDrawContext,
+    platform::{DefaultPlatform, Event, EventLoopState, Platform},
+    pointer::{PointerEvent, PointerEventData, PointerId},
+    widget::{self, AnonWidget, RootWidget, UniqueHandleId, Widget},
+    window::{Window, WindowEvent, WindowSettings},
+};
 
 mod builder;
 mod tester;
@@ -189,25 +191,16 @@ impl<P: Platform> App<P> {
 
     fn draw(&mut self) {
         let mut loop_count = 0;
-        let mut first_pass = true;
+        let mut pass_arg = None;
         loop {
-            let mut ctx = self.window.prepare_draw(first_pass);
-            let mut borrowed_roots: Vec<_> = self
-                .roots
-                .iter_mut()
-                .map(|root| root.borrow_mut())
-                .collect();
-            let iter = borrowed_roots.iter_mut().map(|boxed| {
-                let as_ref: &mut dyn AnonWidget<_> = &mut boxed.widget;
-                as_ref
-            });
-            let need_loop = ctx.draw(iter);
-            std::mem::drop(borrowed_roots);
-            std::mem::drop(ctx);
-            if !need_loop {
+            let mut ctx = self.window.prepare_draw(pass_arg);
+            for root in self.roots.iter_mut() {
+                root.borrow_mut().widget.draw(&mut ctx);
+            }
+            pass_arg = ctx.finish();
+            if pass_arg.is_none() {
                 break;
             }
-            first_pass = false;
             debug_assert!(
                 loop_count < 1024,
                 "render exceeded its loop count (possible infinite loop)",

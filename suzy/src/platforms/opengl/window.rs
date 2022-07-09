@@ -6,13 +6,15 @@
 use crate::graphics::Color;
 use crate::graphics::DrawContext;
 
-use super::context::bindings::types::*;
-use super::context::bindings::{
-    BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE_MINUS_SRC_ALPHA,
-    PACK_ALIGNMENT, RGBA, SRC_ALPHA, UNSIGNED_BYTE, VIEWPORT,
+use super::{
+    context::bindings::types::*,
+    context::bindings::{
+        BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE_MINUS_SRC_ALPHA,
+        PACK_ALIGNMENT, RGBA, SRC_ALPHA, UNSIGNED_BYTE, VIEWPORT,
+    },
+    drawparams::DrawParams,
+    {Mat4, OpenGlContext, OpenGlRenderPlatform},
 };
-use super::drawparams::DrawParams;
-use super::{Mat4, OpenGlContext, OpenGlRenderPlatform};
 
 /// opengl::Window provides a subset of the methods to implement the Window
 /// trait. It can be embedded in another window implementation which
@@ -62,7 +64,7 @@ impl Window {
         &mut self,
         screen_size: (f32, f32),
         first_pass: bool,
-    ) -> DrawContext<OpenGlRenderPlatform> {
+    ) -> DrawContext<'_, OpenGlRenderPlatform> {
         unsafe {
             self.ctx.bindings.Enable(BLEND);
             self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
@@ -72,7 +74,7 @@ impl Window {
             Mat4::translate(-1.0, -1.0)
                 * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1),
         );
-        DrawContext::new(&mut self.ctx, params, first_pass)
+        super::DrawContext::new(&mut self.ctx, params, first_pass)
     }
 
     /// Issue opengl call to clear the screen.

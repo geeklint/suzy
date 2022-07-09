@@ -164,7 +164,7 @@ impl<T> Widget<T> {
 }
 
 impl<T: ?Sized> Widget<T> {
-    pub(crate) fn draw<P>(this: &mut Self, ctx: &mut DrawContext<P>)
+    pub(crate) fn draw<P>(this: &mut Self, ctx: &mut DrawContext<'_, P>)
     where
         T: Content<P>,
         P: RenderPlatform,

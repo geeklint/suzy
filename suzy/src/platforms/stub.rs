@@ -29,7 +29,7 @@ pub struct StubRenderPlatform;
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
 #[derive(Default)]
-pub struct StubDrawParams;
+pub struct StubDrawContext;
 
 /// The stub platform is used as a placeholder when no other platforms are
 /// enabled.  All its methods will panic.
@@ -38,8 +38,8 @@ pub struct StubDrawParams;
 pub struct StubOpenglPlatform;
 
 impl crate::platform::RenderPlatform for StubRenderPlatform {
-    type Context = ();
-    type DrawParams = StubDrawParams;
+    type DrawPassInfo = ();
+    type DrawContextBuilder = fn(&mut ()) -> StubDrawContext;
 
     type Texture = StubTexture;
     type SlicedImage = StubSlicedImage;
@@ -48,11 +48,8 @@ impl crate::platform::RenderPlatform for StubRenderPlatform {
     type TextEdit = StubTextEdit;
 }
 
-impl crate::graphics::DrawParams<()> for StubDrawParams {
-    fn apply_all(&mut self, _ctx: &mut ()) {
-        stub!()
-    }
-    fn apply_change(_c: &Self, _n: &mut Self, _ctx: &mut ()) {
+impl crate::graphics::PlatformDrawContext<()> for StubDrawContext {
+    fn finish(self) -> Option<()> {
         stub!()
     }
 }
@@ -153,10 +150,7 @@ impl crate::window::Window<StubRenderPlatform> for StubWindow {
         stub!()
     }
 
-    fn prepare_draw(
-        &mut self,
-        _first_pass: bool,
-    ) -> crate::graphics::DrawContext<StubRenderPlatform> {
+    fn prepare_draw(&mut self, _first_pass: Option<()>) -> StubDrawContext {
         stub!()
     }
 
@@ -190,7 +184,7 @@ impl crate::window::Window<super::opengl::OpenGlRenderPlatform>
 
     fn prepare_draw(
         &mut self,
-        _first_pass: bool,
+        _first_pass: Option<()>,
     ) -> crate::graphics::DrawContext<super::opengl::OpenGlRenderPlatform>
     {
         stub!()

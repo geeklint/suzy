@@ -3,10 +3,11 @@
 
 //! Types associated with the creation and control of windows.
 
-use crate::graphics::Color;
-use crate::graphics::DrawContext;
-use crate::platform::RenderPlatform;
-use crate::pointer::PointerEventData;
+use crate::{
+    graphics::{Color, DrawContext},
+    platform::RenderPlatform,
+    pointer::PointerEventData,
+};
 
 /// An event that happened on a window.
 pub enum WindowEvent {
@@ -134,7 +135,10 @@ where
     fn flip(&mut self);
 
     /// Prepare to draw to this window, create a DrawContext.
-    fn prepare_draw(&mut self, first_pass: bool) -> DrawContext<P>;
+    fn prepare_draw(
+        &mut self,
+        pass_arg: Option<P::DrawPassInfo>,
+    ) -> DrawContext<'_, P>;
 
     /// Take a screenshot of the contents of window.
     fn take_screenshot(&self) -> Box<[u8]>;

@@ -7,14 +7,15 @@ use std::marker::PhantomData;
 
 use drying_paint::WatchedMeta;
 
-use crate::graphics::{DrawContext, DrawPass};
+use crate::graphics::DrawContext;
 
-use super::context::bindings::types::*;
-use super::context::bindings::{
-    ARRAY_BUFFER, DYNAMIC_DRAW, ELEMENT_ARRAY_BUFFER, STATIC_DRAW,
+use super::{
+    context::bindings::types::*,
+    context::bindings::{
+        ARRAY_BUFFER, DYNAMIC_DRAW, ELEMENT_ARRAY_BUFFER, STATIC_DRAW,
+    },
+    DrawPass, OpenGlBindings, OpenGlRenderPlatform,
 };
-use super::OpenGlBindings;
-use super::OpenGlRenderPlatform;
 
 gl_object! { SingleBufferData, GenBuffers, DeleteBuffers, 1 }
 gl_object! { TwoBufferData, GenBuffers, DeleteBuffers, 2 }
@@ -41,7 +42,7 @@ impl<T> SingleVertexBuffer<T> {
 
     pub fn bind_if_ready(
         &mut self,
-        draw_ctx: &mut DrawContext<OpenGlRenderPlatform>,
+        draw_ctx: &mut DrawContext<'_, OpenGlRenderPlatform>,
     ) -> bool {
         let gl = &draw_ctx.render_ctx().bindings;
         match self.obj.check_ready(gl) {
