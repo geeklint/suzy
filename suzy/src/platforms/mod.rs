@@ -3,10 +3,6 @@
 
 //! This module contains the built-in implementations of the Suzy platform.
 
-// stub types are used in case no other defaults are available - all their
-// methods panic
-mod stub;
-
 pub mod no_graphics;
 
 #[cfg(feature = "platform_opengl")]
