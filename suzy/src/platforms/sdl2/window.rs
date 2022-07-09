@@ -260,7 +260,7 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     fn prepare_draw(
         &mut self,
         pass_arg: Option<()>,
-    ) -> DrawContext<opengl::OpenGlRenderPlatform> {
+    ) -> DrawContext<'_, opengl::OpenGlRenderPlatform> {
         let first_pass = pass_arg.is_none();
         if first_pass {
             self.info.gl_win.clear();

@@ -71,11 +71,11 @@ impl<V> Default for ToggleButtonGroup<V> {
 /// what value is associated with which content.
 pub trait ToggleButtonValue<V> {
     /// Get the value associated with this toggle button content.
-    fn get_value(&self, extra: &WidgetExtra) -> V;
+    fn get_value(&self, extra: &WidgetExtra<'_>) -> V;
 }
 
 impl<T> ToggleButtonValue<()> for T {
-    fn get_value(&self, _extra: &WidgetExtra) {}
+    fn get_value(&self, _extra: &WidgetExtra<'_>) {}
 }
 
 pub struct ToggleButtonContent<T, V = ()> {
@@ -177,7 +177,7 @@ where
     fn pointer_event(
         &mut self,
         extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent,
+        event: &mut PointerEvent<'_>,
     ) -> bool {
         match event.action() {
             PointerAction::Down => {

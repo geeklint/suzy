@@ -84,7 +84,7 @@ where
     fn pointer_event(
         &mut self,
         extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent,
+        event: &mut PointerEvent<'_>,
     ) -> bool {
         let _unused = (extra, event);
         false
@@ -96,7 +96,7 @@ where
     fn pointer_event_before(
         &mut self,
         extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent,
+        event: &mut PointerEvent<'_>,
     ) -> bool {
         let _unused = (extra, event);
         false

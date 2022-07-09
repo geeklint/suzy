@@ -184,7 +184,7 @@ impl Rect for SlicedImage {
 }
 
 impl Graphic<OpenGlRenderPlatform> for SlicedImage {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         ctx.push(|ctx| {
             ctx.params().standard_mode();
             ctx.params().use_texture(self.texture.clone());
@@ -385,7 +385,7 @@ impl SelectableSlicedImage {
 }
 
 impl Graphic<OpenGlRenderPlatform> for SelectableSlicedImage {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         const UV_STATE_SIZE: usize = 32 * std::mem::size_of::<f32>();
         let uv_offset = match self.current_state.v2() {
             SelectionStateV2::Normal => 0,

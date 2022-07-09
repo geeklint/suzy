@@ -19,13 +19,13 @@ impl<T> super::Effect for MaskEffect<T>
 where
     T: Graphic<OpenGlRenderPlatform> + ?Sized,
 {
-    fn push(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn push(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         ctx.params().push_mask();
         self.item.draw(ctx);
         ctx.params().commit_mask();
     }
 
-    fn pop(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn pop(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         ctx.params().pop_mask();
         if ctx.pass() != DrawPass::DrawRemaining || !self.popped {
             self.popped = ctx.force_redraw(|ctx| {

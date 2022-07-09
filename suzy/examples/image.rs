@@ -1,8 +1,6 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-extern crate suzy;
-
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::platforms::opengl::SlicedImage;
 use suzy::platforms::opengl::Texture;

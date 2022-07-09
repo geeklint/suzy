@@ -3,8 +3,6 @@
 
 #![cfg(feature = "platform_opengl")]
 
-extern crate suzy;
-
 use suzy::app::{App, AppBuilder};
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::graphics::{Color, Conditional};

@@ -224,7 +224,7 @@ pub(super) struct FontCharCalc<'a, T> {
 
 impl<'a, T> FontCharCalc<'a, T> {
     pub fn new(
-        font_family: &'a FontFamilyDynamic,
+        font_family: &'a FontFamilyDynamic<'_>,
         settings: TextLayoutSettings,
         char_locs: &'a mut T,
     ) -> Self {
@@ -496,7 +496,7 @@ impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
         }
     }
 
-    pub fn push(&mut self, cmd: RichTextCommand) {
+    pub fn push(&mut self, cmd: RichTextCommand<'_>) {
         match cmd {
             RichTextCommand::Text(text) => self.push_str(&text),
             RichTextCommand::Bold => {

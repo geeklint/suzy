@@ -28,19 +28,19 @@ where
     P: ?Sized + RenderPlatform,
 {
     /// Draw this graphic.
-    fn draw(&mut self, ctx: &mut DrawContext<P>);
+    fn draw(&mut self, ctx: &mut DrawContext<'_, P>);
 }
 
 impl<P: ?Sized + RenderPlatform> Graphic<P> for () {
-    fn draw(&mut self, _ctx: &mut DrawContext<P>) {}
+    fn draw(&mut self, _ctx: &mut DrawContext<'_, P>) {}
 }
 
 impl<P: ?Sized + RenderPlatform> Graphic<P> for [(); 0] {
-    fn draw(&mut self, _ctx: &mut DrawContext<P>) {}
+    fn draw(&mut self, _ctx: &mut DrawContext<'_, P>) {}
 }
 
 impl<P: ?Sized + RenderPlatform, T: Graphic<P>> Graphic<P> for [T] {
-    fn draw(&mut self, ctx: &mut DrawContext<P>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, P>) {
         for graphic in self {
             graphic.draw(ctx);
         }
@@ -48,7 +48,7 @@ impl<P: ?Sized + RenderPlatform, T: Graphic<P>> Graphic<P> for [T] {
 }
 
 impl<P: ?Sized + RenderPlatform, T: Graphic<P>> Graphic<P> for &mut T {
-    fn draw(&mut self, ctx: &mut DrawContext<P>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, P>) {
         T::draw(self, ctx)
     }
 }
@@ -68,7 +68,7 @@ impl<T: Default> Default for Conditional<T> {
 }
 
 impl<P: ?Sized + RenderPlatform, T: Graphic<P>> Graphic<P> for Conditional<T> {
-    fn draw(&mut self, ctx: &mut DrawContext<P>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, P>) {
         if self.enable {
             self.graphic.draw(ctx);
         }

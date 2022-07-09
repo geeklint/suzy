@@ -1,8 +1,6 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-extern crate suzy;
-
 use std::cell::Cell;
 use std::rc::Rc;
 use std::time::Duration;

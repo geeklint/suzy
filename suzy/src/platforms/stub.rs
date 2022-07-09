@@ -72,7 +72,7 @@ impl crate::platform::Platform for StubPlatform {
 
     fn run<F>(self, _event_handler: F) -> !
     where
-        F: 'static + FnMut(&mut Self::State, Event),
+        F: 'static + FnMut(&mut Self::State, Event<'_>),
     {
         stub!()
     }
@@ -97,7 +97,7 @@ impl crate::platform::Platform for StubOpenglPlatform {
 
     fn run<F>(self, _event_handler: F) -> !
     where
-        F: 'static + FnMut(&mut Self::State, Event),
+        F: 'static + FnMut(&mut Self::State, Event<'_>),
     {
         stub!()
     }
@@ -185,7 +185,7 @@ impl crate::window::Window<super::opengl::OpenGlRenderPlatform>
     fn prepare_draw(
         &mut self,
         _first_pass: Option<()>,
-    ) -> crate::graphics::DrawContext<super::opengl::OpenGlRenderPlatform>
+    ) -> crate::graphics::DrawContext<'_, super::opengl::OpenGlRenderPlatform>
     {
         stub!()
     }
@@ -224,7 +224,7 @@ impl crate::platform::graphics::SlicedImage<StubTexture> for StubSlicedImage {
 impl crate::graphics::Graphic<StubRenderPlatform> for StubSlicedImage {
     fn draw(
         &mut self,
-        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+        _ctx: &mut crate::graphics::DrawContext<'_, StubRenderPlatform>,
     ) {
         stub!()
     }
@@ -283,7 +283,7 @@ impl crate::graphics::Graphic<StubRenderPlatform>
 {
     fn draw(
         &mut self,
-        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+        _ctx: &mut crate::graphics::DrawContext<'_, StubRenderPlatform>,
     ) {
         stub!()
     }
@@ -329,7 +329,7 @@ impl crate::platform::graphics::Text for StubText {
 impl crate::graphics::Graphic<StubRenderPlatform> for StubText {
     fn draw(
         &mut self,
-        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+        _ctx: &mut crate::graphics::DrawContext<'_, StubRenderPlatform>,
     ) {
         stub!()
     }
@@ -358,7 +358,7 @@ impl crate::platform::graphics::TextEdit for StubTextEdit {
 impl crate::graphics::Graphic<StubRenderPlatform> for StubTextEdit {
     fn draw(
         &mut self,
-        _ctx: &mut crate::graphics::DrawContext<StubRenderPlatform>,
+        _ctx: &mut crate::graphics::DrawContext<'_, StubRenderPlatform>,
     ) {
         stub!()
     }

@@ -390,7 +390,7 @@ mod extra_impls {
         fn pointer_event(
             &mut self,
             extra: &mut WidgetExtra<'_>,
-            event: &mut PointerEvent,
+            event: &mut PointerEvent<'_>,
         ) -> bool {
             self.data.pointer_event(extra, event)
         }
@@ -401,7 +401,7 @@ mod extra_impls {
         P: RenderPlatform,
         T: Graphic<P>,
     {
-        fn draw(&mut self, ctx: &mut DrawContext<P>) {
+        fn draw(&mut self, ctx: &mut DrawContext<'_, P>) {
             self.data.draw(ctx)
         }
     }
@@ -411,7 +411,7 @@ mod extra_impls {
         P: RenderPlatform,
         T: Graphic<P>,
     {
-        fn draw(&mut self, ctx: &mut DrawContext<P>) {
+        fn draw(&mut self, ctx: &mut DrawContext<'_, P>) {
             T::draw(self, ctx)
         }
     }

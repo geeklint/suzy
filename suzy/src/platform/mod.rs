@@ -44,7 +44,7 @@ pub trait Platform: 'static {
     /// Run, the event loop, calling the provided closure with each new event.
     fn run<F>(self, event_handler: F) -> !
     where
-        F: 'static + FnMut(&mut Self::State, Event);
+        F: 'static + FnMut(&mut Self::State, Event<'_>);
 }
 
 /// A RenderPlatform provides tools to create Graphics.

@@ -67,7 +67,7 @@ impl Text {
 }
 
 impl Graphic<OpenGlRenderPlatform> for Text {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         self.raw.draw(ctx, self.render_settings);
     }
 }
@@ -121,7 +121,7 @@ impl TextEdit {
 }
 
 impl Graphic<OpenGlRenderPlatform> for TextEdit {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         self.raw.draw(ctx, self.render_settings);
     }
 }
@@ -210,7 +210,7 @@ impl<T: calc::RecordCharLocation> RawText<T> {
     pub fn render<'a, I>(
         &mut self,
         text: I,
-        font: &FontFamilyDynamic,
+        font: &FontFamilyDynamic<'_>,
         settings: TextLayoutSettings,
     ) where
         I: 'a + Iterator<Item = RichTextCommand<'a>>,
@@ -249,7 +249,7 @@ impl RawText<CharLocationRecorder> {
 impl<T> RawText<T> {
     fn draw(
         &mut self,
-        ctx: &mut DrawContext<OpenGlRenderPlatform>,
+        ctx: &mut DrawContext<'_, OpenGlRenderPlatform>,
         render_settings: TextRenderSettings,
     ) {
         ctx.push(|ctx| {

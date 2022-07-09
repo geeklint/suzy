@@ -145,7 +145,7 @@ where
     fn pointer_event_before(
         &mut self,
         extra: &mut crate::widget::WidgetExtra<'_>,
-        event: &mut crate::pointer::PointerEvent,
+        event: &mut crate::pointer::PointerEvent<'_>,
     ) -> bool {
         use crate::pointer::PointerAction;
         match event.action() {
@@ -179,7 +179,7 @@ where
     fn pointer_event(
         &mut self,
         extra: &mut crate::widget::WidgetExtra<'_>,
-        event: &mut crate::pointer::PointerEvent,
+        event: &mut crate::pointer::PointerEvent<'_>,
     ) -> bool {
         use crate::pointer::PointerAction;
         match event.action() {

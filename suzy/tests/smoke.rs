@@ -3,8 +3,6 @@
 
 #![cfg(feature = "platform_opengl")]
 
-extern crate suzy;
-
 use suzy::app::{App, AppBuilder};
 use suzy::graphics::Color;
 use suzy::platform::TestPlatform;

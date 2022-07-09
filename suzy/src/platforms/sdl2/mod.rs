@@ -34,7 +34,7 @@ impl crate::platform::Platform for SdlPlatform {
 
     fn run<F>(self, mut event_handler: F) -> !
     where
-        F: 'static + FnMut(&mut Self::State, Event),
+        F: 'static + FnMut(&mut Self::State, Event<'_>),
     {
         let mut state = SimpleEventLoopState::default();
         let mut events = window::Events {

@@ -145,7 +145,7 @@ impl<'a> FontFamilyDynamic<'a> {
     }
 
     #[doc(hidden)]
-    pub fn best_font_source(&self, style: FontStyle) -> &FontSource {
+    pub fn best_font_source(&self, style: FontStyle) -> &FontSource<'a> {
         match style {
             FontStyle::Normal => &self.normal,
             FontStyle::Bold => self.bold.as_ref().unwrap_or(&self.normal),

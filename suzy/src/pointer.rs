@@ -118,7 +118,7 @@ pub struct PointerEvent<'a> {
 }
 
 impl std::fmt::Debug for PointerEvent<'_> {
-    fn fmt(&self, fmtter: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, fmtter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.data, fmtter)
     }
 }

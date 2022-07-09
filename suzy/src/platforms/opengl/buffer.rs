@@ -122,7 +122,7 @@ impl<T> DualVertexBuffer<T> {
 
     pub fn check_ready<'a>(
         &'a mut self,
-        draw_ctx: &'a mut DrawContext<OpenGlRenderPlatform>,
+        draw_ctx: &'a mut DrawContext<'_, OpenGlRenderPlatform>,
     ) -> Option<ReadyDualVertexBuffer<'a>> {
         let gl = &draw_ctx.render_ctx().bindings;
         match (self.ready[0], self.ready[1], self.obj.check_ready(gl)) {
@@ -255,7 +255,7 @@ impl<T> DualVertexBufferIndexed<T> {
 
     pub fn check_ready<'a>(
         &'a mut self,
-        draw_ctx: &'a mut DrawContext<OpenGlRenderPlatform>,
+        draw_ctx: &'a mut DrawContext<'_, OpenGlRenderPlatform>,
     ) -> Option<ReadyDualVertexBufferIndexed<'a>> {
         let gl = &draw_ctx.render_ctx().bindings;
         match (self.ready[0], self.ready[1], self.obj.check_ready(gl)) {

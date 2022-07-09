@@ -14,11 +14,12 @@ mod private {
     use crate::pointer::PointerEvent;
 
     pub trait Widget<P>: DynRect {
-        fn draw(&mut self, ctx: &mut DrawContext<P>)
+        fn draw(&mut self, ctx: &mut DrawContext<'_, P>)
         where
             P: RenderPlatform;
-        fn pointer_event(&mut self, event: &mut PointerEvent) -> bool;
-        fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool;
+        fn pointer_event(&mut self, event: &mut PointerEvent<'_>) -> bool;
+        fn pointer_event_self(&mut self, event: &mut PointerEvent<'_>)
+            -> bool;
         fn as_any(self: Box<Self>) -> Box<dyn std::any::Any>;
         fn as_any_ref(&self) -> &dyn std::any::Any;
         fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
@@ -29,18 +30,21 @@ mod private {
         Self: 'static,
         T: Content<P>,
     {
-        fn draw(&mut self, ctx: &mut DrawContext<P>)
+        fn draw(&mut self, ctx: &mut DrawContext<'_, P>)
         where
             P: RenderPlatform,
         {
             super::Widget::draw(self, ctx);
         }
 
-        fn pointer_event(&mut self, event: &mut PointerEvent) -> bool {
+        fn pointer_event(&mut self, event: &mut PointerEvent<'_>) -> bool {
             super::Widget::pointer_event(self, event)
         }
 
-        fn pointer_event_self(&mut self, event: &mut PointerEvent) -> bool {
+        fn pointer_event_self(
+            &mut self,
+            event: &mut PointerEvent<'_>,
+        ) -> bool {
             super::Widget::pointer_event_self(self, event)
         }
 

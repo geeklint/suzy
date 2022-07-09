@@ -9,8 +9,8 @@ use crate::widget::WidgetGraphic;
 use super::super::OpenGlRenderPlatform;
 
 pub trait Effect {
-    fn push(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>);
-    fn pop(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>);
+    fn push(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>);
+    fn pop(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>);
 }
 
 #[derive(Default)]
@@ -27,7 +27,7 @@ impl<'a, T> Graphic<OpenGlRenderPlatform> for BaseEffectPush<'a, T>
 where
     T: Effect + ?Sized,
 {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         self.inner.backup_params = Some(ctx.manually_push());
         self.inner.effect.push(ctx);
     }
@@ -41,7 +41,7 @@ impl<'a, T> Graphic<OpenGlRenderPlatform> for BaseEffectPop<'a, T>
 where
     T: Effect + ?Sized,
 {
-    fn draw(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         self.inner.effect.pop(ctx);
         if let Some(params) = self.inner.backup_params.take() {
             ctx.manually_pop(params);
@@ -78,11 +78,11 @@ impl Default for TintEffect {
 }
 
 impl Effect for TintEffect {
-    fn push(&mut self, ctx: &mut DrawContext<OpenGlRenderPlatform>) {
+    fn push(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         ctx.params().tint(self.color);
     }
 
-    fn pop(&mut self, _ctx: &mut DrawContext<OpenGlRenderPlatform>) {}
+    fn pop(&mut self, _ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {}
 }
 
 #[derive(Default)]

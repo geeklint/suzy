@@ -71,7 +71,7 @@ macro_rules! gl_object {
             }
         }
         impl ::std::fmt::Debug for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter)
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>)
                 -> Result<(), ::std::fmt::Error>
             {
                 let mut st = f.debug_struct(stringify!($name));

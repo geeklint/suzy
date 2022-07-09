@@ -110,7 +110,7 @@ impl<P: Platform> App<P> {
 
     /// Create a test interface for this app, which allows simulating
     /// behavior.
-    pub fn test<F: FnOnce(AppTesterInterface<P>)>(mut self, func: F) {
+    pub fn test<F: FnOnce(AppTesterInterface<'_, P>)>(mut self, func: F) {
         self.window.recalculate_viewport();
         let (width, height) = self.window.size();
         let values = AppValues::new_now(width, height);
@@ -125,7 +125,7 @@ impl<P: Platform> App<P> {
     fn handle_event<E: EventLoopState>(
         &mut self,
         state: &mut E,
-        event: Event,
+        event: Event<'_>,
     ) {
         use self::WindowEvent::*;
 

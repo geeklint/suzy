@@ -1,8 +1,6 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-extern crate suzy;
-
 use suzy::adapter::{Adaptable, DownwardVecAdapter};
 use suzy::dims::{Rect, SimplePadding2d};
 use suzy::platform::graphics::Text as _TextTrait;

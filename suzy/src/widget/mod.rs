@@ -191,7 +191,7 @@ impl<T: ?Sized> Widget<T> {
 
     pub(crate) fn pointer_event<P>(
         this: &mut Self,
-        event: &mut PointerEvent,
+        event: &mut PointerEvent<'_>,
     ) -> bool
     where
         T: Content<P>,
@@ -216,7 +216,7 @@ impl<T: ?Sized> Widget<T> {
 
     pub(crate) fn pointer_event_self<P>(
         this: &mut Self,
-        event: &mut PointerEvent,
+        event: &mut PointerEvent<'_>,
     ) -> bool
     where
         T: Content<P>,

@@ -96,10 +96,24 @@ struct ValueImpl<F> {
     f: F,
 }
 
+impl ValueImpl<()> {
+    fn zero<T: ?Sized>() -> impl Clone + LayoutValue<T> {
+        #[derive(Clone, Copy, Debug, Default)]
+        struct Zero;
+
+        impl<T: ?Sized> LayoutValue<T> for ValueImpl<Zero> {
+            fn value(&self, _content: &mut T, _rect: &mut WidgetRect) -> f32 {
+                0.0
+            }
+        }
+        ValueImpl { f: Zero }
+    }
+}
+
 impl<F, T> LayoutValue<T> for ValueImpl<F>
 where
     T: ?Sized,
-    F: 'static + for<'a> Fn(&'a mut ContentRef<T>) -> f32,
+    F: 'static + Fn(&mut ContentRef<'_, T>) -> f32,
 {
     fn value(&self, content: &mut T, rect: &mut WidgetRect) -> f32 {
         (self.f)(&mut ContentRef { content, rect })
@@ -139,12 +153,8 @@ where
         impl Clone + LayoutValue<T>,
         impl LayoutValue<T>,
     > {
-        let spacing = ValueImpl {
-            f: |_: &mut ContentRef<T>| -> f32 { 0.0 },
-        };
-        let prev = ValueImpl {
-            f: |_: &mut ContentRef<T>| -> f32 { 0.0 },
-        };
+        let spacing = ValueImpl::zero();
+        let prev = ValueImpl::zero();
         StackLayout {
             desc: self.desc,
             spacing,
@@ -344,7 +354,7 @@ where
         impl LayoutValue<Content>,
     >
     where
-        F: 'static + Fn(&mut ContentRef<Content>) -> f32,
+        F: 'static + Fn(&mut ContentRef<'_, Content>) -> f32,
     {
         let prev = ValueImpl { f };
         StackLayout {
@@ -369,7 +379,7 @@ where
         Value,
     >
     where
-        F: 'static + Clone + Fn(&mut ContentRef<Content>) -> f32,
+        F: 'static + Clone + Fn(&mut ContentRef<'_, Content>) -> f32,
     {
         let spacing = ValueImpl { f };
         StackLayout {
@@ -406,7 +416,7 @@ where
     where
         F: 'static
             + Copy
-            + for<'b> Fn(&'b mut ContentRef<Content>) -> &'b mut R,
+            + for<'b> Fn(&'b mut ContentRef<'_, Content>) -> &'b mut R,
         R: Rect,
     {
         let Self {
@@ -423,7 +433,7 @@ where
             Direction::set_start(rect, start);
         });
         let prev = ValueImpl {
-            f: move |content: &mut ContentRef<Content>| -> f32 {
+            f: move |content: &mut ContentRef<'_, Content>| -> f32 {
                 let spacing =
                     spacing_clone.value(content.content, content.rect);
                 let spacing = Direction::sign(spacing);

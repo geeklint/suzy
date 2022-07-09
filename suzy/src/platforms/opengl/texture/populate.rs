@@ -17,7 +17,10 @@ static DEFAULT_POPULATE_DEBUG: DefaultPopulateDebug = DefaultPopulateDebug;
 struct DefaultPopulateDebug;
 
 impl std::fmt::Debug for DefaultPopulateDebug {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> Result<(), std::fmt::Error> {
         f.write_str("dyn PopulateTexture")
     }
 }
@@ -75,7 +78,10 @@ impl Clone for Box<dyn PopulateTexture> {
 }
 
 impl std::fmt::Debug for Box<dyn PopulateTexture> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> Result<(), std::fmt::Error> {
         self.debug().fmt(f)
     }
 }

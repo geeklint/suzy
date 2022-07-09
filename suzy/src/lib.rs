@@ -2,6 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 //#![warn(missing_docs)]
+#![warn(elided_lifetimes_in_paths)]
 #![warn(clippy::clone_on_ref_ptr)]
 #![warn(clippy::todo)]
 #![warn(clippy::unimplemented)]

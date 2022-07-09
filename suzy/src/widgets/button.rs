@@ -90,7 +90,7 @@ where
     fn pointer_event(
         &mut self,
         extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent,
+        event: &mut PointerEvent<'_>,
     ) -> bool {
         match event.action() {
             PointerAction::Down => {
