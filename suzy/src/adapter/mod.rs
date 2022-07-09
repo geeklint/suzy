@@ -57,7 +57,10 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
         &mut self.data
     }
 
-    fn layout(&mut self, mut interface: impl AdapterLayoutInterface<Self>) {
+    fn layout(
+        &mut self,
+        mut interface: impl AdapterLayoutInterface<usize, T>,
+    ) {
         let (top, bottom) = {
             let bounds = interface.bounds();
             (bounds.top(), bounds.bottom())

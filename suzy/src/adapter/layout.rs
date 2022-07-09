@@ -1,18 +1,20 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
-use crate::dims::Rect;
-use crate::watch::WatchedMeta;
-use crate::widget::{self, WidgetRect};
+use crate::{
+    dims::Rect,
+    watch::WatchedMeta,
+    widget::{self, WidgetRect},
+};
 
 use super::Adaptable;
 
 /// An implementation of this trait is passed to AdapterLayout implementations.
 ///
 /// It provides the utilities an adapter layout uses to control the view.
-pub trait AdapterLayoutInterface<Layout: AdapterLayout + ?Sized> {
+pub trait AdapterLayoutInterface<Key, Data> {
     /// A rectangle which represents the extants of the view. Returned by
     /// the `bounds` method.
     type Bounds: Rect;
@@ -43,17 +45,13 @@ pub trait AdapterLayoutInterface<Layout: AdapterLayout + ?Sized> {
     fn num_active_elements(&self) -> usize;
 
     /// Get or construct a widget from some data.
-    fn get_element(
-        &mut self,
-        key: Layout::ElementKey,
-        data: &Layout::ElementData,
-    ) -> &mut Self::Element;
+    fn get_element(&mut self, key: Key, data: &Data) -> &mut Self::Element;
 }
 
 /// An adapter layout defines how elements in the adapter view are organized.
 pub trait AdapterLayout {
     /// The key for looking up existing widgets.
-    type ElementKey: std::hash::Hash + Eq;
+    type ElementKey: Hash + Eq;
 
     /// The type of the collection the layout understands.
     type Collection: ?Sized;
@@ -68,7 +66,10 @@ pub trait AdapterLayout {
     fn data_mut(&mut self) -> &mut Self::Collection;
 
     /// Execute the layout, using the provided interface to position elements.
-    fn layout(&mut self, interface: impl AdapterLayoutInterface<Self>);
+    fn layout(
+        &mut self,
+        interface: impl AdapterLayoutInterface<Self::ElementKey, Self::ElementData>,
+    );
 
     /// Get an approximate location of an element that is not currently in
     /// view.
@@ -79,21 +80,15 @@ pub trait AdapterLayout {
     ) -> Option<(f32, f32)>;
 }
 
-pub(super) struct AdapterLayoutData<Layout, Content>
-where
-    Layout: AdapterLayout,
-{
-    active: HashMap<Layout::ElementKey, widget::Ephemeral<Content>>,
+pub(super) struct AdapterLayoutData<ElementKey, Content> {
+    active: HashMap<ElementKey, widget::Ephemeral<Content>>,
     inactive: Vec<widget::Ephemeral<Content>>,
     child_flag: WatchedMeta<'static>,
     position: (f32, f32),
     rest_position: (f32, f32),
 }
 
-impl<Layout, Content> Default for AdapterLayoutData<Layout, Content>
-where
-    Layout: AdapterLayout,
-{
+impl<ElementKey, Content> Default for AdapterLayoutData<ElementKey, Content> {
     fn default() -> Self {
         AdapterLayoutData {
             active: HashMap::default(),
@@ -105,11 +100,7 @@ where
     }
 }
 
-impl<Layout, Content> AdapterLayoutData<Layout, Content>
-where
-    Self: 'static,
-    Layout: AdapterLayout,
-{
+impl<ElementKey, Content> AdapterLayoutData<ElementKey, Content> {
     pub fn clear_active_children(&mut self) {
         let old = std::mem::take(&mut self.active);
         self.inactive.extend(old.into_iter().map(|(_k, v)| v));
@@ -122,12 +113,13 @@ where
         self.active.values().chain(&self.inactive)
     }
 
-    pub fn get_interface<'a>(
+    pub fn get_interface<'a, Data>(
         &'a mut self,
         rect: &'a WidgetRect,
-    ) -> impl AdapterLayoutInterface<Layout> + 'a
+    ) -> impl AdapterLayoutInterface<ElementKey, Data> + 'a
     where
-        Content: Adaptable<Layout::ElementData>,
+        ElementKey: Hash + Eq,
+        Content: Adaptable<Data>,
     {
         let prev = std::mem::take(&mut self.active);
         Interface {
@@ -150,20 +142,17 @@ where
     }
 }
 
-struct Interface<'a, Layout, Content>
-where
-    Layout: AdapterLayout,
-{
+struct Interface<'a, Key, Content> {
     rect: &'a WidgetRect,
-    data: &'a mut AdapterLayoutData<Layout, Content>,
-    prev: HashMap<Layout::ElementKey, widget::Ephemeral<Content>>,
+    data: &'a mut AdapterLayoutData<Key, Content>,
+    prev: HashMap<Key, widget::Ephemeral<Content>>,
 }
 
-impl<'a, Layout, Content> AdapterLayoutInterface<Layout>
-    for Interface<'a, Layout, Content>
+impl<'a, Key, Data, Content> AdapterLayoutInterface<Key, Data>
+    for Interface<'a, Key, Content>
 where
-    Layout: AdapterLayout,
-    Content: Adaptable<Layout::ElementData>,
+    Key: Hash + Eq,
+    Content: Adaptable<Data>,
 {
     type Bounds = WidgetRect;
     type Element = widget::Ephemeral<Content>;
@@ -189,11 +178,7 @@ where
         self.data.active.len()
     }
 
-    fn get_element(
-        &mut self,
-        key: Layout::ElementKey,
-        data: &Layout::ElementData,
-    ) -> &mut Self::Element {
+    fn get_element(&mut self, key: Key, data: &Data) -> &mut Self::Element {
         use std::collections::hash_map::Entry;
         match self.data.active.entry(key) {
             Entry::Occupied(bucket) => bucket.into_mut(),
@@ -222,10 +207,7 @@ where
     }
 }
 
-impl<'a, Layout, Content> Drop for Interface<'a, Layout, Content>
-where
-    Layout: AdapterLayout,
-{
+impl<'a, Key, Content> Drop for Interface<'a, Key, Content> {
     fn drop(&mut self) {
         let remaining = std::mem::take(&mut self.prev);
         self.data

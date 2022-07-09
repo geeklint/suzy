@@ -66,7 +66,7 @@ pub struct AdapterView<Layout, Content>
 where
     Layout: AdapterLayout,
 {
-    inner: AdapterLayoutData<Layout, Content>,
+    inner: AdapterLayoutData<Layout::ElementKey, Content>,
     data_flag: WatchedMeta<'static>,
     position_flag: WatchedMeta<'static>,
     layout: Layout,
@@ -76,7 +76,6 @@ where
 
 impl<Layout, Content> AdapterView<Layout, Content>
 where
-    Self: 'static,
     Layout: AdapterLayout,
 {
     /// Get the data collection stored by the layout.
@@ -106,7 +105,7 @@ where
 
 impl<Layout, Content> Default for AdapterView<Layout, Content>
 where
-    Layout: 'static + AdapterLayout + Default,
+    Layout: AdapterLayout + Default,
 {
     fn default() -> Self {
         let layout = Layout::default();
