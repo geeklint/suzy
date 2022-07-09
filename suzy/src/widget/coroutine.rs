@@ -7,8 +7,7 @@ use std::task::{Context, Poll};
 use std::time;
 
 use crate::{
-    app::App,
-    platform::DefaultPlatform,
+    app,
     watch::{self, Watched},
 };
 
@@ -20,7 +19,7 @@ struct NextFrame {
 impl NextFrame {
     fn new() -> Self {
         Self {
-            init_frame: App::<DefaultPlatform>::time_unwatched(),
+            init_frame: app::time_unwatched(),
         }
     }
 }
@@ -31,7 +30,7 @@ impl Future for NextFrame {
         self: Pin<&mut Self>,
         _cx: &mut Context<'_>,
     ) -> Poll<Self::Output> {
-        let time = App::<DefaultPlatform>::time();
+        let time = app::time();
         if time == self.init_frame {
             Poll::Pending
         } else {
@@ -47,7 +46,7 @@ struct Timer {
 
 impl Timer {
     fn new(duration: time::Duration) -> Self {
-        let time = App::<DefaultPlatform>::time_unwatched();
+        let time = app::time_unwatched();
         let end_time = time + duration;
         Self { end_time }
     }
@@ -59,7 +58,7 @@ impl Future for Timer {
         self: Pin<&mut Self>,
         _cx: &mut Context<'_>,
     ) -> Poll<Self::Output> {
-        let time = App::<DefaultPlatform>::time();
+        let time = app::time();
         if time < self.end_time {
             Poll::Pending
         } else {

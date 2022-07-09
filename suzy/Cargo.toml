@@ -30,8 +30,20 @@ default-features = false
 
 [[example]]
 name = "adapter"
-required-features = ["platform_opengl"]
+required-features = ["platform_sdl"]
+
+[[example]]
+name = "button"
+required-features = ["platform_sdl"]
+
+[[example]]
+name = "coroutine"
+required-features = ["platform_sdl"]
 
 [[example]]
 name = "image"
-required-features = ["platform_opengl"]
+required-features = ["platform_sdl"]
+
+[[example]]
+name = "layout"
+required-features = ["platform_sdl"]

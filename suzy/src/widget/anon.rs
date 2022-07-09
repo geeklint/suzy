@@ -2,7 +2,6 @@
 /* Copyright © 2021 Violet Leonard */
 
 use crate::dims::{Dim, Rect};
-use crate::platform::DefaultRenderPlatform;
 
 use super::{Content, Widget};
 
@@ -64,7 +63,18 @@ mod private {
 ///
 /// This can be used for the same patterns trait-objects usually are, e.g.
 /// a heterogeneous collection of Widgets.
-pub trait AnonWidget<P = DefaultRenderPlatform>: private::Widget<P> {}
+#[cfg(feature = "platform_opengl")]
+pub trait AnonWidget<P = crate::platforms::DefaultRenderPlatform>:
+    private::Widget<P>
+{
+}
+
+/// A trait which represents a Widget with an unknown content type.
+///
+/// This can be used for the same patterns trait-objects usually are, e.g.
+/// a heterogeneous collection of Widgets.
+#[cfg(not(feature = "platform_opengl"))]
+pub trait AnonWidget<P>: private::Widget<P> {}
 
 impl<P, T> AnonWidget<P> for Widget<T>
 where

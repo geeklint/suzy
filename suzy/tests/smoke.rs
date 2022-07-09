@@ -3,10 +3,12 @@
 
 #![cfg(feature = "platform_opengl")]
 
-use suzy::app::{App, AppBuilder};
-use suzy::graphics::Color;
-use suzy::platform::TestPlatform;
-use suzy::window::WindowSettings;
+use suzy::{
+    app::{App, AppBuilder},
+    graphics::Color,
+    platforms::TestPlatform,
+    window::WindowSettings,
+};
 
 #[test]
 fn smoke() {

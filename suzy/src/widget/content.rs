@@ -1,9 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::dims::Rect;
-use crate::platform::{DefaultPlatform, DefaultRenderPlatform};
-use crate::pointer::PointerEvent;
+use crate::{dims::Rect, pointer::PointerEvent};
 
 use super::WidgetExtra;
 
@@ -61,7 +59,51 @@ use super::WidgetExtra;
 /// }
 /// ```
 ///
-pub trait Content<P = DefaultRenderPlatform>
+#[cfg(feature = "platform_opengl")]
+pub trait Content<P = crate::platforms::DefaultRenderPlatform>
+where
+    Self: 'static,
+{
+    /// This method should be implemented to describe a custom widget, including
+    /// watch functions, children, graphics, and more.
+    fn desc(desc: impl super::Desc<Self, P>);
+
+    /// Override this method to define a custom shape for the widget.
+    ///
+    /// This is used by e.g. Button to test if it should handle a pointer
+    /// event.  The default is a standard rectangular test.
+    fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
+        extra.contains(point)
+    }
+
+    /// Override this method to handle pointer events directly by a custom
+    /// widget.
+    ///
+    /// Return true if this successfully handled the event.
+    fn pointer_event(
+        &mut self,
+        extra: &mut WidgetExtra<'_>,
+        event: &mut PointerEvent<'_>,
+    ) -> bool {
+        let _unused = (extra, event);
+        false
+    }
+
+    /// This is the same as `pointer_event`, except that it runs before
+    /// passing the event to children, rather than after.  This is only
+    /// recomended for special cases.
+    fn pointer_event_before(
+        &mut self,
+        extra: &mut WidgetExtra<'_>,
+        event: &mut PointerEvent<'_>,
+    ) -> bool {
+        let _unused = (extra, event);
+        false
+    }
+}
+
+#[cfg(not(feature = "platform_opengl"))]
+pub trait Content<P>
 where
     Self: 'static,
 {
@@ -113,13 +155,17 @@ pub trait RunAsApp {
     fn run_as_app() -> !;
 }
 
+#[cfg(feature = "platform_sdl")]
 impl<T> RunAsApp for T
 where
-    T: Default + Content<DefaultRenderPlatform>,
+    T: Default + Content<crate::platforms::DefaultRenderPlatform>,
 {
     fn run_as_app() -> ! {
-        use crate::app::{App, AppBuilder};
-        use crate::window::WindowSettings;
+        use crate::{
+            app::{App, AppBuilder},
+            platforms::DefaultPlatform,
+            window::WindowSettings,
+        };
 
         let name = std::any::type_name::<T>()
             .rsplit("::")

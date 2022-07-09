@@ -1,15 +1,22 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::dims::Rect;
-use crate::platform::graphics::Text;
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
-use crate::text::{TextPosition, TextSettings};
-use crate::watch::Watched;
-use crate::widget::{self, Widget};
+use crate::{
+    dims::Rect,
+    platform::{graphics::Text, RenderPlatform},
+    text::{TextPosition, TextSettings},
+    watch::Watched,
+    widget::{self, Widget},
+};
 
 /// A widget which displays some text
-pub type Label<P = DefaultRenderPlatform> = Widget<LabelContent<P>>;
+#[cfg(feature = "platform_opengl")]
+pub type Label<P = crate::platforms::DefaultRenderPlatform> =
+    Widget<LabelContent<P>>;
+
+/// A widget which displays some text
+#[cfg(not(feature = "platform_opengl"))]
+pub type Label<P> = Widget<LabelContent<P>>;
 
 /// The content for a widget which displays some text
 pub struct LabelContent<P>

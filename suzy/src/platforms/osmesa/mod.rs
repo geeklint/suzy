@@ -45,7 +45,7 @@ impl crate::platform::Platform for OsMesaPlatform {
     #[allow(clippy::unimplemented)]
     fn run<F>(self, _event_handler: F) -> !
     where
-        F: 'static + FnMut(&mut Self::State, Event),
+        F: 'static + FnMut(&mut Self::State, Event<'_>),
     {
         unimplemented!("Platform::run called for OSMesa Platform");
     }

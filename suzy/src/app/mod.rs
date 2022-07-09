@@ -6,16 +6,16 @@
 //! Apps have an associated window and "root" widgets, which are assigned
 //! to fill the whole window area.
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc, time};
+use std::{cell::RefCell, rc::Rc, time};
 
-use drying_paint::{WatchContext, Watched};
+use drying_paint::Watched;
 
 use crate::{
     dims::{Dim, Rect, SimplePadding2d, SimpleRect},
     graphics::PlatformDrawContext,
-    platform::{DefaultPlatform, Event, EventLoopState, Platform},
-    pointer::{PointerEvent, PointerEventData, PointerId},
-    widget::{self, AnonWidget, RootWidget, UniqueHandleId, Widget},
+    platform::{Event, EventLoopState, Platform},
+    pointer::{PointerEvent, PointerEventData},
+    widget::{self, Widget},
     window::{Window, WindowEvent, WindowSettings},
 };
 
@@ -27,50 +27,75 @@ pub use builder::AppBuilder;
 pub use tester::AppTesterInterface;
 pub(crate) use values::{get_cell_size, AppValues};
 
-type RootHolder<P> = Rc<RefCell<RootWidget<dyn AnonWidget<P>, P>>>;
+#[cfg(feature = "platform_sdl")]
+pub type App<P = crate::platforms::DefaultPlatform> = app_struct::App<P>;
 
-/// A type which contains the context in which widgets run.
-///
-/// See the [module-level documentation](./index.html) for more details.
-pub struct App<P = DefaultPlatform>
+#[cfg(not(feature = "platform_sdl"))]
+pub type App<P> = app_struct::App<P>;
+
+mod app_struct {
+    use crate::{
+        platform::Platform,
+        pointer::PointerId,
+        watch::WatchContext,
+        widget::{AnonWidget, RootWidget, UniqueHandleId},
+    };
+    use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+    type RootHolder<P> = Rc<RefCell<RootWidget<dyn AnonWidget<P>, P>>>;
+
+    /// A type which contains the context in which widgets run.
+    ///
+    /// See the [module-level documentation](./index.html) for more details.
+    pub struct App<P>
+    where
+        P: Platform,
+    {
+        pub(super) platform: Option<P>,
+        pub(super) watch_ctx: WatchContext<'static>,
+        pub(super) window: P::Window,
+        pub(super) roots: Vec<RootHolder<P::Renderer>>,
+        pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
+    }
+}
+
+impl<P> Default for App<P>
 where
     P: Platform,
 {
-    platform: Option<P>,
-    watch_ctx: WatchContext<'static>,
-    window: P::Window,
-    roots: Vec<RootHolder<P::Renderer>>,
-    pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
+    fn default() -> Self {
+        AppBuilder::default().build()
+    }
+}
+
+/// Get the time recorded at the start of the frame.
+///
+/// This will bind watch closures it is called in, and can be used to
+/// intentionally cause a watch closure to re-run every frame.
+pub fn time() -> time::Instant {
+    AppValues::expect_current(|values| *values.frame_start)
+}
+
+/// A version of `time` which will not bind watch closures.
+pub fn time_unwatched() -> time::Instant {
+    AppValues::try_with_current(|values| {
+        *Watched::get_unwatched(&values.frame_start)
+    })
+    .unwrap_or_else(time::Instant::now)
+}
+
+/// This is similar to `time`, however it updates much less frequently.
+///
+/// You may bind to this in a watch closure to cause it to re-run
+/// periodically.
+///
+/// Current precision is 1 second, however this should not be relied
+/// upon and may change in the future.
+pub fn coarse_time() -> time::Instant {
+    AppValues::expect_current(|values| *values.coarse_time)
 }
 
 impl<P: Platform> App<P> {
-    /// Get the time recorded at the start of the frame.
-    ///
-    /// This will bind watch closures it is called in, and can be used to
-    /// intentionally cause a watch closure to re-run every frame.
-    pub fn time() -> time::Instant {
-        AppValues::expect_current(|values| *values.frame_start)
-    }
-
-    /// A version of `time` which will not bind watch closures.
-    pub fn time_unwatched() -> time::Instant {
-        AppValues::try_with_current(|values| {
-            *Watched::get_unwatched(&values.frame_start)
-        })
-        .unwrap_or_else(time::Instant::now)
-    }
-
-    /// This is similar to `time`, however it updates much less frequently.
-    ///
-    /// You may bind to this in a watch closure to cause it to re-run
-    /// periodically.
-    ///
-    /// Current precision is 1 second, however this should not be relied
-    /// upon and may change in the future.
-    pub fn coarse_time() -> time::Instant {
-        AppValues::expect_current(|values| *values.coarse_time)
-    }
-
     /// Start running the app.
     ///
     /// Because of platform-specific requirements, this requires control
@@ -224,11 +249,5 @@ impl<P: Platform> App<P> {
         let Self { window, roots, .. } = self;
         std::mem::drop(roots);
         std::mem::drop(window);
-    }
-}
-
-impl Default for App {
-    fn default() -> Self {
-        AppBuilder::default().build()
     }
 }

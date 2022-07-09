@@ -1,16 +1,14 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::graphics::Color;
-use crate::graphics::DrawContext;
-use crate::pointer::PointerEventData;
-use crate::window::{Window, WindowBuilder, WindowSettings};
+use crate::{
+    graphics::Color,
+    graphics::DrawContext,
+    pointer::PointerEventData,
+    window::{Window, WindowBuilder, WindowSettings},
+};
 
 use crate::platforms::opengl;
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use super::bindings;
 
@@ -112,10 +110,10 @@ impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
 
     fn prepare_draw(
         &mut self,
-        first_pass: bool,
-    ) -> DrawContext<opengl::OpenGlRenderPlatform> {
+        frame_arg: Option<()>,
+    ) -> DrawContext<'_, opengl::OpenGlRenderPlatform> {
         self.gl_win.clear();
-        self.gl_win.prepare_draw(self.size(), first_pass)
+        self.gl_win.prepare_draw(self.size(), frame_arg.is_none())
     }
 
     fn take_screenshot(&self) -> Box<[u8]> {

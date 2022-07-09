@@ -3,11 +3,13 @@
 
 use drying_paint::{Watched, WatchedQueue};
 
-use crate::graphics::Color;
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
-use crate::pointer::{PointerAction, PointerEvent, PointerId};
-use crate::selectable::{Selectable, SelectionState, SelectionStateV1};
-use crate::widget::{self, UniqueHandle, Widget, WidgetExtra};
+use crate::{
+    graphics::Color,
+    platform::RenderPlatform,
+    pointer::{PointerAction, PointerEvent, PointerId},
+    selectable::{Selectable, SelectionState, SelectionStateV1},
+    widget::{self, UniqueHandle, Widget, WidgetExtra},
+};
 
 const IMAGE_DATA: &[u8] = include_bytes!("button-all.data");
 const IMAGE_WIDTH: u16 = 112;
@@ -166,8 +168,16 @@ impl<T: Default> Default for ButtonBehavior<T> {
 /// A simple button.
 ///
 /// Use `Button::on_click` like a WatchedEvent to handle button clicks
-pub type Button<T = DefaultButtonContent<DefaultRenderPlatform>> =
-    Widget<ButtonBehavior<T>>;
+#[cfg(feature = "platform_opengl")]
+pub type Button<
+    T = DefaultButtonContent<crate::platforms::DefaultRenderPlatform>,
+> = Widget<ButtonBehavior<T>>;
+
+/// A simple button.
+///
+/// Use `Button::on_click` like a WatchedEvent to handle button clicks
+#[cfg(not(feature = "platform_opengl"))]
+pub type Button<T> = Widget<ButtonBehavior<T>>;
 
 pub struct DefaultButtonContent<P>
 where

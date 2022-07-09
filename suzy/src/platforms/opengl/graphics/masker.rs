@@ -57,7 +57,7 @@ impl<T: ?Sized> Masker<T> {
 
 impl<T> WidgetGraphic<OpenGlRenderPlatform> for Masker<T>
 where
-    T: Graphic + ?Sized,
+    T: ?Sized + Graphic<OpenGlRenderPlatform>,
 {
     type BeforeGetter =
         fn(&mut ()) -> super::effects::BaseEffectPush<'_, MaskEffect<T>>;

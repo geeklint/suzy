@@ -17,10 +17,6 @@ pub use event::{Event, EventLoopState, SimpleEventLoopState};
 
 pub mod graphics;
 
-pub use crate::platforms::{
-    DefaultPlatform, DefaultRenderPlatform, TestPlatform, TestRenderPlatform,
-};
-
 /// A platform handles window creation and manages an event loop.
 pub trait Platform: 'static {
     /// The event loop state tracked by this platform.

@@ -1,8 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::graphics::Graphic;
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::{graphics::Graphic, platform::RenderPlatform};
 
 pub trait GetGraphicMethod<'a, P>
 where
@@ -29,9 +28,9 @@ where
 /// children, and one after.  The typical behavior is to ignore the second
 /// pass, however some functionality may require it, for instance to revert
 /// a state-change applied in the first pass.
-pub trait WidgetGraphic<P = DefaultRenderPlatform>
+pub trait WidgetGraphic<P>
 where
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     /// The type of graphic to render before the widget's children.
     type BeforeGetter: for<'a> GetGraphicMethod<'a, P>;
@@ -61,7 +60,7 @@ impl<P, T> WidgetGraphic<P> for T
 where
     Self: Sized,
     T: Graphic<P>,
-    P: ?Sized + RenderPlatform,
+    P: RenderPlatform,
 {
     type BeforeGetter = fn(&mut ()) -> &mut T;
     type AfterGetter = fn(&mut ()) -> &mut [(); 0];

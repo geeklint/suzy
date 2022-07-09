@@ -5,7 +5,6 @@
 #![warn(elided_lifetimes_in_paths)]
 #![warn(clippy::clone_on_ref_ptr)]
 #![warn(clippy::todo)]
-#![warn(clippy::unimplemented)]
 #![warn(clippy::print_stdout)]
 #![allow(clippy::needless_doctest_main)]
 #![deny(clippy::unwrap_used)]

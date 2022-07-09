@@ -18,12 +18,12 @@ mod context;
 pub use color::{Color, ParseColorError};
 pub use context::{BuildDrawContext, DrawContext, PlatformDrawContext};
 
-use crate::platform::{DefaultRenderPlatform, RenderPlatform};
+use crate::platform::RenderPlatform;
 
 /// A trait which represents a drawable graphic.
 ///
 /// See [module-level documentation](index.html) for more information.
-pub trait Graphic<P = DefaultRenderPlatform>
+pub trait Graphic<P>
 where
     P: ?Sized + RenderPlatform,
 {

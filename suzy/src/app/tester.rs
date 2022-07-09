@@ -22,7 +22,7 @@ pub struct AppTesterInterface<'a, P: Platform> {
 impl<'a, P: Platform> AppTesterInterface<'a, P> {
     /// Create a tester interface from a CurrentApp.
     pub fn new(app: &'a mut App<P>) -> Self {
-        let start_time = App::<P>::time();
+        let start_time = super::time();
         let mut state = SimpleEventLoopState::default();
         app.handle_event(&mut state, Event::StartFrame(start_time));
         Self {

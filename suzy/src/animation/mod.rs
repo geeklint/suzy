@@ -38,9 +38,7 @@
 
 use std::time::{Duration, Instant};
 
-use crate::app::App;
-use crate::platform::DefaultPlatform;
-use crate::watch::Watched;
+use crate::{app, watch::Watched};
 
 mod easing;
 
@@ -192,7 +190,7 @@ impl<T> Animation<T> {
 impl<T: Lerp<Output = T>> Animation<T> {
     /// Start the animation, with a specified value to interpolate towards.
     pub fn animate_to(&mut self, value: T) {
-        let start_time = App::<DefaultPlatform>::time_unwatched();
+        let start_time = app::time_unwatched();
         *self.current = Some((start_time, value));
         self.start_value = None;
     }
@@ -211,7 +209,7 @@ impl<T: Lerp<Output = T>> Animation<T> {
             None => &*target,
         };
         let total_duration = self.speed.duration(start_value, end_value);
-        let frame_time = App::<DefaultPlatform>::time();
+        let frame_time = app::time();
         let elapsed = frame_time.duration_since(*start_time);
         let t = elapsed.as_secs_f32() / total_duration.as_secs_f32();
         let (t, at_end) = if t > 1.0 { (1.0, true) } else { (t, false) };

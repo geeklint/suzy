@@ -8,7 +8,7 @@ use std::time::Duration;
 use suzy::animation::Animation;
 use suzy::app::{App, AppBuilder};
 use suzy::graphics::Color;
-use suzy::platform::{TestPlatform, TestRenderPlatform};
+use suzy::platforms::no_graphics::NoGraphics;
 use suzy::widget::{self, Widget};
 use suzy::window::WindowSettings;
 
@@ -18,8 +18,8 @@ struct Root {
     value_feedback: Rc<Cell<f32>>,
 }
 
-impl widget::Content<TestRenderPlatform> for Root {
-    fn desc(mut desc: impl widget::Desc<Self, TestRenderPlatform>) {
+impl widget::Content<NoGraphics> for Root {
+    fn desc(mut desc: impl widget::Desc<Self, NoGraphics>) {
         desc.watch(|root, _rect| {
             let mut value = root.value_feedback.get();
             root.anim.apply(&mut value);
@@ -37,7 +37,7 @@ fn animation() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
-    let mut app: App<TestPlatform> = builder.build();
+    let mut app: App<NoGraphics> = builder.build();
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
     let mut root = Widget::<Root>::default();
