@@ -35,7 +35,7 @@ where
 
     /// Create a layout group which a provides a shorthand for organizing
     /// widgets in common configurations.
-    fn create_layout_group(&mut self) -> layout::LayoutTypes<'_, Self, T, P>
+    fn create_layout_group(&mut self) -> layout::LayoutTypes<'_, Self, T>
     where
         Self: Sized,
     {

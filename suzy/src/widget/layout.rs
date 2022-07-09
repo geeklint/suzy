@@ -123,15 +123,15 @@ where
 /// The base type returned from WidgetInit::create_layout_group, used to
 /// create a variety of types of layouts.
 #[derive(Debug)]
-pub struct LayoutTypes<'a, Desc, T, P>
+pub struct LayoutTypes<'a, Desc, T>
 where
     T: ?Sized,
 {
     desc: &'a mut Desc,
-    _types: PhantomData<(&'a T, &'a P)>,
+    _types: PhantomData<&'a T>,
 }
 
-impl<'a, Desc, T, P> LayoutTypes<'a, Desc, T, P>
+impl<'a, Desc, T> LayoutTypes<'a, Desc, T>
 where
     T: ?Sized,
 {
@@ -149,7 +149,6 @@ where
         D,
         Desc,
         T,
-        P,
         impl Clone + LayoutValue<T>,
         impl LayoutValue<T>,
     > {
@@ -172,7 +171,6 @@ where
         Up,
         Desc,
         T,
-        P,
         impl Clone + LayoutValue<T>,
         impl LayoutValue<T>,
     > {
@@ -188,7 +186,6 @@ where
         Down,
         Desc,
         T,
-        P,
         impl Clone + LayoutValue<T>,
         impl LayoutValue<T>,
     > {
@@ -204,7 +201,6 @@ where
         Left,
         Desc,
         T,
-        P,
         impl Clone + LayoutValue<T>,
         impl LayoutValue<T>,
     > {
@@ -220,7 +216,6 @@ where
         Right,
         Desc,
         T,
-        P,
         impl Clone + LayoutValue<T>,
         impl LayoutValue<T>,
     > {
@@ -320,23 +315,15 @@ impl StackLayoutDirection for Right {
 ///
 /// This layout does not control the size of elements.
 #[derive(Debug)]
-pub struct StackLayout<
-    'a,
-    Direction,
-    Desc,
-    Content: ?Sized,
-    Platform,
-    Spacing,
-    Value,
-> {
+pub struct StackLayout<'a, Direction, Desc, Content: ?Sized, Spacing, Value> {
     desc: &'a mut Desc,
     spacing: Spacing,
     prev: Value,
-    _types: PhantomData<(&'a Content, &'a Platform, Direction)>,
+    _types: PhantomData<(&'a Content, Direction)>,
 }
 
-impl<'a, Direction, Desc, Content, Platform, Spacing, Value>
-    StackLayout<'a, Direction, Desc, Content, Platform, Spacing, Value>
+impl<'a, Direction, Desc, Content, Spacing, Value>
+    StackLayout<'a, Direction, Desc, Content, Spacing, Value>
 where
     Content: ?Sized,
 {
@@ -349,7 +336,6 @@ where
         Direction,
         Desc,
         Content,
-        Platform,
         Spacing,
         impl LayoutValue<Content>,
     >
@@ -374,7 +360,6 @@ where
         Direction,
         Desc,
         Content,
-        Platform,
         impl Clone + LayoutValue<Content>,
         Value,
     >
@@ -391,17 +376,16 @@ where
     }
 }
 
-impl<'a, Direction, Desc, Content, Platform, Spacing, Value>
-    StackLayout<'a, Direction, Desc, Content, Platform, Spacing, Value>
+impl<'a, Direction, Desc, Content, Spacing, Value>
+    StackLayout<'a, Direction, Desc, Content, Spacing, Value>
 where
     Direction: StackLayoutDirection,
-    Desc: super::Desc<Content, Platform>,
-    Content: super::Content<Platform> + ?Sized,
+    Content: ?Sized,
     Spacing: Clone + LayoutValue<Content>,
     Value: LayoutValue<Content>,
 {
     /// Add a rectangle to the layout group.
-    pub fn push<F, R>(
+    pub fn push<F, R, Platform>(
         self,
         f: F,
     ) -> StackLayout<
@@ -409,11 +393,11 @@ where
         Direction,
         Desc,
         Content,
-        Platform,
         Spacing,
         impl LayoutValue<Content>,
     >
     where
+        Desc: super::Desc<Content, Platform>,
         F: 'static
             + Copy
             + for<'b> Fn(&'b mut ContentRef<'_, Content>) -> &'b mut R,
