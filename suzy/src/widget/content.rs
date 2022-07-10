@@ -5,143 +5,105 @@ use crate::{dims::Rect, pointer::PointerEvent};
 
 use super::WidgetExtra;
 
-/// This trait provides the "glue" between the data you define in custom
-/// widgets and the behavior suzy defines for widgets.  There are three
-/// required methods: `init`, `children`, and `graphics`.
-///
-/// The `init` method is the primary point for registering the `watch`
-/// functions that define the behavior of a widget. See the
-/// [watch](../watch/index.html) module for more information.
-///
-/// The methods `children` and `graphics` should be fairly straightforward
-/// to implement: they provide a simple "internal iterator" format which
-/// allows suzy to iterate over the children and graphics a custom widget
-/// contains.
-///
-/// Custom widgets may contain any number of graphics and child widgets, or
-/// none of either.
-///
-/// For example, if a custom widget contains two buttons as children:
-///
-/// ```rust
-/// # use suzy::widget::{self, *};
-/// # use suzy::selectable::SelectableIgnored;
-/// # type ButtonContent = SelectableIgnored<()>;
-/// use suzy::widgets::Button;
-///
-/// struct MyWidgetData {
-///     button_one: Button<ButtonContent>,
-///     button_two: Button<ButtonContent>,
-/// }
-///
-/// impl widget::Content for MyWidgetData {
-///     fn desc(mut desc: impl widget::Desc<Self>) {
-///         desc.child(|this| &mut this.button_one);
-///         desc.child(|this| &mut this.button_two);
-///     }
-/// }
-/// ```
-///
-/// Or, if the custom widget only has a single graphic:
-///
-/// ```rust
-/// # use suzy::widget::{self, *};
-/// # type MyGraphic = ();
-///
-/// struct MyWidgetData {
-///     graphic: MyGraphic,
-/// }
-///
-/// impl widget::Content for MyWidgetData {
-///     fn desc(mut desc: impl widget::Desc<Self>) {
-///         desc.graphic(|this| &mut this.graphic);
-///     }
-/// }
-/// ```
-///
-#[cfg(feature = "platform_opengl")]
-pub trait Content<P = crate::platforms::DefaultRenderPlatform>
-where
-    Self: 'static,
-{
-    /// This method should be implemented to describe a custom widget, including
-    /// watch functions, children, graphics, and more.
-    fn desc(desc: impl super::Desc<Self, P>);
-
-    /// Override this method to define a custom shape for the widget.
+with_default_render_platform! {
+    /// This trait provides the "glue" between the data you define in custom
+    /// widgets and the behavior suzy defines for widgets.  There are three
+    /// required methods: `init`, `children`, and `graphics`.
     ///
-    /// This is used by e.g. Button to test if it should handle a pointer
-    /// event.  The default is a standard rectangular test.
-    fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
-        extra.contains(point)
-    }
-
-    /// Override this method to handle pointer events directly by a custom
-    /// widget.
+    /// The `init` method is the primary point for registering the `watch`
+    /// functions that define the behavior of a widget. See the
+    /// [watch](../watch/index.html) module for more information.
     ///
-    /// Return true if this successfully handled the event.
-    fn pointer_event(
-        &mut self,
-        extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent<'_>,
-    ) -> bool {
-        let _unused = (extra, event);
-        false
-    }
-
-    /// This is the same as `pointer_event`, except that it runs before
-    /// passing the event to children, rather than after.  This is only
-    /// recomended for special cases.
-    fn pointer_event_before(
-        &mut self,
-        extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent<'_>,
-    ) -> bool {
-        let _unused = (extra, event);
-        false
-    }
-}
-
-#[cfg(not(feature = "platform_opengl"))]
-pub trait Content<P>
-where
-    Self: 'static,
-{
-    /// This method should be implemented to describe a custom widget, including
-    /// watch functions, children, graphics, and more.
-    fn desc(desc: impl super::Desc<Self, P>);
-
-    /// Override this method to define a custom shape for the widget.
+    /// The methods `children` and `graphics` should be fairly straightforward
+    /// to implement: they provide a simple "internal iterator" format which
+    /// allows suzy to iterate over the children and graphics a custom widget
+    /// contains.
     ///
-    /// This is used by e.g. Button to test if it should handle a pointer
-    /// event.  The default is a standard rectangular test.
-    fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
-        extra.contains(point)
-    }
-
-    /// Override this method to handle pointer events directly by a custom
-    /// widget.
+    /// Custom widgets may contain any number of graphics and child widgets, or
+    /// none of either.
     ///
-    /// Return true if this successfully handled the event.
-    fn pointer_event(
-        &mut self,
-        extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent<'_>,
-    ) -> bool {
-        let _unused = (extra, event);
-        false
-    }
+    /// For example, if a custom widget contains two buttons as children:
+    ///
+    /// ```rust
+    /// # use suzy::widget::{self, *};
+    /// # use suzy::selectable::SelectableIgnored;
+    /// # type ButtonContent = SelectableIgnored<()>;
+    /// use suzy::widgets::Button;
+    ///
+    /// struct MyWidgetData {
+    ///     button_one: Button<ButtonContent>,
+    ///     button_two: Button<ButtonContent>,
+    /// }
+    ///
+    /// impl widget::Content for MyWidgetData {
+    ///     fn desc(mut desc: impl widget::Desc<Self>) {
+    ///         desc.child(|this| &mut this.button_one);
+    ///         desc.child(|this| &mut this.button_two);
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Or, if the custom widget only has a single graphic:
+    ///
+    /// ```rust
+    /// # use suzy::widget::{self, *};
+    /// # type MyGraphic = ();
+    ///
+    /// struct MyWidgetData {
+    ///     graphic: MyGraphic,
+    /// }
+    ///
+    /// impl widget::Content for MyWidgetData {
+    ///     fn desc(mut desc: impl widget::Desc<Self>) {
+    ///         desc.graphic(|this| &mut this.graphic);
+    ///     }
+    /// }
+    /// ```
+    ///
+    pub trait Content<P>
+    where
+        Self: 'static,
+    {
+        /// This method should be implemented to describe a custom widget,
+        /// including watch functions, children, graphics, and more.
+        fn desc(desc: impl super::Desc<Self, P>);
 
-    /// This is the same as `pointer_event`, except that it runs before
-    /// passing the event to children, rather than after.  This is only
-    /// recomended for special cases.
-    fn pointer_event_before(
-        &mut self,
-        extra: &mut WidgetExtra<'_>,
-        event: &mut PointerEvent<'_>,
-    ) -> bool {
-        let _unused = (extra, event);
-        false
+        /// Override this method to define a custom shape for the widget.
+        ///
+        /// This is used by e.g. Button to test if it should handle a pointer
+        /// event.  The default is a standard rectangular test.
+        fn hittest(
+            &self,
+            extra: &mut WidgetExtra<'_>,
+            point: (f32, f32),
+        ) -> bool {
+            extra.contains(point)
+        }
+
+        /// Override this method to handle pointer events directly by a custom
+        /// widget.
+        ///
+        /// Return true if this successfully handled the event.
+        fn pointer_event(
+            &mut self,
+            extra: &mut WidgetExtra<'_>,
+            event: &mut PointerEvent<'_>,
+        ) -> bool {
+            let _unused = (extra, event);
+            false
+        }
+
+        /// This is the same as `pointer_event`, except that it runs before
+        /// passing the event to children, rather than after.  This is only
+        /// recomended for special cases.
+        fn pointer_event_before(
+            &mut self,
+            extra: &mut WidgetExtra<'_>,
+            event: &mut PointerEvent<'_>,
+        ) -> bool {
+            let _unused = (extra, event);
+            false
+        }
     }
 }
 

@@ -64,6 +64,7 @@ pub mod app;
 pub mod dims;
 pub mod graphics;
 pub mod platform;
+#[macro_use]
 pub mod platforms;
 pub mod pointer;
 pub mod selectable;
