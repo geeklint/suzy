@@ -105,16 +105,17 @@ where
         use crate::watch::{DefaultOwner, WatchedMeta};
         let getter = self.getter.clone();
         let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
-        self.init.watch_for_new_child(move |base| {
-            maybe_more.watched_auto();
-            let (content, _rect) = getter(base);
-            let holder =
-                iter_fn(content).filter_map(|e| e.uninit_holder()).next();
-            if holder.is_some() {
-                maybe_more.trigger_external();
-            }
-            holder
-        });
+        self.init
+            .watch_for_new_child_explicit(move |watch_arg, base| {
+                maybe_more.watched(watch_arg);
+                let (content, _rect) = getter(base);
+                let holder =
+                    iter_fn(content).filter_map(|e| e.uninit_holder()).next();
+                if holder.is_some() {
+                    maybe_more.trigger_external();
+                }
+                holder
+            });
     }
 
     fn bare_child<F, Child>(&mut self, getter: F)

@@ -8,8 +8,6 @@
 
 use std::{cell::RefCell, rc::Rc, time};
 
-use drying_paint::Watched;
-
 use crate::{
     dims::{Dim, Rect, SimplePadding2d, SimpleRect},
     graphics::PlatformDrawContext,
@@ -25,7 +23,7 @@ mod values;
 
 pub use builder::AppBuilder;
 pub use tester::AppTesterInterface;
-pub(crate) use values::{get_cell_size, AppValues};
+pub(crate) use values::{get_cell_size, AppState};
 
 #[cfg(feature = "platform_sdl")]
 pub type App<P = crate::platforms::DefaultPlatform> = app_struct::App<P>;
@@ -73,15 +71,14 @@ where
 /// This will bind watch closures it is called in, and can be used to
 /// intentionally cause a watch closure to re-run every frame.
 pub fn time() -> time::Instant {
-    AppValues::expect_current(|values| *values.frame_start)
+    AppState::try_with_current(|state| *state.time().get_auto())
+        .expect("there is no valid app state to get time from")
 }
 
 /// A version of `time` which will not bind watch closures.
 pub fn time_unwatched() -> time::Instant {
-    AppValues::try_with_current(|values| {
-        *Watched::get_unwatched(&values.frame_start)
-    })
-    .unwrap_or_else(time::Instant::now)
+    AppState::try_with_current(|state| *state.time().get_unwatched())
+        .unwrap_or_else(time::Instant::now)
 }
 
 /// This is similar to `time`, however it updates much less frequently.
@@ -92,7 +89,8 @@ pub fn time_unwatched() -> time::Instant {
 /// Current precision is 1 second, however this should not be relied
 /// upon and may change in the future.
 pub fn coarse_time() -> time::Instant {
-    AppValues::expect_current(|values| *values.coarse_time)
+    AppState::try_with_current(|state| *state.coarse_time().get_auto())
+        .expect("there is no valid app state to get coarse_time from")
 }
 
 impl<P: Platform> App<P> {
@@ -101,17 +99,11 @@ impl<P: Platform> App<P> {
     /// Because of platform-specific requirements, this requires control
     /// of the current thread.
     pub fn run(mut self) -> ! {
-        let (width, height) = self.window.size();
-        let values = AppValues::new_now(width, height);
-        values
-            .with(|| {
-                self.platform.take().expect("app lost its platform").run(
-                    move |state, event| {
-                        self.handle_event(state, event);
-                    },
-                )
-            })
-            .1
+        self.platform.take().expect("app lost its platform").run(
+            move |state, event| {
+                self.handle_event(state, event);
+            },
+        )
     }
 
     /// Add a root widget to the app.
@@ -130,21 +122,52 @@ impl<P: Platform> App<P> {
         let holder = Rc::new(RefCell::new(widget.into_root()));
         let watcher = Rc::downgrade(&holder);
         self.roots.push(holder);
-        self.watch_ctx.add_watcher(&watcher);
+        let (state, _) = self
+            .owning_app()
+            .state
+            .take()
+            .expect("App lost its contained state")
+            .use_as_current(|| {
+                self.watch_ctx.add_watcher(&watcher);
+            });
+        self.owning_app().state = Some(state);
     }
 
     /// Create a test interface for this app, which allows simulating
     /// behavior.
     pub fn test<F: FnOnce(AppTesterInterface<'_, P>)>(mut self, func: F) {
         self.window.recalculate_viewport();
-        let (width, height) = self.window.size();
-        let values = AppValues::new_now(width, height);
-        values.with(|| {
-            func(AppTesterInterface::new(&mut self));
-        });
+        func(AppTesterInterface::new(&mut self));
         std::mem::drop(self.roots);
         std::mem::drop(self.window);
         std::mem::drop(self.platform);
+    }
+
+    fn owning_app(&mut self) -> &mut OwningApp {
+        self.watch_ctx
+            .owner()
+            .get_owner()
+            .next()
+            .expect("App lost its contained state")
+    }
+
+    fn state_mut(&mut self) -> &mut AppState {
+        self.owning_app()
+            .state
+            .as_mut()
+            .expect("App lost its contained state")
+    }
+
+    fn update(&mut self) {
+        let (state, _) = self
+            .owning_app()
+            .state
+            .take()
+            .expect("App lost its contained state")
+            .use_as_current(|| {
+                self.watch_ctx.update();
+            });
+        self.owning_app().state = Some(state);
     }
 
     fn handle_event<E: EventLoopState>(
@@ -156,19 +179,15 @@ impl<P: Platform> App<P> {
 
         match event {
             Event::StartFrame(frame_time) => {
-                AppValues::expect_current_mut(|values| {
-                    *values.frame_start = frame_time;
-                    let duration = frame_time.duration_since(
-                        *Watched::get_unwatched(&values.coarse_time),
-                    );
-                    if duration >= AppValues::COARSE_STEP {
-                        *values.coarse_time = frame_time;
-                    }
-                });
+                let state = self.state_mut();
+                *state.frame_start.get_mut_external() = frame_time;
+                let duration = frame_time
+                    .duration_since(*state.coarse_time().get_unwatched());
+                if duration >= AppState::COARSE_STEP {
+                    *state.coarse_time.get_mut_external() = frame_time;
+                }
             }
-            Event::Update => {
-                self.watch_ctx.update();
-            }
+            Event::Update => self.update(),
             Event::TakeScreenshot(dest) => {
                 *dest = self.window.take_screenshot();
             }
@@ -183,11 +202,10 @@ impl<P: Platform> App<P> {
             }
             Event::WindowEvent(Resize) => {
                 let (x, y) = self.window.size();
-                AppValues::expect_current_mut(|values| {
-                    *values.cell_size = get_cell_size(x, y);
-                    values.window_size.0 = x;
-                    values.window_size.1 = y;
-                });
+                let state = self.state_mut();
+                *state.cell_size.get_mut_external() = get_cell_size(x, y);
+                state.window_size.0 = x;
+                state.window_size.1 = y;
                 let xdim = Dim::with_length(x);
                 let ydim = Dim::with_length(y);
                 let rect = SimpleRect::new(xdim, ydim);
@@ -200,9 +218,7 @@ impl<P: Platform> App<P> {
             }
             Event::WindowEvent(DpScaleChange) => {
                 let ppd = self.window.pixels_per_dp();
-                AppValues::expect_current_mut(|values| {
-                    *values.px_per_dp = ppd;
-                });
+                *self.state_mut().px_per_dp.get_mut_external() = ppd;
             }
             Event::WindowEvent(KeyDown(_key)) => {}
             Event::WindowEvent(Pointer(mut pointer)) => {
@@ -230,7 +246,7 @@ impl<P: Platform> App<P> {
                 loop_count < 1024,
                 "render exceeded its loop count (possible infinite loop)",
             );
-            self.watch_ctx.update();
+            self.update();
             loop_count += 1;
         }
     }
@@ -250,4 +266,8 @@ impl<P: Platform> App<P> {
         std::mem::drop(roots);
         std::mem::drop(window);
     }
+}
+
+pub struct OwningApp {
+    state: Option<AppState>,
 }

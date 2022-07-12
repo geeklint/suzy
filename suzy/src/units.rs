@@ -14,83 +14,141 @@
 //! divides the screen.  This is intended for compatibility with character
 //! cell based interfaces, like a text-based terminal.
 
-use crate::app::AppValues;
+use drying_paint::DefaultOwner;
 
-/// This function is an identity function, for API symetry.
-#[inline]
-pub fn to_dp(value: f32) -> f32 {
-    value
-}
-
-/// This function is an identity function, for API symetry.
-#[inline]
-pub fn dp(dp: f32) -> f32 {
-    dp
-}
+use crate::{app::AppState, watch::WatchArg};
 
 /// The ratio Suzy assumes between dp and inches.
 pub const DPI: f32 = 96.0;
 
-/// Convert dp to inches
-#[inline]
-pub fn to_inches(value: f32) -> f32 {
-    value / DPI
-}
-
-/// Convert inches to dp
-#[inline]
-pub fn inches(inches: f32) -> f32 {
-    inches * DPI
-}
-
 const MM_PER_INCH: f32 = 25.4;
 
-/// Convert dp to millimeters
-#[inline]
-pub fn to_mm(value: f32) -> f32 {
-    to_inches(value) * MM_PER_INCH
+// dp is an identity function but it conveys semantic meaning, this alias
+// exists to avoid implying anything about the units of the value
+fn to_f32<T: Units>(value: T) -> f32 {
+    value.dp()
 }
 
-/// Convert millimeters to dp
-#[inline]
-pub fn mm(mm: f32) -> f32 {
-    inches(mm / MM_PER_INCH)
+pub trait Units: Sized {
+    /// This function is an identity function, since dp is the native unit
+    fn to_dp(self) -> f32;
+
+    /// This function is an identity function, since dp is the native unit
+    fn dp(self) -> f32;
+
+    /// Convert dp to inches
+    #[inline]
+    fn to_inches(self) -> f32 {
+        to_f32(self) / DPI
+    }
+
+    /// Convert inches to dp
+    #[inline]
+    fn inches(self) -> f32 {
+        to_f32(self) * DPI
+    }
+
+    /// Convert dp to millimeters
+    #[inline]
+    fn to_mm(self) -> f32 {
+        self.inches() * MM_PER_INCH
+    }
+
+    /// Convert millimeters to dp
+    #[inline]
+    fn mm(self) -> f32 {
+        (to_f32(self) / MM_PER_INCH).inches()
+    }
+
+    /// Convert dp to centimeters
+    #[inline]
+    fn to_cm(self) -> f32 {
+        self.to_mm() / 10.0
+    }
+
+    /// Convert centimeters to dp
+    #[inline]
+    fn cm(self) -> f32 {
+        (to_f32(self) * 10.0).mm()
+    }
+
+    /// Convert dp to real physical pixels
+    #[inline]
+    fn to_px_explicit(
+        self,
+        state: &AppState,
+        ctx: WatchArg<'_, 'static, DefaultOwner>,
+    ) -> f32 {
+        self.dp() * state.px_per_dp().get(ctx)
+    }
+
+    /// Convert dp to real physical pixels
+    #[inline]
+    fn to_px(self) -> f32 {
+        self.dp()
+            * AppState::try_with_current(|state| *state.px_per_dp().get_auto())
+                .expect("unable to find app state to get current DPI from")
+    }
+
+    /// Convert real physical pixels to dp
+    #[inline]
+    fn px_explicit(
+        self,
+        state: &AppState,
+        ctx: WatchArg<'_, 'static, DefaultOwner>,
+    ) -> f32 {
+        to_f32(self) / state.px_per_dp().get(ctx)
+    }
+
+    /// Convert real physical pixels to dp
+    #[inline]
+    fn px(self) -> f32 {
+        to_f32(self)
+            / AppState::try_with_current(|state| *state.px_per_dp().get_auto())
+                .expect("unable to find app state to get current DPI from")
+    }
+
+    /// Round dp to a cell boundry
+    ///
+    /// See the [module-level documentation](./index.html) for an explanation of
+    /// the `cell` unit.
+    fn to_cells_explicit(
+        self,
+        state: &AppState,
+        ctx: WatchArg<'_, 'static, DefaultOwner>,
+    ) -> i32 {
+        (self.dp() / state.cell_size().get(ctx)).round() as i32
+    }
 }
 
-/// Convert dp to centimeters
-#[inline]
-pub fn to_cm(value: f32) -> f32 {
-    to_mm(value) / 10.0
+impl Units for f32 {
+    fn to_dp(self) -> f32 {
+        self
+    }
+
+    fn dp(self) -> f32 {
+        self
+    }
 }
 
-/// Convert centimeters to dp
-#[inline]
-pub fn cm(cm: f32) -> f32 {
-    mm(cm * 10.0)
+pub trait CellUnit: Sized {
+    /// Convert a number of cells to a size in dp
+    ///
+    /// See the [module-level documentation](./index.html) for an explanation of
+    /// the `cell` unit.
+    fn cells_explicit(
+        self,
+        state: &AppState,
+        ctx: WatchArg<'_, 'static, DefaultOwner>,
+    ) -> f32;
 }
 
-/// Convert dp to real physical pixels
-pub fn to_px(value: f32) -> f32 {
-    value * AppValues::px_per_dp()
-}
-
-/// Convert real physical pixels to dp
-pub fn px(px: f32) -> f32 {
-    px / AppValues::px_per_dp()
-}
-
-/// Round dp to a cell boundry
-///
-/// See the [module-level documentation](./index.html) for an explanation of
-/// the `cell` unit.
-pub fn to_cells(value: f32) -> i32 {
-    (value / AppValues::cell_size()).round() as i32
-}
-
-/// Convert a number of cells to a size in dp
-///
-/// See the [module-level documentation](./index.html) for an explanation of
-/// the `cell` unit.
-pub fn cells(cells: i32) -> f32 {
-    (cells as f32) * AppValues::cell_size()
+impl CellUnit for i32 {
+    fn cells_explicit(
+        self,
+        state: &AppState,
+        ctx: WatchArg<'_, 'static, DefaultOwner>,
+    ) -> f32 {
+        (self as f32) * state.cell_size().get(ctx)
+    }
 }

@@ -1,85 +1,76 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use drying_paint::Watched;
-use std::cell::RefCell;
-use std::time;
+use std::{cell::Cell, time};
+
+use crate::watch::DefaultOwner;
+
+type WatchedCore<T> = crate::watch::WatchedCore<'static, T, DefaultOwner>;
 
 thread_local! {
-    static APP_STACK: RefCell<Vec<AppValues>> = RefCell::new(Vec::new());
+    static CURRENT: Cell<Option<AppState>> = Cell::new(None);
 }
 
-#[derive(Debug)]
-pub(crate) struct AppValues {
-    pub frame_start: Watched<time::Instant>,
-    pub coarse_time: Watched<time::Instant>,
-    pub cell_size: Watched<f32>,
-    pub px_per_dp: Watched<f32>,
-    pub window_size: (f32, f32),
+pub struct AppState {
+    pub(super) frame_start: WatchedCore<time::Instant>,
+    pub(super) coarse_time: WatchedCore<time::Instant>,
+    pub(super) cell_size: WatchedCore<f32>,
+    pub(super) px_per_dp: WatchedCore<f32>,
+    pub(super) window_size: (f32, f32),
 }
 
-impl AppValues {
+impl AppState {
     pub const COARSE_STEP: time::Duration = time::Duration::from_secs(1);
+
+    pub fn time(&self) -> &WatchedCore<time::Instant> {
+        &self.frame_start
+    }
+
+    pub fn coarse_time(&self) -> &WatchedCore<time::Instant> {
+        &self.coarse_time
+    }
+
+    pub fn cell_size(&self) -> &WatchedCore<f32> {
+        &self.cell_size
+    }
+
+    pub fn px_per_dp(&self) -> &WatchedCore<f32> {
+        &self.px_per_dp
+    }
 
     pub(crate) fn new_now(width: f32, height: f32) -> Self {
         let now = time::Instant::now();
         Self {
-            frame_start: Watched::new(now),
-            coarse_time: Watched::new(now),
-            cell_size: Watched::new(get_cell_size(width, height)),
-            px_per_dp: Watched::new(1.0),
+            frame_start: WatchedCore::new(now),
+            coarse_time: WatchedCore::new(now),
+            cell_size: WatchedCore::new(get_cell_size(width, height)),
+            px_per_dp: WatchedCore::new(1.0),
             window_size: (width, height),
         }
     }
 
-    pub(super) fn with<F: FnOnce() -> R, R>(self, func: F) -> (Self, R) {
-        APP_STACK.with(|cell| cell.borrow_mut().push(self));
-        let res = (func)();
-        let values =
-            APP_STACK
-                .with(|cell| cell.borrow_mut().pop())
-                .expect(concat!(
-                    "Failed to pop from APP_STACK,",
-                    "it must have been modified incorrectly"
-                ));
-        (values, res)
+    pub(super) fn use_as_current<F: FnOnce() -> R, R>(
+        self,
+        func: F,
+    ) -> (Self, R) {
+        CURRENT.with(|cell| {
+            let prev = cell.replace(Some(self));
+            let res = (func)();
+            let self_again = cell.replace(prev).expect("AppState removed from current before end of use_as_current call");
+            (self_again, res)
+        })
     }
 
     pub(crate) fn try_with_current<F, R>(func: F) -> Option<R>
     where
-        F: FnOnce(&AppValues) -> R,
+        F: FnOnce(&AppState) -> R,
     {
-        APP_STACK.with(|cell| cell.borrow().last().map(func))
-    }
-
-    pub(crate) fn expect_current<F, R>(func: F) -> R
-    where
-        F: FnOnce(&AppValues) -> R,
-    {
-        APP_STACK.with(|cell| {
-            let stack = cell.borrow();
-            let top = stack.last().expect("App context is not valid");
-            (func)(top)
+        CURRENT.with(|cell| {
+            let state = cell.take()?;
+            let ret = func(&state);
+            cell.set(Some(state));
+            Some(ret)
         })
-    }
-
-    pub(crate) fn expect_current_mut<F, R>(func: F) -> R
-    where
-        F: FnOnce(&mut AppValues) -> R,
-    {
-        APP_STACK.with(|cell| {
-            let mut stack = cell.borrow_mut();
-            let top = stack.last_mut().expect("App context is not valid");
-            (func)(top)
-        })
-    }
-
-    pub(crate) fn px_per_dp() -> f32 {
-        Self::try_with_current(|values| *values.px_per_dp).unwrap_or(1.0)
-    }
-
-    pub(crate) fn cell_size() -> f32 {
-        Self::try_with_current(|values| *values.cell_size).unwrap_or(16.0)
     }
 }
 

@@ -3,10 +3,13 @@
 
 use std::collections::HashMap;
 
-use crate::platform::Platform;
-use crate::window::{WindowBuilder, WindowSettings};
+use crate::{
+    platform::Platform,
+    watch::WatchContext,
+    window::{WindowBuilder, WindowSettings},
+};
 
-use super::App;
+use super::{App, AppState, OwningApp};
 
 /// Enables customizing an app before it is run.
 #[derive(Default)]
@@ -21,7 +24,13 @@ impl AppBuilder {
         let window = platform
             .create_window(self.win)
             .expect("Failed to create window");
-        let watch_ctx = drying_paint::WatchContext::new();
+
+        let (width, height) = window.size();
+        let state = AppState::new_now(width, height);
+        let owner = OwningApp { state: Some(state) };
+
+        let mut watch_ctx: WatchContext<'static> = WatchContext::new();
+        watch_ctx.owner().add_owner(owner);
 
         App {
             platform: Some(platform),
