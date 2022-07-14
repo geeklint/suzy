@@ -1,10 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::{
-    dims::{Dim, Rect},
-    watch,
-};
+use crate::dims::{Dim, Rect};
 
 use super::WidgetRect;
 
@@ -54,37 +51,5 @@ impl Rect for WidgetExtra<'_> {
         F: FnOnce(&mut Dim) -> R,
     {
         self.rect.y_mut(f)
-    }
-}
-
-#[repr(transparent)]
-pub(super) struct WatcherImpl<T: ?Sized, P> {
-    _platform: std::marker::PhantomData<fn() -> P>,
-    internal: T,
-}
-
-impl<T: ?Sized> WidgetInternal<T> {
-    pub fn as_watcher<P>(&mut self) -> &mut WatcherImpl<Self, P>
-    where
-        T: super::Content<P>,
-    {
-        let ptr = self as *mut WidgetInternal<T> as *mut WatcherImpl<Self, P>;
-        unsafe { &mut *ptr }
-    }
-}
-
-impl<T, P> watch::Watcher<'static> for WatcherImpl<WidgetInternal<T>, P>
-where
-    T: ?Sized + super::Content<P>,
-    Self: 'static,
-{
-    fn init(mut init: impl watch::WatcherInit<'static, Self>) {
-        super::Content::desc(super::receivers::WidgetInitImpl {
-            init: &mut init,
-            getter: |this: &mut Self| {
-                (&mut this.internal.content, &mut this.internal.rect)
-            },
-            _marker: std::marker::PhantomData,
-        });
     }
 }

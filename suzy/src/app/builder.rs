@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     platform::Platform,
@@ -9,7 +9,7 @@ use crate::{
     window::{WindowBuilder, WindowSettings},
 };
 
-use super::{App, AppState, OwningApp};
+use super::{App, AppState};
 
 /// Enables customizing an app before it is run.
 #[derive(Default)]
@@ -26,11 +26,9 @@ impl AppBuilder {
             .expect("Failed to create window");
 
         let (width, height) = window.size();
-        let state = AppState::new_now(width, height);
-        let owner = OwningApp { state: Some(state) };
+        let state = Rc::new(RefCell::new(AppState::new_now(width, height)));
 
-        let mut watch_ctx: WatchContext<'static> = WatchContext::new();
-        watch_ctx.owner().add_owner(owner);
+        let watch_ctx: WatchContext<'static> = WatchContext::new();
 
         App {
             platform: Some(platform),
@@ -38,6 +36,7 @@ impl AppBuilder {
             window,
             roots: Vec::new(),
             pointer_grab_map: HashMap::new(),
+            state,
         }
     }
 }

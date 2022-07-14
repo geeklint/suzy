@@ -36,11 +36,11 @@ mod app_struct {
         platform::Platform,
         pointer::PointerId,
         watch::WatchContext,
-        widget::{AnonWidget, RootWidget, UniqueHandleId},
+        widget::{AnonWidget, UniqueHandleId},
     };
     use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-    type RootHolder<P> = Rc<RefCell<RootWidget<dyn AnonWidget<P>, P>>>;
+    type RootHolder<P> = Rc<RefCell<dyn AnonWidget<P>>>;
 
     /// A type which contains the context in which widgets run.
     ///
@@ -50,10 +50,11 @@ mod app_struct {
         P: Platform,
     {
         pub(super) platform: Option<P>,
-        pub(super) watch_ctx: WatchContext<'static>,
+        pub(crate) watch_ctx: WatchContext<'static>,
         pub(super) window: P::Window,
         pub(super) roots: Vec<RootHolder<P::Renderer>>,
         pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
+        pub(crate) state: Rc<RefCell<super::AppState>>,
     }
 }
 
@@ -119,18 +120,10 @@ impl<P: Platform> App<P> {
         let (width, height) = self.window.size();
         let rect = SimpleRect::with_size(width, height);
         widget.set_fill(&rect, &SimplePadding2d::zero());
-        let holder = Rc::new(RefCell::new(widget.into_root()));
+        let holder = Rc::new(RefCell::new(widget));
         let watcher = Rc::downgrade(&holder);
         self.roots.push(holder);
-        let (state, _) = self
-            .owning_app()
-            .state
-            .take()
-            .expect("App lost its contained state")
-            .use_as_current(|| {
-                self.watch_ctx.add_watcher(&watcher);
-            });
-        self.owning_app().state = Some(state);
+        Widget::init(watcher, self);
     }
 
     /// Create a test interface for this app, which allows simulating
@@ -143,33 +136,6 @@ impl<P: Platform> App<P> {
         std::mem::drop(self.platform);
     }
 
-    fn owning_app(&mut self) -> &mut OwningApp {
-        self.watch_ctx
-            .owner()
-            .get_owner()
-            .next()
-            .expect("App lost its contained state")
-    }
-
-    fn state_mut(&mut self) -> &mut AppState {
-        self.owning_app()
-            .state
-            .as_mut()
-            .expect("App lost its contained state")
-    }
-
-    fn update(&mut self) {
-        let (state, _) = self
-            .owning_app()
-            .state
-            .take()
-            .expect("App lost its contained state")
-            .use_as_current(|| {
-                self.watch_ctx.update();
-            });
-        self.owning_app().state = Some(state);
-    }
-
     fn handle_event<E: EventLoopState>(
         &mut self,
         state: &mut E,
@@ -179,7 +145,7 @@ impl<P: Platform> App<P> {
 
         match event {
             Event::StartFrame(frame_time) => {
-                let state = self.state_mut();
+                let mut state = self.state.borrow_mut();
                 *state.frame_start.get_mut_external() = frame_time;
                 let duration = frame_time
                     .duration_since(*state.coarse_time().get_unwatched());
@@ -187,7 +153,9 @@ impl<P: Platform> App<P> {
                     *state.coarse_time.get_mut_external() = frame_time;
                 }
             }
-            Event::Update => self.update(),
+            Event::Update => {
+                self.watch_ctx.update();
+            }
             Event::TakeScreenshot(dest) => {
                 *dest = self.window.take_screenshot();
             }
@@ -202,7 +170,7 @@ impl<P: Platform> App<P> {
             }
             Event::WindowEvent(Resize) => {
                 let (x, y) = self.window.size();
-                let state = self.state_mut();
+                let mut state = self.state.borrow_mut();
                 *state.cell_size.get_mut_external() = get_cell_size(x, y);
                 state.window_size.0 = x;
                 state.window_size.1 = y;
@@ -211,14 +179,13 @@ impl<P: Platform> App<P> {
                 let rect = SimpleRect::new(xdim, ydim);
                 for root in self.roots.iter_mut() {
                     root.borrow_mut()
-                        .widget
                         .set_fill(&rect, &SimplePadding2d::zero());
                 }
                 self.window.recalculate_viewport();
             }
             Event::WindowEvent(DpScaleChange) => {
                 let ppd = self.window.pixels_per_dp();
-                *self.state_mut().px_per_dp.get_mut_external() = ppd;
+                *self.state.borrow_mut().px_per_dp.get_mut_external() = ppd;
             }
             Event::WindowEvent(KeyDown(_key)) => {}
             Event::WindowEvent(Pointer(mut pointer)) => {
@@ -236,7 +203,7 @@ impl<P: Platform> App<P> {
         loop {
             let mut ctx = self.window.prepare_draw(pass_arg);
             for root in self.roots.iter_mut() {
-                root.borrow_mut().widget.draw(&mut ctx);
+                root.borrow_mut().draw(&mut ctx);
             }
             pass_arg = ctx.finish();
             if pass_arg.is_none() {
@@ -246,7 +213,7 @@ impl<P: Platform> App<P> {
                 loop_count < 1024,
                 "render exceeded its loop count (possible infinite loop)",
             );
-            self.update();
+            self.watch_ctx.update();
             loop_count += 1;
         }
     }
@@ -256,7 +223,7 @@ impl<P: Platform> App<P> {
         let mut handled = false;
         let mut iter = self.roots.iter_mut().rev();
         while let (false, Some(root)) = (handled, iter.next()) {
-            handled = root.borrow_mut().widget.pointer_event(&mut event);
+            handled = root.borrow_mut().pointer_event(&mut event);
         }
     }
 
@@ -266,8 +233,4 @@ impl<P: Platform> App<P> {
         std::mem::drop(roots);
         std::mem::drop(window);
     }
-}
-
-pub struct OwningApp {
-    state: Option<AppState>,
 }

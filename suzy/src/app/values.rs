@@ -1,14 +1,18 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::{cell::Cell, time};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+    time,
+};
 
 use crate::watch::DefaultOwner;
 
 type WatchedCore<T> = crate::watch::WatchedCore<'static, T, DefaultOwner>;
 
 thread_local! {
-    static CURRENT: Cell<Option<AppState>> = Cell::new(None);
+    static CURRENT: Cell<Option<Rc<RefCell<AppState>>>> = Cell::new(None);
 }
 
 pub struct AppState {
@@ -49,12 +53,12 @@ impl AppState {
         }
     }
 
-    pub(super) fn use_as_current<F: FnOnce() -> R, R>(
-        self,
+    pub(crate) fn use_as_current<F: FnOnce() -> R, R>(
+        this: Rc<RefCell<Self>>,
         func: F,
-    ) -> (Self, R) {
+    ) -> (Rc<RefCell<Self>>, R) {
         CURRENT.with(|cell| {
-            let prev = cell.replace(Some(self));
+            let prev = cell.replace(Some(this));
             let res = (func)();
             let self_again = cell.replace(prev).expect("AppState removed from current before end of use_as_current call");
             (self_again, res)
@@ -67,7 +71,7 @@ impl AppState {
     {
         CURRENT.with(|cell| {
             let state = cell.take()?;
-            let ret = func(&state);
+            let ret = func(&state.borrow());
             cell.set(Some(state));
             Some(ret)
         })

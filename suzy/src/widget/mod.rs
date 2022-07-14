@@ -154,16 +154,26 @@ impl<T> Widget<T> {
             },
         }
     }
-
-    pub(crate) fn into_root<P>(self) -> RootWidget<Self, P> {
-        RootWidget {
-            platform: std::marker::PhantomData,
-            widget: self,
-        }
-    }
 }
 
 impl<T: ?Sized> Widget<T> {
+    pub(crate) fn init<P>(
+        path: std::rc::Weak<std::cell::RefCell<Self>>,
+        app: &mut crate::app::App<P>,
+    ) where
+        T: Content<P::Renderer>,
+        P: crate::platform::Platform,
+    {
+        let crate::app::App {
+            watch_ctx, state, ..
+        } = app;
+        T::desc(receivers::WidgetInitImpl {
+            watch_ctx,
+            state,
+            path,
+        })
+    }
+
     pub(crate) fn draw<P>(this: &mut Self, ctx: &mut DrawContext<'_, P>)
     where
         T: Content<P>,
@@ -252,20 +262,5 @@ where
         F: FnOnce(&mut Dim) -> R,
     {
         self.internal.rect.external_y_mut(f)
-    }
-}
-
-pub(crate) struct RootWidget<W: ?Sized, P> {
-    pub platform: std::marker::PhantomData<fn() -> P>,
-    pub widget: W,
-}
-
-impl<T, P> crate::watch::Watcher<'static> for RootWidget<Widget<T>, P>
-where
-    P: 'static,
-    T: Content<P>,
-{
-    fn init(mut init: impl crate::watch::WatcherInit<'static, Self>) {
-        init.init_child(|this| this.widget.internal.as_watcher());
     }
 }

@@ -160,14 +160,14 @@ where
 pub(super) use holder::EphemeralHolder;
 
 mod holder {
-    use std::rc::Weak;
+    use std::{
+        cell::RefCell,
+        rc::{Rc, Weak},
+    };
 
     use super::Inner;
 
-    use crate::{
-        watch::{DefaultOwner, WatcherHolder},
-        widget,
-    };
+    use crate::{app, watch, widget};
     pub(in crate::widget) struct EphemeralHolder<T: ?Sized, P> {
         pub(super) ptr: Weak<Inner<T>>,
         pub(super) marker: std::marker::PhantomData<fn() -> P>,
@@ -184,23 +184,39 @@ mod holder {
         }
     }
 
-    impl<T, P> WatcherHolder<'static, DefaultOwner> for EphemeralHolder<T, P>
+    impl<T, P> widget::receivers::Holder for EphemeralHolder<T, P>
+    where
+        T: ?Sized,
+    {
+        type Content = T;
+
+        fn get_mut<F>(&self, f: F)
+        where
+            F: FnOnce(&mut Self::Content, &mut widget::WidgetRect),
+        {
+            if let Some(strong) = self.ptr.upgrade() {
+                let mut widget = strong.widget.borrow_mut();
+                let internal = &mut widget.internal;
+                f(&mut internal.content, &mut internal.rect)
+            }
+        }
+    }
+
+    impl<T, P> EphemeralHolder<T, P>
     where
         T: ?Sized + widget::Content<P>,
         P: 'static,
     {
-        type Content = widget::internal::WatcherImpl<
-            widget::internal::WidgetInternal<T>,
-            P,
-        >;
-
-        fn get_mut<F, R>(&self, _owner: &mut DefaultOwner, f: F) -> Option<R>
-        where
-            F: FnOnce(&mut Self::Content) -> R,
-        {
-            self.ptr.upgrade().map(|strong| {
-                let mut wid_ref = strong.widget.borrow_mut();
-                f(wid_ref.internal.as_watcher())
+        pub(crate) fn init(
+            self,
+            watch_ctx: &mut watch::WatchContext<'static, watch::DefaultOwner>,
+            state: &Rc<RefCell<app::AppState>>,
+        ) {
+            use crate::widget::receivers::WidgetInitImpl;
+            T::desc(WidgetInitImpl {
+                watch_ctx,
+                state,
+                path: self,
             })
         }
     }

@@ -1,7 +1,13 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
+use std::{
+    cell::RefCell,
+    rc::{Rc, Weak},
+};
+
 use crate::{
+    app::{self, AppState},
     graphics::{DrawContext, Graphic},
     platform::RenderPlatform,
     pointer::PointerEvent,
@@ -46,25 +52,82 @@ macro_rules! impl_empty {
     }
 }
 
-pub(super) struct WidgetInitImpl<'a, Init, Getter, Base, Leaf>
-where
-    Base: ?Sized,
-    Leaf: ?Sized,
-    Getter: 'static + Clone + Fn(&mut Base) -> (&mut Leaf, &mut WidgetRect),
-{
-    pub init: &'a mut Init,
-    pub getter: Getter,
-    pub _marker: std::marker::PhantomData<&'a mut Base>,
+pub(super) trait Holder: Clone {
+    type Content: ?Sized;
+
+    fn get_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut Self::Content, &mut WidgetRect);
 }
 
-impl<'a, Init, Base, Leaf, Plat, Getter> Desc<Leaf, Plat>
-    for WidgetInitImpl<'a, Init, Getter, Base, Leaf>
+impl<T: ?Sized> Holder for Weak<RefCell<Widget<T>>> {
+    type Content = T;
+
+    fn get_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut Self::Content, &mut WidgetRect),
+    {
+        if let Some(strong) = self.upgrade() {
+            let mut widget = strong.borrow_mut();
+            let internal = &mut widget.internal;
+            f(&mut internal.content, &mut internal.rect)
+        }
+    }
+}
+
+#[derive(Clone)]
+struct MapHolder<Base, MapFn> {
+    base: Base,
+    map: MapFn,
+}
+
+impl<Base, MapFn, Leaf: ?Sized> Holder for MapHolder<Base, MapFn>
 where
-    Init: watch::WatcherInit<'static, Base>,
-    Base: ?Sized,
-    Leaf: ?Sized + super::Content<Plat>,
+    Base: Holder,
+    MapFn: Clone
+        + for<'a> Fn(
+            &'a mut Base::Content,
+            &'a mut WidgetRect,
+        ) -> (&'a mut Leaf, &'a mut WidgetRect),
+{
+    type Content = Leaf;
+
+    fn get_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut Self::Content, &mut WidgetRect),
+    {
+        let map = &self.map;
+        self.base.get_mut(|base_content, base_rect| {
+            let (leaf_content, leaf_rect) = map(base_content, base_rect);
+            f(leaf_content, leaf_rect)
+        });
+    }
+}
+
+fn fix_closure<Branch, Leaf, F>(f: F) -> F
+where
+    Branch: ?Sized,
+    Leaf: ?Sized,
+    F: Clone
+        + for<'a> Fn(
+            &'a mut Branch,
+            &'a mut WidgetRect,
+        ) -> (&'a mut Leaf, &'a mut WidgetRect),
+{
+    f
+}
+
+pub(super) struct WidgetInitImpl<'a, Path> {
+    pub watch_ctx: &'a mut watch::WatchContext<'static, watch::DefaultOwner>,
+    pub state: &'a Rc<RefCell<app::AppState>>,
+    pub path: Path,
+}
+
+impl<'a, Leaf, Plat, Path> Desc<Leaf, Plat> for WidgetInitImpl<'a, Path>
+where
     Plat: 'static,
-    Getter: 'static + Clone + Fn(&mut Base) -> (&mut Leaf, &mut WidgetRect),
+    Leaf: ?Sized + super::Content<Plat>,
+    Path: 'static + Holder<Content = Leaf>,
 {
     impl_empty! { Leaf; Plat; graphic }
 
@@ -72,11 +135,17 @@ where
     where
         F: Fn(&mut Leaf, &mut WidgetRect) + 'static,
     {
-        let getter = self.getter.clone();
-        self.init.watch(move |base| {
-            let (content, rect) = getter(base);
-            (func)(content, rect);
-        });
+        let current_path = self.path.clone();
+        let state = Rc::clone(self.state);
+        self.watch_ctx
+            .add_watch_raw("<unknown>", move |mut raw_arg| {
+                let (_, arg) = raw_arg.as_owner_and_arg();
+                arg.use_as_current(|| {
+                    AppState::use_as_current(Rc::clone(&state), || {
+                        current_path.get_mut(&func)
+                    });
+                })
+            });
     }
 
     fn child<F, Child>(&mut self, map_fn: F)
@@ -84,12 +153,17 @@ where
         F: 'static + Clone + FnOnce(&mut Leaf) -> &mut Widget<Child>,
         Child: super::Content<Plat>,
     {
-        let getter = self.getter.clone();
-        self.init.init_child(move |base| {
-            (map_fn.clone())(getter(base).0)
-                .internal
-                .as_watcher::<Plat>()
-        });
+        Child::desc(WidgetInitImpl {
+            watch_ctx: self.watch_ctx,
+            state: self.state,
+            path: MapHolder {
+                base: self.path.clone(),
+                map: fix_closure(move |content, _rect| {
+                    let widget = map_fn.clone()(content);
+                    (&mut widget.internal.content, &mut widget.internal.rect)
+                }),
+            },
+        })
     }
 
     fn iter_children<F, Child>(&mut self, iter_fn: F)
@@ -103,18 +177,28 @@ where
         Child: super::Content<Plat>,
     {
         use crate::watch::{DefaultOwner, WatchedMeta};
-        let getter = self.getter.clone();
         let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
-        self.init
-            .watch_for_new_child_explicit(move |watch_arg, base| {
-                maybe_more.watched(watch_arg);
-                let (content, _rect) = getter(base);
-                let holder =
-                    iter_fn(content).filter_map(|e| e.uninit_holder()).next();
-                if holder.is_some() {
+        let current_path = self.path.clone();
+        let state = Rc::clone(self.state);
+        self.watch_ctx
+            .add_watch_raw("<unknown>", move |mut raw_arg| {
+                let (_, arg) = raw_arg.as_owner_and_arg();
+                maybe_more.watched(arg);
+                let holder = arg.use_as_current(|| {
+                    let mut holder = None;
+                    AppState::use_as_current(Rc::clone(&state), || {
+                        current_path.get_mut(|content, _rect| {
+                            holder = iter_fn(content)
+                                .filter_map(|e| e.uninit_holder::<Plat>())
+                                .next();
+                        });
+                    });
+                    holder
+                });
+                if let Some(widget) = holder {
                     maybe_more.trigger_external();
+                    widget.init(raw_arg.context(), &state)
                 }
-                holder
             });
     }
 
@@ -123,14 +207,13 @@ where
         Child: super::Content<Plat>,
         F: 'static + Clone + Fn(&mut Leaf) -> &mut Child,
     {
-        let current_getter = self.getter.clone();
-        super::Content::desc(WidgetInitImpl {
-            init: self.init,
-            getter: move |base| {
-                let (base_content, rect) = current_getter(base);
-                (getter(base_content), rect)
+        Child::desc(WidgetInitImpl {
+            watch_ctx: self.watch_ctx,
+            state: self.state,
+            path: MapHolder {
+                base: self.path.clone(),
+                map: fix_closure(move |content, rect| (getter(content), rect)),
             },
-            _marker: std::marker::PhantomData,
         });
     }
 }
