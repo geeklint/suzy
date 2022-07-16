@@ -160,10 +160,7 @@ where
 pub(super) use holder::EphemeralHolder;
 
 mod holder {
-    use std::{
-        cell::RefCell,
-        rc::{Rc, Weak},
-    };
+    use std::rc::{Rc, Weak};
 
     use super::Inner;
 
@@ -210,7 +207,7 @@ mod holder {
         pub(crate) fn init(
             self,
             watch_ctx: &mut watch::WatchContext<'static, watch::DefaultOwner>,
-            state: &Rc<RefCell<app::AppState>>,
+            state: &Rc<app::AppState>,
         ) {
             use crate::widget::receivers::WidgetInitImpl;
             T::desc(WidgetInitImpl {

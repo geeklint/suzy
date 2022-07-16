@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     platform::Platform,
@@ -26,7 +26,7 @@ impl AppBuilder {
             .expect("Failed to create window");
 
         let (width, height) = window.size();
-        let state = Rc::new(RefCell::new(AppState::new_now(width, height)));
+        let state = Rc::new(AppState::new_now(width, height));
 
         let watch_ctx: WatchContext<'static> = WatchContext::new();
 

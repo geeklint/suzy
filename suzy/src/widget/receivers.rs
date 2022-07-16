@@ -119,7 +119,7 @@ where
 
 pub(super) struct WidgetInitImpl<'a, Path> {
     pub watch_ctx: &'a mut watch::WatchContext<'static, watch::DefaultOwner>,
-    pub state: &'a Rc<RefCell<app::AppState>>,
+    pub state: &'a Rc<app::AppState>,
     pub path: Path,
 }
 

@@ -1,62 +1,61 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::{
-    cell::{Cell, RefCell},
-    rc::Rc,
-    time,
-};
+use std::{cell::Cell, rc::Rc, time};
 
 use crate::watch::DefaultOwner;
 
-type WatchedCore<T> = crate::watch::WatchedCore<'static, T, DefaultOwner>;
+type WatchedCellCore<T> =
+    crate::watch::WatchedCellCore<'static, T, DefaultOwner>;
 
 thread_local! {
-    static CURRENT: Cell<Option<Rc<RefCell<AppState>>>> = Cell::new(None);
+    static CURRENT: Cell<Option<Rc<AppState>>> = Cell::new(None);
 }
 
 pub struct AppState {
-    pub(super) frame_start: WatchedCore<time::Instant>,
-    pub(super) coarse_time: WatchedCore<time::Instant>,
-    pub(super) cell_size: WatchedCore<f32>,
-    pub(super) px_per_dp: WatchedCore<f32>,
-    pub(super) window_size: (f32, f32),
+    pub(super) frame_start: WatchedCellCore<time::Instant>,
+    pub(super) coarse_time: WatchedCellCore<time::Instant>,
+    pub(super) cell_size: WatchedCellCore<f32>,
+    pub(super) px_per_dp: WatchedCellCore<f32>,
+    pub(super) window_width: WatchedCellCore<f32>,
+    pub(super) window_height: WatchedCellCore<f32>,
 }
 
 impl AppState {
     pub const COARSE_STEP: time::Duration = time::Duration::from_secs(1);
 
-    pub fn time(&self) -> &WatchedCore<time::Instant> {
+    pub fn time(&self) -> &WatchedCellCore<time::Instant> {
         &self.frame_start
     }
 
-    pub fn coarse_time(&self) -> &WatchedCore<time::Instant> {
+    pub fn coarse_time(&self) -> &WatchedCellCore<time::Instant> {
         &self.coarse_time
     }
 
-    pub fn cell_size(&self) -> &WatchedCore<f32> {
+    pub fn cell_size(&self) -> &WatchedCellCore<f32> {
         &self.cell_size
     }
 
-    pub fn px_per_dp(&self) -> &WatchedCore<f32> {
+    pub fn px_per_dp(&self) -> &WatchedCellCore<f32> {
         &self.px_per_dp
     }
 
     pub(crate) fn new_now(width: f32, height: f32) -> Self {
         let now = time::Instant::now();
         Self {
-            frame_start: WatchedCore::new(now),
-            coarse_time: WatchedCore::new(now),
-            cell_size: WatchedCore::new(get_cell_size(width, height)),
-            px_per_dp: WatchedCore::new(1.0),
-            window_size: (width, height),
+            frame_start: WatchedCellCore::new(now),
+            coarse_time: WatchedCellCore::new(now),
+            cell_size: WatchedCellCore::new(get_cell_size(width, height)),
+            px_per_dp: WatchedCellCore::new(1.0),
+            window_width: WatchedCellCore::new(width),
+            window_height: WatchedCellCore::new(height),
         }
     }
 
     pub(crate) fn use_as_current<F: FnOnce() -> R, R>(
-        this: Rc<RefCell<Self>>,
+        this: Rc<Self>,
         func: F,
-    ) -> (Rc<RefCell<Self>>, R) {
+    ) -> (Rc<Self>, R) {
         CURRENT.with(|cell| {
             let prev = cell.replace(Some(this));
             let res = (func)();
@@ -71,7 +70,7 @@ impl AppState {
     {
         CURRENT.with(|cell| {
             let state = cell.take()?;
-            let ret = func(&state.borrow());
+            let ret = func(&state);
             cell.set(Some(state));
             Some(ret)
         })

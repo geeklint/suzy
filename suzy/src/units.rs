@@ -86,7 +86,7 @@ pub trait Units: Sized {
     #[inline]
     fn to_px(self) -> f32 {
         self.dp()
-            * AppState::try_with_current(|state| *state.px_per_dp().get_auto())
+            * AppState::try_with_current(|state| state.px_per_dp().get_auto())
                 .expect("unable to find app state to get current DPI from")
     }
 
@@ -104,7 +104,7 @@ pub trait Units: Sized {
     #[inline]
     fn px(self) -> f32 {
         to_f32(self)
-            / AppState::try_with_current(|state| *state.px_per_dp().get_auto())
+            / AppState::try_with_current(|state| state.px_per_dp().get_auto())
                 .expect("unable to find app state to get current DPI from")
     }
 

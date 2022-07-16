@@ -54,7 +54,7 @@ mod app_struct {
         pub(super) window: P::Window,
         pub(super) roots: Vec<RootHolder<P::Renderer>>,
         pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
-        pub(crate) state: Rc<RefCell<super::AppState>>,
+        pub(crate) state: Rc<super::AppState>,
     }
 }
 
@@ -72,13 +72,13 @@ where
 /// This will bind watch closures it is called in, and can be used to
 /// intentionally cause a watch closure to re-run every frame.
 pub fn time() -> time::Instant {
-    AppState::try_with_current(|state| *state.time().get_auto())
+    AppState::try_with_current(|state| state.time().get_auto())
         .expect("there is no valid app state to get time from")
 }
 
 /// A version of `time` which will not bind watch closures.
 pub fn time_unwatched() -> time::Instant {
-    AppState::try_with_current(|state| *state.time().get_unwatched())
+    AppState::try_with_current(|state| state.time().get_unwatched())
         .unwrap_or_else(time::Instant::now)
 }
 
@@ -90,7 +90,7 @@ pub fn time_unwatched() -> time::Instant {
 /// Current precision is 1 second, however this should not be relied
 /// upon and may change in the future.
 pub fn coarse_time() -> time::Instant {
-    AppState::try_with_current(|state| *state.coarse_time().get_auto())
+    AppState::try_with_current(|state| state.coarse_time().get_auto())
         .expect("there is no valid app state to get coarse_time from")
 }
 
@@ -145,12 +145,11 @@ impl<P: Platform> App<P> {
 
         match event {
             Event::StartFrame(frame_time) => {
-                let mut state = self.state.borrow_mut();
-                *state.frame_start.get_mut_external() = frame_time;
+                self.state.frame_start.set_external(frame_time);
                 let duration = frame_time
-                    .duration_since(*state.coarse_time().get_unwatched());
+                    .duration_since(self.state.coarse_time().get_unwatched());
                 if duration >= AppState::COARSE_STEP {
-                    *state.coarse_time.get_mut_external() = frame_time;
+                    self.state.coarse_time.set_external(frame_time);
                 }
             }
             Event::Update => {
@@ -170,10 +169,9 @@ impl<P: Platform> App<P> {
             }
             Event::WindowEvent(Resize) => {
                 let (x, y) = self.window.size();
-                let mut state = self.state.borrow_mut();
-                *state.cell_size.get_mut_external() = get_cell_size(x, y);
-                state.window_size.0 = x;
-                state.window_size.1 = y;
+                self.state.cell_size.set_external(get_cell_size(x, y));
+                self.state.window_width.set_external(x);
+                self.state.window_height.set_external(y);
                 let xdim = Dim::with_length(x);
                 let ydim = Dim::with_length(y);
                 let rect = SimpleRect::new(xdim, ydim);
@@ -185,7 +183,7 @@ impl<P: Platform> App<P> {
             }
             Event::WindowEvent(DpScaleChange) => {
                 let ppd = self.window.pixels_per_dp();
-                *self.state.borrow_mut().px_per_dp.get_mut_external() = ppd;
+                self.state.px_per_dp.set_external(ppd);
             }
             Event::WindowEvent(KeyDown(_key)) => {}
             Event::WindowEvent(Pointer(mut pointer)) => {
