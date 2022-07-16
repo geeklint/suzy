@@ -119,6 +119,15 @@ pub trait Units: Sized {
     ) -> i32 {
         (self.dp() / state.cell_size().get(ctx)).round() as i32
     }
+
+    fn to_cells(self) -> i32 {
+        let cell_size =
+            AppState::try_with_current(|state| state.cell_size().get_auto())
+                .expect(
+                    "unable to find app state to get current cell size from",
+                );
+        (self.dp() / cell_size).round() as i32
+    }
 }
 
 impl Units for f32 {
@@ -141,6 +150,8 @@ pub trait CellUnit: Sized {
         state: &AppState,
         ctx: WatchArg<'_, 'static, DefaultOwner>,
     ) -> f32;
+
+    fn cells(self) -> f32;
 }
 
 impl CellUnit for i32 {
@@ -150,5 +161,14 @@ impl CellUnit for i32 {
         ctx: WatchArg<'_, 'static, DefaultOwner>,
     ) -> f32 {
         (self as f32) * state.cell_size().get(ctx)
+    }
+
+    fn cells(self) -> f32 {
+        let cell_size =
+            AppState::try_with_current(|state| state.cell_size().get_auto())
+                .expect(
+                    "unable to find app state to get current cell size from",
+                );
+        (self as f32) * cell_size
     }
 }

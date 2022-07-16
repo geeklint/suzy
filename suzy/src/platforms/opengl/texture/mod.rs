@@ -281,7 +281,7 @@ impl Texture {
     pub fn new<T, U>(populator: T) -> Self
     where
         T: Into<Box<U>>,
-        U: PopulateTexture + 'static,
+        U: 'static + PopulateTexture,
     {
         let populator = populator.into();
         let size = populator.get_known_size().unwrap_or((f32::NAN, f32::NAN));
@@ -299,7 +299,7 @@ impl Texture {
     pub fn new_cached<T, U>(key: TextureCacheKey, populator: T) -> Self
     where
         T: Into<Box<U>>,
-        U: PopulateTexture + 'static,
+        U: 'static + PopulateTexture,
     {
         let populator = populator.into();
         let size = populator.get_known_size().unwrap_or((f32::NAN, f32::NAN));

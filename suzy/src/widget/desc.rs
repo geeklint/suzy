@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::platform::RenderPlatform;
+use crate::{
+    app::AppState,
+    platform::RenderPlatform,
+    watch::{DefaultOwner, WatchArg},
+};
 
 use super::{layout, Ephemeral, Widget, WidgetGraphic, WidgetRect};
 
@@ -19,12 +23,16 @@ with_default_render_platform! {
         /// [watch](../watch/index.html) module for more information.
         fn watch<F>(&mut self, func: F)
         where
-            F: Fn(&mut T, &mut WidgetRect) + 'static;
+            F: 'static + Fn(&mut T, &mut WidgetRect);
+
+        fn watch_explicit<F>(&mut self, func: F)
+        where
+            F: 'static + Fn(&mut T, &mut WidgetRect, &AppState, WatchArg<'_, 'static, DefaultOwner>);
 
         /// Register a child of this widget.
         fn child<F, Child>(&mut self, map_fn: F)
         where
-            F: 'static + Clone + FnOnce(&mut T) -> &mut Widget<Child>,
+            F: 'static + Clone + Fn(&mut T) -> &mut Widget<Child>,
             Child: super::Content<P>;
 
         /// Register a graphic member of this widget.
@@ -63,6 +71,18 @@ with_default_render_platform! {
             F: 'static,
             F: for<'a> Fn(
                 &'a mut T,
+            ) -> Box<
+                dyn 'a + Iterator<Item = &'a mut Ephemeral<Child>>,
+            >,
+            Child: super::Content<P>;
+
+        /// Register a variable number of children
+        fn iter_children_explicit<F, Child>(&mut self, iter_fn: F)
+        where
+            F: 'static,
+            F: for<'a> Fn(
+                &'a mut T,
+                Option<WatchArg<'_, 'static, DefaultOwner>>,
             ) -> Box<
                 dyn 'a + Iterator<Item = &'a mut Ephemeral<Child>>,
             >,

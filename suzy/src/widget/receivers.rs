@@ -11,7 +11,7 @@ use crate::{
     graphics::{DrawContext, Graphic},
     platform::RenderPlatform,
     pointer::PointerEvent,
-    watch,
+    watch::{self, DefaultOwner, WatchArg},
 };
 
 use super::{Desc, Ephemeral, Widget, WidgetGraphic, WidgetRect};
@@ -20,7 +20,11 @@ macro_rules! impl_empty {
     ($T:ident; $P:ident; watch) => {
         fn watch<F>(&mut self, _func: F)
         where
-            F: Fn(&mut T, &mut WidgetRect) + 'static {}
+            F: 'static + Fn(&mut $T, &mut WidgetRect)  {}
+
+        fn watch_explicit<F>(&mut self, _func: F)
+        where
+            F: 'static + Fn(&mut $T, &mut WidgetRect, &AppState, WatchArg<'_, 'static, DefaultOwner>){}
     };
     ($T:ident; $P:ident; child) => {
         fn child<F, Child>(&mut self, _map_fn: F)
@@ -40,6 +44,15 @@ macro_rules! impl_empty {
         where
             F: for<'iter_children> Fn(
                 &'iter_children mut $T,
+            ) -> Box<
+                dyn 'iter_children + Iterator<Item = &'iter_children mut Ephemeral<Child>>,
+            >,
+            Child: super::Content<$P> {}
+        fn iter_children_explicit<F, Child>(&mut self, _iter_fn: F)
+        where
+            F: for<'iter_children> Fn(
+                &'iter_children mut $T,
+                Option<WatchArg<'_, 'static, DefaultOwner>>,
             ) -> Box<
                 dyn 'iter_children + Iterator<Item = &'iter_children mut Ephemeral<Child>>,
             >,
@@ -123,6 +136,43 @@ pub(super) struct WidgetInitImpl<'a, Path> {
     pub path: Path,
 }
 
+impl<'a, Path> WidgetInitImpl<'a, Path> {
+    fn iter_children_raw<Leaf, Plat, F, Child>(&mut self, iter_fn: F)
+    where
+        F: 'static,
+        F: for<'i> Fn(
+            &'i mut Leaf,
+            WatchArg<'_, 'static, DefaultOwner>,
+        ) -> Box<
+            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
+        >,
+        Child: super::Content<Plat>,
+        Plat: 'static,
+        Leaf: ?Sized + super::Content<Plat>,
+        Path: 'static + Holder<Content = Leaf>,
+    {
+        use crate::watch::WatchedMeta;
+        let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
+        let current_path = self.path.clone();
+        let state = Rc::clone(self.state);
+        self.watch_ctx
+            .add_watch_raw("<unknown>", move |mut raw_arg| {
+                let (_, arg) = raw_arg.as_owner_and_arg();
+                maybe_more.watched(arg);
+                let mut holder = None;
+                current_path.get_mut(|content, _rect| {
+                    holder = iter_fn(content, arg)
+                        .filter_map(|e| e.uninit_holder::<Plat>())
+                        .next();
+                });
+                if let Some(widget) = holder {
+                    maybe_more.trigger_external();
+                    widget.init(raw_arg.context(), &state)
+                }
+            });
+    }
+}
+
 impl<'a, Leaf, Plat, Path> Desc<Leaf, Plat> for WidgetInitImpl<'a, Path>
 where
     Plat: 'static,
@@ -133,24 +183,41 @@ where
 
     fn watch<F>(&mut self, func: F)
     where
-        F: Fn(&mut Leaf, &mut WidgetRect) + 'static,
+        F: 'static + Fn(&mut Leaf, &mut WidgetRect),
+    {
+        let state = Rc::clone(self.state);
+        self.watch_explicit(move |leaf, rect, _state, arg| {
+            arg.use_as_current(|| {
+                AppState::use_as_current(Rc::clone(&state), || {
+                    func(leaf, rect);
+                });
+            });
+        });
+    }
+
+    fn watch_explicit<F>(&mut self, func: F)
+    where
+        F: 'static
+            + Fn(
+                &mut Leaf,
+                &mut WidgetRect,
+                &AppState,
+                WatchArg<'_, 'static, DefaultOwner>,
+            ),
     {
         let current_path = self.path.clone();
         let state = Rc::clone(self.state);
         self.watch_ctx
             .add_watch_raw("<unknown>", move |mut raw_arg| {
                 let (_, arg) = raw_arg.as_owner_and_arg();
-                arg.use_as_current(|| {
-                    AppState::use_as_current(Rc::clone(&state), || {
-                        current_path.get_mut(&func)
-                    });
-                })
+                current_path
+                    .get_mut(|leaf, rect| func(leaf, rect, &state, arg));
             });
     }
 
     fn child<F, Child>(&mut self, map_fn: F)
     where
-        F: 'static + Clone + FnOnce(&mut Leaf) -> &mut Widget<Child>,
+        F: 'static + Clone + Fn(&mut Leaf) -> &mut Widget<Child>,
         Child: super::Content<Plat>,
     {
         Child::desc(WidgetInitImpl {
@@ -159,7 +226,7 @@ where
             path: MapHolder {
                 base: self.path.clone(),
                 map: fix_closure(move |content, _rect| {
-                    let widget = map_fn.clone()(content);
+                    let widget = map_fn(content);
                     (&mut widget.internal.content, &mut widget.internal.rect)
                 }),
             },
@@ -176,30 +243,24 @@ where
         >,
         Child: super::Content<Plat>,
     {
-        use crate::watch::{DefaultOwner, WatchedMeta};
-        let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
-        let current_path = self.path.clone();
-        let state = Rc::clone(self.state);
-        self.watch_ctx
-            .add_watch_raw("<unknown>", move |mut raw_arg| {
-                let (_, arg) = raw_arg.as_owner_and_arg();
-                maybe_more.watched(arg);
-                let holder = arg.use_as_current(|| {
-                    let mut holder = None;
-                    AppState::use_as_current(Rc::clone(&state), || {
-                        current_path.get_mut(|content, _rect| {
-                            holder = iter_fn(content)
-                                .filter_map(|e| e.uninit_holder::<Plat>())
-                                .next();
-                        });
-                    });
-                    holder
-                });
-                if let Some(widget) = holder {
-                    maybe_more.trigger_external();
-                    widget.init(raw_arg.context(), &state)
-                }
-            });
+        self.iter_children_raw(move |leaf, arg| {
+            let iter_fn = &iter_fn;
+            arg.use_as_current(move || iter_fn(leaf))
+        });
+    }
+
+    fn iter_children_explicit<F, Child>(&mut self, iter_fn: F)
+    where
+        F: 'static,
+        F: for<'b> Fn(
+            &'b mut Leaf,
+            Option<WatchArg<'_, 'static, DefaultOwner>>,
+        ) -> Box<
+            dyn 'b + Iterator<Item = &'b mut Ephemeral<Child>>,
+        >,
+        Child: super::Content<Plat>,
+    {
+        self.iter_children_raw(move |leaf, arg| iter_fn(leaf, Some(arg)));
     }
 
     fn bare_child<F, Child>(&mut self, getter: F)
@@ -260,6 +321,25 @@ where
         }
     }
 
+    fn iter_children_explicit<F, Child>(&mut self, iter_fn: F)
+    where
+        F: 'static,
+        F: for<'i> Fn(
+            &'i mut T,
+            Option<WatchArg<'_, 'static, DefaultOwner>>,
+        ) -> Box<
+            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
+        >,
+        Child: super::Content<P>,
+    {
+        let Self { content, ctx } = self;
+        for child in iter_fn(content, None) {
+            child.access_mut(|widget| {
+                Widget::draw(widget, ctx);
+            });
+        }
+    }
+
     fn bare_child<F, Child>(&mut self, map_fn: F)
     where
         F: FnOnce(&mut T) -> &mut Child,
@@ -297,8 +377,22 @@ where
 
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
+        F: 'static,
         F: for<'i> Fn(
             &'i mut T,
+        ) -> Box<
+            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
+        >,
+        Child: super::Content<P>,
+    {
+        self.iter_children_explicit(move |leaf, _arg| iter_fn(leaf));
+    }
+
+    fn iter_children_explicit<F, Child>(&mut self, iter_fn: F)
+    where
+        F: for<'i> Fn(
+            &'i mut T,
+            Option<WatchArg<'_, 'static, DefaultOwner>>,
         ) -> Box<
             dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
         >,
@@ -309,7 +403,7 @@ where
             event,
             handled,
         } = self;
-        for child in iter_fn(content) {
+        for child in iter_fn(content, None) {
             if !**handled {
                 **handled = child
                     .access_mut(|widget| Widget::pointer_event(widget, event));
