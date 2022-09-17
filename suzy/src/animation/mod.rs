@@ -128,14 +128,21 @@ impl<T> Default for Speed<T> {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+enum RefTime {
+    StartTime(Instant),
+    FinishNow,
+}
+
 /// An instance of an animation.
 ///
 /// See the [module-level documentation](./index.html) for more details.
 pub struct Animation<T> {
     speed: Speed<T>,
     start_value: Option<T>,
-    current: Watched<Option<(Instant, T)>>,
+    current: Watched<Option<(RefTime, T)>>,
     easing: Option<Box<dyn Easing>>,
+    on_complete: crate::watch::WatchedQueue<'static, ()>,
 }
 
 impl<T> Animation<T> {
@@ -152,6 +159,7 @@ impl<T> Default for Animation<T> {
             start_value: None,
             current: Watched::new(None),
             easing: None,
+            on_complete: crate::watch::WatchedQueue::default(),
         }
     }
 }
@@ -185,22 +193,74 @@ impl<T> Animation<T> {
     pub fn set_ease(&mut self, easing: Box<dyn Easing>) {
         self.easing = Some(easing);
     }
+
+    /// Returns true if the animation is currently running
+    pub fn running(&self) -> bool {
+        self.current.is_some()
+    }
+
+    /// The provided function is run when the animation completes
+    pub fn on_complete<F: FnOnce()>(&self, f: F) {
+        crate::watch::WatchArg::try_with_current(|arg| {
+            self.on_complete.handle_item(arg, |()| f());
+        });
+    }
+
+    /// Proceed as though the remaining time in the animation has passed,
+    /// causing the next update to apply the final value and notify
+    /// on_complete.
+    ///
+    /// Does nothing if the animation is not currently running.
+    pub fn finish_now(&mut self) {
+        if let Some((ref_time, _)) = self.current.as_mut() {
+            *ref_time = RefTime::FinishNow;
+        }
+    }
+
+    /// Cancel the animation, preventing it from further updates, leaving
+    /// any output state as-is.
+    ///
+    /// Does nothing if the animation is not currently running.
+    pub fn cancel(&mut self) {
+        *self.current = None;
+    }
+
+    /// Reset the animation to the starting value.
+    ///
+    /// If an animation is in-progress, this 'rewinds' the animation, so that
+    /// the next update will apply the value that was present at the start.
+    /// The animation then stops running.
+    ///
+    /// Does nothing if the animation is not currently running.
+    pub fn reset(&mut self)
+    where
+        T: Copy,
+    {
+        if let Some((ref_time, target_value)) = self.current.as_mut() {
+            if let Some(start_value) = self.start_value {
+                *ref_time = RefTime::FinishNow;
+                *target_value = start_value;
+            } else {
+                *self.current = None;
+            }
+        }
+    }
 }
 
 impl<T: Lerp<Output = T>> Animation<T> {
     /// Start the animation, with a specified value to interpolate towards.
     pub fn animate_to(&mut self, value: T) {
         let start_time = app::time_unwatched();
-        *self.current = Some((start_time, value));
+        *self.current = Some((RefTime::StartTime(start_time), value));
         self.start_value = None;
     }
 
     /// This is the primary output of the animation.  A
-    /// [`watch`](../widget/trait.WidgetInit.html#tymethod.watch)
+    /// [`watch`](crate::widget::Desc::watch)
     /// closure which calls this method will be re-run every frame with
     /// an interpolated value while the animation is in-progress.
     pub fn apply(&mut self, target: &mut T) {
-        let (start_time, end_value) = match &*self.current {
+        let (ref_time, end_value) = match &*self.current {
             Some(value) => value,
             None => return,
         };
@@ -208,10 +268,15 @@ impl<T: Lerp<Output = T>> Animation<T> {
             Some(ref start) => start,
             None => &*target,
         };
-        let total_duration = self.speed.duration(start_value, end_value);
-        let frame_time = app::time();
-        let elapsed = frame_time.duration_since(*start_time);
-        let t = elapsed.as_secs_f32() / total_duration.as_secs_f32();
+        let total_duration =
+            self.speed.duration(start_value, end_value).as_secs_f32();
+        let elapsed = match ref_time {
+            RefTime::StartTime(start_time) => {
+                app::time().duration_since(*start_time).as_secs_f32()
+            }
+            RefTime::FinishNow => total_duration * 2.0,
+        };
+        let t = elapsed / total_duration;
         let (t, at_end) = if t > 1.0 { (1.0, true) } else { (t, false) };
         let t = match self.easing {
             None => t,
@@ -221,6 +286,7 @@ impl<T: Lerp<Output = T>> Animation<T> {
         let prev = std::mem::replace(target, value);
         if at_end {
             *self.current = None;
+            self.on_complete.push_external(());
         } else if self.start_value.is_none() {
             self.start_value = Some(prev);
         }
