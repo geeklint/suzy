@@ -25,6 +25,7 @@ mod window;
 pub use buffer::{
     DualVertexBuffer, DualVertexBufferIndexed, SingleVertexBuffer,
 };
+pub use context::bindings as opengl_bindings;
 pub use context::{OpenGlBindings, OpenGlContext, DEBUG};
 pub use drawparams::DrawParams;
 pub use graphics::*;
