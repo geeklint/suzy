@@ -432,10 +432,7 @@ impl Texture {
         }
     }
 
-    pub(super) fn bind(
-        &mut self,
-        ctx: &mut OpenGlContext,
-    ) -> (f32, f32, f32, f32) {
+    pub fn bind(&mut self, ctx: &mut OpenGlContext) -> (f32, f32, f32, f32) {
         self.ins.bind(ctx);
         let size = self.ins.size().expect(
             "Failed to get texture size, even though we just bound it",
