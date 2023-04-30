@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use super::{ChannelMask, FontFamilyDynamic, GlyphMetricsSource};
-use crate::text::*;
+use crate::text;
 
 struct GlyphMetrics {
     _ch: char,
@@ -156,65 +156,9 @@ impl RecordCharLocation for CharLocationRecorder {
     }
 }
 
-/// A type which contains settings which effect the vertex generation
-/// of a text object.
-#[derive(Clone, Copy, Debug)]
-pub struct TextLayoutSettings {
-    font_size: f32,
-    wrap_width: f32,
-    alignment: TextAlignment,
-    tab_stop: f32,
-    y_offset: f32,
-}
-
-impl Default for TextLayoutSettings {
-    fn default() -> Self {
-        Self {
-            font_size: 24.0,
-            wrap_width: f32::INFINITY,
-            alignment: TextAlignment::Left,
-            tab_stop: 48.0,
-            y_offset: 0.0,
-        }
-    }
-}
-
-impl TextLayoutSettings {
-    /// Set the font size.
-    #[must_use]
-    pub fn font_size(self, font_size: f32) -> Self {
-        Self { font_size, ..self }
-    }
-
-    /// Set the width at which text will wrap.
-    #[must_use]
-    pub fn wrap_width(self, wrap_width: f32) -> Self {
-        Self { wrap_width, ..self }
-    }
-
-    /// Set the alignment of the text.
-    #[must_use]
-    pub fn alignment(self, alignment: TextAlignment) -> Self {
-        Self { alignment, ..self }
-    }
-
-    /// Set the tab-stop of the text.
-    #[must_use]
-    pub fn tab_stop(self, tab_stop: f32) -> Self {
-        Self { tab_stop, ..self }
-    }
-
-    /// Set the y-offset of the text.
-    #[must_use]
-    pub fn y_offset(self, y_offset: f32) -> Self {
-        Self { y_offset, ..self }
-    }
-}
-
 pub(super) struct FontCharCalc<'a, T> {
     font_family: &'a FontFamilyDynamic<'a>,
-    settings: TextLayoutSettings,
-    current_style: FontStyle,
+    layout: text::Layout,
     x_offset: f32,
     y_offset: f32,
     bufs: HashMap<ChannelMask, Vec<f32>>,
@@ -225,7 +169,7 @@ pub(super) struct FontCharCalc<'a, T> {
 impl<'a, T> FontCharCalc<'a, T> {
     pub fn new(
         font_family: &'a FontFamilyDynamic<'_>,
-        settings: TextLayoutSettings,
+        layout: text::Layout,
         char_locs: &'a mut T,
     ) -> Self {
         let mut bufs: HashMap<_, _> = font_family
@@ -238,9 +182,8 @@ impl<'a, T> FontCharCalc<'a, T> {
         let commited = bufs.keys().map(|mask| (*mask, 0)).collect();
         FontCharCalc {
             font_family,
-            y_offset: settings.y_offset,
-            settings,
-            current_style: FontStyle::Normal,
+            layout,
+            y_offset: 0.0,
             x_offset: 0.0,
             bufs,
             commited,
@@ -264,14 +207,14 @@ impl<'a, T> FontCharCalc<'a, T> {
     }
 
     fn metrics(&self, ch: char) -> Option<GlyphMetrics> {
-        let list = self.font_family.best_font_source(self.current_style).1;
+        let list = self.font_family.normal.1;
         list.binary_search_by_key(&ch, |coord| coord.0)
             .ok()
             .map(|index| conv_glyph_metrics(list[index]))
     }
 
     fn kerning(&self, ch: char, next: char) -> f32 {
-        let list = self.font_family.best_font_source(self.current_style).2;
+        let list = self.font_family.normal.2;
         list.binary_search_by_key(&(ch, next), |item| (item.0, item.1))
             .ok()
             .map(|index| list[index].2)
@@ -279,11 +222,11 @@ impl<'a, T> FontCharCalc<'a, T> {
     }
 
     fn commit_line(&mut self) {
-        let remaining_in_line = self.settings.wrap_width - self.x_offset;
-        let shift = match self.settings.alignment {
-            TextAlignment::Left => 0.0,
-            TextAlignment::Center => remaining_in_line / 2.0,
-            TextAlignment::Right => remaining_in_line,
+        let remaining_in_line = self.layout.wrap_width - self.x_offset;
+        let shift = match self.layout.alignment {
+            text::Alignment::Left => 0.0,
+            text::Alignment::Center => remaining_in_line / 2.0,
+            text::Alignment::Right => remaining_in_line,
         };
         for (mask, buf) in self.bufs.iter_mut() {
             let commit = self
@@ -297,16 +240,16 @@ impl<'a, T> FontCharCalc<'a, T> {
         }
     }
 
-    pub fn push_newline(&mut self) {
+    pub fn push_newline(&mut self, font_size: f32) {
         self.commit_line();
         self.x_offset = 0.0;
-        self.y_offset -= self.settings.font_size;
+        self.y_offset -= font_size;
     }
 
-    fn populate_char(&mut self, metrics: GlyphMetrics) {
-        let mask = self.font_family.channel_mask(self.current_style);
+    fn populate_char(&mut self, font_size: f32, metrics: GlyphMetrics) {
+        let mask = self.font_family.channel_masks[0];
         Self::populate_vertices(
-            self.settings.font_size,
+            font_size,
             self.bufs
                 .get_mut(&mask)
                 .expect("unexpected channel mask while processing text"),
@@ -367,16 +310,16 @@ impl<'a, T> FontCharCalc<'a, T> {
 }
 
 impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
-    fn record_char_loc(&mut self, advance: f32) {
+    fn record_char_loc(&mut self, font_size: f32, advance: f32) {
         self.char_locs.record_char(
             self.x_offset,
             self.x_offset + advance,
-            self.y_offset + self.settings.font_size,
+            self.y_offset + font_size,
             self.y_offset,
         );
     }
 
-    fn push_word_splitwrap(&mut self, word: &str) {
+    fn push_word_splitwrap(&mut self, font_size: f32, word: &str) {
         let mut iter = word.chars().peekable();
         while let Some(ch) = iter.next() {
             if let Some(metrics) = self.metrics(ch) {
@@ -385,20 +328,20 @@ impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
                     .copied()
                     .map_or(0.0, |nch| self.kerning(ch, nch));
                 let advance = metrics.advance_width + kerning;
-                let advance = advance * self.settings.font_size;
-                if self.x_offset + advance > self.settings.wrap_width {
-                    self.push_newline();
+                let advance = advance * font_size;
+                if self.x_offset + advance > self.layout.wrap_width {
+                    self.push_newline(font_size);
                 }
-                self.record_char_loc(advance);
-                self.populate_char(metrics);
+                self.record_char_loc(font_size, advance);
+                self.populate_char(font_size, metrics);
                 self.x_offset += advance;
             }
         }
     }
 
-    pub fn push_word(&mut self, word: &str) {
+    pub fn push_word(&mut self, font_size: f32, word: &str) {
         if self.x_offset == 0.0 {
-            self.push_word_splitwrap(word);
+            self.push_word_splitwrap(font_size, word);
             return;
         }
         let mut x_offset = self.x_offset;
@@ -412,20 +355,20 @@ impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
                     .copied()
                     .map_or(0.0, |nch| self.kerning(ch, nch));
                 let advance = metrics.advance_width + kerning;
-                let advance = advance * self.settings.font_size;
-                if x_offset + advance > self.settings.wrap_width {
-                    self.push_newline();
-                    self.push_word_splitwrap(word);
+                let advance = advance * font_size;
+                if x_offset + advance > self.layout.wrap_width {
+                    self.push_newline(font_size);
+                    self.push_word_splitwrap(font_size, word);
                     return;
                 }
                 char_locs.record_char(
                     x_offset,
                     x_offset + advance,
-                    self.y_offset + self.settings.font_size,
+                    self.y_offset + font_size,
                     self.y_offset,
                 );
                 Self::populate_vertices(
-                    self.settings.font_size,
+                    font_size,
                     &mut verts,
                     x_offset,
                     self.y_offset,
@@ -434,7 +377,7 @@ impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
                 x_offset += advance;
             }
         }
-        let mask = self.font_family.channel_mask(self.current_style);
+        let mask = self.font_family.channel_masks[0];
         self.bufs
             .get_mut(&mask)
             .expect("unexpected channel mask while processing text")
@@ -443,73 +386,59 @@ impl<'a, T: RecordCharLocation> FontCharCalc<'a, T> {
         self.x_offset = x_offset;
     }
 
-    pub fn push_whitespace(&mut self, white_char: char) {
-        self.record_char_loc(f32::EPSILON);
+    pub fn push_whitespace(&mut self, font_size: f32, white_char: char) {
+        self.record_char_loc(font_size, f32::EPSILON);
         if let Some(metrics) = self.metrics(white_char) {
             let advance = metrics.advance_width;
-            let advance = advance * self.settings.font_size;
-            if self.x_offset + advance > self.settings.wrap_width {
-                self.push_newline();
+            let advance = advance * font_size;
+            if self.x_offset + advance > self.layout.wrap_width {
+                self.push_newline(font_size);
             }
-            self.populate_char(metrics);
+            self.populate_char(font_size, metrics);
             self.x_offset += advance;
             return;
         }
         match white_char {
             '\t' => {
-                let ntabs = self.x_offset.div_euclid(self.settings.tab_stop);
-                self.x_offset = (ntabs + 1.0) * self.settings.tab_stop;
+                todo!();
+                //let ntabs = self.x_offset.div_euclid(self.settings.tab_stop);
+                //self.x_offset = (ntabs + 1.0) * self.settings.tab_stop;
             }
             '\n' => {
-                self.push_newline();
+                self.push_newline(font_size);
             }
             ' ' => {
-                self.x_offset += self.settings.font_size * 0.25;
+                self.x_offset += font_size * 0.25;
             }
             _ => (),
         }
     }
 
-    pub fn push_str(&mut self, text: &str) {
+    pub fn push_str(&mut self, font_size: f32, text: &str) {
         let mut remaining = text;
         while !remaining.is_empty() {
             let word_end = remaining.find(char::is_whitespace);
             match word_end {
                 None => {
-                    self.push_word(remaining);
+                    self.push_word(font_size, remaining);
                     remaining = "";
                 }
                 Some(0) => {
                     let mut iter = remaining.chars();
-                    self.push_whitespace(iter.next().expect(concat!(
-                        "remaining text was not empty,",
-                        "but str::chars returned no items"
-                    )));
+                    self.push_whitespace(
+                        font_size,
+                        iter.next().expect(concat!(
+                            "remaining text was not empty,",
+                            "but str::chars returned no items"
+                        )),
+                    );
                     remaining = iter.as_str();
                 }
                 Some(index) => {
                     let (word, next) = remaining.split_at(index);
-                    self.push_word(word);
+                    self.push_word(font_size, word);
                     remaining = next;
                 }
-            }
-        }
-    }
-
-    pub fn push(&mut self, cmd: RichTextCommand<'_>) {
-        match cmd {
-            RichTextCommand::Text(text) => self.push_str(&text),
-            RichTextCommand::Bold => {
-                self.current_style = self.current_style.bold();
-            }
-            RichTextCommand::Italic => {
-                self.current_style = self.current_style.italic();
-            }
-            RichTextCommand::ResetBold => {
-                self.current_style = self.current_style.unbold();
-            }
-            RichTextCommand::ResetItalic => {
-                self.current_style = self.current_style.unitalic();
             }
         }
     }

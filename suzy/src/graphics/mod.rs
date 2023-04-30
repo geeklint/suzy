@@ -74,3 +74,12 @@ impl<P: ?Sized + RenderPlatform, T: Graphic<P>> Graphic<P> for Conditional<T> {
         }
     }
 }
+
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+pub enum CornerStyle {
+    #[default]
+    NotRounded,
+    Rounded,
+}

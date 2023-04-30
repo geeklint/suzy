@@ -3,7 +3,8 @@
 
 use crate::{
     dims::Rect,
-    platform::{Platform, RenderPlatform, SimpleEventLoopState},
+    graphics::Color,
+    platform::{graphics, Platform, RenderPlatform, SimpleEventLoopState},
     window::WindowSettings,
 };
 
@@ -15,10 +16,10 @@ pub struct Window {
     title: String,
     size: (f32, f32),
     fullscreen: bool,
-    background_color: crate::graphics::Color,
+    background_color: Color,
 }
 
-pub enum Texture {}
+pub enum TextStyle {}
 pub enum Graphic {}
 
 impl Platform for NoGraphics {
@@ -59,15 +60,11 @@ impl RenderPlatform for NoGraphics {
 
     type DrawContextBuilder = fn(&mut ()) -> Self;
 
-    type Texture = Texture;
-
     type SlicedImage = Graphic;
 
-    type SelectableSlicedImage = Graphic;
+    type TextStyle = TextStyle;
 
     type Text = Graphic;
-
-    type TextEdit = Graphic;
 }
 
 impl crate::graphics::PlatformDrawContext<()> for NoGraphics {
@@ -101,11 +98,11 @@ impl WindowSettings for Window {
         self.fullscreen = fullscreen;
     }
 
-    fn background_color(&self) -> crate::graphics::Color {
+    fn background_color(&self) -> Color {
         self.background_color
     }
 
-    fn set_background_color(&mut self, color: crate::graphics::Color) {
+    fn set_background_color(&mut self, color: Color) {
         self.background_color = color;
     }
 }
@@ -138,20 +135,13 @@ impl crate::window::Window<NoGraphics> for Window {
     }
 }
 
-impl Default for Texture {
-    fn default() -> Self {
-        unimplemented!("Can't constuct a texture for NoGraphics platform")
+impl graphics::TextStyle for TextStyle {
+    fn with_size_and_color(_size: f32, _color: Color) -> Self {
+        unimplemented!("Can't construct TextStyle for NoGraphics")
     }
-}
 
-impl crate::platform::graphics::Texture for Texture {
-    fn load_static(
-        _width: u16,
-        _height: u16,
-        _alignment: u16,
-        _pixels: &'static [u8],
-    ) -> Self {
-        unimplemented!("Can't constuct a texture for NoGraphics platform")
+    fn push_tag(&self, _tag: &mut &str) -> Result<Self, ()> {
+        unreachable!()
     }
 }
 
@@ -194,65 +184,30 @@ impl Rect for Graphic {
     }
 }
 
-impl crate::selectable::Selectable for Graphic {
-    fn selection_changed(
-        &mut self,
-        _state: crate::selectable::SelectionState,
-    ) {
+impl graphics::SlicedImage for Graphic {
+    fn set_color(&mut self, _color: Color) {
+        unreachable!()
+    }
+
+    fn set_slice_padding(&mut self, _padding: impl crate::dims::Padding2d) {
+        unreachable!()
+    }
+
+    fn set_corners(&mut self, _style: crate::graphics::CornerStyle) {
         unreachable!()
     }
 }
 
-impl crate::platform::graphics::SlicedImage<Texture> for Graphic {
-    fn set_image<P>(&mut self, _texture: Texture, _padding: P)
-    where
-        P: crate::dims::Padding2d,
-    {
-        unreachable!()
-    }
-}
-
-impl crate::platform::graphics::SelectableSlicedImage<Texture> for Graphic {
-    fn set_image<P>(
-        &mut self,
-        _texture: Texture,
-        _padding: P,
-        _states: &'static [crate::selectable::SelectionState],
-    ) where
-        P: crate::dims::Padding2d,
-    {
-        unreachable!()
-    }
-}
-
-impl crate::platform::graphics::Text for Graphic {
-    fn set_text<'a, T>(
-        &mut self,
-        _text: T,
-        _pos: &crate::text::TextPosition,
-        _settings: &crate::text::TextSettings,
-    ) where
-        T: 'a + Iterator<Item = crate::text::RichTextCommand<'a>>,
-    {
-        unreachable!()
-    }
-}
-
-impl crate::platform::graphics::TextEdit for Graphic {
-    fn set_text_plain(
-        &mut self,
-        _text: &str,
-        _pos: &crate::text::TextPosition,
-        _settings: &crate::text::TextSettings,
-    ) {
+impl graphics::Text<TextStyle> for Graphic {
+    fn set_layout(&mut self, _layout: crate::text::Layout) {
         unreachable!()
     }
 
-    fn char_at(&self, _x: f32, _y: f32) -> Option<usize> {
+    fn clear(&mut self) {
         unreachable!()
     }
 
-    fn char_rect(&self, _index: usize) -> Option<crate::dims::SimpleRect> {
+    fn push_span(&mut self, _style: TextStyle, _text: &str) {
         unreachable!()
     }
 }

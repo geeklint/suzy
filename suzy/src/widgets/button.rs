@@ -11,17 +11,6 @@ use crate::{
     widget::{self, UniqueHandle, Widget, WidgetExtra},
 };
 
-const IMAGE_DATA: &[u8] = include_bytes!("button-all.data");
-const IMAGE_WIDTH: u16 = 112;
-const IMAGE_HEIGHT: u16 = 37;
-const IMAGE_ALIGNMENT: u16 = 1;
-const IMAGE_STATES: &[SelectionState] = &[
-    SelectionState::normal(),
-    SelectionState::hover(),
-    SelectionState::focus(),
-    SelectionState::active(),
-];
-
 /// A Widget providing the behavior of a button.
 pub struct ButtonBehavior<T> {
     on_click: WatchedQueue<'static, ()>,
@@ -183,10 +172,10 @@ pub struct DefaultButtonContent<P>
 where
     P: ?Sized + RenderPlatform,
 {
-    image: P::SelectableSlicedImage,
+    pub text: Watched<String>,
+    image: P::SlicedImage,
     text_graphic: P::Text,
     text_color: Watched<Color>,
-    text: Watched<String>,
 }
 
 impl<P> Default for DefaultButtonContent<P>
@@ -195,10 +184,10 @@ where
 {
     fn default() -> Self {
         Self {
-            image: P::SelectableSlicedImage::default(),
+            text: Watched::new("Button".to_string()),
+            image: P::SlicedImage::default(),
             text_graphic: P::Text::default(),
             text_color: Watched::new(Color::WHITE),
-            text: Watched::new("Button".to_string()),
         }
     }
 }
@@ -217,11 +206,18 @@ where
     P: ?Sized + RenderPlatform,
 {
     fn selection_changed(&mut self, state: SelectionState) {
-        use crate::selectable::SelectionStateV0;
-        self.image.selection_changed(state);
-        *self.text_color = match state.v0() {
-            SelectionStateV0::Active => Color::BLACK,
-            _ => Color::WHITE,
+        use crate::{
+            platform::graphics::SlicedImage, selectable::SelectionStateV0,
+        };
+        match state.v0() {
+            SelectionStateV0::Active => {
+                *self.text_color = Color::BLACK;
+                self.image.set_color(Color::LAVENDER);
+            }
+            _ => {
+                *self.text_color = Color::WHITE;
+                self.image.set_color(Color::DIM_GRAY);
+            }
         };
     }
 }
@@ -231,42 +227,38 @@ where
     P: RenderPlatform,
 {
     fn desc(mut desc: impl widget::Desc<Self, P>) {
-        use crate::dims::{Rect, SimplePadding2d};
-        use crate::platform::graphics::{
-            SelectableSlicedImage, Text, Texture,
+        use crate::{
+            dims::{Rect, SimplePadding2d},
+            graphics::CornerStyle,
+            platform::graphics::{SlicedImage, Text},
+            text,
         };
-        use crate::text::{TextAlignment, TextPosition, TextSettings};
 
         desc.watch(|this, rect| {
             this.image.set_fill(&rect, &SimplePadding2d::zero());
         });
         desc.watch(|this, rect| {
-            let pos = TextPosition {
-                left: rect.left(),
-                top: rect.center_y() + 12.0,
-                wrap_width: rect.width(),
-            };
-            let (r, g, b, _) = this.text_color.rgba();
-            let settings = TextSettings {
-                text_color: *this.text_color,
-                alignment: TextAlignment::Center,
-                outline_color: Color::create_rgba(r, g, b, 0.0),
-                ..TextSettings::default()
-            };
-            this.text_graphic.set_text_rich(&this.text, &pos, &settings);
+            this.text_graphic.set_layout(text::Layout {
+                alignment: text::Alignment::Center,
+                line: text::Line::BetweenBaseAndCap,
+                flow: text::Flow::Out,
+                origin_x: rect.center_x(),
+                origin_y: rect.center_y(),
+                wrap_width: f32::INFINITY,
+            });
         });
         desc.watch(|this, _rect| {
-            let texture = P::Texture::load_static(
-                IMAGE_WIDTH,
-                IMAGE_HEIGHT,
-                IMAGE_ALIGNMENT,
-                IMAGE_DATA,
-            );
-            this.image.set_image(
-                texture,
-                SimplePadding2d::uniform(6.0),
-                IMAGE_STATES,
-            );
+            let style =
+                crate::platform::graphics::TextStyle::with_size_and_color(
+                    24.0,
+                    *this.text_color,
+                );
+            this.text_graphic.push_span(style, &this.text)
+        });
+        desc.watch(|this, _rect| this.image.set_color(Color::ALICE_BLUE));
+        desc.watch(|this, _rect| {
+            this.image.set_slice_padding(SimplePadding2d::uniform(6.0));
+            this.image.set_corners(CornerStyle::Rounded);
         });
         desc.graphic(|this| &mut this.image);
         desc.graphic(|this| &mut this.text_graphic);

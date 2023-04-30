@@ -8,12 +8,11 @@
 //! Two windowing platforms are currently included; the primary is based on
 //! SDL2.  A windowless OSMesa interface is also included, intended for
 //! automated testing.
-//!
-//! If no platforms are enabled (using features) the default platform is
-//! a "stub" platform which has no functionality (all methods panic).
 
 mod event;
 pub use event::{Event, EventLoopState, SimpleEventLoopState};
+
+use crate::dims::Rect;
 
 pub mod graphics;
 
@@ -52,24 +51,16 @@ pub trait RenderPlatform: 'static {
         Self::DrawPassInfo,
     >;
 
-    /// The platform's texture primitive.
-    type Texture: graphics::Texture + Default;
-
     /// The platform's graphic primitive for 9-sliced images.
-    type SlicedImage: graphics::SlicedImage<Self::Texture>
+    type SlicedImage: graphics::SlicedImage
+        + Rect
         + Default
         + crate::graphics::Graphic<Self>;
 
-    /// The platform's graphic primitive for selectable 9-sliced images.
-    type SelectableSlicedImage: graphics::SelectableSlicedImage<Self::Texture>
-        + Default
-        + crate::graphics::Graphic<Self>;
+    type TextStyle: graphics::TextStyle;
 
     /// The platform's graphic primitive for text
-    type Text: graphics::Text + Default + crate::graphics::Graphic<Self>;
-
-    /// The platform's graphic primitive for editable text
-    type TextEdit: graphics::TextEdit
+    type Text: graphics::Text<Self::TextStyle>
         + Default
         + crate::graphics::Graphic<Self>;
 }

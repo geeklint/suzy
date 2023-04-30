@@ -1,13 +1,16 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use suzy::adapter::{Adaptable, DownwardVecAdapter};
-use suzy::dims::{Rect, SimplePadding2d};
-use suzy::platform::graphics::Text as _TextTrait;
-use suzy::platforms::opengl::Text;
-use suzy::text::{TextAlignment, TextPosition, TextSettings};
-use suzy::watch::Watched;
-use suzy::widget::{self, *};
+use suzy::{
+    adapter::{Adaptable, DownwardVecAdapter},
+    dims::{Rect, SimplePadding2d},
+    graphics::Color,
+    platform::graphics::{Text as _TextTrait, TextStyle},
+    platforms::opengl::Text,
+    text,
+    watch::Watched,
+    widget::{self, *},
+};
 
 const WORDS: &str = include_str!("words.txt");
 
@@ -32,14 +35,20 @@ impl Adaptable<&'static str> for Element {
 impl widget::Content for Element {
     fn desc(mut desc: impl widget::Desc<Self>) {
         desc.watch(|this, rect| {
-            let pos = TextPosition {
-                left: rect.left(),
-                top: rect.center_y() + 12.0,
+            let layout = text::Layout {
+                alignment: text::Alignment::Center,
+                line: text::Line::BetweenBaseAndCap,
+                flow: text::Flow::Out,
+                origin_x: rect.center_x(),
+                origin_y: rect.center_y(),
                 wrap_width: rect.width(),
             };
-            let mut settings = TextSettings::default();
-            settings.alignment = TextAlignment::Center;
-            this.text.set_text_plain(*this.value, &pos, &settings);
+            this.text.set_layout(layout);
+        });
+        desc.watch(|this, _rect| {
+            let style = TextStyle::with_size_and_color(24.0, Color::WHITE);
+            this.text.clear();
+            this.text.push_span(style, &this.value);
         });
         desc.graphic(|this| &mut this.text);
     }

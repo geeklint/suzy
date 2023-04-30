@@ -5,8 +5,6 @@ use crate::platforms::opengl;
 use opengl::context::bindings::types::*;
 use opengl::texture::Texture;
 
-use super::FontStyle;
-
 // 0: char
 // 1,2: u,v
 // 3,4: uv width,height
@@ -133,29 +131,4 @@ pub struct FontFamilyDynamic<'a> {
     pub(super) bold: Option<FontSource<'a>>,
     pub(super) italic: Option<FontSource<'a>>,
     pub(super) bold_italic: Option<FontSource<'a>>,
-}
-
-impl<'a> FontFamilyDynamic<'a> {
-    pub(super) fn channel_mask(&self, style: FontStyle) -> ChannelMask {
-        let index: usize = self.best_font_source(style).0.into();
-        self.channel_masks
-            .get(index)
-            .copied()
-            .unwrap_or((0, 0, 0, 0))
-    }
-
-    #[doc(hidden)]
-    pub fn best_font_source(&self, style: FontStyle) -> &FontSource<'a> {
-        match style {
-            FontStyle::Normal => &self.normal,
-            FontStyle::Bold => self.bold.as_ref().unwrap_or(&self.normal),
-            FontStyle::Italic => self.italic.as_ref().unwrap_or(&self.normal),
-            FontStyle::BoldItalic => self
-                .bold_italic
-                .as_ref()
-                .or(self.bold.as_ref())
-                .or(self.italic.as_ref())
-                .unwrap_or(&self.normal),
-        }
-    }
 }

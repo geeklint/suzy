@@ -3,21 +3,23 @@
 
 use std::collections::HashMap;
 
-use crate::graphics::{Color, DrawContext, Graphic};
-use crate::text::{FontStyle, RichTextCommand, TextPosition, TextSettings};
-use crate::watch::Watched;
+use crate::{
+    graphics::{Color, DrawContext, Graphic},
+    text,
+    watch::Watched,
+};
 
-use super::buffer::SingleVertexBuffer;
-use super::context::bindings::types::*;
-use super::context::bindings::{FALSE, FLOAT, TRIANGLES};
-use super::texture::Texture;
-use super::Mat4;
-use super::OpenGlRenderPlatform;
+use super::{
+    buffer::SingleVertexBuffer,
+    context::bindings::types::*,
+    context::bindings::{FALSE, FLOAT, TRIANGLES},
+    texture::Texture,
+    Mat4, OpenGlRenderPlatform,
+};
 
 mod calc;
 mod font;
 
-pub use calc::TextLayoutSettings;
 pub use font::{
     FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
 };
@@ -48,6 +50,24 @@ fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(_f: F) -> R {
     ));
 }
 
+pub struct TextStyle {
+    pub font_size: f32,
+    pub color: Color,
+}
+
+impl crate::platform::graphics::TextStyle for TextStyle {
+    fn with_size_and_color(size: f32, color: Color) -> Self {
+        Self {
+            font_size: size,
+            color,
+        }
+    }
+
+    fn push_tag(&self, tag: &mut &str) -> Result<Self, ()> {
+        Err(())
+    }
+}
+
 /// Default Graphic for displaying Text.
 ///
 /// This implementation is based on a signed distance field font atlas, these
@@ -57,6 +77,7 @@ pub struct Text {
     raw: RawText<()>,
     font: Watched<Option<Box<FontFamily>>>,
     render_settings: TextRenderSettings,
+    layout: text::Layout,
 }
 
 impl Text {
@@ -72,102 +93,27 @@ impl Graphic<OpenGlRenderPlatform> for Text {
     }
 }
 
-impl crate::platform::graphics::Text for Text {
-    fn set_text<'a, T>(
-        &mut self,
-        text: T,
-        pos: &TextPosition,
-        settings: &TextSettings,
-    ) where
-        T: 'a + Iterator<Item = RichTextCommand<'a>>,
-    {
-        let layout = TextLayoutSettings::default()
-            .font_size(settings.font_size)
-            .wrap_width(pos.wrap_width)
-            .alignment(settings.alignment)
-            .tab_stop(settings.tab_stop);
-        self.render_settings = TextRenderSettings {
-            text_color: settings.text_color,
-            outline_color: settings.outline_color,
-            pseudo_bold_level: 0.5,
-            outline_width: settings.outline_width,
-            smoothing: 0.07,
-            outline_smoothing: 0.07,
-            x: pos.left,
-            y: pos.top - settings.font_size,
-        };
+impl crate::platform::graphics::Text<TextStyle> for Text {
+    fn set_layout(&mut self, layout: text::Layout) {
+        self.layout = layout;
+        self.render_settings.x = layout.origin_x;
+        self.render_settings.y = layout.origin_y;
+    }
+
+    fn clear(&mut self) {
+        self.raw.channels.clear();
+    }
+
+    fn push_span(&mut self, style: TextStyle, text: &str) {
+        self.render_settings.text_color = style.color;
         match &*self.font {
-            Some(font) => self.raw.render(text, font, layout),
+            Some(font) => {
+                self.raw.render(text, font, self.layout, style.font_size)
+            }
             None => with_default_font(|font| {
-                self.raw.render(text, font, layout);
+                self.raw.render(text, font, self.layout, style.font_size);
             }),
         };
-    }
-}
-
-/// Default Graphic for displaying text in a text editor
-#[derive(Default)]
-pub struct TextEdit {
-    raw: RawText<CharLocationRecorder>,
-    font: Watched<Option<Box<FontFamily>>>,
-    render_settings: TextRenderSettings,
-}
-
-impl TextEdit {
-    /// Set the font to be used by future calls to `set_text`.
-    pub fn set_font(&mut self, font: Box<FontFamily>) {
-        *self.font = Some(font);
-    }
-}
-
-impl Graphic<OpenGlRenderPlatform> for TextEdit {
-    fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
-        self.raw.draw(ctx, self.render_settings);
-    }
-}
-
-impl crate::platform::graphics::TextEdit for TextEdit {
-    fn set_text_plain(
-        &mut self,
-        text: &str,
-        pos: &TextPosition,
-        settings: &TextSettings,
-    ) {
-        let cmd = RichTextCommand::Text(text.into());
-        let text = Some(cmd).into_iter();
-        let layout = TextLayoutSettings::default()
-            .font_size(settings.font_size)
-            .wrap_width(pos.wrap_width)
-            .alignment(settings.alignment)
-            .tab_stop(settings.tab_stop);
-        self.render_settings = TextRenderSettings {
-            text_color: settings.text_color,
-            outline_color: settings.outline_color,
-            pseudo_bold_level: 0.5,
-            outline_width: settings.outline_width,
-            smoothing: 0.07,
-            outline_smoothing: 0.07,
-            x: pos.left,
-            y: pos.top - settings.font_size,
-        };
-        match &*self.font {
-            Some(font) => self.raw.render(text, font, layout),
-            None => with_default_font(|font| {
-                self.raw.render(text, font, layout);
-            }),
-        };
-    }
-
-    fn char_at(&self, x: f32, y: f32) -> Option<usize> {
-        match self.raw.char_at(x, y) {
-            Ok(index) => Some(index),
-            Err(CharLocationError::Outside { clamped }) => Some(clamped),
-            Err(CharLocationError::CalcError) => None,
-        }
-    }
-
-    fn char_rect(&self, index: usize) -> Option<crate::dims::SimpleRect> {
-        self.raw.char_rect(index)
     }
 }
 
@@ -207,14 +153,13 @@ impl<T: Default> RawText<T> {
 
 impl<T: calc::RecordCharLocation> RawText<T> {
     /// Update the text to display, using the provided font.
-    pub fn render<'a, I>(
+    pub fn render(
         &mut self,
-        text: I,
+        text: &str,
         font: &FontFamilyDynamic<'_>,
-        settings: TextLayoutSettings,
-    ) where
-        I: 'a + Iterator<Item = RichTextCommand<'a>>,
-    {
+        settings: text::Layout,
+        font_size: f32,
+    ) {
         self.texture = font.texture.clone();
         let vertices = &mut self.vertices;
         let channels = &mut self.channels;
@@ -223,9 +168,7 @@ impl<T: calc::RecordCharLocation> RawText<T> {
         vertices.set_data(|_gl| {
             font.texture.transform_uvs(|| {
                 let mut calc = FontCharCalc::new(font, settings, char_locs);
-                for rich_text_cmd in text {
-                    calc.push(rich_text_cmd);
-                }
+                calc.push_str(font_size, text);
                 channels.clear();
                 calc.merge_verts(&mut verts, channels);
                 &mut verts[..]

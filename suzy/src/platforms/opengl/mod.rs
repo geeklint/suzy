@@ -32,7 +32,7 @@ pub use graphics::*;
 pub use matrix::Mat4;
 pub use text::{
     FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
-    RawText, Text, TextEdit, TextLayoutSettings,
+    RawText, Text,
 };
 pub use texture::{
     PopulateTexture, PopulateTextureDynClone, PopulateTextureUtil, Texture,
@@ -48,9 +48,7 @@ impl crate::platform::RenderPlatform for OpenGlRenderPlatform {
     type DrawPassInfo = ();
     type DrawContextBuilder = fn(&mut ()) -> DrawContext<'_>;
 
-    type Texture = Texture;
     type SlicedImage = SlicedImage;
-    type SelectableSlicedImage = SelectableSlicedImage;
+    type TextStyle = text::TextStyle;
     type Text = Text;
-    type TextEdit = TextEdit;
 }
