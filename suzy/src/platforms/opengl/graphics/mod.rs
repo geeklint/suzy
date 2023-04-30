@@ -28,7 +28,7 @@ pub struct DrawContext<'a> {
 
 impl<'a> crate::graphics::PlatformDrawContext<()> for DrawContext<'a> {
     fn finish(self) -> Option<()> {
-        (self.pass == DrawPass::UpdateContext).then(|| ())
+        (self.pass == DrawPass::UpdateContext).then_some(())
     }
 }
 
@@ -60,7 +60,7 @@ impl<'a> DrawContext<'a> {
     }
 
     pub fn render_ctx_mut(&mut self) -> &mut super::context::OpenGlContext {
-        &mut self.context
+        self.context
     }
 
     pub fn params(&mut self) -> &mut super::DrawParams {

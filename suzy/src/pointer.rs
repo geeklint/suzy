@@ -170,7 +170,7 @@ impl PointerEvent<'_> {
 
         let wid = holder.into();
         match self.grab_map.entry(self.id()) {
-            Occupied(entry) => (wid == *entry.get()),
+            Occupied(entry) => wid == *entry.get(),
             Vacant(entry) => {
                 entry.insert(wid);
                 true

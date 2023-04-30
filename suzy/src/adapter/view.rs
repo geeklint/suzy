@@ -27,7 +27,7 @@ struct PointerSet {
 impl PointerSet {
     fn primary_pointer(&self) -> Option<PointerId> {
         self.data.iter().find_map(|entry| {
-            (entry.status == PointerStatus::Grabbed).then(|| entry.pointer)
+            (entry.status == PointerStatus::Grabbed).then_some(entry.pointer)
         })
     }
 
@@ -36,9 +36,9 @@ impl PointerSet {
     }
 
     fn status(&self, pointer: PointerId) -> Option<PointerStatus> {
-        self.data
-            .iter()
-            .find_map(|entry| (entry.pointer == pointer).then(|| entry.status))
+        self.data.iter().find_map(|entry| {
+            (entry.pointer == pointer).then_some(entry.status)
+        })
     }
 
     fn add_pending(&mut self, pointer: PointerId) {

@@ -209,13 +209,11 @@ impl<T> RawText<T> {
             ));
             let opt_outline = (render_settings.outline_width
                 > render_settings.pseudo_bold_level)
-                .then(|| {
-                    (
-                        render_settings.outline_color,
-                        render_settings.outline_width,
-                        render_settings.outline_smoothing,
-                    )
-                });
+                .then_some((
+                    render_settings.outline_color,
+                    render_settings.outline_width,
+                    render_settings.outline_smoothing,
+                ));
             let opt_shadow = None;
             if self.vertices.bind_if_ready(ctx) {
                 let stride = (4 * std::mem::size_of::<GLfloat>()) as _;

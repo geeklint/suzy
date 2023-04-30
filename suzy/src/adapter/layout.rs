@@ -103,7 +103,7 @@ impl<ElementKey, Content> Default for AdapterLayoutData<ElementKey, Content> {
 impl<ElementKey, Content> AdapterLayoutData<ElementKey, Content> {
     pub fn clear_active_children(&mut self) {
         let old = std::mem::take(&mut self.active);
-        self.inactive.extend(old.into_iter().map(|(_k, v)| v));
+        self.inactive.extend(old.into_values());
     }
 
     pub fn watch_each_child(
@@ -210,8 +210,6 @@ where
 impl<'a, Key, Content> Drop for Interface<'a, Key, Content> {
     fn drop(&mut self) {
         let remaining = std::mem::take(&mut self.prev);
-        self.data
-            .inactive
-            .extend(remaining.into_iter().map(|(_k, v)| v));
+        self.data.inactive.extend(remaining.into_values());
     }
 }
