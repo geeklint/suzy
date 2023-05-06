@@ -110,7 +110,7 @@ impl SharedTexture {
             gl.BindTexture(TEXTURE_2D, obj.ids[0]);
         }
         if !ready.unwrap_or(false) {
-            if let Ok(pop_size) = self.populator.populate(gl) {
+            if let Ok(pop_size) = self.populator.populate(gl, TEXTURE_2D) {
                 *size = pop_size;
                 obj.mark_ready();
             } else {

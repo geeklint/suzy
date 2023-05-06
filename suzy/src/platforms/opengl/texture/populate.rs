@@ -4,7 +4,7 @@
 use crate::platforms::opengl;
 use opengl::context::bindings::types::*;
 use opengl::context::bindings::{
-    ALPHA, CLAMP_TO_EDGE, LINEAR, NEAREST, REPEAT, RGB, RGBA, TEXTURE_2D,
+    ALPHA, CLAMP_TO_EDGE, LINEAR, NEAREST, REPEAT, RGB, RGBA,
     TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
     UNPACK_ALIGNMENT, UNSIGNED_BYTE,
 };
@@ -47,7 +47,11 @@ where
 /// texture populator.
 pub trait PopulateTexture: PopulateTextureDynClone {
     /// Execute the necesary opengl commands to populate a texture.
-    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, String>;
+    fn populate(
+        &self,
+        gl: &OpenGlBindings,
+        target: GLenum,
+    ) -> Result<TextureSize, String>;
 
     /// This function should return Some, if the populator can perfectly
     /// determine the size the texture will be without loading it.
@@ -64,10 +68,14 @@ pub trait PopulateTexture: PopulateTextureDynClone {
 impl<F> PopulateTexture for F
 where
     F: 'static + Clone,
-    F: for<'a> Fn(&'a OpenGlBindings) -> Result<TextureSize, String>,
+    F: for<'a> Fn(&'a OpenGlBindings, GLenum) -> Result<TextureSize, String>,
 {
-    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, String> {
-        (self)(gl)
+    fn populate(
+        &self,
+        gl: &OpenGlBindings,
+        target: GLenum,
+    ) -> Result<TextureSize, String> {
+        (self)(gl, target)
     }
 }
 
@@ -92,17 +100,18 @@ pub struct PopulateTextureUtil;
 
 impl PopulateTextureUtil {
     /// Set the default texture parameters for magnification and wrapping.
-    pub fn default_params(gl: &OpenGlBindings) {
+    pub fn default_params(gl: &OpenGlBindings, target: GLenum) {
         unsafe {
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, LINEAR as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, LINEAR as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR as _);
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR as _);
+            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
+            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
         }
     }
 
     fn populate_format(
         gl: &OpenGlBindings,
+        target: GLenum,
         format: GLint,
         width: u16,
         height: u16,
@@ -115,7 +124,7 @@ impl PopulateTextureUtil {
         if width.is_power_of_two() && height.is_power_of_two() {
             unsafe {
                 gl.TexImage2D(
-                    TEXTURE_2D,
+                    target,
                     0,
                     format,
                     width.into(),
@@ -139,7 +148,7 @@ impl PopulateTextureUtil {
             let height: GLsizei = height.into();
             unsafe {
                 gl.TexImage2D(
-                    TEXTURE_2D,
+                    target,
                     0,
                     format,
                     texture_width,
@@ -150,7 +159,7 @@ impl PopulateTextureUtil {
                     std::ptr::null(),
                 );
                 gl.TexSubImage2D(
-                    TEXTURE_2D,
+                    target,
                     0,
                     0,
                     0,
@@ -187,37 +196,46 @@ impl PopulateTextureUtil {
     /// Populate an image with a single channel.
     pub fn populate_alpha(
         gl: &OpenGlBindings,
+        target: GLenum,
         width: u16,
         height: u16,
         alignment: u16,
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 1));
-        Self::populate_format(gl, ALPHA as _, width, height, alignment, pixels)
+        Self::populate_format(
+            gl, target, ALPHA as _, width, height, alignment, pixels,
+        )
     }
 
     /// Populate an texture with three channels.
     pub fn populate_rgb(
         gl: &OpenGlBindings,
+        target: GLenum,
         width: u16,
         height: u16,
         alignment: u16,
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 3));
-        Self::populate_format(gl, RGB as _, width, height, alignment, pixels)
+        Self::populate_format(
+            gl, target, RGB as _, width, height, alignment, pixels,
+        )
     }
 
     /// Populate an texture with four channels.
     pub fn populate_rgba(
         gl: &OpenGlBindings,
+        target: GLenum,
         width: u16,
         height: u16,
         alignment: u16,
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 4));
-        Self::populate_format(gl, RGBA as _, width, height, alignment, pixels)
+        Self::populate_format(
+            gl, target, RGBA as _, width, height, alignment, pixels,
+        )
     }
 }
 
@@ -229,17 +247,22 @@ impl PopulateTexture for DefaultTexturePopulator {
         Some((2.0, 2.0))
     }
 
-    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, String> {
+    fn populate(
+        &self,
+        gl: &OpenGlBindings,
+        target: GLenum,
+    ) -> Result<TextureSize, String> {
         let pixels: [u8; 12] = [0xff; 12];
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, 1);
         }
-        let size = PopulateTextureUtil::populate_rgb(gl, 2, 2, 1, &pixels);
+        let size =
+            PopulateTextureUtil::populate_rgb(gl, target, 2, 2, 1, &pixels);
         unsafe {
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, NEAREST as _);
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST as _);
+            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
+            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
         }
         Ok(size)
     }
@@ -256,22 +279,27 @@ impl PopulateTexture for ErrorTexturePopulator {
         Some((16.0, 16.0))
     }
 
-    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, String> {
+    fn populate(
+        &self,
+        gl: &OpenGlBindings,
+        target: GLenum,
+    ) -> Result<TextureSize, String> {
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, 1);
         }
         let size = PopulateTextureUtil::populate_rgb(
             gl,
+            target,
             ERRTEX_SIDE,
             ERRTEX_SIDE,
             1,
             ERRTEX,
         );
         unsafe {
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, REPEAT as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, REPEAT as _);
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, NEAREST as _);
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST as _);
+            gl.TexParameteri(target, TEXTURE_WRAP_S, REPEAT as _);
+            gl.TexParameteri(target, TEXTURE_WRAP_T, REPEAT as _);
         }
         Ok(size)
     }
@@ -290,18 +318,23 @@ impl PopulateTexture for AlphaTexturePopulator {
         Some((self.width as f32, self.height as f32))
     }
 
-    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, String> {
+    fn populate(
+        &self,
+        gl: &OpenGlBindings,
+        target: GLenum,
+    ) -> Result<TextureSize, String> {
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, self.alignment.into());
         }
         let size = PopulateTextureUtil::populate_alpha(
             gl,
+            target,
             self.width,
             self.height,
             self.alignment,
             &self.pixels,
         );
-        PopulateTextureUtil::default_params(gl);
+        PopulateTextureUtil::default_params(gl, target);
         Ok(size)
     }
 }
@@ -319,18 +352,23 @@ impl PopulateTexture for RgbTexturePopulator {
         Some((self.width as f32, self.height as f32))
     }
 
-    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, String> {
+    fn populate(
+        &self,
+        gl: &OpenGlBindings,
+        target: GLenum,
+    ) -> Result<TextureSize, String> {
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, self.alignment.into());
         }
         let size = PopulateTextureUtil::populate_rgb(
             gl,
+            target,
             self.width,
             self.height,
             self.alignment,
             &self.pixels,
         );
-        PopulateTextureUtil::default_params(gl);
+        PopulateTextureUtil::default_params(gl, target);
         Ok(size)
     }
 }
@@ -348,15 +386,20 @@ impl PopulateTexture for RgbaTexturePopulator {
         Some((self.width as f32, self.height as f32))
     }
 
-    fn populate(&self, gl: &OpenGlBindings) -> Result<TextureSize, String> {
+    fn populate(
+        &self,
+        gl: &OpenGlBindings,
+        target: GLenum,
+    ) -> Result<TextureSize, String> {
         let size = PopulateTextureUtil::populate_rgba(
             gl,
+            target,
             self.width,
             self.height,
             self.alignment,
             &self.pixels,
         );
-        PopulateTextureUtil::default_params(gl);
+        PopulateTextureUtil::default_params(gl, target);
         Ok(size)
     }
 }
