@@ -126,7 +126,6 @@ enum KeyVariants {
     Path(Cow<'static, Path>),
     Buffer(*const u8),
     Default,
-    Error,
 }
 
 impl Default for KeyVariants {
@@ -146,12 +145,6 @@ impl TextureCacheKey {
     fn buffer(buf: &'static [u8]) -> Self {
         Self {
             inner: KeyVariants::Buffer(buf.as_ptr()),
-        }
-    }
-
-    fn error() -> Self {
-        Self {
-            inner: KeyVariants::Error,
         }
     }
 }
@@ -193,13 +186,6 @@ enum TextureInstance {
 }
 
 impl TextureInstance {
-    fn error() -> Self {
-        Self::ToCache(
-            TextureCacheKey::error(),
-            Box::new(ErrorTexturePopulator),
-        )
-    }
-
     fn size(&self) -> Option<TextureSize> {
         match self {
             Self::Existing(existing) => existing.size(),
@@ -220,7 +206,7 @@ impl TextureInstance {
         let success = if let Self::Existing(ref existing) = self {
             existing.bind(&ctx.bindings)
         } else {
-            match std::mem::replace(self, Self::error()) {
+            match std::mem::take(self) {
                 // TODO: figure out how to do this without unreachable!() ?
                 Self::Existing(_) => unreachable!(),
                 Self::ToCache(key, populator) => {
@@ -235,12 +221,7 @@ impl TextureInstance {
             }
         };
         if !success {
-            let entry = ctx.texture_cache.entry(TextureCacheKey::error());
-            let cached = entry.or_insert_with(move || {
-                SharedTexture::new(Box::new(ErrorTexturePopulator))
-            });
-            let clone = Rc::clone(cached);
-            assert!(clone.bind(&ctx.bindings), "Failed to bind error texture",);
+            todo!()
         }
     }
 }

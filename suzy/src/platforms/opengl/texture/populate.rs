@@ -4,9 +4,9 @@
 use crate::platforms::opengl;
 use opengl::context::bindings::types::*;
 use opengl::context::bindings::{
-    ALPHA, CLAMP_TO_EDGE, LINEAR, NEAREST, REPEAT, RGB, RGBA,
-    TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
-    UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+    ALPHA, CLAMP_TO_EDGE, LINEAR, NEAREST, RGB, RGBA, TEXTURE_MAG_FILTER,
+    TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNPACK_ALIGNMENT,
+    UNSIGNED_BYTE,
 };
 use opengl::context::OpenGlBindings;
 
@@ -263,43 +263,6 @@ impl PopulateTexture for DefaultTexturePopulator {
             gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST as _);
             gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
             gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
-        }
-        Ok(size)
-    }
-}
-
-#[derive(Clone, Copy, Default, PartialEq)]
-pub(super) struct ErrorTexturePopulator;
-
-const ERRTEX_SIDE: u16 = 16;
-const ERRTEX: &[u8] = include_bytes!("errtex.data");
-
-impl PopulateTexture for ErrorTexturePopulator {
-    fn get_known_size(&self) -> Option<(f32, f32)> {
-        Some((16.0, 16.0))
-    }
-
-    fn populate(
-        &self,
-        gl: &OpenGlBindings,
-        target: GLenum,
-    ) -> Result<TextureSize, String> {
-        unsafe {
-            gl.PixelStorei(UNPACK_ALIGNMENT, 1);
-        }
-        let size = PopulateTextureUtil::populate_rgb(
-            gl,
-            target,
-            ERRTEX_SIDE,
-            ERRTEX_SIDE,
-            1,
-            ERRTEX,
-        );
-        unsafe {
-            gl.TexParameteri(target, TEXTURE_MIN_FILTER, NEAREST as _);
-            gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST as _);
-            gl.TexParameteri(target, TEXTURE_WRAP_S, REPEAT as _);
-            gl.TexParameteri(target, TEXTURE_WRAP_T, REPEAT as _);
         }
         Ok(size)
     }
