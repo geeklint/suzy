@@ -10,7 +10,6 @@ use crate::{
 };
 
 use super::{
-    context::bindings::{FALSE, FLOAT, TRIANGLES},
     renderer::{BatchPool, BatchRef, BoundingBox, Vertex},
     texture::Texture,
     OpenGlRenderPlatform,

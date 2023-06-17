@@ -1,9 +1,14 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::convert::{TryFrom, TryInto};
+use std::{
+    convert::{TryFrom, TryInto},
+    mem::size_of,
+};
 
-#[derive(Clone, Copy, Debug)]
+use crate::platforms::opengl::opengl_bindings::types::GLenum;
+
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Vertex<Uv> {
     pub xy: [f32; 2],
     pub uv: [Uv; 2],
@@ -53,6 +58,23 @@ impl VertexVec {
         self.len() == 0
     }
 
+    pub fn data_ptr(&self) -> *const std::ffi::c_void {
+        match self {
+            VertexVec::U16(vec) => vec.as_ptr().cast(),
+            VertexVec::F32(vec) => vec.as_ptr().cast(),
+        }
+    }
+
+    pub fn data_size(
+        &self,
+    ) -> crate::platforms::opengl::opengl_bindings::types::GLsizeiptr {
+        TryFrom::try_from(match self {
+            VertexVec::U16(vec) => vec.len() * size_of::<Vertex<u16>>(),
+            VertexVec::F32(vec) => vec.len() * size_of::<Vertex<f32>>(),
+        })
+        .expect("vertex buffer should fit in GLsizei")
+    }
+
     pub fn can_add(&self, num_vertices: u16) -> bool {
         self.len()
             .checked_add(num_vertices.into())
@@ -81,12 +103,17 @@ impl VertexVec {
 }
 
 pub trait UvType: Sized + Copy + Default {
+    fn gl_type() -> GLenum;
     fn to_f32(self) -> f32;
     fn try_from_f32(value: f32) -> Option<Self>;
     fn push(vv: &mut VertexVec, vertex: Vertex<Self>) -> u16;
 }
 
 impl UvType for f32 {
+    fn gl_type() -> GLenum {
+        crate::platforms::opengl::opengl_bindings::FLOAT
+    }
+
     fn to_f32(self) -> f32 {
         self
     }
@@ -104,6 +131,10 @@ impl UvType for f32 {
 }
 
 impl UvType for u16 {
+    fn gl_type() -> GLenum {
+        crate::platforms::opengl::opengl_bindings::UNSIGNED_SHORT
+    }
+
     fn to_f32(self) -> f32 {
         self.into()
     }
@@ -141,4 +172,49 @@ pub struct UvRectValues<T> {
 pub enum UvRect {
     F32(UvRectValues<f32>),
     U16(UvRectValues<u16>),
+}
+
+pub(super) struct OffsetInfo {
+    pub xy: usize,
+    pub uv: usize,
+    pub color: usize,
+    pub config: usize,
+    pub smoothing: usize,
+    pub stride: usize,
+    pub uv_type: GLenum,
+}
+
+impl OffsetInfo {
+    pub fn for_vertex_vec(vec: &VertexVec) -> Self {
+        match vec {
+            VertexVec::U16(_) => Self::for_uv_type::<u16>(),
+            VertexVec::F32(_) => Self::for_uv_type::<f32>(),
+        }
+    }
+
+    pub fn for_uv_type<Uv: UvType>() -> Self {
+        let base_vertex = Vertex::<Uv>::default();
+        let abs_xy = base_vertex.xy.as_ptr() as usize;
+        let abs_uv = base_vertex.uv.as_ptr() as usize;
+        let abs_color = base_vertex.color.as_ptr() as usize;
+        let abs_config = base_vertex.config.as_ptr() as usize;
+        let abs_smoothing = (&base_vertex.smoothing as *const f32) as usize;
+        let abs_base = (&base_vertex as *const Vertex<Uv>) as usize;
+        let xy = abs_xy - abs_base;
+        let uv = abs_uv - abs_base;
+        let color = abs_color - abs_base;
+        let config = abs_config - abs_base;
+        let smoothing = abs_smoothing - abs_base;
+        let stride = size_of::<Vertex<Uv>>();
+        let uv_type = Uv::gl_type();
+        Self {
+            xy,
+            uv,
+            color,
+            config,
+            smoothing,
+            stride,
+            uv_type,
+        }
+    }
 }

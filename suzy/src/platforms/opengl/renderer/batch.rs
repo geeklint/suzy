@@ -8,7 +8,7 @@ use crate::platforms::opengl::{
 use super::{vertex::UvRect, BoundingBox, CoveredArea, VertexVec};
 
 pub struct Batch {
-    texture: TextureId,
+    pub(super) texture: TextureId,
     covered_area: CoveredArea,
     pub vertices: VertexVec,
     pub indices: Vec<u16>,
@@ -20,8 +20,8 @@ pub struct BatchRef<'a> {
 }
 
 pub struct BatchPool {
-    matrix: Mat4,
-    batches: Vec<Batch>,
+    pub(super) matrix: Mat4,
+    pub(super) batches: Vec<Batch>,
 }
 
 impl BatchPool {
@@ -39,7 +39,7 @@ impl BatchPool {
     ) -> Option<UvRect> {
         // TODO: special handling for solid_color texture
         if batch_tex == &tex.id() {
-            let texture_size = texture_cache.lookup(batch_tex)?;
+            let (_id, texture_size) = texture_cache.lookup(batch_tex)?;
             Some(tex.crop.get_uv_rect(texture_size))
         } else {
             None
@@ -56,7 +56,7 @@ impl BatchPool {
         let mut found: Option<(usize, UvRect)> = None;
         for (i, batch) in self.batches.iter_mut().enumerate().rev() {
             if let Some(uv_rect) =
-                Self::can_use_texture(texture_cache, &batch.texture, &tex)
+                Self::can_use_texture(texture_cache, &batch.texture, tex)
             {
                 if batch.vertices.can_add(num_vertices) {
                     found = Some((i, uv_rect));
@@ -77,7 +77,7 @@ impl BatchPool {
             });
             let uv_rect = texture_cache
                 .lookup(&tex.id())
-                .map(|size| tex.crop.get_uv_rect(size))?;
+                .map(|(_id, size)| tex.crop.get_uv_rect(size))?;
             Some((index, uv_rect))
         });
         match found {

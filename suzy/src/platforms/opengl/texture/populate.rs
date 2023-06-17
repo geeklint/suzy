@@ -89,11 +89,11 @@ impl PopulateTextureUtil {
         gl: &OpenGlBindings,
         target: GLenum,
         format: GLint,
-        width: u16,
-        height: u16,
-        alignment: u16,
+        size_align: (u16, u16, u16),
+        sdf: bool,
         pixels: &[u8],
     ) -> TextureSize {
+        let (width, height, alignment) = size_align;
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, alignment.into());
         }
@@ -111,11 +111,13 @@ impl PopulateTextureUtil {
                     pixels.as_ptr() as *const _,
                 );
             }
+            Self::default_params(gl, target);
             TextureSize {
                 image_width: width as f32,
                 image_height: height as f32,
                 texture_width: width,
                 texture_height: height,
+                is_sdf: sdf,
             }
         } else {
             let texture_width = width.next_power_of_two();
@@ -146,11 +148,13 @@ impl PopulateTextureUtil {
                     pixels.as_ptr() as *const _,
                 );
             }
+            Self::default_params(gl, target);
             TextureSize {
                 image_width: width as f32,
                 image_height: height as f32,
                 texture_width,
                 texture_height,
+                is_sdf: sdf,
             }
         }
     }
@@ -176,12 +180,12 @@ impl PopulateTextureUtil {
         width: u16,
         height: u16,
         alignment: u16,
+        sdf: bool,
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 1));
-        Self::populate_format(
-            gl, target, ALPHA as _, width, height, alignment, pixels,
-        )
+        let size_align = (width, height, alignment);
+        Self::populate_format(gl, target, ALPHA as _, size_align, sdf, pixels)
     }
 
     /// Populate an texture with three channels.
@@ -194,9 +198,8 @@ impl PopulateTextureUtil {
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 3));
-        Self::populate_format(
-            gl, target, RGB as _, width, height, alignment, pixels,
-        )
+        let size_align = (width, height, alignment);
+        Self::populate_format(gl, target, RGB as _, size_align, false, pixels)
     }
 
     /// Populate an texture with four channels.
@@ -209,9 +212,8 @@ impl PopulateTextureUtil {
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 4));
-        Self::populate_format(
-            gl, target, RGBA as _, width, height, alignment, pixels,
-        )
+        let size_align = (width, height, alignment);
+        Self::populate_format(gl, target, RGBA as _, size_align, false, pixels)
     }
 }
 

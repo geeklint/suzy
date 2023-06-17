@@ -216,18 +216,20 @@ impl ShaderProgram {
         unsafe { gl.Uniform1i(loc.id, value as GLint) };
     }
 
-    pub fn set_vec4(
-        gl: &OpenGlBindings,
-        loc: UniformLoc,
-        value: (GLfloat, GLfloat, GLfloat, GLfloat),
-    ) {
+    pub fn set_float(gl: &OpenGlBindings, loc: UniformLoc, f: f32) {
         unsafe {
-            gl.Uniform4f(loc.id, value.0, value.1, value.2, value.3);
+            gl.Uniform1f(loc.id, f);
+        }
+    }
+
+    pub fn set_vec2(gl: &OpenGlBindings, loc: UniformLoc, x: f32, y: f32) {
+        unsafe {
+            gl.Uniform2f(loc.id, x, y);
         }
     }
 
     pub fn set_mat4(gl: &OpenGlBindings, loc: UniformLoc, value: &[GLfloat]) {
-        debug_assert_eq!(value.len(), 16, "mat4 must have 16 elements!");
+        assert_eq!(value.len(), 16, "mat4 must have 16 elements!");
         unsafe {
             gl.UniformMatrix4fv(loc.id, 1, FALSE, value.as_ptr());
         }

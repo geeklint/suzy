@@ -19,11 +19,15 @@ pub struct DrawContext<'a> {
 
 impl<'a> crate::graphics::PlatformDrawContext<()> for DrawContext<'a> {
     fn finish(self) -> Option<()> {
-        if matches!(self.pass, DrawPass::GatherTextures) {
-            self.context.run_texture_populators();
-            Some(())
-        } else {
-            None
+        match self.pass {
+            DrawPass::GatherTextures => {
+                self.context.run_texture_populators();
+                Some(())
+            }
+            DrawPass::Main { batch_pool } => {
+                super::renderer::render(self.context, batch_pool);
+                None
+            }
         }
     }
 }

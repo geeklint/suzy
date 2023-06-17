@@ -4,10 +4,7 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 
 use super::{
-    context::{
-        bindings::TEXTURE_2D,
-        {OpenGlBindings, OpenGlContext},
-    },
+    context::{bindings::TEXTURE_2D, OpenGlBindings},
     opengl_bindings::types::GLuint,
 };
 
@@ -19,7 +16,7 @@ pub use populate::*;
 pub struct Texture {
     populator: Option<Rc<dyn PopulateTexture>>,
     pub(super) crop: Crop,
-    fallback: Fallback,
+    //fallback: Fallback,
 }
 
 impl Texture {
@@ -27,7 +24,7 @@ impl Texture {
         Self {
             populator: Some(populator),
             crop: Crop::None,
-            fallback: Fallback::NoRender,
+            //fallback: Fallback::NoRender,
         }
     }
 
@@ -35,7 +32,7 @@ impl Texture {
         Self {
             populator: None,
             crop: Crop::None,
-            fallback: Fallback::SolidColor,
+            //fallback: Fallback::SolidColor,
         }
     }
 
@@ -91,17 +88,42 @@ pub(super) enum Crop {
 
 impl Crop {
     pub fn get_uv_rect(&self, size: &TextureSize) -> super::renderer::UvRect {
-        todo!()
+        use super::renderer::{UvRect, UvRectValues, UvType};
+        match self {
+            Crop::None => {
+                match (
+                    u16::try_from_f32(size.image_width),
+                    u16::try_from_f32(size.image_height),
+                ) {
+                    (Some(width), Some(height)) => UvRect::U16(UvRectValues {
+                        left: 0,
+                        right: width,
+                        bottom: 0,
+                        top: height,
+                    }),
+                    _ => UvRect::F32(UvRectValues {
+                        left: 0.0,
+                        right: size.image_width,
+                        bottom: 0.0,
+                        top: size.image_height,
+                    }),
+                }
+            }
+            Crop::F32(_) => todo!(),
+            Crop::U16(_) => todo!(),
+        }
     }
 }
 
+/*
 #[derive(Clone, Debug, Default)]
 enum Fallback {
     #[default]
     NoRender,
     SolidColor,
-    Fallback(Box<Texture>),
+    Texture(Box<Texture>),
 }
+*/
 
 #[derive(Clone, Copy, Debug)]
 enum TextureState {
@@ -123,6 +145,9 @@ pub struct TextureSize {
 
     /// The actual height of this texture on the GPU.
     pub texture_height: u16,
+
+    /// If this image represents a signed distance field.
+    pub is_sdf: bool,
 }
 
 #[derive(Debug)]
@@ -156,12 +181,12 @@ pub(super) struct TextureCache {
 }
 
 impl TextureCache {
-    pub fn lookup(&self, id: &TextureId) -> Option<&TextureSize> {
+    pub fn lookup(&self, id: &TextureId) -> Option<(GLuint, &TextureSize)> {
         self.set
             .get(id.populator.as_ref()?.texture_key())
             .and_then(|state| {
-                if let TextureState::Ready { size, .. } = state {
-                    Some(size)
+                if let TextureState::Ready { id, size } = state {
+                    Some((*id, size))
                 } else {
                     None
                 }
