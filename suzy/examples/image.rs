@@ -1,15 +1,24 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use suzy::dims::{Rect, SimplePadding2d};
-use suzy::platforms::opengl::SlicedImage;
-use suzy::platforms::opengl::Texture;
-use suzy::widget::{self, *};
+use std::rc::Rc;
+
+use suzy::{
+    dims::{Rect, SimplePadding2d},
+    platforms::opengl::{
+        self, PopulateTexture, PopulateTextureUtil, SlicedImage, Texture,
+    },
+    widget::{self, *},
+};
 
 const IMAGE: &[u8] = include_bytes!("cute.data");
 const IMAGE_WIDTH: u16 = 384;
 const IMAGE_HEIGHT: u16 = 512;
 const IMAGE_ASPECT: f32 = 384.0 / 512.0;
+
+fn main() {
+    ImageViewer::run_as_app();
+}
 
 // Root widget data
 #[derive(Default)]
@@ -20,10 +29,8 @@ struct ImageViewer {
 impl widget::Content for ImageViewer {
     fn desc(mut desc: impl widget::Desc<Self>) {
         desc.watch(|this, _rect| {
-            this.image.set_image(
-                Texture::from_rgb(IMAGE_WIDTH, IMAGE_HEIGHT, 1, IMAGE),
-                SimplePadding2d::zero(),
-            );
+            this.image.texture = Texture::new(Rc::new(Populator));
+            this.image.padding = SimplePadding2d::zero();
         });
         desc.watch(|this, rect| {
             // fill the screen with the image
@@ -35,6 +42,25 @@ impl widget::Content for ImageViewer {
     }
 }
 
-fn main() {
-    ImageViewer::run_as_app();
+struct Populator;
+
+impl PopulateTexture for Populator {
+    fn populate(
+        &self,
+        gl: &opengl::OpenGlBindings,
+        target: opengl::opengl_bindings::types::GLenum,
+    ) -> Result<opengl::TextureSize, String> {
+        Ok(PopulateTextureUtil::populate_rgb(
+            gl,
+            target,
+            IMAGE_WIDTH,
+            IMAGE_HEIGHT,
+            1,
+            IMAGE,
+        ))
+    }
+
+    fn texture_key(&self) -> &[u8] {
+        &[1]
+    }
 }

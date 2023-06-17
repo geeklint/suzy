@@ -75,13 +75,13 @@ impl Color {
 
     /// Get the RGBA components of this color, as integers, where 255
     /// represents the maximum for that component.
-    pub fn rgba8(&self) -> (u8, u8, u8, u8) {
-        (
+    pub fn rgba8(&self) -> [u8; 4] {
+        [
             (self.r * MAX8).round() as u8,
             (self.g * MAX8).round() as u8,
             (self.b * MAX8).round() as u8,
             (self.a * MAX8).round() as u8,
-        )
+        ]
     }
 
     /// Apply a tint to this color based on another color.
@@ -159,19 +159,13 @@ impl std::str::FromStr for Color {
 
 impl LowerHex for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let rgba = self.rgba8();
-        let bytes = [rgba.0, rgba.1, rgba.2, rgba.3];
-        write!(f, "#{:08x}", u32::from_be_bytes(bytes))
+        write!(f, "#{:08x}", u32::from_be_bytes(self.rgba8()))
     }
 }
 
 impl UpperHex for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let rgba = self.rgba8();
-        let bytes = [rgba.0, rgba.1, rgba.2, rgba.3];
-        f.write_str("#")?;
-        UpperHex::fmt(&u32::from_be_bytes(bytes), f)?;
-        Ok(())
+        write!(f, "#{:08X}", u32::from_be_bytes(self.rgba8()))
     }
 }
 

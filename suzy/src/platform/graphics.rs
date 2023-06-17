@@ -27,4 +27,5 @@ pub trait Text<Style> {
     fn set_layout(&mut self, layout: text::Layout);
     fn clear(&mut self);
     fn push_span(&mut self, style: Style, text: &str);
+    fn finish(&mut self);
 }

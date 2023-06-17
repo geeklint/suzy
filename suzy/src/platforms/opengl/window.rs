@@ -12,7 +12,6 @@ use super::{
         BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE_MINUS_SRC_ALPHA,
         PACK_ALIGNMENT, RGBA, SRC_ALPHA, UNSIGNED_BYTE, VIEWPORT,
     },
-    drawparams::DrawParams,
     {Mat4, OpenGlContext, OpenGlRenderPlatform},
 };
 
@@ -57,7 +56,6 @@ impl Window {
                 height as GLsizei,
             );
         }
-        self.ctx.mask.mask_size(&self.ctx.bindings, width, height);
     }
 
     pub fn prepare_draw(
@@ -69,12 +67,9 @@ impl Window {
             self.ctx.bindings.Enable(BLEND);
             self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
         }
-        let mut params = DrawParams::new();
-        params.transform(
-            Mat4::translate(-1.0, -1.0)
-                * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1),
-        );
-        super::DrawContext::new(&mut self.ctx, params, first_pass)
+        let matrix = Mat4::translate(-1.0, -1.0)
+            * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1);
+        super::DrawContext::new(&mut self.ctx, matrix, first_pass)
     }
 
     /// Issue opengl call to clear the screen.

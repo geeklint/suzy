@@ -42,6 +42,8 @@ impl widget::Content for Element {
                 origin_x: rect.center_x(),
                 origin_y: rect.center_y(),
                 wrap_width: rect.width(),
+                vertical_limit: text::VerticalLimit::Lines(1),
+                overflow_mode: text::OverflowMode::Ellipsis,
             };
             this.text.set_layout(layout);
         });
@@ -49,6 +51,7 @@ impl widget::Content for Element {
             let style = TextStyle::with_size_and_color(24.0, Color::WHITE);
             this.text.clear();
             this.text.push_span(style, &this.value);
+            this.text.finish();
         });
         desc.graphic(|this| &mut this.text);
     }

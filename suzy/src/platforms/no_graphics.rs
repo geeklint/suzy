@@ -210,4 +210,8 @@ impl graphics::Text<TextStyle> for Graphic {
     fn push_span(&mut self, _style: TextStyle, _text: &str) {
         unreachable!()
     }
+
+    fn finish(&mut self) {
+        unreachable!()
+    }
 }

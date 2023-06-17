@@ -1,58 +1,42 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::collections::HashMap;
+use std::convert::TryInto;
 
 use crate::{
     graphics::{Color, DrawContext, Graphic},
     text,
-    watch::Watched,
+    watch::WatchedMeta,
 };
 
 use super::{
-    buffer::SingleVertexBuffer,
-    context::bindings::types::*,
     context::bindings::{FALSE, FLOAT, TRIANGLES},
+    renderer::{BatchPool, BatchRef, BoundingBox, Vertex},
     texture::Texture,
-    Mat4, OpenGlRenderPlatform,
+    OpenGlRenderPlatform,
 };
 
 mod calc;
 mod font;
 
-pub use font::{
-    FontFamily, FontFamilyDynamic, FontFamilySource, FontFamilySourceDynamic,
-};
-
-use calc::{CharLocationError, CharLocationRecorder, FontCharCalc};
-use font::{ChannelMask, GlyphMetricsSource};
+use calc::{CalcParams, Cursor, FontCharCalc};
+pub use font::Font;
 
 #[cfg(feature = "default_font")]
-mod default_font;
-
-#[cfg(feature = "default_font")]
-thread_local! {
-    static DEFAULT_FONT: FontFamily = default_font::FONT.load();
-}
-
-#[cfg(feature = "default_font")]
-fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(f: F) -> R {
-    DEFAULT_FONT.with(f)
+fn default_font() -> &'static font::Font {
+    todo!()
 }
 
 #[cfg(not(feature = "default_font"))]
 #[track_caller]
-fn with_default_font<F: FnOnce(&FontFamily) -> R, R>(_f: F) -> R {
-    panic!(concat!(
-        "`Text::set_text` called without an available font.",
-        " Perhaps you need to call `Text::set_font` first, or",
-        " enable the feature `default_font`.",
-    ));
+fn default_font() -> &'static font::Font {
+    panic!("invalid font index specified, and no default font is available");
 }
 
 pub struct TextStyle {
     pub font_size: f32,
     pub color: Color,
+    pub font: usize,
 }
 
 impl crate::platform::graphics::TextStyle for TextStyle {
@@ -60,6 +44,7 @@ impl crate::platform::graphics::TextStyle for TextStyle {
         Self {
             font_size: size,
             color,
+            font: 0,
         }
     }
 
@@ -74,243 +59,135 @@ impl crate::platform::graphics::TextStyle for TextStyle {
 /// fonts can be generated using the crate `suzy_build_tools`.
 #[derive(Default)]
 pub struct Text {
-    raw: RawText<()>,
-    font: Watched<Option<Box<FontFamily>>>,
-    render_settings: TextRenderSettings,
-    layout: text::Layout,
-}
-
-impl Text {
-    /// Set the font to be used by future calls to `set_text`.
-    pub fn set_font(&mut self, font: Box<FontFamily>) {
-        *self.font = Some(font);
-    }
+    fonts: Vec<font::Font>,
+    vertices: Vec<VertexSet>,
+    layout_changed: WatchedMeta<'static>,
+    calc: FontCharCalc,
 }
 
 impl Graphic<OpenGlRenderPlatform> for Text {
     fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
-        self.raw.draw(ctx, self.render_settings);
+        for vs in &mut self.vertices {
+            let vs_vertices = &vs.vertices;
+            let &mut bbox = vs.bounding_box.get_or_insert_with(|| {
+                let mut bbox = BoundingBox {
+                    left: f32::INFINITY,
+                    right: f32::NEG_INFINITY,
+                    bottom: f32::INFINITY,
+                    top: f32::NEG_INFINITY,
+                };
+                for vertex in vs_vertices {
+                    bbox.left = bbox.left.min(vertex.xy[0]);
+                    bbox.right = bbox.right.max(vertex.xy[0]);
+                    bbox.bottom = bbox.bottom.min(vertex.xy[1]);
+                    bbox.top = bbox.top.max(vertex.xy[1]);
+                }
+                bbox
+            });
+            if let Some(BatchRef { batch, uv_rect }) = ctx.find_batch(
+                &vs.texture,
+                vs.vertices.len().try_into().expect(
+            "the number of vertices in a text object should be less than 2^16",
+                ),
+                &[bbox],
+            ) {
+                let index_offset: u16 =
+                    batch.vertices.len().try_into().expect(
+            "the number of vertices in a batch should be less than 2^16",
+                    );
+                for &vertex in &vs.vertices {
+                    batch.vertices.push(vertex);
+                }
+                batch
+                    .indices
+                    .extend(vs.indices.iter().map(|idx| idx + index_offset));
+            }
+        }
     }
 }
 
 impl crate::platform::graphics::Text<TextStyle> for Text {
     fn set_layout(&mut self, layout: text::Layout) {
-        self.layout = layout;
-        self.render_settings.x = layout.origin_x;
-        self.render_settings.y = layout.origin_y;
+        self.calc.layout = layout;
+        self.layout_changed.trigger_auto();
     }
 
     fn clear(&mut self) {
-        self.raw.channels.clear();
+        self.layout_changed.watched_auto();
+        self.calc.cursor = Cursor::default();
+        self.vertices.clear();
     }
 
     fn push_span(&mut self, style: TextStyle, text: &str) {
-        self.render_settings.text_color = style.color;
-        match &*self.font {
-            Some(font) => {
-                self.raw.render(text, font, self.layout, style.font_size)
+        self.calc.cursor.font_size = style.font_size;
+        let font = self
+            .fonts
+            .get(style.font)
+            .unwrap_or_else(|| default_font())
+            .as_ref();
+        let color = style.color.rgba8();
+        let texture = font.data().texture.clone();
+        let vertex_set_index = match self
+            .vertices
+            .iter_mut()
+            .enumerate()
+            .find(|(_, vs)| vs.texture.id() == texture.id())
+        {
+            Some((idx, _)) => idx,
+            None => {
+                let idx = self.vertices.len();
+                let vs = VertexSet {
+                    texture,
+                    vertices: Vec::new(),
+                    indices: Vec::new(),
+                    line_start_index: 0,
+                    bounding_box: None,
+                };
+                self.vertices.push(vs);
+                idx
             }
-            None => with_default_font(|font| {
-                self.raw.render(text, font, self.layout, style.font_size);
-            }),
         };
-    }
-}
-
-/// RawText for custom use cases or optimization
-///
-/// Text is done in two stages, and there are two settings types for each
-/// stage:
-///
-/// 1. `TextLayoutSettings` controls the generation of the text vertices, and
-/// contains settings like alignment and wrap width.
-/// 2. `TextRenderSettings` controls the rendering of the text, and contains
-/// settings such as text color and position.
-pub struct RawText<T> {
-    vertices: SingleVertexBuffer<GLfloat>,
-    channels: HashMap<ChannelMask, std::ops::Range<usize>>,
-    texture: Texture,
-    char_locs: T,
-}
-
-impl<T: Default> Default for RawText<T> {
-    fn default() -> Self {
-        Self {
-            vertices: SingleVertexBuffer::new(true),
-            channels: HashMap::new(),
-            texture: Texture::default(),
-            char_locs: T::default(),
-        }
-    }
-}
-
-impl<T: Default> RawText<T> {
-    /// Create a new empty text graphic.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl<T: calc::RecordCharLocation> RawText<T> {
-    /// Update the text to display, using the provided font.
-    pub fn render(
-        &mut self,
-        text: &str,
-        font: &FontFamilyDynamic<'_>,
-        settings: text::Layout,
-        font_size: f32,
-    ) {
-        self.texture = font.texture.clone();
-        let vertices = &mut self.vertices;
-        let channels = &mut self.channels;
-        let char_locs = &mut self.char_locs;
-        let mut verts = vec![];
-        vertices.set_data(|_gl| {
-            font.texture.transform_uvs(|| {
-                let mut calc = FontCharCalc::new(font, settings, char_locs);
-                calc.push_str(font_size, text);
-                channels.clear();
-                calc.merge_verts(&mut verts, channels);
-                &mut verts[..]
-            })
-        });
-    }
-}
-
-impl RawText<CharLocationRecorder> {
-    /// Get the index of the character at the given position
-    pub fn char_at(&self, x: f32, y: f32) -> Result<usize, CharLocationError> {
-        self.char_locs.char_at(x, y)
-    }
-
-    /// Get the bounding rect of the character at the given index
-    fn char_rect(&self, index: usize) -> Option<crate::dims::SimpleRect> {
-        self.char_locs.char_rect(index)
-    }
-}
-
-impl<T> RawText<T> {
-    fn draw(
-        &mut self,
-        ctx: &mut DrawContext<'_, OpenGlRenderPlatform>,
-        render_settings: TextRenderSettings,
-    ) {
-        ctx.push(|ctx| {
-            ctx.params().sdf_mode();
-            ctx.params().use_texture(self.texture.clone());
-            ctx.params().transform(Mat4::translate(
-                render_settings.x,
-                render_settings.y,
-            ));
-            let opt_text = Some((
-                render_settings.text_color,
-                render_settings.pseudo_bold_level,
-                render_settings.smoothing,
-            ));
-            let opt_outline = (render_settings.outline_width
-                > render_settings.pseudo_bold_level)
-                .then_some((
-                    render_settings.outline_color,
-                    render_settings.outline_width,
-                    render_settings.outline_smoothing,
-                ));
-            let opt_shadow = None;
-            if self.vertices.bind_if_ready(ctx) {
-                let stride = (4 * std::mem::size_of::<GLfloat>()) as _;
-                let offset = (2 * std::mem::size_of::<GLfloat>()) as _;
-                let gl = &ctx.render_ctx().bindings;
-                unsafe {
-                    gl.VertexAttribPointer(
-                        0,
-                        2,
-                        FLOAT,
-                        FALSE,
-                        stride,
-                        std::ptr::null(),
-                    );
-                    gl.VertexAttribPointer(1, 2, FLOAT, FALSE, stride, offset);
-                }
-                for (color, edge, smoothing) in
-                    opt_shadow.into_iter().chain(opt_outline).chain(opt_text)
-                {
-                    ctx.push(|ctx| {
-                        ctx.params().tint(color);
-                        ctx.params().sdf_edge(edge, smoothing);
-                        for (mask, range) in self.channels.iter() {
-                            #[allow(clippy::len_zero)]
-                            if range.len() > 0 {
-                                ctx.push(|ctx| {
-                                    ctx.params().sdf_chan_mask(*mask);
-                                    ctx.prepare_draw();
-                                    let gl = &ctx.render_ctx().bindings;
-                                    unsafe {
-                                        gl.DrawArrays(
-                                            TRIANGLES,
-                                            range.start as GLsizei,
-                                            range.len() as GLsizei,
-                                        );
-                                    }
-                                });
-                            }
-                        }
+        let mut remaining = text;
+        while !remaining.is_empty() {
+            let vertices = &mut self.vertices;
+            let mut params = CalcParams {
+                font,
+                handle_glyph: &mut |glyph: calc::GlyphMetrics| {
+                    vertices[vertex_set_index].vertices.push(Vertex {
+                        xy: [glyph.bb_left, glyph.bb_bottom],
+                        uv: [glyph.tex_left, glyph.tex_bottom],
+                        color,
+                        config: todo!(),
+                        smoothing: todo!(),
                     });
+                    todo!()
+                },
+            };
+            let (consumed, line_break) =
+                self.calc.push_span(params.rbr(), text);
+            remaining = &remaining[consumed..];
+            if line_break {
+                for vs in &mut self.vertices {
+                    self.calc
+                        .align_line(vs.vertices.iter_mut().map(|v| &mut v.xy));
                 }
-            } else {
-                self.texture.bind(ctx.render_ctx_mut());
+                self.calc.reset_line();
             }
-        });
-    }
-}
-
-/// Settings controlling the rendering of the text.
-#[derive(Clone, Copy, Debug)]
-#[non_exhaustive]
-pub struct TextRenderSettings {
-    /// Primary text color.
-    pub text_color: Color,
-
-    /// Color of outline around glyphs.
-    pub outline_color: Color,
-
-    /// Allows artificially bolding or lightening the text.
-    ///
-    /// (As opposed to using a different font which was designed to be bolder).
-    /// The default is 0.5, which indicates no change.
-    pub pseudo_bold_level: f32,
-
-    /// Width of the outline around glyphs.
-    pub outline_width: f32,
-
-    /// Smoothing value applied to the edge of the glyph.
-    ///
-    /// Smaller values will cause text to appear more pixelated, larger
-    /// values may cause it to appear blurry.
-    pub smoothing: f32,
-
-    /// Smoothing value applied to the edge of the outline around the glyph.
-    ///
-    /// Smaller values will cause text to appear more pixelated, larger
-    /// values may cause it to appear blurry.
-    pub outline_smoothing: f32,
-
-    /// x position of the rendered text.
-    pub x: f32,
-
-    /// y position of the rendered text.
-    pub y: f32,
-}
-
-impl Default for TextRenderSettings {
-    fn default() -> Self {
-        TextRenderSettings {
-            text_color: Color::WHITE,
-            outline_color: Color::create_rgba(1.0, 1.0, 1.0, 0.0),
-            pseudo_bold_level: 0.5,
-            outline_width: 0.0,
-            smoothing: 0.07,
-            outline_smoothing: 0.07,
-            x: 0.0,
-            y: 0.0,
         }
     }
+
+    fn finish(&mut self) {
+        for vs in &mut self.vertices {
+            self.calc
+                .align_block(vs.vertices.iter_mut().map(|v| &mut v.xy));
+        }
+    }
+}
+
+struct VertexSet {
+    texture: Texture,
+    vertices: Vec<Vertex<u16>>,
+    indices: Vec<u16>,
+    line_start_index: usize,
+    bounding_box: Option<BoundingBox>,
 }

@@ -143,7 +143,7 @@ fn compile_program(
 }
 
 #[derive(Clone)]
-pub struct Shader {
+pub struct ShaderProgram {
     _obj: Rc<ProgramObject>,
     program_id: GLuint,
     attrs: GLuint,
@@ -155,7 +155,7 @@ pub struct UniformLoc {
     id: GLint,
 }
 
-impl Shader {
+impl ShaderProgram {
     pub fn create(
         gl: &Rc<OpenGlBindings>,
         vert_text: &[u8],
@@ -173,7 +173,7 @@ impl Shader {
             gl.GetIntegerv(MAX_VERTEX_ATTRIBS, &mut total_attrs as *mut GLint);
             (attrs as GLuint, total_attrs as GLuint)
         };
-        let shader = Shader {
+        let shader = ShaderProgram {
             program_id: obj.id,
             _obj: Rc::new(obj),
             attrs,

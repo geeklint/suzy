@@ -3,12 +3,9 @@
 
 #![allow(missing_docs)]
 
-use std::collections::HashMap;
 use std::rc::Rc;
 
-use super::mask::Mask;
-use super::stdshaders::Shaders;
-use super::texture::TextureCache;
+use super::{stdshaders::Shaders, texture::TextureCache};
 
 pub const DEBUG: bool = option_env!("SUZY_GL_DEBUG").is_some();
 
@@ -31,7 +28,6 @@ pub struct OpenGlContext {
     pub(super) bindings: Rc<OpenGlBindings>,
     pub(super) shaders: Shaders,
     pub(super) texture_cache: TextureCache,
-    pub(super) mask: Mask,
 }
 
 impl OpenGlContext {
@@ -53,11 +49,15 @@ impl OpenGlContext {
         Self {
             bindings: ptr,
             shaders,
-            texture_cache: HashMap::new(),
-            mask: Mask::new(),
+            texture_cache: TextureCache::default(),
         }
     }
 
+    pub fn run_texture_populators(&mut self) {
+        self.texture_cache.run_populators(&self.bindings);
+    }
+
+    #[allow(clippy::print_stdout)]
     extern "system" fn message_callback(
         _source: bindings::types::GLenum,
         _gltype: bindings::types::GLenum,

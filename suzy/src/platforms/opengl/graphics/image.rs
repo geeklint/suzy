@@ -1,35 +1,44 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
+use std::convert::TryInto;
+
 use crate::{
     dims::{Dim, Padding2d, Rect, SimplePadding2d, SimpleRect},
-    graphics::{DrawContext, Graphic},
+    graphics::{Color, DrawContext, Graphic},
     platforms::opengl,
 };
 
-use opengl::context::bindings::{FALSE, FLOAT, TRIANGLES, UNSIGNED_BYTE};
-use opengl::{DualVertexBufferIndexed, OpenGlRenderPlatform, Texture};
+use opengl::{
+    renderer::{Batch, BatchRef, UvRect, UvRectValues, UvType, Vertex},
+    OpenGlRenderPlatform, Texture,
+};
+
+// 12 13 14 15
+//  8  9 10 11
+//  4  5  6  7
+//  0  1  2  3
 
 #[rustfmt::skip]
 static SLICED_INDICES: [u8; 18 * 3] = [
-    12, 13, 15,
-    13, 14, 15,
-    0, 4, 11,
-    4, 12, 11,
-    4, 5, 12,
-    5, 13, 12,
-    5, 1, 13,
-    1, 6, 13,
-    11, 12, 10,
-    12, 15, 10,
-    13, 6, 14,
-    6, 7, 14,
-    10, 15, 3,
-    15, 9, 3,
-    15, 14, 9,
-    14, 8, 9,
-    14, 7, 8,
-    7, 2, 8,
+    0, 1, 4,
+    1, 5, 4,
+    1, 2, 5,
+    2, 6, 5,
+    2, 3, 6,
+    3, 7, 6,
+    4, 5, 8,
+    5, 9, 8,
+    5, 6, 9,
+    6, 10, 9,
+    6, 7, 10,
+    7, 11, 10,
+    8, 9, 12,
+    9, 13, 12,
+    9, 10, 13,
+    10, 14, 13,
+    10, 11, 14,
+    11, 15, 14,
 ];
 
 /// A common graphic used for user interfaces, a sliced image is defined by
@@ -39,19 +48,19 @@ static SLICED_INDICES: [u8; 18 * 3] = [
 /// See the [Wikipedia article](https://en.wikipedia.org/wiki/9-slice_scaling)
 /// on 9-slice scaling for more information.
 pub struct SlicedImage {
+    pub padding: SimplePadding2d,
+    pub texture: Texture,
+    color: Color,
     rect: SimpleRect,
-    padding: SimplePadding2d,
-    texture: Texture,
-    buffers: DualVertexBufferIndexed<f32>,
 }
 
 impl Default for SlicedImage {
     fn default() -> Self {
         Self {
-            rect: SimpleRect::default(),
             padding: SimplePadding2d::default(),
             texture: Texture::default(),
-            buffers: DualVertexBufferIndexed::new(true, false, false),
+            color: Color::WHITE,
+            rect: SimpleRect::default(),
         }
     }
 }
@@ -61,99 +70,19 @@ impl SlicedImage {
     pub fn new() -> Self {
         Self::default()
     }
+}
 
-    /// Set the texture used by this graphic.  The given padding describes
-    /// the sliced area.
-    pub fn set_image(&mut self, texture: Texture, padding: SimplePadding2d) {
-        self.texture = texture;
-        self.padding = padding;
-        self.update_image();
+impl crate::platform::graphics::SlicedImage for SlicedImage {
+    fn set_color(&mut self, color: Color) {
+        self.color = color;
     }
 
-    fn indicies_to_draw(&self) -> opengl::context::bindings::types::GLsizei {
-        if self.padding == SimplePadding2d::zero() {
-            6
-        } else {
-            SLICED_INDICES.len() as _
-        }
+    fn set_slice_padding(&mut self, padding: impl Padding2d) {
+        self.padding = (&padding).into();
     }
 
-    fn update_image(&mut self) {
-        let mut uvs = [0f32; 32];
-        let Self {
-            buffers,
-            texture,
-            padding,
-            ..
-        } = self;
-        buffers.set_data_1(|_gl| {
-            texture.size().and_then(|(tex_width, tex_height)| {
-                let uvs = &mut uvs;
-                texture.transform_uvs(move || {
-                    let left = padding.left() / tex_width;
-                    let right = 1.0 - (padding.right() / tex_width);
-                    let bottom = padding.bottom() / tex_height;
-                    let top = 1.0 - (padding.top() / tex_height);
-                    #[rustfmt::skip]
-                    let data = [
-                        0.0, 0.0,
-                        1.0, 0.0,
-                        1.0, 1.0,
-                        0.0, 1.0,
-                        left, 0.0,
-                        right, 0.0,
-                        1.0, bottom,
-                        1.0, top,
-                        right, 1.0,
-                        left, 1.0,
-                        0.0, top,
-                        0.0, bottom,
-                        left, bottom,
-                        right, bottom,
-                        right, top,
-                        left, top,
-                    ];
-                    *uvs = data;
-                    &mut uvs[..]
-                })
-            })
-        });
-    }
-
-    fn update(&mut self) {
-        let mut inner = SimpleRect::default();
-        inner.set_fill(&self.rect, &self.padding);
-        let rect = &self.rect;
-        let mut vertices = [0f32; 32];
-        self.buffers.set_data_0(|_gl| {
-            #[rustfmt::skip]
-            let data = [
-                // outer corners
-                rect.left(), rect.bottom(),
-                rect.right(), rect.bottom(),
-                rect.right(), rect.top(),
-                rect.left(), rect.top(),
-                // bottom edge
-                inner.left(), rect.bottom(),
-                inner.right(), rect.bottom(),
-                // right edge
-                rect.right(), inner.bottom(),
-                rect.right(), inner.top(),
-                // top edge
-                inner.right(), rect.top(),
-                inner.left(), rect.top(),
-                // left edge
-                rect.left(), inner.top(),
-                rect.left(), inner.bottom(),
-                // inner corners
-                inner.left(), inner.bottom(),
-                inner.right(), inner.bottom(),
-                inner.right(), inner.top(),
-                inner.left(), inner.top(),
-            ];
-            vertices = data;
-            &vertices[..]
-        });
+    fn set_corners(&mut self, _style: crate::graphics::CornerStyle) {
+        todo!()
     }
 }
 
@@ -169,81 +98,124 @@ impl Rect for SlicedImage {
     where
         F: FnOnce(&mut Dim) -> R,
     {
-        let res = self.rect.x_mut(f);
-        self.update();
-        res
+        self.rect.x_mut(f)
     }
 
     fn y_mut<F, R>(&mut self, f: F) -> R
     where
         F: FnOnce(&mut Dim) -> R,
     {
-        let res = self.rect.y_mut(f);
-        self.update();
-        res
+        self.rect.y_mut(f)
     }
 }
 
 impl Graphic<OpenGlRenderPlatform> for SlicedImage {
     fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
-        ctx.push(|ctx| {
-            ctx.params().standard_mode();
-            ctx.params().use_texture(self.texture.clone());
-            let indicies_to_draw = self.indicies_to_draw();
-            if let Some(ready) = self.buffers.check_ready(ctx) {
-                let gl = ready.gl;
-                ready.bind_0();
-                unsafe {
-                    gl.VertexAttribPointer(
-                        0,
-                        2,
-                        FLOAT,
-                        FALSE,
-                        0,
-                        std::ptr::null(),
-                    );
+        if let Some(BatchRef { batch, mut uv_rect }) =
+            ctx.find_batch(&self.texture, 16, &[(&self.rect).into()])
+        {
+            loop {
+                match uv_rect {
+                    UvRect::F32(uv_rect_f32) => {
+                        let inner_uv_rect = UvRectValues {
+                            left: uv_rect_f32.left + self.padding.left(),
+                            right: uv_rect_f32.right - self.padding.right(),
+                            bottom: uv_rect_f32.bottom + self.padding.bottom(),
+                            top: uv_rect_f32.top - self.padding.top(),
+                        };
+                        self.push_vertices(batch, uv_rect_f32, inner_uv_rect);
+                        return;
+                    }
+                    UvRect::U16(uv_rect_u16) => {
+                        match [
+                            self.padding.left(),
+                            self.padding.right(),
+                            self.padding.bottom(),
+                            self.padding.top(),
+                        ]
+                        .map(u16::try_from_f32)
+                        {
+                            [Some(left), Some(right), Some(bottom), Some(top)] =>
+                            {
+                                let inner_uv_rect = UvRectValues {
+                                    left: uv_rect_u16.left + left,
+                                    right: uv_rect_u16.right - right,
+                                    bottom: uv_rect_u16.bottom + bottom,
+                                    top: uv_rect_u16.top - top,
+                                };
+                                self.push_vertices(
+                                    batch,
+                                    uv_rect_u16,
+                                    inner_uv_rect,
+                                );
+                                return;
+                            }
+                            _ => {
+                                uv_rect = UvRect::F32(UvRectValues {
+                                    left: uv_rect_u16.left.to_f32(),
+                                    right: uv_rect_u16.right.to_f32(),
+                                    bottom: uv_rect_u16.bottom.to_f32(),
+                                    top: uv_rect_u16.top.to_f32(),
+                                });
+                                continue;
+                            }
+                        }
+                    }
                 }
-                ready.bind_1();
-                unsafe {
-                    gl.VertexAttribPointer(
-                        1,
-                        2,
-                        FLOAT,
-                        FALSE,
-                        0,
-                        std::ptr::null(),
-                    );
-                }
-                ready.bind_indices();
-                unsafe {
-                    gl.DrawElements(
-                        TRIANGLES,
-                        indicies_to_draw,
-                        UNSIGNED_BYTE,
-                        std::ptr::null(),
-                    );
-                }
-            } else {
-                self.update();
-                self.texture.bind(ctx.render_ctx_mut());
-                self.update_image();
-                self.buffers.set_indices(|_gl| &SLICED_INDICES[..]);
             }
-        });
+        }
     }
 }
 
-impl crate::platform::graphics::SlicedImage for SlicedImage {
-    fn set_color(&mut self, _color: crate::graphics::Color) {
-        todo!()
-    }
-
-    fn set_slice_padding(&mut self, padding: impl Padding2d) {
-        self.padding = (&padding).into();
-        self.update();
-    }
-
-    fn set_corners(&mut self, _style: crate::graphics::CornerStyle) {
-        todo!()
+impl SlicedImage {
+    fn push_vertices<Uv>(
+        &self,
+        batch: &mut Batch,
+        uv_rect: UvRectValues<Uv>,
+        inner_uv_rect: UvRectValues<Uv>,
+    ) where
+        Uv: UvType,
+    {
+        let rect = &self.rect;
+        let index_offset: u16 = batch.vertices.len().try_into().expect(
+            "the number of vertices in a batch should be less than 2^16",
+        );
+        let mut inner = SimpleRect::default();
+        inner.set_fill(rect, &self.padding);
+        let horiz_values = [
+            (rect.left(), uv_rect.left),
+            (inner.left(), inner_uv_rect.left),
+            (inner.right(), inner_uv_rect.right),
+            (rect.right(), uv_rect.right),
+        ];
+        let vertical_values = [
+            (rect.bottom(), uv_rect.bottom),
+            (inner.bottom(), inner_uv_rect.bottom),
+            (inner.top(), inner_uv_rect.top),
+            (rect.top(), uv_rect.top),
+        ];
+        let color = self.color.rgba8();
+        let alpha_invert = 0xff;
+        let mut flip = false;
+        for (y, v) in vertical_values {
+            for &(x, u) in &horiz_values {
+                // can't represent exactly 0.5 in a normalized u8
+                // so we flip between 127 and 128 and let it interpolate
+                // to 0.5 between vertices
+                let alpha_offset = if flip { 128 } else { 127 };
+                batch.vertices.push(Vertex {
+                    xy: [x, y],
+                    uv: [u, v],
+                    color,
+                    config: [alpha_offset, alpha_invert, 0, 0],
+                    smoothing: 1.0,
+                });
+                flip = !flip;
+            }
+            flip = !flip;
+        }
+        batch.indices.extend(
+            SLICED_INDICES.iter().map(|&i| u16::from(i) + index_offset),
+        );
     }
 }

@@ -32,6 +32,21 @@ pub enum Flow {
     Out,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub enum VerticalLimit {
+    #[default]
+    None,
+    Lines(u16),
+    Height(f32),
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum OverflowMode {
+    #[default]
+    Truncate,
+    Ellipsis,
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Layout {
     pub alignment: Alignment,
@@ -40,6 +55,8 @@ pub struct Layout {
     pub origin_x: f32,
     pub origin_y: f32,
     pub wrap_width: f32,
+    pub vertical_limit: VerticalLimit,
+    pub overflow_mode: OverflowMode,
 }
 
 impl Default for Layout {
@@ -51,6 +68,8 @@ impl Default for Layout {
             origin_x: 0.0,
             origin_y: 100.0,
             wrap_width: f32::INFINITY,
+            vertical_limit: VerticalLimit::None,
+            overflow_mode: OverflowMode::Truncate,
         }
     }
 }

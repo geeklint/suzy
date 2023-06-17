@@ -47,6 +47,8 @@ where
                 origin_x: 0.0,
                 origin_y: 1.0,
                 wrap_width: 1.0,
+                vertical_limit: text::VerticalLimit::None,
+                overflow_mode: text::OverflowMode::Truncate,
             }),
             graphic: P::Text::default(),
         }
@@ -83,7 +85,9 @@ where
                     *this.font_size,
                     *this.color,
                 );
+            this.graphic.clear();
             this.graphic.push_span(style, &this.text);
+            this.graphic.finish();
         });
         desc.graphic(|this| &mut this.graphic);
     }

@@ -245,6 +245,8 @@ where
                 origin_x: rect.center_x(),
                 origin_y: rect.center_y(),
                 wrap_width: f32::INFINITY,
+                vertical_limit: text::VerticalLimit::Lines(1),
+                overflow_mode: text::OverflowMode::Truncate,
             });
         });
         desc.watch(|this, _rect| {
@@ -253,7 +255,9 @@ where
                     24.0,
                     *this.text_color,
                 );
-            this.text_graphic.push_span(style, &this.text)
+            this.text_graphic.clear();
+            this.text_graphic.push_span(style, &this.text);
+            this.text_graphic.finish();
         });
         desc.watch(|this, _rect| this.image.set_color(Color::ALICE_BLUE));
         desc.watch(|this, _rect| {

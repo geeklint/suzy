@@ -5,16 +5,21 @@
 
 uniform mat4 TRANSFORM;
 
-attribute vec2 in_pos;
-attribute vec2 in_uv;
+attribute highp vec2 in_xy;
+attribute mediump vec2 in_uv;
+attribute lowp vec4 in_color;
+attribute mediump vec4 in_config;
+attribute mediump float in_smoothing;
 
-#ifdef GL_FRAGMENT_PRECISION_HIGH
-varying highp vec2 pass_uv;
-#else
 varying mediump vec2 pass_uv;
-#endif
+varying lowp vec4 pass_color;
+varying mediump vec4 pass_config;
+varying mediump float pass_smoothing;
 
 void main() {
-    gl_Position = TRANSFORM * vec4(in_pos, 0, 1);
+    gl_Position = TRANSFORM * vec4(in_xy, 0, 1);
     pass_uv = in_uv;
+    pass_color = in_color;
+    pass_config = in_config;
+    pass_smoothing = in_smoothing;
 }
