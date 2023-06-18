@@ -73,3 +73,8 @@ impl Default for Layout {
         }
     }
 }
+
+#[derive(Clone, Debug, Default)]
+pub struct RichTextTagParseError {
+    pub msg: String,
+}

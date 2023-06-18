@@ -10,7 +10,9 @@ use crate::{
 };
 
 use opengl::{
-    renderer::{Batch, BatchRef, UvRect, UvRectValues, UvType, Vertex},
+    renderer::{
+        Batch, BatchRef, UvRect, UvRectValues, UvType, Vertex, VertexConfig,
+    },
     OpenGlRenderPlatform, Texture,
 };
 
@@ -207,7 +209,7 @@ impl SlicedImage {
                     xy: [x, y],
                     uv: [u, v],
                     color,
-                    config: [alpha_offset, alpha_invert, 0, 0],
+                    config: VertexConfig([alpha_offset, alpha_invert, 0, 0]),
                     smoothing: 1.0,
                 });
                 flip = !flip;

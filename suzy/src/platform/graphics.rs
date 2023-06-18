@@ -19,7 +19,10 @@ pub trait SlicedImage {
 
 pub trait TextStyle: Sized {
     fn with_size_and_color(size: f32, color: Color) -> Self;
-    fn push_tag(&self, tag: &mut &str) -> Result<Self, ()>;
+    fn push_tag(
+        &self,
+        tag: &mut &str,
+    ) -> Result<Self, text::RichTextTagParseError>;
 }
 
 /// A platform's text graphic primitive.

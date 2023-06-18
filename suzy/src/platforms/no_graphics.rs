@@ -140,7 +140,10 @@ impl graphics::TextStyle for TextStyle {
         unimplemented!("Can't construct TextStyle for NoGraphics")
     }
 
-    fn push_tag(&self, _tag: &mut &str) -> Result<Self, ()> {
+    fn push_tag(
+        &self,
+        _tag: &mut &str,
+    ) -> Result<Self, crate::text::RichTextTagParseError> {
         unreachable!()
     }
 }

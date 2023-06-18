@@ -18,7 +18,9 @@ use super::{
 
 pub use batch::{Batch, BatchPool, BatchRef};
 pub use coverage::{BoundingBox, CoveredArea};
-pub use vertex::{UvRect, UvRectValues, UvType, Vertex, VertexVec};
+pub use vertex::{
+    UvRect, UvRectValues, UvType, Vertex, VertexConfig, VertexVec,
+};
 
 pub(super) fn render(ctx: &mut super::OpenGlContext, batches: BatchPool) {
     let num_buffers =

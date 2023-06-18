@@ -4,7 +4,7 @@
 use std::{cell::OnceCell, ops::Deref, rc::Rc};
 
 use crate::platforms::opengl;
-use opengl::{context::bindings::types::*, texture::Texture};
+use opengl::texture::Texture;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Glyph {
@@ -30,6 +30,7 @@ pub struct Kerning {
 #[derive(Debug)]
 pub struct FontData {
     pub texture: Texture,
+    pub padding_ratio: f32,
     pub glyphs: Box<[Glyph]>,
     pub kerning: Box<[Kerning]>,
     pub line_spacing: f32,

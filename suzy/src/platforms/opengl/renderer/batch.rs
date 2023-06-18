@@ -59,6 +59,7 @@ impl BatchPool {
                 Self::can_use_texture(texture_cache, &batch.texture, tex)
             {
                 if batch.vertices.can_add(num_vertices) {
+                    batch.vertices.reserve(num_vertices.into());
                     found = Some((i, uv_rect));
                     break;
                 }

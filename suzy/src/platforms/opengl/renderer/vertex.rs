@@ -9,11 +9,15 @@ use std::{
 use crate::platforms::opengl::opengl_bindings::types::GLenum;
 
 #[derive(Clone, Copy, Debug, Default)]
+#[repr(transparent)]
+pub struct VertexConfig(pub [u8; 4]);
+
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Vertex<Uv> {
     pub xy: [f32; 2],
     pub uv: [Uv; 2],
     pub color: [u8; 4],
-    pub config: [u8; 4],
+    pub config: VertexConfig,
     pub smoothing: f32,
 }
 
@@ -53,9 +57,22 @@ impl VertexVec {
         }
     }
 
+    pub fn len_u16(&self) -> u16 {
+        self.len().try_into().expect(
+            "the number of vertices in a batch should be less than 2^16",
+        )
+    }
+
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        match self {
+            VertexVec::U16(vec) => vec.reserve(additional),
+            VertexVec::F32(vec) => vec.reserve(additional),
+        }
     }
 
     pub fn data_ptr(&self) -> *const std::ffi::c_void {
@@ -197,7 +214,7 @@ impl OffsetInfo {
         let abs_xy = base_vertex.xy.as_ptr() as usize;
         let abs_uv = base_vertex.uv.as_ptr() as usize;
         let abs_color = base_vertex.color.as_ptr() as usize;
-        let abs_config = base_vertex.config.as_ptr() as usize;
+        let abs_config = base_vertex.config.0.as_ptr() as usize;
         let abs_smoothing = (&base_vertex.smoothing as *const f32) as usize;
         let abs_base = (&base_vertex as *const Vertex<Uv>) as usize;
         let xy = abs_xy - abs_base;

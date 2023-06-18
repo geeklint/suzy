@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    renderer::{BatchPool, BatchRef, BoundingBox, Vertex},
+    renderer::{BatchRef, BoundingBox, Vertex, VertexConfig},
     texture::Texture,
     OpenGlRenderPlatform,
 };
@@ -32,23 +32,49 @@ fn default_font() -> &'static font::Font {
     panic!("invalid font index specified, and no default font is available");
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+enum Layer {
+    Shadow,
+    #[default]
+    Primary,
+}
+
+#[derive(Clone, Debug)]
+struct Draw {
+    layer: Layer,
+    color: Color,
+    config: VertexConfig,
+    smoothing: f32,
+}
+
+#[derive(Clone, Debug)]
 pub struct TextStyle {
     pub font_size: f32,
-    pub color: Color,
     pub font: usize,
+    draws: Vec<Draw>,
 }
 
 impl crate::platform::graphics::TextStyle for TextStyle {
     fn with_size_and_color(size: f32, color: Color) -> Self {
         Self {
             font_size: size,
-            color,
             font: 0,
+            draws: vec![Draw {
+                layer: Layer::Primary,
+                color,
+                config: VertexConfig([64, 255, 0, 0]),
+                smoothing: f32::NAN,
+            }],
         }
     }
 
-    fn push_tag(&self, tag: &mut &str) -> Result<Self, ()> {
-        Err(())
+    fn push_tag(
+        &self,
+        tag: &mut &str,
+    ) -> Result<Self, text::RichTextTagParseError> {
+        Err(text::RichTextTagParseError {
+            msg: format!("unknown tag: {tag}"),
+        })
     }
 }
 
@@ -83,23 +109,19 @@ impl Graphic<OpenGlRenderPlatform> for Text {
                 }
                 bbox
             });
-            if let Some(BatchRef { batch, uv_rect }) = ctx.find_batch(
-                &vs.texture,
-                vs.vertices.len().try_into().expect(
-            "the number of vertices in a text object should be less than 2^16",
-                ),
-                &[bbox],
-            ) {
-                let index_offset: u16 =
-                    batch.vertices.len().try_into().expect(
-            "the number of vertices in a batch should be less than 2^16",
-                    );
+            if let Some(BatchRef { batch, .. }) =
+                ctx.find_batch(&vs.texture, vs.vertices.len_u16(), &[bbox])
+            {
+                let index_offset: u16 = batch.vertices.len_u16();
                 for &vertex in &vs.vertices {
                     batch.vertices.push(vertex);
                 }
-                batch
-                    .indices
-                    .extend(vs.indices.iter().map(|idx| idx + index_offset));
+                batch.indices.extend(
+                    vs.indices
+                        .make_final()
+                        .iter()
+                        .map(|idx| idx + index_offset),
+                );
             }
         }
     }
@@ -124,7 +146,8 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
             .get(style.font)
             .unwrap_or_else(|| default_font())
             .as_ref();
-        let color = style.color.rgba8();
+        let aa_smoothing = style.font_size * (2.0 * font.data().padding_ratio);
+        let draws = &style.draws;
         let texture = font.data().texture.clone();
         let vertex_set_index = match self
             .vertices
@@ -138,7 +161,7 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                 let vs = VertexSet {
                     texture,
                     vertices: Vec::new(),
-                    indices: Vec::new(),
+                    indices: IndicesState::Unsorted(Vec::new()),
                     line_start_index: 0,
                     bounding_box: None,
                 };
@@ -148,18 +171,37 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
         };
         let mut remaining = text;
         while !remaining.is_empty() {
-            let vertices = &mut self.vertices;
+            let vertex_set = &mut self.vertices[vertex_set_index];
+            let vertices = &mut vertex_set.vertices;
+            let indices = vertex_set.indices.unsorted();
             let mut params = CalcParams {
                 font,
                 handle_glyph: &mut |glyph: calc::GlyphMetrics| {
-                    vertices[vertex_set_index].vertices.push(Vertex {
-                        xy: [glyph.bb_left, glyph.bb_bottom],
-                        uv: [glyph.tex_left, glyph.tex_bottom],
-                        color,
-                        config: todo!(),
-                        smoothing: todo!(),
-                    });
-                    todo!()
+                    for draw in draws {
+                        let color = draw.color.rgba8();
+                        let config = draw.config;
+                        let smoothing = if draw.smoothing.is_nan() {
+                            aa_smoothing
+                        } else {
+                            draw.smoothing
+                        };
+                        let left = (glyph.bb_left, glyph.tex_left);
+                        let right = (glyph.bb_right, glyph.tex_right);
+                        let bottom = (glyph.bb_bottom, glyph.tex_bottom);
+                        let top = (glyph.bb_top, glyph.tex_bottom);
+                        indices.push(draw.layer);
+                        for (y, v) in [bottom, top] {
+                            for (x, u) in [left, right] {
+                                vertices.push(Vertex {
+                                    xy: [x, y],
+                                    uv: [u, v],
+                                    color,
+                                    config,
+                                    smoothing,
+                                });
+                            }
+                        }
+                    }
                 },
             };
             let (consumed, line_break) =
@@ -167,8 +209,13 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
             remaining = &remaining[consumed..];
             if line_break {
                 for vs in &mut self.vertices {
-                    self.calc
-                        .align_line(vs.vertices.iter_mut().map(|v| &mut v.xy));
+                    self.calc.align_line(
+                        vs.vertices
+                            .iter_mut()
+                            .skip(vs.line_start_index)
+                            .map(|v| &mut v.xy),
+                    );
+                    vs.line_start_index = vs.vertices.len();
                 }
                 self.calc.reset_line();
             }
@@ -179,6 +226,51 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
         for vs in &mut self.vertices {
             self.calc
                 .align_block(vs.vertices.iter_mut().map(|v| &mut v.xy));
+            vs.indices.make_final();
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum IndicesState {
+    Unsorted(Vec<Layer>),
+    Final(Vec<u16>),
+}
+
+impl IndicesState {
+    fn unsorted(&mut self) -> &mut Vec<Layer> {
+        match self {
+            IndicesState::Unsorted(vec) => vec,
+            IndicesState::Final(_) => {
+                unreachable!("push_span called after finish but before clear")
+            }
+        }
+    }
+
+    fn make_final(&mut self) -> &mut Vec<u16> {
+        loop {
+            match self {
+                IndicesState::Final(vec) => return vec,
+                IndicesState::Unsorted(layer_vec) => {
+                    let vertex_count = layer_vec.len_u16();
+                    let mut layer_index_vec: Vec<u16> =
+                        (0..vertex_count).collect();
+                    layer_index_vec
+                        .sort_by_key(|index| &layer_vec[usize::from(*index)]);
+                    *self = IndicesState::Final(
+                        layer_index_vec
+                            .into_iter()
+                            .flat_map(|layer_index| {
+                                let bl = layer_index * 4;
+                                let br = bl + 1;
+                                let tl = bl + 2;
+                                let tr = bl + 3;
+                                [bl, br, tl, br, tr, tl]
+                            })
+                            .collect(),
+                    );
+                }
+            }
         }
     }
 }
@@ -186,7 +278,19 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
 struct VertexSet {
     texture: Texture,
     vertices: Vec<Vertex<u16>>,
-    indices: Vec<u16>,
+    indices: IndicesState,
     line_start_index: usize,
     bounding_box: Option<BoundingBox>,
+}
+
+trait ExpectU16Len {
+    fn len_u16(&self) -> u16;
+}
+
+impl<T> ExpectU16Len for Vec<T> {
+    fn len_u16(&self) -> u16 {
+        self.len().try_into().expect(
+            "the number of vertices in a text object should be less than 2^16",
+        )
+    }
 }
