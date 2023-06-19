@@ -90,6 +90,21 @@ pub struct Text {
     calc: FontCharCalc,
 }
 
+impl Text {
+    fn finish_line(&mut self) {
+        for vs in &mut self.vertices {
+            self.calc.align_line(
+                vs.vertices
+                    .iter_mut()
+                    .skip(vs.line_start_index)
+                    .map(|v| &mut v.xy),
+            );
+            vs.line_start_index = vs.vertices.len();
+        }
+        self.calc.reset_line();
+    }
+}
+
 impl Graphic<OpenGlRenderPlatform> for Text {
     fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         for vs in &mut self.vertices {
@@ -135,17 +150,18 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
 
     fn clear(&mut self) {
         self.layout_changed.watched_auto();
-        self.calc.cursor = Cursor::default();
+        self.calc.reset();
         self.vertices.clear();
     }
 
     fn push_span(&mut self, style: TextStyle, text: &str) {
         self.calc.cursor.font_size = style.font_size;
-        let font = self
+        let font_clone = self
             .fonts
             .get(style.font)
             .unwrap_or_else(|| default_font())
-            .as_ref();
+            .clone();
+        let font = font_clone.as_ref();
         let aa_smoothing = style.font_size * (2.0 * font.data().padding_ratio);
         let draws = &style.draws;
         let texture = font.data().texture.clone();
@@ -174,7 +190,7 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
             let vertex_set = &mut self.vertices[vertex_set_index];
             let vertices = &mut vertex_set.vertices;
             let indices = vertex_set.indices.unsorted();
-            let mut params = CalcParams {
+            let params = CalcParams {
                 font,
                 handle_glyph: &mut |glyph: calc::GlyphMetrics| {
                     for draw in draws {
@@ -204,25 +220,16 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                     }
                 },
             };
-            let (consumed, line_break) =
-                self.calc.push_span(params.rbr(), text);
+            let (consumed, line_break) = self.calc.push_span(params, text);
             remaining = &remaining[consumed..];
             if line_break {
-                for vs in &mut self.vertices {
-                    self.calc.align_line(
-                        vs.vertices
-                            .iter_mut()
-                            .skip(vs.line_start_index)
-                            .map(|v| &mut v.xy),
-                    );
-                    vs.line_start_index = vs.vertices.len();
-                }
-                self.calc.reset_line();
+                self.finish_line();
             }
         }
     }
 
     fn finish(&mut self) {
+        self.finish_line();
         for vs in &mut self.vertices {
             self.calc
                 .align_block(vs.vertices.iter_mut().map(|v| &mut v.xy));

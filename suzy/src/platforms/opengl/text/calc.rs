@@ -9,6 +9,8 @@ use super::font;
 pub(super) struct FontCharCalc {
     pub layout: text::Layout,
     pub cursor: Cursor,
+    pub first_line_line: f32,
+    pub last_line_line: f32,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -34,6 +36,17 @@ impl<F> CalcParams<'_, F> {
 }
 
 impl FontCharCalc {
+    pub fn reset(&mut self) {
+        self.cursor = Cursor {
+            font_size: 0.0,
+            x: 0.0,
+            y: 0.0,
+            current_line_height: f32::NAN,
+        };
+        self.first_line_line = f32::NAN;
+        self.last_line_line = f32::NAN;
+    }
+
     pub fn align_line<'a>(
         &mut self,
         verts: impl Iterator<Item = &'a mut [f32; 2]>,
@@ -44,16 +57,21 @@ impl FontCharCalc {
             text::Alignment::Center => remaining_in_line / 2.0,
             text::Alignment::Right => remaining_in_line,
         };
-        let vert_shift = self.cursor.current_line_height;
-        for xy in verts {
-            xy[0] += horiz_shift;
-            xy[1] -= vert_shift;
+        let vert_shift = self.cursor.current_line_height.max(0.0);
+        for [x, y] in verts {
+            *x += horiz_shift;
+            *y -= vert_shift;
         }
     }
 
     pub fn reset_line(&mut self) {
+        if self.cursor.current_line_height.is_nan() {
+            self.cursor.current_line_height = 0.0;
+            self.first_line_line = self.last_line_line;
+        }
         self.cursor.x = 0.0;
         self.cursor.y -= self.cursor.current_line_height;
+        self.last_line_line -= self.cursor.current_line_height;
         self.cursor.current_line_height = 0.0;
     }
 
@@ -61,7 +79,19 @@ impl FontCharCalc {
         &mut self,
         verts: impl Iterator<Item = &'a mut [f32; 2]>,
     ) {
-        todo!()
+        let origin_line = match self.layout.flow {
+            text::Flow::Down => self.first_line_line,
+            text::Flow::Up => self.last_line_line,
+            text::Flow::Out => {
+                (self.first_line_line + self.last_line_line) / 2.0
+            }
+        };
+        let vert_shift = self.layout.origin_y - origin_line;
+        let horiz_shift = self.layout.origin_x;
+        for [x, y] in verts {
+            *x += horiz_shift;
+            *y += vert_shift;
+        }
     }
 
     pub fn push_span(
@@ -73,10 +103,27 @@ impl FontCharCalc {
         let mut consumed = 0;
         let mut last_ch = None;
         let mut line_break = false;
-        self.cursor.current_line_height = self
-            .cursor
-            .current_line_height
-            .max(params.font.data().line_spacing * self.cursor.font_size);
+        let line = match self.layout.line {
+            text::Line::Ascent => params.font.data().ascent,
+            text::Line::Descent => params.font.data().descent,
+            text::Line::Baseline => 0.0,
+            text::Line::BetweenBaseAndCap => params.font.data().capline / 2.0,
+        };
+        let line = line * self.cursor.font_size + self.cursor.y;
+        if self.cursor.x == 0.0 {
+            self.last_line_line = f32::NAN;
+        }
+        self.last_line_line = if self.layout.line == text::Line::Descent {
+            self.last_line_line.min(line)
+        } else {
+            self.last_line_line.max(line)
+        };
+        let line_height =
+            params.font.data().line_spacing * self.cursor.font_size;
+        // intentionally propgate NaNs
+        if line_height > self.cursor.current_line_height {
+            self.cursor.current_line_height = line_height;
+        }
         while !remaining.is_empty() {
             if self.cursor.x > self.layout.wrap_width {
                 break;
