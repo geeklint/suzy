@@ -16,12 +16,13 @@ ci_build = ["platform_osmesa", "inline_tweak", "default_font"]
 
 platform_opengl = []
 platform_osmesa = ["platform_opengl"]
-default_font = ["platform_opengl"]
+default_font = ["suzy-default-font"]
 platform_sdl = ["sdl2", "platform_opengl"]
 
 [dependencies]
 drying_paint = "0.5.2"
 inline_tweak = { version = "1.0.8", optional = true }
+suzy-default-font = { path = "../suzy-default-font", optional = true }
 
 [dependencies.sdl2]
 version = "0.33"
@@ -46,4 +47,8 @@ required-features = ["platform_sdl"]
 
 [[example]]
 name = "layout"
+required-features = ["platform_sdl"]
+
+[[example]]
+name = "text"
 required-features = ["platform_sdl"]

@@ -2,4 +2,6 @@
 members = [
     "suzy",
     "suzy_build_tools",
+    "suzy-default-font",
+    "build-default-font",
 ]

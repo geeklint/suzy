@@ -18,18 +18,20 @@ use super::{
 mod calc;
 mod font;
 
-use calc::{CalcParams, Cursor, FontCharCalc};
+use calc::{CalcParams, FontCharCalc};
 pub use font::Font;
 
 #[cfg(feature = "default_font")]
-fn default_font() -> &'static font::Font {
-    todo!()
-}
+mod default_font;
 
 #[cfg(not(feature = "default_font"))]
-#[track_caller]
-fn default_font() -> &'static font::Font {
-    panic!("invalid font index specified, and no default font is available");
+mod default_font {
+    #[track_caller]
+    pub fn default_font() -> font::Font {
+        panic!(
+            "invalid font index specified, and no default font is available"
+        );
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
@@ -159,12 +161,12 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
         let font_clone = self
             .fonts
             .get(style.font)
-            .unwrap_or_else(|| default_font())
-            .clone();
+            .cloned()
+            .unwrap_or_else(default_font::default_font);
         let font = font_clone.as_ref();
-        let aa_smoothing = style.font_size * (2.0 * font.data().padding_ratio);
+        let aa_smoothing = style.font_size * (2.0 * font.data.padding_ratio);
         let draws = &style.draws;
-        let texture = font.data().texture.clone();
+        let texture = font.data.texture.clone();
         let vertex_set_index = match self
             .vertices
             .iter_mut()
@@ -191,7 +193,7 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
             let vertices = &mut vertex_set.vertices;
             let indices = vertex_set.indices.unsorted();
             let params = CalcParams {
-                font,
+                font: &font.data,
                 handle_glyph: &mut |glyph: calc::GlyphMetrics| {
                     for draw in draws {
                         let color = draw.color.rgba8();
@@ -204,7 +206,7 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                         let left = (glyph.bb_left, glyph.tex_left);
                         let right = (glyph.bb_right, glyph.tex_right);
                         let bottom = (glyph.bb_bottom, glyph.tex_bottom);
-                        let top = (glyph.bb_top, glyph.tex_bottom);
+                        let top = (glyph.bb_top, glyph.tex_top);
                         indices.push(draw.layer);
                         for (y, v) in [bottom, top] {
                             for (x, u) in [left, right] {

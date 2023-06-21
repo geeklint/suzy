@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::{cell::OnceCell, ops::Deref, rc::Rc};
+use std::{cell::OnceCell, rc::Rc};
 
 use crate::platforms::opengl;
 use opengl::texture::Texture;
@@ -58,63 +58,10 @@ impl FontData {
 }
 
 #[derive(Debug)]
-pub struct StaticFont {
-    data: FontData,
-    bold: Option<&'static StaticFont>,
-    italic: Option<&'static StaticFont>,
+pub struct LinkedFont {
+    pub data: FontData,
+    pub bold: OnceCell<Rc<LinkedFont>>,
+    pub italic: OnceCell<Rc<LinkedFont>>,
 }
 
-#[derive(Debug)]
-pub struct RcFont {
-    data: FontData,
-    bold: OnceCell<Rc<RcFont>>,
-    italic: OnceCell<Rc<RcFont>>,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum FontRef<'a> {
-    Static(&'static StaticFont),
-    Rc(&'a RcFont),
-}
-
-#[derive(Clone, Debug)]
-pub enum Font {
-    Static(&'static StaticFont),
-    Rc(Rc<RcFont>),
-}
-
-impl Font {
-    pub(crate) fn as_ref(&self) -> FontRef<'_> {
-        match self {
-            Font::Static(font) => FontRef::Static(font),
-            Font::Rc(font) => FontRef::Rc(&font),
-        }
-    }
-}
-
-impl<'a> FontRef<'a> {
-    pub fn data(&self) -> &FontData {
-        match self {
-            Self::Static(font) => &font.data,
-            Self::Rc(font) => &font.data,
-        }
-    }
-
-    pub fn bold(&self) -> FontRef<'_> {
-        match self {
-            FontRef::Static(font) => Self::Static(font.bold.unwrap_or(font)),
-            FontRef::Rc(font) => {
-                Self::Rc(font.bold.get().map(Rc::deref).unwrap_or(font))
-            }
-        }
-    }
-
-    pub fn italic(&self) -> FontRef<'_> {
-        match self {
-            FontRef::Static(font) => Self::Static(font.italic.unwrap_or(font)),
-            FontRef::Rc(font) => {
-                Self::Rc(font.italic.get().map(Rc::deref).unwrap_or(font))
-            }
-        }
-    }
-}
+pub type Font = Rc<LinkedFont>;

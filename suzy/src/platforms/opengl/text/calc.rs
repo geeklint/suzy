@@ -22,7 +22,7 @@ pub(super) struct Cursor {
 }
 
 pub(super) struct CalcParams<'a, F> {
-    pub font: font::FontRef<'a>,
+    pub font: &'a font::FontData,
     pub handle_glyph: &'a mut F,
 }
 
@@ -51,11 +51,10 @@ impl FontCharCalc {
         &mut self,
         verts: impl Iterator<Item = &'a mut [f32; 2]>,
     ) {
-        let remaining_in_line = self.layout.wrap_width - self.cursor.x;
         let horiz_shift = match self.layout.alignment {
             text::Alignment::Left => 0.0,
-            text::Alignment::Center => remaining_in_line / 2.0,
-            text::Alignment::Right => remaining_in_line,
+            text::Alignment::Center => -self.cursor.x / 2.0,
+            text::Alignment::Right => -self.cursor.x,
         };
         let vert_shift = self.cursor.current_line_height.max(0.0);
         for [x, y] in verts {
@@ -104,10 +103,10 @@ impl FontCharCalc {
         let mut last_ch = None;
         let mut line_break = false;
         let line = match self.layout.line {
-            text::Line::Ascent => params.font.data().ascent,
-            text::Line::Descent => params.font.data().descent,
+            text::Line::Ascent => params.font.ascent,
+            text::Line::Descent => params.font.descent,
             text::Line::Baseline => 0.0,
-            text::Line::BetweenBaseAndCap => params.font.data().capline / 2.0,
+            text::Line::BetweenBaseAndCap => params.font.capline / 2.0,
         };
         let line = line * self.cursor.font_size + self.cursor.y;
         if self.cursor.x == 0.0 {
@@ -118,8 +117,7 @@ impl FontCharCalc {
         } else {
             self.last_line_line.max(line)
         };
-        let line_height =
-            params.font.data().line_spacing * self.cursor.font_size;
+        let line_height = params.font.line_spacing * self.cursor.font_size;
         // intentionally propgate NaNs
         if line_height > self.cursor.current_line_height {
             self.cursor.current_line_height = line_height;
@@ -183,9 +181,9 @@ impl FontCharCalc {
         let mut last_ch = None;
         let mut cursor = self.cursor;
         for ch in word.chars() {
-            if let Some(glyph) = params.font.data().glyph(ch) {
+            if let Some(glyph) = params.font.glyph(ch) {
                 let kerning = last_ch
-                    .and_then(|left| params.font.data().kerning(left, ch))
+                    .and_then(|left| params.font.kerning(left, ch))
                     .unwrap_or(0.0);
                 let kerning = kerning * cursor.font_size;
                 let advance = glyph.advance * cursor.font_size;
@@ -213,12 +211,11 @@ impl FontCharCalc {
         last_ch: Option<char>,
         white_char: char,
     ) {
-        let advance = if let Some(glyph) = params.font.data().glyph(white_char)
-        {
+        let advance = if let Some(glyph) = params.font.glyph(white_char) {
             glyph.advance
         } else {
             match white_char {
-                '_' => 0.25,
+                ' ' => 0.25,
                 '\u{2002}' => 0.5,
                 '\u{2003}' => 1.0,
                 '\u{2004}' => 1.0 / 3.0,
@@ -229,9 +226,9 @@ impl FontCharCalc {
             }
         };
         let kerning = last_ch
-            .and_then(|left| params.font.data().kerning(left, white_char))
+            .and_then(|left| params.font.kerning(left, white_char))
             .unwrap_or(0.0);
-        cursor.x += kerning + advance;
+        cursor.x += cursor.font_size * (kerning + advance);
     }
 
     #[must_use]
@@ -242,9 +239,9 @@ impl FontCharCalc {
     ) -> (Option<char>, usize) {
         let mut last_ch = None;
         for (i, ch) in word.char_indices() {
-            if let Some(glyph) = params.font.data().glyph(ch) {
+            if let Some(glyph) = params.font.glyph(ch) {
                 let kerning = last_ch
-                    .and_then(|left| params.font.data().kerning(left, ch))
+                    .and_then(|left| params.font.kerning(left, ch))
                     .unwrap_or(0.0);
                 let kerning = kerning * self.cursor.font_size;
                 let advance = glyph.advance * self.cursor.font_size;
