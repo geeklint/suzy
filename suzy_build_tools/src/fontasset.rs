@@ -136,7 +136,7 @@ impl<I> FontAtlas<I> {
             let font_face = &faces[index];
             let height = f32::from(font_face.height());
             let rel_value = |val| f32::from(val) / height;
-            let line_spacing = rel_value(font_face.line_gap());
+            let line_spacing = 1.0 + rel_value(font_face.line_gap());
             let ascent = rel_value(font_face.ascender());
             let mut capline = font_face.capital_height().map(rel_value);
             let mut x_height = font_face.x_height().map(rel_value);

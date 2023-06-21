@@ -222,7 +222,8 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                     }
                 },
             };
-            let (consumed, line_break) = self.calc.push_span(params, text);
+            let (consumed, line_break) =
+                self.calc.push_span(params, remaining);
             remaining = &remaining[consumed..];
             if line_break {
                 self.finish_line();
