@@ -1,287 +1,240 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::collections::HashMap;
-use std::path::Path;
+use std::{
+    io::{self, Write},
+    path::Path,
+};
 
-use rusttype::Font;
+pub use blurry::{ascii, hexdigits, latin1, latin1_french};
 
-use crate::progressbar::ProgressBar;
-
-mod output;
-mod render_char;
-mod settings;
-
-use render_char::render_char;
-pub use settings::{AssetSize, FontFamily, Settings};
-
-trait GlyphSizeExt {
-    fn glyph_size(&self) -> (f32, f32);
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u16)]
+#[non_exhaustive]
+pub enum TextureDim {
+    V16 = 16,
+    V32 = 32,
+    V64 = 64,
+    V128 = 128,
+    V256 = 256,
+    V512 = 512,
+    V1024 = 1024,
+    V2048 = 2048,
+    V4096 = 4096,
+    V8192 = 8192,
 }
 
-impl<'a> GlyphSizeExt for rusttype::ScaledGlyph<'a> {
-    fn glyph_size(&self) -> (f32, f32) {
-        if let Some(rect) = self.exact_bounding_box() {
-            (rect.width(), rect.height())
-        } else {
-            (0.0, 0.0)
+#[derive(Debug)]
+struct FontData {
+    name: String,
+    data: Vec<u8>,
+}
+
+#[derive(Debug)]
+pub struct FontAtlas<I> {
+    builder: blurry::FontAssetBuilder,
+    font_data: Vec<FontData>,
+    spec: I,
+    padding_ratio: f32,
+}
+
+impl FontAtlas<std::iter::Empty<FontSpec>> {
+    pub fn with_texture_size(width: TextureDim, height: TextureDim) -> Self {
+        let initial_padding = 0.1;
+        Self {
+            builder: blurry::FontAssetBuilder::with_texture_size(
+                width as u16,
+                height as u16,
+            )
+            .with_padding_ratio(initial_padding),
+            font_data: Vec::new(),
+            spec: std::iter::empty(),
+            padding_ratio: initial_padding,
         }
     }
 }
 
-pub fn build_fontasset<P: AsRef<Path>>(
-    ttf_family: FontFamily<'_, '_, '_, '_>,
-    dest_file: P,
-    settings: Settings,
-) {
-    let fonts = ttf_family.parse();
-
-    let fonts = (
-        fonts.normal.unwrap(),
-        fonts.bold.map(Result::unwrap),
-        fonts.italic.map(Result::unwrap),
-        fonts.bold_italic.map(Result::unwrap),
-    );
-
-    let get_size = |font: &Font<'_>| {
-        get_packed_size(settings.padding_ratio, font, &settings.chars)
-    };
-
-    let sizes = (
-        get_size(&fonts.0),
-        fonts.1.as_ref().map_or(0.0, get_size),
-        fonts.2.as_ref().map_or(0.0, get_size),
-        fonts.3.as_ref().map_or(0.0, get_size),
-    );
-
-    let max = sizes.0.max(sizes.1).max(sizes.2).max(sizes.3);
-
-    let layout = |font: &Font<'_>| {
-        let packer =
-            get_layout(settings.padding_ratio, font, &settings.chars, max)
-                .expect(
-                "Failed to pack a font that previously fit in a larger box",
-            );
-        packer.positions
-    };
-
-    let uniform = (
-        layout(&fonts.0),
-        fonts.1.as_ref().map(layout),
-        fonts.2.as_ref().map(layout),
-        fonts.3.as_ref().map(layout),
-    );
-
-    let (font_size, texture_size) = match settings.size {
-        AssetSize::FontSize(font_size) => {
-            let tex_size = ((font_size * max) as usize).next_power_of_two();
-            ((tex_size as f64) / max, tex_size)
-        }
-        AssetSize::TextureSize(tex_size) => {
-            ((tex_size as f64) / max, tex_size)
-        }
-    };
-
-    let padding = font_size * settings.padding_ratio;
-
-    let dest_scale = rusttype::Scale::uniform(font_size as f32);
-    let ref_scale = font_size * padding;
-    let ref_scale = rusttype::Scale::uniform(ref_scale as f32);
-
-    let channels = (
-        1,
-        fonts.1.is_some() as usize,
-        fonts.2.is_some() as usize,
-        fonts.3.is_some() as usize,
-    );
-    let bold_channel = fonts.1.as_ref().map(|_| 1);
-    let italic_channel =
-        fonts.2.as_ref().map(|_| bold_channel.unwrap_or(0) + 1);
-    let bold_italic_channel = fonts
-        .3
-        .as_ref()
-        .map(|_| italic_channel.or(bold_channel).unwrap_or(0) + 1);
-    let channels = channels.0 + channels.1 + channels.2 + channels.3;
-    let channels = if channels == 2 { 3 } else { channels };
-
-    let mut progressbar = if settings.progressbar {
-        ProgressBar::best("Packing Glyphs...")
-    } else {
-        ProgressBar::none()
-    };
-    let mut output = settings.chars.iter().enumerate().fold(
-        output::FontOutput::new(
-            texture_size,
-            texture_size,
-            channels,
-            bold_channel,
-            italic_channel,
-            bold_italic_channel,
-        ),
-        |mut buffer_data, (chindex, ch)| {
-            let mut channel = 0;
-            let tex_size = texture_size;
-            let nchans = channels;
-            let ch_shared = render_char::CharToRender {
-                ch: *ch,
-                dest_scale,
-                ref_scale,
-                x: 0.0,
-                y: 0.0,
-                chan: 0,
-                padding,
-                norm_padding: settings.padding_ratio as f32,
-            };
-            let mut dest_buffer = render_char::DestBuffer {
-                buffer: &mut buffer_data,
-                tex_size,
-                nchans,
-            };
-            let (x, y) = uniform.0[ch];
-            render_char(
-                &fonts.0,
-                render_char::CharToRender {
-                    x,
-                    y,
-                    chan: channel,
-                    ..ch_shared
-                },
-                &mut dest_buffer,
-            );
-            channel += 1;
-            if let Some(font) = &fonts.1 {
-                let (x, y) = uniform.1.as_ref().unwrap()[ch];
-                render_char(
-                    font,
-                    render_char::CharToRender {
-                        x,
-                        y,
-                        chan: channel,
-                        ..ch_shared
-                    },
-                    &mut dest_buffer,
-                );
-                channel += 1;
-            }
-            if let Some(font) = &fonts.2 {
-                let (x, y) = uniform.2.as_ref().unwrap()[ch];
-                render_char(
-                    font,
-                    render_char::CharToRender {
-                        x,
-                        y,
-                        chan: channel,
-                        ..ch_shared
-                    },
-                    &mut dest_buffer,
-                );
-                channel += 1;
-            }
-            if let Some(font) = &fonts.3 {
-                let (x, y) = uniform.3.as_ref().unwrap()[ch];
-                render_char(
-                    font,
-                    render_char::CharToRender {
-                        x,
-                        y,
-                        chan: channel,
-                        ..ch_shared
-                    },
-                    &mut dest_buffer,
-                );
-            }
-            progressbar.update(chindex, settings.chars.len());
-            buffer_data
-        },
-    );
-    std::mem::drop(progressbar);
-    let write_failure = "Failed to write to output file";
-    output.write(dest_file).expect(write_failure);
-}
-
-fn get_packed_size(padding_ratio: f64, font: &Font, chars: &[char]) -> f64 {
-    let scale = rusttype::Scale::uniform(1.0);
-    let glyphs = font
-        .glyphs_for(chars.iter().copied())
-        .map(|glyph| glyph.scaled(scale));
-
-    let padding = padding_ratio * 2.0;
-    let mut sum_width = 0.0;
-    let mut sum_height = 0.0;
-    for glyph in glyphs {
-        let (width, height) = glyph.glyph_size();
-        sum_width += width + padding as f32;
-        sum_height += height + padding as f32;
-    }
-
-    let mut high: f64 = sum_width.max(sum_height).into();
-    high *= 1.1;
-    let mut low = 0.0f64;
-
-    loop {
-        let size = (high + low) / 2.0;
-        if let Some(layout) = get_layout(padding_ratio, font, chars, size) {
-            let empty_threshold = 0.05 * size * size;
-            if layout.empty_area < empty_threshold || high < 1.05 * low {
-                return size;
-            } else {
-                high = size;
-            }
-        } else {
-            low = size;
+impl<I> FontAtlas<I> {
+    pub fn with_padding_ratio(self, padding: f32) -> Self {
+        Self {
+            builder: self.builder.with_padding_ratio(padding),
+            font_data: self.font_data,
+            spec: self.spec,
+            padding_ratio: padding,
         }
     }
-}
 
-struct LayoutResult {
-    positions: HashMap<char, (f64, f64)>,
-    empty_area: f64,
-}
-
-fn get_layout(
-    padding_ratio: f64,
-    font: &Font,
-    chars: &[char],
-    size: f64,
-) -> Option<LayoutResult> {
-    let padding = (padding_ratio * 2.0 * 100_000.0) as i32;
-    let config = rect_packer::Config {
-        width: (size * 100_000.0).floor() as i32,
-        height: (size * 100_000.0).floor() as i32,
-        border_padding: 0,
-        rectangle_padding: 0,
-    };
-    let mut packer = rect_packer::Packer::new(config);
-    let scale = rusttype::Scale::uniform(1.0);
-    let mut array: Vec<_> = chars
-        .iter()
-        .map(|ch| {
-            let glyph = font.glyph(*ch).scaled(scale);
-            let (width, height) = glyph.glyph_size();
-            let width = (width * 100_000.0).ceil() as i32 + padding;
-            let height = (height * 100_000.0).ceil() as i32 + padding;
-            (*ch, width, height)
+    pub fn add_font(
+        self,
+        out_name: String,
+        font: impl AsRef<Path>,
+        chars: impl Clone + Iterator<Item = char>,
+    ) -> Result<FontAtlas<impl Clone + Iterator<Item = FontSpec>>, io::Error>
+    where
+        I: Clone + Iterator<Item = FontSpec>,
+    {
+        let Self {
+            builder,
+            mut font_data,
+            spec,
+            padding_ratio,
+        } = self;
+        let font_index = font_data.len();
+        let data = std::fs::read(font)?;
+        font_data.push(FontData {
+            name: out_name,
+            data,
+        });
+        Ok(FontAtlas {
+            builder,
+            font_data,
+            spec: spec.chain(chars.map(move |ch| FontSpec { font_index, ch })),
+            padding_ratio,
         })
-        .collect();
-    array.sort_unstable_by(|a, b| {
-        (a.1.max(a.2))
-            .partial_cmp(&(b.1.max(b.2)))
-            .unwrap()
-            .reverse()
-    });
-    let mut positions = HashMap::new();
-    let mut empty_area = size * size;
-    for (ch, width, height) in array.into_iter() {
-        let rect = packer.pack(width, height, false)?;
-        let x = rect.x as f64 / 100_000.0;
-        let y = rect.y as f64 / 100_000.0;
-        positions.insert(ch, (x / size, y / size));
-        let width = width as f64 / 100_000.0;
-        let height = height as f64 / 100_000.0;
-        empty_area -= width * height;
     }
-    Some(LayoutResult {
-        positions,
-        empty_area,
-    })
+
+    pub fn write_module(self, path: impl AsRef<Path>) -> Result<(), Error>
+    where
+        I: Clone + Iterator<Item = FontSpec>,
+    {
+        let Self {
+            builder,
+            font_data,
+            spec,
+            padding_ratio,
+        } = self;
+        let faces = font_data
+            .iter()
+            .map(|data| blurry::ttf_parser::Face::parse(&data.data, 0))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| Error::FontParseError)?;
+        let asset = builder
+            .build(spec.map(|spec| blurry::GlyphRequest {
+                user_data: spec.font_index,
+                face: &faces[spec.font_index],
+                codepoint: spec.ch,
+            }))
+            .map_err(|err| match err {
+                blurry::Error::MissingGlyph(ch) => Error::MissingGlyph(ch),
+                blurry::Error::PackingAtlasFailed => Error::PackingAtlasFailed,
+                _ => Error::FontParseError,
+            })?;
+        let mut texture_path = path.as_ref().as_os_str().to_os_string();
+        texture_path.push(".texture");
+        std::fs::write(texture_path, asset.data)?;
+        let mut mod_file = std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(path)?;
+        write!(mod_file, "pub const TEXTURE_WIDTH: u16 = {};", asset.width)?;
+        write!(
+            mod_file,
+            "pub const TEXTURE_HEIGHT: u16 = {};",
+            asset.height
+        )?;
+        for (index, font) in font_data.iter().enumerate() {
+            let font_face = &faces[index];
+            let height = f32::from(font_face.height());
+            let rel_value = |val| f32::from(val) / height;
+            let line_spacing = rel_value(font_face.line_gap());
+            let ascent = rel_value(font_face.ascender());
+            let mut capline = font_face.capital_height().map(rel_value);
+            let mut x_height = font_face.x_height().map(rel_value);
+            let descent = rel_value(font_face.descender());
+            write!(mod_file, "pub mod {} {{", font.name)?;
+            write!(
+                mod_file,
+                "
+                use super::Glyph;
+                pub const PADDING_RATIO: f32 = {padding_ratio}f32;
+                pub const LINE_SPACING: f32 = {line_spacing}f32;
+                pub const ASCENT: f32 = {ascent}f32;
+                pub const DESCENT: f32 = {descent}f32;
+                ",
+            )?;
+            let mut glyphs: Vec<_> = asset
+                .metadata
+                .iter()
+                .filter(|glyph| glyph.user_data == index)
+                .collect();
+            glyphs.sort_by_key(|glyph| glyph.codepoint);
+            write!(mod_file, "pub static GLYPHS: &[Glyph] = &[")?;
+            for glyph in glyphs {
+                let blurry::Glyph {
+                    codepoint,
+                    left,
+                    right,
+                    bottom,
+                    top,
+                    tex_left,
+                    tex_right,
+                    tex_top,
+                    tex_bottom,
+                    ..
+                } = *glyph;
+                if x_height.is_none() && codepoint == 'x' {
+                    x_height = Some(top);
+                }
+                if capline.is_none() && codepoint == 'I' {
+                    capline = Some(top);
+                }
+                let ch = codepoint.escape_unicode();
+                let advance = font_face
+                    .glyph_index(codepoint)
+                    .and_then(|id| font_face.glyph_hor_advance(id))
+                    .ok_or(Error::MissingGlyph(codepoint))?;
+                let advance = f32::from(advance) / height;
+                let tex_left =
+                    (tex_left * f32::from(asset.width)).round() as u16;
+                let tex_right =
+                    (tex_right * f32::from(asset.width)).round() as u16;
+                let tex_bottom =
+                    (tex_bottom * f32::from(asset.height)).round() as u16;
+                let tex_top =
+                    (tex_top * f32::from(asset.height)).round() as u16;
+                write!(
+                    mod_file,
+                    "
+                    Glyph {{
+                        ch:'{ch}',
+                        advance:{advance}f32,
+                        bb_left:{left}f32,
+                        bb_right:{right}f32,
+                        bb_bottom:{bottom}f32,
+                        bb_top:{top}f32,
+                        tex_left:{tex_left},
+                        tex_right:{tex_right},
+                        tex_bottom:{tex_bottom},
+                        tex_top:{tex_top},
+                    }},"
+                )?;
+            }
+            write!(mod_file, "];")?;
+            let capline = capline.unwrap_or(0.7);
+            let x_height = x_height.unwrap_or(0.5);
+            write!(mod_file, "pub const CAPLINE: f32 = {capline}f32;")?;
+            write!(mod_file, "pub const X_HEIGHT: f32 = {x_height}f32;")?;
+            write!(mod_file, "}}")?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub enum Error {
+    Io(io::Error),
+    FontParseError,
+    MissingGlyph(char),
+    PackingAtlasFailed,
+}
+
+impl From<io::Error> for Error {
+    fn from(value: io::Error) -> Self {
+        Self::Io(value)
+    }
+}
+
+pub struct FontSpec {
+    font_index: usize,
+    ch: char,
 }
