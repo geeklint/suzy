@@ -31,7 +31,7 @@ impl widget::Content for TextExample {
             this.text.set_layout(layout);
         });
         desc.watch(|this, _rect| {
-            let style = TextStyle::with_size_and_color(50.0, Color::WHITE);
+            let style = TextStyle::with_size_and_color(24.0, Color::WHITE);
             this.text.clear();
             this.text.push_span(
                 style,

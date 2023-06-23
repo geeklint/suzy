@@ -124,6 +124,7 @@ impl<I> FontAtlas<I> {
         std::fs::write(texture_path, asset.data)?;
         let mut mod_file = std::fs::OpenOptions::new()
             .create(true)
+            .truncate(true)
             .write(true)
             .open(path)?;
         write!(mod_file, "pub const TEXTURE_WIDTH: u16 = {};", asset.width)?;
@@ -134,7 +135,7 @@ impl<I> FontAtlas<I> {
         )?;
         for (index, font) in font_data.iter().enumerate() {
             let font_face = &faces[index];
-            let height = f32::from(font_face.height());
+            let height = f32::from(font_face.units_per_em());
             let rel_value = |val| f32::from(val) / height;
             let line_spacing = 1.0 + rel_value(font_face.line_gap());
             let ascent = rel_value(font_face.ascender());

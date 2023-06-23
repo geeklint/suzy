@@ -30,7 +30,7 @@ pub fn default_font() -> font::Font {
             })
             .collect(),
         kerning: Box::new([]),
-        line_spacing: 1.0 + suzy_default_font::regular::LINE_SPACING,
+        line_spacing: suzy_default_font::regular::LINE_SPACING,
         ascent: suzy_default_font::regular::ASCENT,
         capline: suzy_default_font::regular::CAPLINE,
         descent: suzy_default_font::regular::DESCENT,

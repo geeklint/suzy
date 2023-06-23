@@ -45,7 +45,8 @@ enum Layer {
 struct Draw {
     layer: Layer,
     color: Color,
-    config: VertexConfig,
+    midpoint: f32,
+    peak: f32,
     smoothing: f32,
 }
 
@@ -64,7 +65,8 @@ impl crate::platform::graphics::TextStyle for TextStyle {
             draws: vec![Draw {
                 layer: Layer::Primary,
                 color,
-                config: VertexConfig([64, 255, 0, 0]),
+                midpoint: 0.5,
+                peak: 1.0,
                 smoothing: f32::NAN,
             }],
         }
@@ -197,12 +199,17 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                 handle_glyph: &mut |glyph: calc::GlyphMetrics| {
                     for draw in draws {
                         let color = draw.color.rgba8();
-                        let config = draw.config;
                         let smoothing = if draw.smoothing.is_nan() {
                             aa_smoothing
                         } else {
                             draw.smoothing
                         };
+                        let base = draw.midpoint - 0.5 / smoothing;
+                        let magic = 255.0 / 2.0;
+                        let offset = (-magic * base + magic).clamp(0.0, 255.0);
+                        let peak = (draw.peak * 255.0).clamp(0.0, 255.0);
+                        let config =
+                            VertexConfig([offset as u8, peak as u8, 0, 0]);
                         let left = (glyph.bb_left, glyph.tex_left);
                         let right = (glyph.bb_right, glyph.tex_right);
                         let bottom = (glyph.bb_bottom, glyph.tex_bottom);
