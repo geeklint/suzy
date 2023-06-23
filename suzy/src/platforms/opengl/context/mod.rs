@@ -28,6 +28,7 @@ pub struct OpenGlContext {
     pub(super) bindings: Rc<OpenGlBindings>,
     pub(super) shaders: Shaders,
     pub(super) texture_cache: TextureCache,
+    pub(super) buffers: Vec<bindings::types::GLuint>,
 }
 
 impl OpenGlContext {
@@ -50,6 +51,7 @@ impl OpenGlContext {
             bindings: ptr,
             shaders,
             texture_cache: TextureCache::default(),
+            buffers: Vec::new(),
         }
     }
 

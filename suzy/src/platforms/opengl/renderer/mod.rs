@@ -23,12 +23,18 @@ pub use vertex::{
 };
 
 pub(super) fn render(ctx: &mut super::OpenGlContext, batches: BatchPool) {
-    let num_buffers =
+    let want_buffers =
         u16::try_from(2 * batches.batches.len()).unwrap_or(u16::MAX);
-    let mut buffer_ids = vec![0; num_buffers.into()];
-    unsafe {
-        ctx.bindings
-            .GenBuffers(num_buffers.into(), buffer_ids.as_mut_ptr());
+    let existing_buffers = ctx.buffers.len();
+    if usize::from(want_buffers) > existing_buffers {
+        let new_buffers = usize::from(want_buffers) - existing_buffers;
+        ctx.buffers.append(&mut vec![0; new_buffers]);
+        unsafe {
+            ctx.bindings.GenBuffers(
+                want_buffers.into(),
+                ctx.buffers[existing_buffers..].as_mut_ptr(),
+            );
+        }
     }
 
     ctx.shaders.shader.make_current(&ctx.bindings, None);
@@ -62,11 +68,11 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, batches: BatchPool) {
             );
             ctx.bindings.BindBuffer(
                 ARRAY_BUFFER,
-                buffer_ids[usize::from(buffer_index)],
+                ctx.buffers[usize::from(buffer_index)],
             );
             ctx.bindings.BindBuffer(
                 ELEMENT_ARRAY_BUFFER,
-                buffer_ids[usize::from(buffer_index) + 1],
+                ctx.buffers[usize::from(buffer_index) + 1],
             );
             buffer_index = buffer_index.wrapping_add(2);
             let vertex_data_size = batch.vertices.data_size();
@@ -131,7 +137,7 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, batches: BatchPool) {
                 batch.indices.len() as GLsizei,
                 UNSIGNED_SHORT,
                 std::ptr::null(),
-            )
+            );
         }
     }
 }
