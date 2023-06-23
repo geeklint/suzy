@@ -3,9 +3,10 @@
 
 #![allow(missing_docs)]
 
-use crate::platform::{Event, SimpleEventLoopState};
-
-use crate::platforms::opengl::OpenGlRenderPlatform;
+use crate::{
+    platform::{Event, SimpleEventLoopState},
+    platforms::opengl::OpenGlRenderPlatform,
+};
 
 mod window;
 //mod texture_loader;

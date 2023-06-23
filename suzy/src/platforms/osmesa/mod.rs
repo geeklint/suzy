@@ -8,9 +8,10 @@
 //! no window to recieve events from.  Mostly it should be used for
 //! automation, e.g. tests.
 
-use crate::platform::{Event, SimpleEventLoopState};
-
-use crate::platforms::opengl::OpenGlRenderPlatform;
+use crate::{
+    platform::{Event, SimpleEventLoopState},
+    platforms::opengl::OpenGlRenderPlatform,
+};
 
 mod bindings;
 mod window;

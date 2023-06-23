@@ -3,8 +3,7 @@
 
 #![allow(missing_docs)]
 
-use crate::graphics::Color;
-use crate::graphics::DrawContext;
+use crate::graphics::{Color, DrawContext};
 
 use super::{
     context::bindings::types::*,

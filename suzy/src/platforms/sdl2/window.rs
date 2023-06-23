@@ -3,16 +3,17 @@
 
 use std::convert::{TryFrom, TryInto};
 
-use sdl2::event::Event;
-use sdl2::event::WindowEvent as sdl_WindowEvent;
-use sdl2::video::WindowBuildError;
+use sdl2::{
+    event::{Event, WindowEvent as sdl_WindowEvent},
+    video::WindowBuildError,
+};
 
-use crate::graphics::Color;
-use crate::graphics::DrawContext;
-use crate::platforms::opengl;
-use crate::pointer::{PointerAction, PointerEventData};
-use crate::window;
-use crate::window::{WindowBuilder, WindowEvent, WindowSettings};
+use crate::{
+    graphics::{Color, DrawContext},
+    platforms::opengl,
+    pointer::{PointerAction, PointerEventData},
+    window::{self, WindowBuilder, WindowEvent, WindowSettings},
+};
 
 //use super::texture_loader::load_texture;
 

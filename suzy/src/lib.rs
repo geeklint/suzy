@@ -77,9 +77,11 @@ pub mod window;
 
 /// The Suzy prelude contains exports of the most frequently-used types
 pub mod prelude {
-    pub use crate::dims::Rect;
-    pub use crate::watch::Watched;
-    pub use crate::widget::{self, Widget};
+    pub use crate::{
+        dims::Rect,
+        watch::Watched,
+        widget::{self, Widget},
+    };
 }
 
 /// A version of the tweak! macro from the crate

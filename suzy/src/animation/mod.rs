@@ -14,9 +14,7 @@
 //! Animate a color to green with a speed of 1.
 //!
 //! ```rust
-//! # use suzy::animation::Animation;
-//! # use suzy::widget::{self, *};
-//! # use suzy::graphics::Color;
+//! # use suzy::{animation::Animation, widget::{self, *}, graphics::Color};
 //! struct MyWidgetData {
 //!     current_color: Color,
 //!     animation: Animation<Color>,

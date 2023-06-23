@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use suzy::dims::{Rect, SimplePadding2d};
-use suzy::widget::{self, RunAsApp};
-use suzy::widgets::Button;
+use suzy::{
+    dims::{Rect, SimplePadding2d},
+    widget::{self, RunAsApp},
+    widgets::Button,
+};
 
 #[derive(Default)]
 struct Root {

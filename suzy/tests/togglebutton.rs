@@ -3,15 +3,19 @@
 
 #![cfg(feature = "platform_opengl")]
 
-use suzy::app::{App, AppBuilder};
-use suzy::dims::{Rect, SimplePadding2d};
-use suzy::graphics::{Color, Conditional};
-use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
-use suzy::platforms::TestPlatform;
-use suzy::selectable::{Selectable, SelectionState};
-use suzy::widget::{self, Widget, WidgetExtra};
-use suzy::widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue};
-use suzy::window::WindowSettings;
+use suzy::{
+    app::{App, AppBuilder},
+    dims::{Rect, SimplePadding2d},
+    graphics::{Color, Conditional},
+    platforms::{
+        opengl::{OpenGlRenderPlatform, SlicedImage},
+        TestPlatform,
+    },
+    selectable::{Selectable, SelectionState},
+    widget::{self, Widget, WidgetExtra},
+    widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue},
+    window::WindowSettings,
+};
 
 mod utils;
 use utils::*;

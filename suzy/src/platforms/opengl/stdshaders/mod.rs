@@ -3,8 +3,10 @@
 
 use std::rc::Rc;
 
-use super::shader::{ProgramCompileError, ShaderProgram, UniformLoc};
-use super::OpenGlBindings;
+use super::{
+    shader::{ProgramCompileError, ShaderProgram, UniformLoc},
+    OpenGlBindings,
+};
 
 const STD_VERTEX_SOURCE: &[u8] = include_bytes!("std.vert.glsl");
 const STD_FRAGMENT_SOURCE: &[u8] = include_bytes!("std.frag.glsl");

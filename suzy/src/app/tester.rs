@@ -3,9 +3,11 @@
 
 use std::time;
 
-use crate::platform::{Event, Platform, SimpleEventLoopState};
-use crate::pointer::PointerEventData;
-use crate::window::WindowEvent;
+use crate::{
+    platform::{Event, Platform, SimpleEventLoopState},
+    pointer::PointerEventData,
+    window::WindowEvent,
+};
 
 use super::App;
 

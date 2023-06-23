@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::pointer::PointerId;
-use crate::watch::WatchedMeta;
-use crate::widget::{self, UniqueHandle};
+use crate::{
+    pointer::PointerId,
+    watch::WatchedMeta,
+    widget::{self, UniqueHandle},
+};
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
 

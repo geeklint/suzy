@@ -1,17 +1,18 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::convert::TryInto;
-use std::fmt;
-use std::fmt::{Display, Formatter};
-use std::path::Path;
+use std::{
+    convert::TryInto,
+    fmt::{self, Display, Formatter},
+    path::Path,
+};
 
-use sdl2::image::LoadSurface;
-use sdl2::pixels::PixelFormatEnum;
-use sdl2::surface::Surface;
+use sdl2::{image::LoadSurface, pixels::PixelFormatEnum, surface::Surface};
 
-use crate::platforms::opengl::bindings::{RGB, RGBA, UNSIGNED_BYTE};
-use crate::platforms::opengl::image::{TextureBuilder, TextureLoadResult};
+use crate::platforms::opengl::{
+    bindings::{RGB, RGBA, UNSIGNED_BYTE},
+    image::{TextureBuilder, TextureLoadResult},
+};
 
 #[derive(Debug)]
 struct SdlImageLoadError(String);

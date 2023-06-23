@@ -33,9 +33,7 @@
 //! button will be updated to match.
 //!
 //! ```rust
-//! # use suzy::widget::{self, *};
-//! # use suzy::dims::Rect;
-//! # use suzy::selectable::SelectableIgnored;
+//! # use suzy::{widget::{self, *}, dims::Rect, selectable::SelectableIgnored};
 //! # type ButtonContent = SelectableIgnored<()>;
 //! use suzy::widgets::Button;
 //!

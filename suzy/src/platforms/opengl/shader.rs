@@ -1,8 +1,10 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::ffi::{CStr, CString};
-use std::rc::{Rc, Weak};
+use std::{
+    ffi::{CStr, CString},
+    rc::{Rc, Weak},
+};
 
 use super::context::bindings::types::*;
 use super::context::bindings::{

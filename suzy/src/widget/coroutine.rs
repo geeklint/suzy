@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::future::Future;
-use std::pin::Pin;
-use std::task::{Context, Poll};
-use std::time;
+use std::{
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+    time,
+};
 
 use crate::{
     app,

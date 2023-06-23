@@ -3,16 +3,20 @@
 
 #![cfg(feature = "platform_opengl")]
 
-use suzy::app::{App, AppBuilder};
-use suzy::dims::{Rect, SimplePadding2d};
-use suzy::graphics::{Color, Conditional};
-use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
-use suzy::platforms::TestPlatform;
-use suzy::pointer::{PointerAction, PointerEventData, PointerId};
-use suzy::selectable::{Selectable, SelectionState};
-use suzy::widget::{self, Widget};
-use suzy::widgets::Button;
-use suzy::window::WindowSettings;
+use suzy::{
+    app::{App, AppBuilder},
+    dims::{Rect, SimplePadding2d},
+    graphics::{Color, Conditional},
+    platforms::{
+        opengl::{OpenGlRenderPlatform, SlicedImage},
+        TestPlatform,
+    },
+    pointer::{PointerAction, PointerEventData, PointerId},
+    selectable::{Selectable, SelectionState},
+    widget::{self, Widget},
+    widgets::Button,
+    window::WindowSettings,
+};
 
 #[derive(Default)]
 struct ButtonContent {

@@ -3,13 +3,17 @@
 
 #![cfg(feature = "platform_opengl")]
 
-use suzy::app::{App, AppBuilder};
-use suzy::dims::{Rect, SimplePadding2d};
-use suzy::graphics::Color;
-use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage, Tint};
-use suzy::platforms::TestPlatform;
-use suzy::widget::{self, Widget};
-use suzy::window::WindowSettings;
+use suzy::{
+    app::{App, AppBuilder},
+    dims::{Rect, SimplePadding2d},
+    graphics::Color,
+    platforms::{
+        opengl::{OpenGlRenderPlatform, SlicedImage, Tint},
+        TestPlatform,
+    },
+    widget::{self, Widget},
+    window::WindowSettings,
+};
 
 mod utils;
 use utils::*;
