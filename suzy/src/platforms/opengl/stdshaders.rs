@@ -8,8 +8,8 @@ use super::{
     OpenGlBindings,
 };
 
-const STD_VERTEX_SOURCE: &[u8] = include_bytes!("std.vert.glsl");
-const STD_FRAGMENT_SOURCE: &[u8] = include_bytes!("std.frag.glsl");
+const STD_VERTEX_SOURCE: &[u8] = include_bytes!("include/std.vert.glsl");
+const STD_FRAGMENT_SOURCE: &[u8] = include_bytes!("include/std.frag.glsl");
 
 #[derive(Clone, Copy, Debug)]
 pub(super) struct Uniforms {
