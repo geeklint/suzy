@@ -40,7 +40,7 @@ impl BatchPool {
         // TODO: special handling for solid_color texture
         if batch_tex == &tex.id() {
             let (_id, texture_size) = texture_cache.lookup(batch_tex)?;
-            Some(tex.crop.get_uv_rect(texture_size))
+            Some(tex.get_uv_rect(texture_size))
         } else {
             None
         }
@@ -78,7 +78,7 @@ impl BatchPool {
             });
             let uv_rect = texture_cache
                 .lookup(&tex.id())
-                .map(|(_id, size)| tex.crop.get_uv_rect(size))?;
+                .map(|(_id, size)| tex.get_uv_rect(size))?;
             Some((index, uv_rect))
         });
         match found {

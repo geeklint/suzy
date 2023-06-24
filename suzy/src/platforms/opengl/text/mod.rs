@@ -36,7 +36,6 @@ mod default_font {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 enum Layer {
-    Shadow,
     #[default]
     Primary,
 }

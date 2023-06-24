@@ -6,6 +6,7 @@ use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 use super::{
     context::{bindings::TEXTURE_2D, OpenGlBindings},
     opengl_bindings::types::GLuint,
+    renderer::{UvRect, UvRectValues},
 };
 
 mod populate;
@@ -15,7 +16,7 @@ pub use populate::*;
 #[derive(Clone, Debug)]
 pub struct Texture {
     populator: Option<Rc<dyn PopulateTexture>>,
-    pub(super) crop: Crop,
+    pub(super) crop: Option<UvRect>,
     //fallback: Fallback,
 }
 
@@ -23,7 +24,7 @@ impl Texture {
     pub fn new(populator: Rc<dyn PopulateTexture>) -> Self {
         Self {
             populator: Some(populator),
-            crop: Crop::None,
+            crop: None,
             //fallback: Fallback::NoRender,
         }
     }
@@ -31,7 +32,7 @@ impl Texture {
     pub fn solid_color() -> Self {
         Self {
             populator: None,
-            crop: Crop::None,
+            crop: None,
             //fallback: Fallback::SolidColor,
         }
     }
@@ -46,51 +47,36 @@ impl Texture {
     ///
     /// This, along with Texture::clone, enables patterns like sprite-sheets
     /// where multiple images are packed into a single texture reference.
-    pub fn crop(self, x: f32, y: f32, height: f32, width: f32) -> Self {
+    pub fn crop(self, left: f32, right: f32, bottom: f32, top: f32) -> Self {
+        let (origin_x, origin_y) = match self.crop {
+            Some(rect) => match rect {
+                UvRect::F32(UvRectValues { left, bottom, .. }) => {
+                    (left, bottom)
+                }
+                UvRect::U16(UvRectValues { left, bottom, .. }) => {
+                    (left.into(), bottom.into())
+                }
+            },
+            None => (0.0, 0.0),
+        };
         Self {
-            crop: Crop::F32(CropValues {
-                offset_x: x,
-                offset_y: y,
-                width,
-                height,
-            }),
+            crop: Some(UvRect::F32(UvRectValues {
+                left: left + origin_x,
+                right: right + origin_x,
+                bottom: bottom + origin_y,
+                top: top + origin_y,
+            })),
             ..self
         }
     }
-}
 
-impl Default for Texture {
-    fn default() -> Self {
-        Self::solid_color()
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct TextureId {
-    populator: Option<Rc<dyn PopulateTexture>>,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub(super) struct CropValues<T> {
-    offset_x: T,
-    offset_y: T,
-    width: T,
-    height: T,
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub(super) enum Crop {
-    #[default]
-    None,
-    F32(CropValues<f32>),
-    U16(CropValues<u16>),
-}
-
-impl Crop {
-    pub fn get_uv_rect(&self, size: &TextureSize) -> super::renderer::UvRect {
-        use super::renderer::{UvRect, UvRectValues, UvType};
-        match self {
-            Crop::None => {
+    pub(super) fn get_uv_rect(
+        &self,
+        size: &TextureSize,
+    ) -> super::renderer::UvRect {
+        use super::renderer::UvType;
+        match self.crop {
+            None => {
                 match (
                     u16::try_from_f32(size.image_width),
                     u16::try_from_f32(size.image_height),
@@ -109,10 +95,20 @@ impl Crop {
                     }),
                 }
             }
-            Crop::F32(_) => todo!(),
-            Crop::U16(_) => todo!(),
+            Some(uvrect) => uvrect,
         }
     }
+}
+
+impl Default for Texture {
+    fn default() -> Self {
+        Self::solid_color()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct TextureId {
+    populator: Option<Rc<dyn PopulateTexture>>,
 }
 
 /*

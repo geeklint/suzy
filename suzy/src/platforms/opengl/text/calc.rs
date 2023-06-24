@@ -294,10 +294,7 @@ impl FontCharCalc {
 }
 
 fn is_line_break(ch: char) -> bool {
-    match ch {
-        '\n' => true,
-        _ => false,
-    }
+    matches!(ch, '\n')
 }
 
 fn is_breaking_space(ch: char) -> bool {
