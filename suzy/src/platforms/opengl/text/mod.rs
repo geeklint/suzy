@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::convert::TryInto;
+use std::{convert::TryInto, rc::Rc};
 
 use crate::{
     graphics::{Color, DrawContext, Graphic},
@@ -27,7 +27,7 @@ mod default_font;
 #[cfg(not(feature = "default_font"))]
 mod default_font {
     #[track_caller]
-    pub fn default_font() -> font::Font {
+    pub fn default_font() -> Rc<font::Font> {
         panic!(
             "invalid font index specified, and no default font is available"
         );
@@ -88,7 +88,7 @@ impl crate::platform::graphics::TextStyle for TextStyle {
 /// fonts can be generated using the crate `suzy_build_tools`.
 #[derive(Default)]
 pub struct Text {
-    fonts: Vec<font::Font>,
+    fonts: Vec<Rc<font::Font>>,
     vertices: Vec<VertexSet>,
     layout_changed: WatchedMeta<'static>,
     calc: FontCharCalc,

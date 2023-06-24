@@ -3,13 +3,19 @@
 
 use std::{cell::OnceCell, rc::Rc};
 
-use crate::platforms::opengl::{
-    self, PopulateTexture, PopulateTextureUtil, Texture,
-};
+use crate::platforms::opengl::{self, PopulateTexture, Texture};
 
 use super::font;
 
-pub fn default_font() -> font::Font {
+thread_local! {
+    static DEFAULT_FONT: Rc<font::Font> = build();
+}
+
+pub fn default_font() -> Rc<font::Font> {
+    DEFAULT_FONT.with(Rc::clone)
+}
+
+fn build() -> Rc<font::Font> {
     let texture = Texture::new(Rc::new(DefaultFontAtlasPopulator));
     let regular_data = font::FontData {
         texture,
@@ -35,7 +41,7 @@ pub fn default_font() -> font::Font {
         capline: suzy_default_font::regular::CAPLINE,
         descent: suzy_default_font::regular::DESCENT,
     };
-    font::Font::new(font::LinkedFont {
+    Rc::new(font::Font {
         data: regular_data,
         bold: OnceCell::new(),
         italic: OnceCell::new(),
@@ -50,13 +56,11 @@ impl PopulateTexture for DefaultFontAtlasPopulator {
         gl: &opengl::OpenGlBindings,
         target: opengl::opengl_bindings::types::GLenum,
     ) -> Result<opengl::TextureSize, String> {
-        Ok(PopulateTextureUtil::populate_alpha(
+        Ok(font::Font::populate_font_atlas(
             gl,
             target,
             suzy_default_font::TEXTURE_WIDTH,
             suzy_default_font::TEXTURE_HEIGHT,
-            1,
-            true,
             suzy_default_font::TEXTURE_DATA,
         ))
     }

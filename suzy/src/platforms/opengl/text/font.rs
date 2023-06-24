@@ -3,8 +3,28 @@
 
 use std::{cell::OnceCell, rc::Rc};
 
-use crate::platforms::opengl;
-use opengl::texture::Texture;
+use crate::platforms::opengl::{
+    opengl_bindings::types::GLenum, OpenGlBindings, Texture, TextureSize,
+};
+
+#[derive(Debug)]
+pub struct Font {
+    pub data: FontData,
+    pub bold: OnceCell<Rc<Font>>,
+    pub italic: OnceCell<Rc<Font>>,
+}
+
+#[derive(Debug)]
+pub struct FontData {
+    pub texture: Texture,
+    pub padding_ratio: f32,
+    pub glyphs: Box<[Glyph]>,
+    pub kerning: Box<[Kerning]>,
+    pub line_spacing: f32,
+    pub ascent: f32,
+    pub capline: f32,
+    pub descent: f32,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct Glyph {
@@ -27,18 +47,6 @@ pub struct Kerning {
     pub kerning: f32,
 }
 
-#[derive(Debug)]
-pub struct FontData {
-    pub texture: Texture,
-    pub padding_ratio: f32,
-    pub glyphs: Box<[Glyph]>,
-    pub kerning: Box<[Kerning]>,
-    pub line_spacing: f32,
-    pub ascent: f32,
-    pub capline: f32,
-    pub descent: f32,
-}
-
 impl FontData {
     pub fn kerning(&self, left: char, right: char) -> Option<f32> {
         self.kerning
@@ -57,11 +65,46 @@ impl FontData {
     }
 }
 
-#[derive(Debug)]
-pub struct LinkedFont {
-    pub data: FontData,
-    pub bold: OnceCell<Rc<LinkedFont>>,
-    pub italic: OnceCell<Rc<LinkedFont>>,
-}
+impl Font {
+    pub fn populate_font_atlas(
+        gl: &OpenGlBindings,
+        target: GLenum,
+        width: u16,
+        height: u16,
+        data: &[u8],
+    ) -> TextureSize {
+        use std::ffi::c_void;
 
-pub type Font = Rc<LinkedFont>;
+        use crate::platforms::opengl::opengl_bindings::{
+            types::GLint, ALPHA, CLAMP_TO_EDGE, LINEAR, TEXTURE_MAG_FILTER,
+            TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
+            UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+        };
+
+        unsafe {
+            gl.PixelStorei(UNPACK_ALIGNMENT, 1);
+            gl.TexImage2D(
+                target,
+                0,
+                ALPHA as GLint,
+                width.into(),
+                height.into(),
+                0,
+                ALPHA,
+                UNSIGNED_BYTE,
+                data.as_ptr() as *const c_void,
+            );
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR as GLint);
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR as GLint);
+            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as GLint);
+            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as GLint);
+        }
+        TextureSize {
+            image_width: width.into(),
+            image_height: height.into(),
+            texture_width: width,
+            texture_height: height,
+            is_sdf: true,
+        }
+    }
+}
