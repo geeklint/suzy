@@ -102,7 +102,7 @@ impl Window {
                 height,
                 RGBA,
                 UNSIGNED_BYTE,
-                buffer.as_mut_ptr() as *mut _,
+                buffer.as_mut_ptr().cast(),
             );
         }
         buffer

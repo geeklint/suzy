@@ -196,7 +196,7 @@ impl<P: Platform> App<P> {
     }
 
     fn draw(&mut self) {
-        let mut loop_count = 0;
+        let mut loop_count: u32 = 0;
         let mut pass_arg = None;
         loop {
             let mut ctx = self.window.prepare_draw(pass_arg);

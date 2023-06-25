@@ -70,7 +70,7 @@ impl OpenGlContext {
         _user_param: *mut std::ffi::c_void,
     ) {
         let data = unsafe {
-            std::slice::from_raw_parts(message as *const u8, length as usize)
+            std::slice::from_raw_parts(message.cast(), length as usize)
         };
         println!("{}", String::from_utf8_lossy(data));
     }

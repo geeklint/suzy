@@ -131,9 +131,7 @@ impl Window {
         let _ = video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context()?;
         let plat_gl_context = {
-            opengl::OpenGlContext::new(|s| {
-                video.gl_get_proc_address(s) as *const _
-            })
+            opengl::OpenGlContext::new(|s| video.gl_get_proc_address(s).cast())
         };
         let mut gl_win = opengl::Window::new(plat_gl_context);
         gl_win.clear_color(builder.background_color());

@@ -144,7 +144,7 @@ impl std::str::FromStr for Color {
             if hex_part.len() == 6 || hex_part.len() == 8 {
                 let mut int = u32::from_str_radix(hex_part, 16)?;
                 if hex_part.len() == 6 {
-                    int = (int << 8) | 0xFF;
+                    int = (int << 8_u8) | 0xFF;
                 }
                 let bytes = int.to_be_bytes();
                 Ok(Self::create_rgba8(bytes[0], bytes[1], bytes[2], bytes[3]))

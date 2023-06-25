@@ -28,11 +28,11 @@ impl OsMesaWindow {
         let width = width.max(1.0).min(1280.0) as u16;
         let height = height.max(1.0).min(1024.0) as u16;
         let title = builder.title().to_string();
-        let mut buffer = vec![0; 4 * (width as usize) * (height as usize)];
+        let mut buffer = vec![0_u8; 4 * (width as usize) * (height as usize)];
         unsafe {
             bindings::OSMesaMakeCurrent(
                 ctx,
-                buffer.as_mut_ptr() as _,
+                buffer.as_mut_ptr().cast(),
                 0x1401, // GL_UNSIGNED_BYTE
                 width as _,
                 height as _,

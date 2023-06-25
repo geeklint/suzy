@@ -83,10 +83,10 @@ impl Lerp for f64 {
     fn lerp(from: &f64, to: &f64, t: f32) -> f64 {
         let t = t as f64;
         let diff = to - from;
-        if t <= 0.5 {
+        if t <= 0.5_f64 {
             from + diff * t
         } else {
-            to - diff * (1.0 - t)
+            to - diff * (1.0_f64 - t)
         }
     }
 }

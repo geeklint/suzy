@@ -33,10 +33,6 @@ impl PointerSet {
         })
     }
 
-    fn contains(&self, pointer: PointerId) -> bool {
-        self.data.iter().any(|entry| entry.pointer == pointer)
-    }
-
     fn status(&self, pointer: PointerId) -> Option<PointerStatus> {
         self.data.iter().find_map(|entry| {
             (entry.pointer == pointer).then_some(entry.status)

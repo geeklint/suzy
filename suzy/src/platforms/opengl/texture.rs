@@ -1,9 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::{
-    borrow::Borrow, collections::HashMap, ffi::c_void, hash::Hash, rc::Rc,
-};
+use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 
 use super::{
     context::{bindings::TEXTURE_2D, OpenGlBindings},
@@ -259,7 +257,7 @@ impl TextureCache {
                     0,
                     RGBA,
                     UNSIGNED_BYTE,
-                    pixels.as_ptr() as *const c_void,
+                    pixels.as_ptr().cast(),
                 );
                 gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
                 gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as _);

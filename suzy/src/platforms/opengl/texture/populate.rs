@@ -108,7 +108,7 @@ impl PopulateTextureUtil {
                     0,
                     format as GLenum,
                     UNSIGNED_BYTE,
-                    pixels.as_ptr() as *const _,
+                    pixels.as_ptr().cast(),
                 );
             }
             Self::default_params(gl, target);
@@ -145,7 +145,7 @@ impl PopulateTextureUtil {
                     height,
                     format as GLenum,
                     UNSIGNED_BYTE,
-                    pixels.as_ptr() as *const _,
+                    pixels.as_ptr().cast(),
                 );
             }
             Self::default_params(gl, target);

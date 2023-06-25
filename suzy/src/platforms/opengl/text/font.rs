@@ -73,8 +73,6 @@ impl Font {
         height: u16,
         data: &[u8],
     ) -> TextureSize {
-        use std::ffi::c_void;
-
         use crate::platforms::opengl::opengl_bindings::{
             types::GLint, ALPHA, CLAMP_TO_EDGE, LINEAR, TEXTURE_MAG_FILTER,
             TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
@@ -92,7 +90,7 @@ impl Font {
                 0,
                 ALPHA,
                 UNSIGNED_BYTE,
-                data.as_ptr() as *const c_void,
+                data.as_ptr().cast(),
             );
             gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR as GLint);
             gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR as GLint);
