@@ -9,7 +9,7 @@ use std::{
 use crate::platforms::opengl;
 use opengl::context::bindings::types::*;
 use opengl::context::bindings::{
-    ALPHA, CLAMP_TO_EDGE, LINEAR, NEAREST, RGB, RGBA, TEXTURE_MAG_FILTER,
+    CLAMP_TO_EDGE, LINEAR, NEAREST, RGB, RGBA, TEXTURE_MAG_FILTER,
     TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNPACK_ALIGNMENT,
     UNSIGNED_BYTE,
 };
@@ -117,6 +117,7 @@ impl PopulateTextureUtil {
                 image_height: height as f32,
                 texture_width: width,
                 texture_height: height,
+                color_pow: 2.2,
                 is_sdf: sdf,
             }
         } else {
@@ -154,6 +155,7 @@ impl PopulateTextureUtil {
                 image_height: height as f32,
                 texture_width,
                 texture_height,
+                color_pow: 2.2,
                 is_sdf: sdf,
             }
         }
@@ -173,23 +175,7 @@ impl PopulateTextureUtil {
         (full_row_len as usize) * (height as usize)
     }
 
-    /// Populate an image with a single channel.
-    pub fn populate_alpha(
-        gl: &OpenGlBindings,
-        target: GLenum,
-        width: u16,
-        height: u16,
-        alignment: u16,
-        sdf: bool,
-        pixels: &[u8],
-    ) -> TextureSize {
-        assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 1));
-        let size_align = (width, height, alignment);
-        Self::populate_format(gl, target, ALPHA as _, size_align, sdf, pixels)
-    }
-
-    /// Populate an texture with three channels.
-    pub fn populate_rgb(
+    pub fn populate_color_rgb(
         gl: &OpenGlBindings,
         target: GLenum,
         width: u16,
@@ -202,8 +188,7 @@ impl PopulateTextureUtil {
         Self::populate_format(gl, target, RGB as _, size_align, false, pixels)
     }
 
-    /// Populate an texture with four channels.
-    pub fn populate_rgba(
+    pub fn populate_color_rgba(
         gl: &OpenGlBindings,
         target: GLenum,
         width: u16,
@@ -238,8 +223,9 @@ impl PopulateTexture for DefaultTexturePopulator {
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, 1);
         }
-        let size =
-            PopulateTextureUtil::populate_rgb(gl, target, 2, 2, 1, &pixels);
+        let size = PopulateTextureUtil::populate_color_rgb(
+            gl, target, 2, 2, 1, &pixels,
+        );
         unsafe {
             gl.TexParameteri(target, TEXTURE_MIN_FILTER, NEAREST as _);
             gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST as _);

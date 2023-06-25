@@ -102,6 +102,7 @@ impl Font {
             image_height: height.into(),
             texture_width: width,
             texture_height: height,
+            color_pow: 1.0,
             is_sdf: true,
         }
     }

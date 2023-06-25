@@ -80,6 +80,7 @@ impl Window {
         gl_attr.set_red_size(5);
         gl_attr.set_green_size(5);
         gl_attr.set_blue_size(5);
+        gl_attr.set_framebuffer_srgb_compatible(true);
         gl_attr.set_double_buffer(true);
         gl_attr.set_multisample_buffers(1);
         gl_attr.set_multisample_samples(4);

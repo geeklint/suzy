@@ -66,6 +66,11 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, batches: BatchPool) {
                 ctx.shaders.uniforms.tex_sdf,
                 if tex_size.is_sdf { 1.0 } else { 0.0 },
             );
+            ShaderProgram::set_float(
+                &ctx.bindings,
+                ctx.shaders.uniforms.tex_color_pow,
+                tex_size.color_pow,
+            );
             ctx.bindings.BindBuffer(
                 ARRAY_BUFFER,
                 ctx.buffers[usize::from(buffer_index)],

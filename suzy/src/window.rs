@@ -75,7 +75,12 @@ impl Default for WindowBuilder {
             size: (1000.0, 500.0),
             title: "Suzy Window".to_string(),
             fullscreen: false,
-            background_color: Color::create_rgba(0.176, 0.176, 0.176, 1.0),
+            background_color: Color::from_rgba(
+                0.026113365,
+                0.026113365,
+                0.026113365,
+                1.0,
+            ),
         }
     }
 }

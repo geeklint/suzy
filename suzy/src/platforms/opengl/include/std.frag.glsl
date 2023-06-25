@@ -9,6 +9,7 @@
 uniform sampler2D TEX_ID;
 uniform mediump vec2 TEX_SIZE;
 uniform lowp float TEX_SDF;
+uniform mediump float TEX_COLOR_POW;
 
 varying lowp vec4 pass_color;
 varying mediump vec2 pass_config;
@@ -21,6 +22,7 @@ void main() {
     mediump float sdf_value = max(tex_color.a, 1.0 - TEX_SDF);
     sdf_value *= 1.0 - min(length(pass_distance), 1.0);
     tex_color = max(tex_color, TEX_SDF);
+    tex_color.rgb = pow(tex_color.rgb, vec3(TEX_COLOR_POW));
     sdf_value = SDF_PEAK - abs(sdf_value - SDF_PEAK);
     sdf_value = sdf_value + SDF_OFFSET + SDF_OFFSET - 1.0;
     sdf_value = sdf_value * pass_smoothing;

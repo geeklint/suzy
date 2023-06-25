@@ -28,7 +28,7 @@ impl Window {
     }
 
     pub fn clear_color(&mut self, color: Color) {
-        let (r, g, b, a) = color.rgba();
+        let Color { r, g, b, a } = color;
         unsafe {
             self.ctx.bindings.ClearColor(r, g, b, a);
         }
@@ -41,7 +41,7 @@ impl Window {
                 .bindings
                 .GetFloatv(COLOR_CLEAR_VALUE, array.as_mut_ptr());
         }
-        Color::create_rgba(array[0], array[1], array[2], array[3])
+        Color::from_rgba(array[0], array[1], array[2], array[3])
     }
 
     /// Set the viewport. Wrapping windows will probably want to do this

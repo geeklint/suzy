@@ -17,6 +17,7 @@ pub(super) struct Uniforms {
     pub(super) tex_id: UniformLoc,
     pub(super) tex_size: UniformLoc,
     pub(super) tex_sdf: UniformLoc,
+    pub(super) tex_color_pow: UniformLoc,
 }
 
 #[derive(Clone)]
@@ -35,6 +36,7 @@ impl Shaders {
                 tex_id: shader.uniform(gl, "TEX_ID"),
                 tex_size: shader.uniform(gl, "TEX_SIZE"),
                 tex_sdf: shader.uniform(gl, "TEX_SDF"),
+                tex_color_pow: shader.uniform(gl, "TEX_COLOR_POW"),
             },
             shader,
         })

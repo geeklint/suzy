@@ -238,7 +238,7 @@ impl SlicedImage {
                     _ => (x_padding + y_padding) / 2.0,
                 };
                 let config = VertexConfig::new()
-                    .alpha_base(0.000001)
+                    .alpha_base(0.0)
                     .vector(x_inside, y_inside);
                 batch.vertices.push(Vertex {
                     xy: [x, y],

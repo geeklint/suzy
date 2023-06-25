@@ -50,7 +50,7 @@ impl PopulateTexture for Populator {
         gl: &opengl::OpenGlBindings,
         target: opengl::opengl_bindings::types::GLenum,
     ) -> Result<opengl::TextureSize, String> {
-        Ok(PopulateTextureUtil::populate_rgb(
+        Ok(PopulateTextureUtil::populate_color_rgb(
             gl,
             target,
             IMAGE_WIDTH,
