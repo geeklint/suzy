@@ -61,6 +61,6 @@ impl PopulateTexture for Populator {
     }
 
     fn texture_key(&self) -> &[u8] {
-        &[1]
+        "cute".as_bytes()
     }
 }

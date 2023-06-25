@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use crate::{
     dims::{Dim, Padding2d, Rect, SimplePadding2d, SimpleRect},
-    graphics::{Color, DrawContext, Graphic},
+    graphics::{Color, CornerStyle, DrawContext, Graphic},
     platforms::opengl,
 };
 
@@ -53,6 +53,7 @@ pub struct SlicedImage {
     pub padding: SimplePadding2d,
     pub texture: Texture,
     color: Color,
+    corners: CornerStyle,
     rect: SimpleRect,
 }
 
@@ -62,6 +63,7 @@ impl Default for SlicedImage {
             padding: SimplePadding2d::default(),
             texture: Texture::default(),
             color: Color::WHITE,
+            corners: CornerStyle::NotRounded,
             rect: SimpleRect::default(),
         }
     }
@@ -83,8 +85,8 @@ impl crate::platform::graphics::SlicedImage for SlicedImage {
         self.padding = (&padding).into();
     }
 
-    fn set_corners(&mut self, _style: crate::graphics::CornerStyle) {
-        todo!()
+    fn set_corners(&mut self, style: CornerStyle) {
+        self.corners = style;
     }
 }
 
@@ -184,37 +186,54 @@ impl SlicedImage {
         );
         let mut inner = SimpleRect::default();
         inner.set_fill(rect, &self.padding);
+        let (outside, pad_left, pad_right, pad_bottom, pad_top);
+        if matches!(self.corners, CornerStyle::Rounded) {
+            outside = false;
+            pad_left = self.padding.left();
+            pad_right = self.padding.right();
+            pad_bottom = self.padding.bottom();
+            pad_top = self.padding.top();
+        } else {
+            outside = true;
+            pad_left = 1.0;
+            pad_right = 1.0;
+            pad_bottom = 1.0;
+            pad_top = 1.0;
+        };
         let horiz_values = [
-            (rect.left(), uv_rect.left),
-            (inner.left(), inner_uv_rect.left),
-            (inner.right(), inner_uv_rect.right),
-            (rect.right(), uv_rect.right),
+            (rect.left(), uv_rect.left, outside, pad_left),
+            (inner.left(), inner_uv_rect.left, true, pad_left),
+            (inner.right(), inner_uv_rect.right, true, pad_right),
+            (rect.right(), uv_rect.right, outside, pad_right),
         ];
         let vertical_values = [
-            (rect.bottom(), uv_rect.bottom),
-            (inner.bottom(), inner_uv_rect.bottom),
-            (inner.top(), inner_uv_rect.top),
-            (rect.top(), uv_rect.top),
+            (rect.bottom(), uv_rect.bottom, outside, pad_bottom),
+            (inner.bottom(), inner_uv_rect.bottom, true, pad_bottom),
+            (inner.top(), inner_uv_rect.top, true, pad_top),
+            (rect.top(), uv_rect.top, outside, pad_top),
         ];
         let color = self.color.rgba8();
-        let alpha_invert = 0xff;
-        let mut flip = false;
-        for (y, v) in vertical_values {
-            for &(x, u) in &horiz_values {
-                // can't represent exactly 0.5 in a normalized u8
-                // so we flip between 127 and 128 and let it interpolate
-                // to 0.5 between vertices
-                let alpha_offset = if flip { 128 } else { 127 };
+        let mut odd = false;
+        for (y, v, y_inside, y_padding) in vertical_values {
+            for &(x, u, x_inside, x_padding) in &horiz_values {
+                let smoothing = match (x_inside, y_inside) {
+                    (true, false) => x_padding,
+                    (false, true) => y_padding,
+                    _ => (x_padding + y_padding) / 2.0,
+                };
+                let config = VertexConfig::new()
+                    .alpha_base(0.000001)
+                    .vector(x_inside, y_inside);
                 batch.vertices.push(Vertex {
                     xy: [x, y],
                     uv: [u, v],
                     color,
-                    config: VertexConfig([alpha_offset, alpha_invert, 0, 0]),
-                    smoothing: 1.0,
+                    config,
+                    smoothing,
                 });
-                flip = !flip;
+                odd = !odd;
             }
-            flip = !flip;
+            odd = !odd;
         }
         batch.indices.extend(
             SLICED_INDICES.iter().map(|&i| u16::from(i) + index_offset),

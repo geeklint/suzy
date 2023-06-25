@@ -8,7 +8,7 @@ use std::{
 
 use crate::platforms::opengl::opengl_bindings::types::GLenum;
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 #[repr(transparent)]
 pub struct VertexConfig(pub [u8; 4]);
 
@@ -34,6 +34,54 @@ impl<Uv> Vertex<Uv> {
             config: self.config,
             smoothing: self.smoothing,
         }
+    }
+}
+
+impl Default for VertexConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl VertexConfig {
+    #[must_use]
+    pub fn new() -> Self {
+        Self([128, 255, 0, 0])
+    }
+
+    #[must_use]
+    pub fn alpha_base(self, base: f32) -> Self {
+        let Self([_, y, z, w]) = self;
+        let magic = 255.0 / 2.0;
+        let offset = (-magic * base + magic).clamp(0.0, 255.0).round();
+        let x = offset as u8;
+        Self([x, y, z, w])
+    }
+
+    #[must_use]
+    pub fn alpha_base_by_odd(self, odd: bool) -> Self {
+        // can't represent exactly 0.5 in a normalized u8
+        // so we flip between 127 and 128 and let it interpolate
+        // to 0.5 between vertices
+        let Self([_, y, z, w]) = self;
+        let x = if odd { 128 } else { 127 };
+        Self([x, y, z, w])
+    }
+
+    #[must_use]
+    pub fn alpha_peak(self, peak: f32) -> Self {
+        let Self([x, _, z, w]) = self;
+        let y = (peak * 255.0).clamp(0.0, 255.0).round() as u8;
+        Self([x, y, z, w])
+    }
+
+    #[must_use]
+    pub fn vector(self, x_inside: bool, y_inside: bool) -> Self {
+        let Self([x, y, _, w]) = self;
+        let dx = if x_inside { 0 } else { 64 };
+        let dy = if y_inside { 0 } else { 128 };
+        let z = dx + dy;
+        Self([x, y, z, w])
     }
 }
 

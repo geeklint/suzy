@@ -204,11 +204,9 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                             draw.smoothing
                         };
                         let base = draw.midpoint - 0.5 / smoothing;
-                        let magic = 255.0 / 2.0;
-                        let offset = (-magic * base + magic).clamp(0.0, 255.0);
-                        let peak = (draw.peak * 255.0).clamp(0.0, 255.0);
-                        let config =
-                            VertexConfig([offset as u8, peak as u8, 0, 0]);
+                        let config = VertexConfig::new()
+                            .alpha_base(base)
+                            .alpha_peak(draw.peak);
                         let left = (glyph.bb_left, glyph.tex_left);
                         let right = (glyph.bb_right, glyph.tex_right);
                         let bottom = (glyph.bb_bottom, glyph.tex_bottom);
