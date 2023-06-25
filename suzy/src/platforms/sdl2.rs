@@ -9,7 +9,6 @@ use crate::{
 };
 
 mod window;
-//mod texture_loader;
 
 pub struct SdlPlatform {
     sdl: sdl2::Sdl,

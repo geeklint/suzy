@@ -11,7 +11,8 @@ keywords = ["gui", "kivy", "widgets"]
 license = "Apache-2.0 OR MIT OR Zlib"
 
 [features]
-default = ["platform_sdl", "inline_tweak", "default_font"]
+default = []
+quickstart = ["platform_sdl", "inline_tweak", "default_font"]
 ci_build = ["platform_osmesa", "inline_tweak", "default_font"]
 
 platform_opengl = []
@@ -31,15 +32,15 @@ default-features = false
 
 [[example]]
 name = "adapter"
-required-features = ["platform_sdl"]
+required-features = ["platform_sdl", "default_font"]
 
 [[example]]
 name = "button"
-required-features = ["platform_sdl"]
+required-features = ["platform_sdl", "default_font"]
 
 [[example]]
 name = "coroutine"
-required-features = ["platform_sdl"]
+required-features = ["platform_sdl", "default_font"]
 
 [[example]]
 name = "image"
@@ -47,8 +48,8 @@ required-features = ["platform_sdl"]
 
 [[example]]
 name = "layout"
-required-features = ["platform_sdl"]
+required-features = ["platform_sdl", "default_font"]
 
 [[example]]
 name = "text"
-required-features = ["platform_sdl"]
+required-features = ["platform_sdl", "default_font"]

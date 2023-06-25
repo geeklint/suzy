@@ -271,7 +271,6 @@ impl TextureCache {
                     TEXTURE_WRAP_T,
                     CLAMP_TO_EDGE as GLint,
                 );
-                dbg!(pixels);
             }
             TextureState::Ready {
                 id,
