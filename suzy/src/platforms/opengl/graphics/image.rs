@@ -120,6 +120,16 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
         {
             loop {
                 match uv_rect {
+                    UvRect::SolidColor(u, v) => {
+                        let rect = UvRectValues {
+                            left: u,
+                            right: u,
+                            bottom: v,
+                            top: v,
+                        };
+                        self.push_vertices(batch, rect, rect);
+                        return;
+                    }
                     UvRect::F32(uv_rect_f32) => {
                         let inner_uv_rect = UvRectValues {
                             left: uv_rect_f32.left + self.padding.left(),
@@ -142,10 +152,16 @@ impl Graphic<OpenGlRenderPlatform> for SlicedImage {
                             [Some(left), Some(right), Some(bottom), Some(top)] =>
                             {
                                 let inner_uv_rect = UvRectValues {
-                                    left: uv_rect_u16.left + left,
-                                    right: uv_rect_u16.right - right,
-                                    bottom: uv_rect_u16.bottom + bottom,
-                                    top: uv_rect_u16.top - top,
+                                    left: uv_rect_u16
+                                        .left
+                                        .saturating_add(left),
+                                    right: uv_rect_u16
+                                        .right
+                                        .saturating_sub(right),
+                                    bottom: uv_rect_u16
+                                        .bottom
+                                        .saturating_add(bottom),
+                                    top: uv_rect_u16.top.saturating_sub(top),
                                 };
                                 self.push_vertices(
                                     batch,

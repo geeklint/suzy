@@ -1,11 +1,17 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
+use std::{
+    borrow::Borrow, collections::HashMap, ffi::c_void, hash::Hash, rc::Rc,
+};
 
 use super::{
     context::{bindings::TEXTURE_2D, OpenGlBindings},
-    opengl_bindings::types::GLuint,
+    opengl_bindings::{
+        types::{GLint, GLuint},
+        CLAMP_TO_EDGE, NEAREST, RGBA, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER,
+        TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+    },
     renderer::{UvRect, UvRectValues},
 };
 
@@ -32,7 +38,7 @@ impl Texture {
     pub fn solid_color() -> Self {
         Self {
             populator: None,
-            crop: None,
+            crop: Some(UvRect::SolidColor(0, 0)),
             //fallback: Fallback::SolidColor,
         }
     }
@@ -56,6 +62,7 @@ impl Texture {
                 UvRect::U16(UvRectValues { left, bottom, .. }) => {
                     (left.into(), bottom.into())
                 }
+                UvRect::SolidColor(..) => return self,
             },
             None => (0.0, 0.0),
         };
@@ -174,19 +181,22 @@ impl Hash for CacheKey {
 #[derive(Default)]
 pub(super) struct TextureCache {
     set: HashMap<CacheKey, TextureState>,
+    solid_color: Option<TextureState>,
 }
 
 impl TextureCache {
     pub fn lookup(&self, id: &TextureId) -> Option<(GLuint, &TextureSize)> {
-        self.set
-            .get(id.populator.as_ref()?.texture_key())
-            .and_then(|state| {
-                if let TextureState::Ready { id, size } = state {
-                    Some((*id, size))
-                } else {
-                    None
-                }
-            })
+        let slot = match id.populator.as_ref() {
+            Some(pop) => self.set.get(pop.texture_key()),
+            None => self.solid_color.as_ref(),
+        };
+        slot.and_then(|state| {
+            if let TextureState::Ready { id, size } = state {
+                Some((*id, size))
+            } else {
+                None
+            }
+        })
     }
 
     pub fn register(&mut self, tex: &Texture) {
@@ -227,6 +237,55 @@ impl TextureCache {
                 }
             }
         }
+        self.solid_color.get_or_insert_with(|| {
+            #[rustfmt::skip]
+            let pixels: [u8; 16] = [0xff; 16];
+            let id = new_tex_id.take().unwrap_or_else(|| {
+                let mut id_slot = 0;
+                unsafe {
+                    gl.GenTextures(1, &mut id_slot);
+                }
+                id_slot
+            });
+            unsafe {
+                gl.BindTexture(TEXTURE_2D, id);
+                gl.PixelStorei(UNPACK_ALIGNMENT, 1);
+                gl.TexImage2D(
+                    TEXTURE_2D,
+                    0,
+                    RGBA as GLint,
+                    2,
+                    2,
+                    0,
+                    RGBA,
+                    UNSIGNED_BYTE,
+                    pixels.as_ptr() as *const c_void,
+                );
+                gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
+                gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as _);
+                gl.TexParameteri(
+                    TEXTURE_2D,
+                    TEXTURE_WRAP_S,
+                    CLAMP_TO_EDGE as GLint,
+                );
+                gl.TexParameteri(
+                    TEXTURE_2D,
+                    TEXTURE_WRAP_T,
+                    CLAMP_TO_EDGE as GLint,
+                );
+                dbg!(pixels);
+            }
+            TextureState::Ready {
+                id,
+                size: TextureSize {
+                    image_width: 2.0,
+                    image_height: 2.0,
+                    texture_width: 2,
+                    texture_height: 2,
+                    is_sdf: false,
+                },
+            }
+        });
         if let Some(id) = new_tex_id {
             unsafe {
                 gl.DeleteTextures(1, &id);

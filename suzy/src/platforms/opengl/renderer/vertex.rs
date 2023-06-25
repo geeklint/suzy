@@ -237,6 +237,7 @@ pub struct UvRectValues<T> {
 pub enum UvRect {
     F32(UvRectValues<f32>),
     U16(UvRectValues<u16>),
+    SolidColor(u16, u16),
 }
 
 pub(super) struct OffsetInfo {
