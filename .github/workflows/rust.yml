@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - name: Install Dependencies
-      run: sudo apt-get -y install libosmesa-dev
+      run: sudo apt-get -y install libosmesa-dev libsdl2-dev
     - uses: actions/checkout@v2
     - uses: actions/cache@v2
       with:
