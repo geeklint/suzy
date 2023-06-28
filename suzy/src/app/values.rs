@@ -78,8 +78,8 @@ impl AppState {
 }
 
 pub(crate) fn get_cell_size(width: f32, height: f32) -> f32 {
-    for dist in 0..=4 {
-        let dist = dist as f32;
+    for dist in 0_u8..=4 {
+        let dist = f32::from(dist);
         let high = 16.0 + dist;
         let low = 16.0 - dist;
         if width % high == 0.0 && height % high == 0.0 {

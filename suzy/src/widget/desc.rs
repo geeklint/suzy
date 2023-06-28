@@ -27,7 +27,13 @@ with_default_render_platform! {
 
         fn watch_explicit<F>(&mut self, func: F)
         where
-            F: 'static + Fn(&mut T, &mut WidgetRect, &AppState, WatchArg<'_, 'static, DefaultOwner>);
+            F: 'static
+                + Fn(
+                    &mut T,
+                    &mut WidgetRect,
+                    &AppState,
+                    WatchArg<'_, 'static, DefaultOwner>,
+                );
 
         /// Register a child of this widget.
         fn child<F, Child>(&mut self, map_fn: F)

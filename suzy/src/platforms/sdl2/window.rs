@@ -3,16 +3,17 @@
 
 use std::convert::{TryFrom, TryInto};
 
-use sdl2::event::Event;
-use sdl2::event::WindowEvent as sdl_WindowEvent;
-use sdl2::video::WindowBuildError;
+use sdl2::{
+    event::{Event, WindowEvent as sdl_WindowEvent},
+    video::WindowBuildError,
+};
 
-use crate::graphics::Color;
-use crate::graphics::DrawContext;
-use crate::platforms::opengl;
-use crate::pointer::{PointerAction, PointerEventData};
-use crate::window;
-use crate::window::{WindowBuilder, WindowEvent, WindowSettings};
+use crate::{
+    graphics::{Color, DrawContext},
+    platforms::opengl,
+    pointer::{PointerAction, PointerEventData},
+    window::{self, WindowBuilder, WindowEvent, WindowSettings},
+};
 
 //use super::texture_loader::load_texture;
 
@@ -21,7 +22,7 @@ struct PixelInfo {
     display_index: i32,
     pixels_per_dp: f32,
     dp_per_screen_unit: f32,
-    pixel_size: (u32, u32),
+    pixel_size: (u16, u16),
     screen_size: (u32, u32),
     size: (f32, f32),
 }
@@ -35,20 +36,26 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
             .subsystem()
             .display_dpi(display_index)
             .unwrap_or((1.0, 1.0, 1.0));
-        let dpi = ((hdpi + vdpi) / 2.0) as f32;
+        let dpi = (hdpi + vdpi) / 2.0;
         let pixels_per_dp = dpi / crate::units::DPI;
         let screen_size = window.size();
-        let pixel_size = window.drawable_size();
-        let x_px_per_su = (pixel_size.0 as f32) / (screen_size.0 as f32);
-        let y_px_per_su = (pixel_size.1 as f32) / (screen_size.1 as f32);
+        let (px_width, px_height) = window.drawable_size();
+        let px_width: u16 = px_width
+            .try_into()
+            .expect("window sizes of 2^16 and greater are not supported");
+        let px_height: u16 = px_height
+            .try_into()
+            .expect("window sizes of 2^16 and greater are not supported");
+        let x_px_per_su = f32::from(px_width) / (screen_size.0 as f32);
+        let y_px_per_su = f32::from(px_height) / (screen_size.1 as f32);
         let px_per_su = (x_px_per_su + y_px_per_su) / 2.0;
-        let width = (pixel_size.0 as f32) / pixels_per_dp;
-        let height = (pixel_size.1 as f32) / pixels_per_dp;
+        let width = f32::from(px_width);
+        let height = f32::from(px_height);
         Ok(Self {
             display_index,
             pixels_per_dp,
             dp_per_screen_unit: 1.0 / (pixels_per_dp * px_per_su),
-            pixel_size,
+            pixel_size: (px_width, px_height),
             screen_size,
             size: (width, height),
         })
@@ -79,6 +86,7 @@ impl Window {
         gl_attr.set_red_size(5);
         gl_attr.set_green_size(5);
         gl_attr.set_blue_size(5);
+        gl_attr.set_framebuffer_srgb_compatible(true);
         gl_attr.set_double_buffer(true);
         gl_attr.set_multisample_buffers(1);
         gl_attr.set_multisample_samples(4);
@@ -91,7 +99,7 @@ impl Window {
         let guess_px_per_dp = {
             let (_ddpi, hdpi, vdpi) =
                 video.display_dpi(0).unwrap_or((1.0, 1.0, 1.0));
-            let dpi = ((hdpi + vdpi) / 2.0) as f32;
+            let dpi = (hdpi + vdpi) / 2.0;
             dpi / crate::units::DPI
         };
         let guess_width = width * guess_px_per_dp;
@@ -130,9 +138,7 @@ impl Window {
         let _ = video.gl_set_swap_interval(sdl2::video::SwapInterval::VSync);
         let context = window.gl_create_context()?;
         let plat_gl_context = {
-            opengl::OpenGlContext::new(|s| {
-                video.gl_get_proc_address(s) as *const _
-            })
+            opengl::OpenGlContext::new(|s| video.gl_get_proc_address(s).cast())
         };
         let mut gl_win = opengl::Window::new(plat_gl_context);
         gl_win.clear_color(builder.background_color());

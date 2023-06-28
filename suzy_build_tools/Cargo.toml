@@ -1,6 +1,6 @@
 [package]
 name = "suzy_build_tools"
-version = "0.0.1"
+version = "0.0.2-dev0"
 authors = ["Violet <violet@geeklint.com>"]
 edition = "2018"
 description = "Build tools for Suzy"
@@ -11,5 +11,4 @@ keywords = ["suzy"]
 license = "Apache-2.0 OR MIT OR Zlib"
 
 [dependencies]
-rusttype = "0.9.1"
-rect_packer = "0.2.1"
+blurry = "0.2.0"

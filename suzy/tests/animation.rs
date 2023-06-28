@@ -1,16 +1,16 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::cell::Cell;
-use std::rc::Rc;
-use std::time::Duration;
+use std::{cell::Cell, rc::Rc, time::Duration};
 
-use suzy::animation::Animation;
-use suzy::app::{App, AppBuilder};
-use suzy::graphics::Color;
-use suzy::platforms::no_graphics::NoGraphics;
-use suzy::widget::{self, Widget};
-use suzy::window::WindowSettings;
+use suzy::{
+    animation::Animation,
+    app::{App, AppBuilder},
+    graphics::Color,
+    platforms::no_graphics::NoGraphics,
+    widget::{self, Widget},
+    window::WindowSettings,
+};
 
 #[derive(Default)]
 struct Root {

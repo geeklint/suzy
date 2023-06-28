@@ -1,8 +1,10 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use std::ffi::{CStr, CString};
-use std::rc::{Rc, Weak};
+use std::{
+    ffi::{CStr, CString},
+    rc::{Rc, Weak},
+};
 
 use super::context::bindings::types::*;
 use super::context::bindings::{
@@ -14,18 +16,18 @@ use super::OpenGlBindings;
 macro_rules! info_log {
     ( $id:expr, $gl:expr, $fn_get_iv:ident, $fn_log:ident ) => {{
         let log_len = unsafe {
-            let mut log_len = 0;
-            $gl.$fn_get_iv($id, INFO_LOG_LENGTH, &mut log_len as *mut GLint);
+            let mut log_len: GLint = 0;
+            $gl.$fn_get_iv($id, INFO_LOG_LENGTH, &mut log_len);
             log_len as usize
         };
         let mut array = vec![0; log_len];
-        let mut actual_len = 0;
+        let mut actual_len: GLsizei = 0;
         unsafe {
             $gl.$fn_log(
                 $id,
                 array.len() as GLsizei,
-                &mut actual_len as *mut GLsizei,
-                array.as_mut_ptr() as *mut GLchar,
+                &mut actual_len,
+                array.as_mut_ptr().cast(),
             );
         }
         array.truncate((actual_len + 1) as usize);
@@ -51,8 +53,8 @@ fn compile_shader<'a>(
     type_: GLenum,
     text: &[u8],
 ) -> Result<ShaderObj<'a>, CString> {
-    let lines = [text.as_ptr()];
-    let lengths = [text.len()];
+    let lengths = [text.len() as GLint];
+    let lines: [*const GLchar; 1] = [text.as_ptr().cast()];
     let (obj, success) = unsafe {
         let obj = ShaderObj {
             id: gl.CreateShader(type_),
@@ -61,8 +63,8 @@ fn compile_shader<'a>(
         gl.ShaderSource(
             obj.id,
             lines.len() as GLsizei,
-            lines.as_ptr() as *const *const GLchar,
-            lengths.as_ptr() as *const GLint,
+            lines.as_ptr(),
+            lengths.as_ptr(),
         );
         gl.CompileShader(obj.id);
         let mut success: GLint = 0;
@@ -143,7 +145,7 @@ fn compile_program(
 }
 
 #[derive(Clone)]
-pub struct Shader {
+pub struct ShaderProgram {
     _obj: Rc<ProgramObject>,
     program_id: GLuint,
     attrs: GLuint,
@@ -155,7 +157,7 @@ pub struct UniformLoc {
     id: GLint,
 }
 
-impl Shader {
+impl ShaderProgram {
     pub fn create(
         gl: &Rc<OpenGlBindings>,
         vert_text: &[u8],
@@ -173,7 +175,7 @@ impl Shader {
             gl.GetIntegerv(MAX_VERTEX_ATTRIBS, &mut total_attrs as *mut GLint);
             (attrs as GLuint, total_attrs as GLuint)
         };
-        let shader = Shader {
+        let shader = ShaderProgram {
             program_id: obj.id,
             _obj: Rc::new(obj),
             attrs,
@@ -202,13 +204,10 @@ impl Shader {
 
     pub fn uniform(&self, gl: &OpenGlBindings, name: &str) -> UniformLoc {
         let cname = CString::new(name).expect("Uniform name contained null");
-        let id = unsafe {
-            gl.GetUniformLocation(
-                self.program_id,
-                cname.as_ptr() as *const GLchar,
-            )
-        };
-        debug_assert_ne!(id, -1, "Failed to get uniform {}", name);
+        let id =
+            unsafe { gl.GetUniformLocation(self.program_id, cname.as_ptr()) };
+        let not_found: GLint = -1;
+        debug_assert_ne!(id, not_found, "Failed to get uniform {}", name);
         UniformLoc { id }
     }
 
@@ -216,18 +215,20 @@ impl Shader {
         unsafe { gl.Uniform1i(loc.id, value as GLint) };
     }
 
-    pub fn set_vec4(
-        gl: &OpenGlBindings,
-        loc: UniformLoc,
-        value: (GLfloat, GLfloat, GLfloat, GLfloat),
-    ) {
+    pub fn set_float(gl: &OpenGlBindings, loc: UniformLoc, f: f32) {
         unsafe {
-            gl.Uniform4f(loc.id, value.0, value.1, value.2, value.3);
+            gl.Uniform1f(loc.id, f);
+        }
+    }
+
+    pub fn set_vec2(gl: &OpenGlBindings, loc: UniformLoc, x: f32, y: f32) {
+        unsafe {
+            gl.Uniform2f(loc.id, x, y);
         }
     }
 
     pub fn set_mat4(gl: &OpenGlBindings, loc: UniformLoc, value: &[GLfloat]) {
-        debug_assert_eq!(value.len(), 16, "mat4 must have 16 elements!");
+        assert_eq!(value.len(), 16, "mat4 must have 16 elements!");
         unsafe {
             gl.UniformMatrix4fv(loc.id, 1, FALSE, value.as_ptr());
         }

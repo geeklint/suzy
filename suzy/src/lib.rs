@@ -1,14 +1,19 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-//#![warn(missing_docs)]
-#![warn(elided_lifetimes_in_paths)]
-#![warn(clippy::clone_on_ref_ptr)]
-#![warn(clippy::todo)]
-#![warn(clippy::print_stdout)]
+#![warn(
+    //missing_docs,
+    elided_lifetimes_in_paths,
+    rust_2018_idioms,
+    clippy::clone_on_ref_ptr,
+    clippy::default_numeric_fallback,
+    clippy::todo,
+    clippy::print_stdout,
+    clippy::default_trait_access,
+    clippy::unwrap_used,
+    clippy::ptr_as_ptr,
+)]
 #![allow(clippy::needless_doctest_main)]
-#![deny(clippy::unwrap_used)]
-#![warn(clippy::default_trait_access)]
 
 //! ## Create an application with Suzy
 //!
@@ -77,9 +82,11 @@ pub mod window;
 
 /// The Suzy prelude contains exports of the most frequently-used types
 pub mod prelude {
-    pub use crate::dims::Rect;
-    pub use crate::watch::Watched;
-    pub use crate::widget::{self, Widget};
+    pub use crate::{
+        dims::Rect,
+        watch::Watched,
+        widget::{self, Widget},
+    };
 }
 
 /// A version of the tweak! macro from the crate

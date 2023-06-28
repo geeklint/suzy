@@ -2,6 +2,3 @@
 /* Copyright © 2021 Violet Leonard */
 
 pub mod fontasset;
-pub mod sdf;
-
-mod progressbar;

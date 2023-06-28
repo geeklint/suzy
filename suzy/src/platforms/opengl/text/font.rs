@@ -1,161 +1,109 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::platforms::opengl;
-use opengl::context::bindings::types::*;
-use opengl::texture::Texture;
+use std::{cell::OnceCell, rc::Rc};
 
-use super::FontStyle;
+use crate::platforms::opengl::{
+    opengl_bindings::types::GLenum, OpenGlBindings, Texture, TextureSize,
+};
 
-// 0: char
-// 1,2: u,v
-// 3,4: uv width,height
-// 5-8: relative bb
-// 9: relative advance width
-pub(super) type GlyphMetricsSource =
-    (char, f32, f32, f32, f32, f32, f32, f32, f32, f32);
-type KerningSource = (char, char, f32);
-
-pub type FontSource<'a> = (
-    u8, // texture channel
-    &'a [GlyphMetricsSource],
-    &'a [KerningSource],
-);
-
-/// A source for a font family.
-///
-/// This is normally created automatically using the crate `suzy_build_tools`.
-pub type FontFamilySource = FontFamilySourceDynamic<'static>;
-
-/// A font family which has been loaded.
-pub type FontFamily = FontFamilyDynamic<'static>;
-
-/// A source for a font family.
-///
-/// This is normally created automatically using the crate `suzy_build_tools`.
-pub struct FontFamilySourceDynamic<'a> {
-    /// The bytes of the SDF font atlas texture.
-    pub atlas_image: &'static [u8],
-
-    /// The number of channels in the atlas texture.
-    pub image_channels: GLsizei,
-
-    /// The width of the atlas texture.
-    pub image_width: u16,
-
-    /// The height of the atlas texture.
-    pub image_height: u16,
-
-    /// The alignment of the pixel rows in the atlas texture.
-    pub image_row_alignment: u16,
-
-    /// The font source for the normal font.
-    pub normal: FontSource<'a>,
-
-    /// The font source for the bold font.
-    pub bold: Option<FontSource<'a>>,
-
-    /// The font source for the italic font.
-    pub italic: Option<FontSource<'a>>,
-
-    /// The font source for the bold and italic font.
-    pub bold_italic: Option<FontSource<'a>>,
+#[derive(Debug)]
+pub struct Font {
+    pub data: FontData,
+    pub bold: OnceCell<Rc<Font>>,
+    pub italic: OnceCell<Rc<Font>>,
 }
 
-pub(super) type ChannelMask = (u8, u8, u8, u8);
+#[derive(Debug)]
+pub struct FontData {
+    pub texture: Texture,
+    pub padding_ratio: f32,
+    pub glyphs: Box<[Glyph]>,
+    pub kerning: Box<[Kerning]>,
+    pub line_spacing: f32,
+    pub ascent: f32,
+    pub capline: f32,
+    pub descent: f32,
+}
 
-const ALPHA_MASKS: &[ChannelMask] = &[(0, 0, 0, 0xff)];
-const RGB_MASKS: &[ChannelMask] =
-    &[(0xff, 0, 0, 0), (0, 0xff, 0, 0), (0, 0, 0xff, 0)];
-const RGBA_MASKS: &[ChannelMask] = &[
-    (0xff, 0, 0, 0),
-    (0, 0xff, 0, 0),
-    (0, 0, 0xff, 0),
-    (0, 0, 0, 0xff),
-];
+#[derive(Clone, Copy, Debug)]
+pub struct Glyph {
+    pub ch: char,
+    pub advance: f32,
+    pub bb_left: f32,
+    pub bb_right: f32,
+    pub bb_bottom: f32,
+    pub bb_top: f32,
+    pub tex_left: u16,
+    pub tex_right: u16,
+    pub tex_bottom: u16,
+    pub tex_top: u16,
+}
 
-impl<'a> FontFamilySourceDynamic<'a> {
-    /// Load a font family from this source.
-    pub fn load(&self) -> FontFamilyDynamic<'a> {
-        let (texture, channel_masks) = match self.image_channels {
-            1 => {
-                let texture = Texture::from_alpha(
-                    self.image_width,
-                    self.image_height,
-                    self.image_row_alignment,
-                    self.atlas_image,
-                );
-                (texture, ALPHA_MASKS)
-            }
-            3 => {
-                let texture = Texture::from_rgb(
-                    self.image_width,
-                    self.image_height,
-                    self.image_row_alignment,
-                    self.atlas_image,
-                );
-                (texture, RGB_MASKS)
-            }
-            4 => {
-                let texture = Texture::from_rgba(
-                    self.image_width,
-                    self.image_height,
-                    self.image_row_alignment,
-                    self.atlas_image,
-                );
-                (texture, RGBA_MASKS)
-            }
-            _ => panic!(
-                concat!(
-                    "Invalid number of channels specified ({}). Must be one",
-                    " of (1, 3, or 4)"
-                ),
-                self.image_channels,
-            ),
+#[derive(Clone, Copy, Debug)]
+pub struct Kerning {
+    pub left: char,
+    pub right: char,
+    pub kerning: f32,
+}
+
+impl FontData {
+    pub fn kerning(&self, left: char, right: char) -> Option<f32> {
+        self.kerning
+            .binary_search_by_key(&(left, right), |item| {
+                (item.left, item.right)
+            })
+            .map(|index| self.kerning[index].kerning)
+            .ok()
+    }
+
+    pub fn glyph(&self, ch: char) -> Option<&Glyph> {
+        self.glyphs
+            .binary_search_by_key(&ch, |glyph| glyph.ch)
+            .map(|index| &self.glyphs[index])
+            .ok()
+    }
+}
+
+impl Font {
+    pub fn populate_font_atlas(
+        gl: &OpenGlBindings,
+        target: GLenum,
+        width: u16,
+        height: u16,
+        data: &[u8],
+    ) -> TextureSize {
+        use crate::platforms::opengl::opengl_bindings::{
+            types::GLint, ALPHA, CLAMP_TO_EDGE, LINEAR, TEXTURE_MAG_FILTER,
+            TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
+            UNPACK_ALIGNMENT, UNSIGNED_BYTE,
         };
-        FontFamilyDynamic {
-            texture,
-            channel_masks,
-            normal: self.normal,
-            bold: self.bold,
-            italic: self.italic,
-            bold_italic: self.bold_italic,
+
+        unsafe {
+            gl.PixelStorei(UNPACK_ALIGNMENT, 1);
+            gl.TexImage2D(
+                target,
+                0,
+                ALPHA as GLint,
+                width.into(),
+                height.into(),
+                0,
+                ALPHA,
+                UNSIGNED_BYTE,
+                data.as_ptr().cast(),
+            );
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR as GLint);
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR as GLint);
+            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as GLint);
+            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as GLint);
         }
-    }
-}
-
-/// A font family which has been loaded.
-#[derive(Clone)]
-pub struct FontFamilyDynamic<'a> {
-    pub(super) texture: Texture,
-    pub(super) channel_masks: &'static [ChannelMask],
-    pub(super) normal: FontSource<'a>,
-    pub(super) bold: Option<FontSource<'a>>,
-    pub(super) italic: Option<FontSource<'a>>,
-    pub(super) bold_italic: Option<FontSource<'a>>,
-}
-
-impl<'a> FontFamilyDynamic<'a> {
-    pub(super) fn channel_mask(&self, style: FontStyle) -> ChannelMask {
-        let index: usize = self.best_font_source(style).0.into();
-        self.channel_masks
-            .get(index)
-            .copied()
-            .unwrap_or((0, 0, 0, 0))
-    }
-
-    #[doc(hidden)]
-    pub fn best_font_source(&self, style: FontStyle) -> &FontSource<'a> {
-        match style {
-            FontStyle::Normal => &self.normal,
-            FontStyle::Bold => self.bold.as_ref().unwrap_or(&self.normal),
-            FontStyle::Italic => self.italic.as_ref().unwrap_or(&self.normal),
-            FontStyle::BoldItalic => self
-                .bold_italic
-                .as_ref()
-                .or(self.bold.as_ref())
-                .or(self.italic.as_ref())
-                .unwrap_or(&self.normal),
+        TextureSize {
+            image_width: width.into(),
+            image_height: height.into(),
+            texture_width: width,
+            texture_height: height,
+            color_pow: 1.0,
+            is_sdf: true,
         }
     }
 }

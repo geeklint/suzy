@@ -28,11 +28,11 @@ impl OsMesaWindow {
         let width = width.max(1.0).min(1280.0) as u16;
         let height = height.max(1.0).min(1024.0) as u16;
         let title = builder.title().to_string();
-        let mut buffer = vec![0; 4 * (width as usize) * (height as usize)];
+        let mut buffer = vec![0_u8; 4 * (width as usize) * (height as usize)];
         unsafe {
             bindings::OSMesaMakeCurrent(
                 ctx,
-                buffer.as_mut_ptr() as _,
+                buffer.as_mut_ptr().cast(),
                 0x1401, // GL_UNSIGNED_BYTE
                 width as _,
                 height as _,
@@ -100,8 +100,7 @@ impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
     fn normalize_pointer_event(&self, _event: &mut PointerEventData) {}
 
     fn recalculate_viewport(&mut self) {
-        self.gl_win
-            .viewport(0, 0, self.size.0.into(), self.size.1.into());
+        self.gl_win.viewport(0, 0, self.size.0, self.size.1);
     }
 
     fn flip(&mut self) {

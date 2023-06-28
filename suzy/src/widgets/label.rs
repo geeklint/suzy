@@ -3,8 +3,9 @@
 
 use crate::{
     dims::Rect,
+    graphics::Color,
     platform::{graphics::Text, RenderPlatform},
-    text::{TextPosition, TextSettings},
+    text,
     watch::Watched,
     widget::{self, Widget},
 };
@@ -23,9 +24,11 @@ pub struct LabelContent<P>
 where
     P: ?Sized + RenderPlatform,
 {
-    text: Watched<String>,
+    pub text: Watched<String>,
+    pub font_size: Watched<f32>,
+    pub color: Watched<Color>,
+    pub layout: Watched<text::Layout>,
     graphic: P::Text,
-    settings: Watched<TextSettings>,
 }
 
 impl<P> Default for LabelContent<P>
@@ -35,8 +38,19 @@ where
     fn default() -> Self {
         Self {
             text: Watched::default(),
+            font_size: Watched::new(16.0),
+            color: Watched::new(Color::BLACK),
+            layout: Watched::new(text::Layout {
+                alignment: text::Alignment::Left,
+                line: text::Line::Ascent,
+                flow: text::Flow::Down,
+                origin_x: 0.0,
+                origin_y: 1.0,
+                wrap_width: 1.0,
+                vertical_limit: text::VerticalLimit::None,
+                overflow_mode: text::OverflowMode::Truncate,
+            }),
             graphic: P::Text::default(),
-            settings: Watched::default(),
         }
     }
 }
@@ -50,33 +64,30 @@ where
     }
 }
 
-impl<P> LabelContent<P>
-where
-    P: ?Sized + RenderPlatform,
-{
-    /// Get a reference to the current text settings
-    pub fn settings(&self) -> &TextSettings {
-        &*self.settings
-    }
-
-    /// Get a mutable reference to the current text settings
-    pub fn settings_mut(&mut self) -> &mut TextSettings {
-        &mut *self.settings
-    }
-}
-
 impl<P> widget::Content<P> for LabelContent<P>
 where
     P: RenderPlatform,
 {
     fn desc(mut desc: impl widget::Desc<Self, P>) {
         desc.watch(|this, rect| {
-            let pos = TextPosition {
-                left: rect.left(),
-                top: rect.top(),
-                wrap_width: rect.width(),
-            };
-            this.graphic.set_text_rich(&this.text, &pos, &this.settings);
+            use crate::animation::Lerp;
+            let mut layout = *this.layout;
+            layout.origin_x =
+                f32::lerp(&rect.left(), &rect.right(), layout.origin_x);
+            layout.origin_y =
+                f32::lerp(&rect.bottom(), &rect.top(), layout.origin_y);
+            layout.wrap_width *= rect.width();
+            this.graphic.set_layout(layout);
+        });
+        desc.watch(|this, _rect| {
+            let style =
+                crate::platform::graphics::TextStyle::with_size_and_color(
+                    *this.font_size,
+                    *this.color,
+                );
+            this.graphic.clear();
+            this.graphic.push_span(style, &this.text);
+            this.graphic.finish();
         });
         desc.graphic(|this| &mut this.graphic);
     }

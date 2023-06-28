@@ -58,7 +58,7 @@ impl<'a, T: ?Sized> std::ops::Deref for ContentRef<'a, T> {
 
 impl<'a, T: ?Sized> std::ops::DerefMut for ContentRef<'a, T> {
     fn deref_mut(&mut self) -> &mut T {
-        &mut self.content
+        self.content
     }
 }
 

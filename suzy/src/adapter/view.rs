@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::pointer::PointerId;
-use crate::watch::WatchedMeta;
-use crate::widget::{self, UniqueHandle};
+use crate::{
+    pointer::PointerId,
+    watch::WatchedMeta,
+    widget::{self, UniqueHandle},
+};
 
 use super::{layout::AdapterLayoutData, Adaptable, AdapterLayout};
 
@@ -27,18 +29,14 @@ struct PointerSet {
 impl PointerSet {
     fn primary_pointer(&self) -> Option<PointerId> {
         self.data.iter().find_map(|entry| {
-            (entry.status == PointerStatus::Grabbed).then(|| entry.pointer)
+            (entry.status == PointerStatus::Grabbed).then_some(entry.pointer)
         })
     }
 
-    fn contains(&self, pointer: PointerId) -> bool {
-        self.data.iter().any(|entry| entry.pointer == pointer)
-    }
-
     fn status(&self, pointer: PointerId) -> Option<PointerStatus> {
-        self.data
-            .iter()
-            .find_map(|entry| (entry.pointer == pointer).then(|| entry.status))
+        self.data.iter().find_map(|entry| {
+            (entry.pointer == pointer).then_some(entry.status)
+        })
     }
 
     fn add_pending(&mut self, pointer: PointerId) {

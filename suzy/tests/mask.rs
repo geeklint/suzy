@@ -1,31 +1,35 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-#![cfg(feature = "platform_opengl")]
+#![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
-use suzy::app::{App, AppBuilder};
-use suzy::dims::{Padding, Rect, SimplePadding2d};
-use suzy::graphics::Color;
-use suzy::platforms::opengl::{Masker, OpenGlRenderPlatform, SlicedImage};
-use suzy::platforms::TestPlatform;
-use suzy::widget::{self, Widget};
-use suzy::window::WindowSettings;
+use suzy::{
+    app::{App, AppBuilder},
+    dims::{Padding, Rect, SimplePadding2d},
+    graphics::Color,
+    platforms::{
+        opengl::{Mask, OpenGlRenderPlatform, SlicedImage},
+        TestPlatform,
+    },
+    widget::{self, Widget},
+    window::WindowSettings,
+};
 
 mod utils;
 use utils::*;
 
 #[derive(Default)]
 struct Root {
-    mask: Masker<SlicedImage>,
+    mask: Mask<SlicedImage>,
     image: SlicedImage,
 }
 
 impl widget::Content<OpenGlRenderPlatform> for Root {
     fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         desc.watch(|root, rect| {
-            root.mask.set_fill_width(&rect, Padding::zero());
-            root.mask.set_height(rect.height() / 2.0);
-            root.mask.set_top(rect.top());
+            root.mask.graphic.set_fill_width(&rect, Padding::zero());
+            root.mask.graphic.set_height(rect.height() / 2.0);
+            root.mask.graphic.set_top(rect.top());
         });
         desc.watch(|root, rect| {
             root.image.set_fill(&rect, &SimplePadding2d::zero());

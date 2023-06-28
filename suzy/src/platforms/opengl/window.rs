@@ -3,8 +3,7 @@
 
 #![allow(missing_docs)]
 
-use crate::graphics::Color;
-use crate::graphics::DrawContext;
+use crate::graphics::{Color, DrawContext};
 
 use super::{
     context::bindings::types::*,
@@ -12,7 +11,6 @@ use super::{
         BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE_MINUS_SRC_ALPHA,
         PACK_ALIGNMENT, RGBA, SRC_ALPHA, UNSIGNED_BYTE, VIEWPORT,
     },
-    drawparams::DrawParams,
     {Mat4, OpenGlContext, OpenGlRenderPlatform},
 };
 
@@ -30,7 +28,7 @@ impl Window {
     }
 
     pub fn clear_color(&mut self, color: Color) {
-        let (r, g, b, a) = color.rgba();
+        let Color { r, g, b, a } = color;
         unsafe {
             self.ctx.bindings.ClearColor(r, g, b, a);
         }
@@ -43,21 +41,25 @@ impl Window {
                 .bindings
                 .GetFloatv(COLOR_CLEAR_VALUE, array.as_mut_ptr());
         }
-        Color::create_rgba(array[0], array[1], array[2], array[3])
+        Color::from_rgba(array[0], array[1], array[2], array[3])
     }
 
     /// Set the viewport. Wrapping windows will probably want to do this
     /// when they detect a resize.
-    pub fn viewport(&mut self, x: i32, y: i32, width: u32, height: u32) {
+    pub fn viewport(&mut self, x: i16, y: i16, width: u16, height: u16) {
         unsafe {
             self.ctx.bindings.Viewport(
-                x as GLint,
-                y as GLint,
-                width as GLsizei,
-                height as GLsizei,
+                x.into(),
+                y.into(),
+                width.into(),
+                height.into(),
+            );
+            self.ctx.mask.configure_for_size(
+                &self.ctx.bindings,
+                width,
+                height,
             );
         }
-        self.ctx.mask.mask_size(&self.ctx.bindings, width, height);
     }
 
     pub fn prepare_draw(
@@ -69,12 +71,9 @@ impl Window {
             self.ctx.bindings.Enable(BLEND);
             self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
         }
-        let mut params = DrawParams::new();
-        params.transform(
-            Mat4::translate(-1.0, -1.0)
-                * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1),
-        );
-        super::DrawContext::new(&mut self.ctx, params, first_pass)
+        let matrix = Mat4::translate(-1.0, -1.0)
+            * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1);
+        super::DrawContext::new(&mut self.ctx, matrix, first_pass)
     }
 
     /// Issue opengl call to clear the screen.
@@ -108,7 +107,7 @@ impl Window {
                 height,
                 RGBA,
                 UNSIGNED_BYTE,
-                buffer.as_mut_ptr() as *mut _,
+                buffer.as_mut_ptr().cast(),
             );
         }
         buffer

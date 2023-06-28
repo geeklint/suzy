@@ -603,7 +603,7 @@ impl SimpleRect {
     }
 }
 
-impl<'a> Rect for SimpleRect {
+impl Rect for SimpleRect {
     fn x(&self) -> Dim {
         self.x
     }
@@ -657,7 +657,7 @@ impl FixedSizeRect {
     }
 }
 
-impl<'a> Rect for FixedSizeRect {
+impl Rect for FixedSizeRect {
     fn x(&self) -> Dim {
         self.x
     }

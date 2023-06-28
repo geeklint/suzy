@@ -1,18 +1,22 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-#![cfg(feature = "platform_opengl")]
+#![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
-use suzy::app::{App, AppBuilder};
-use suzy::dims::{Rect, SimplePadding2d};
-use suzy::graphics::{Color, Conditional};
-use suzy::platforms::opengl::{OpenGlRenderPlatform, SlicedImage};
-use suzy::platforms::TestPlatform;
-use suzy::pointer::{PointerAction, PointerEventData, PointerId};
-use suzy::selectable::{Selectable, SelectionState};
-use suzy::widget::{self, Widget};
-use suzy::widgets::Button;
-use suzy::window::WindowSettings;
+use suzy::{
+    app::{App, AppBuilder},
+    dims::{Rect, SimplePadding2d},
+    graphics::{Color, Conditional},
+    platforms::{
+        opengl::{OpenGlRenderPlatform, SlicedImage},
+        TestPlatform,
+    },
+    pointer::{PointerAction, PointerEventData, PointerId},
+    selectable::{Selectable, SelectionState},
+    widget::{self, Widget},
+    widgets::Button,
+    window::WindowSettings,
+};
 
 #[derive(Default)]
 struct ButtonContent {
@@ -59,7 +63,7 @@ fn button() {
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
             let color =
-                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
+                Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::BLACK);
         }
         app.pointer(PointerEventData {
@@ -72,7 +76,7 @@ fn button() {
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
             let color =
-                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
+                Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::WHITE);
         }
         app.pointer(PointerEventData {
@@ -85,7 +89,7 @@ fn button() {
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
             let color =
-                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
+                Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::BLACK);
         }
     });
