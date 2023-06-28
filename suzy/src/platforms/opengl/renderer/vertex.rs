@@ -52,19 +52,9 @@ impl VertexConfig {
     #[must_use]
     pub fn alpha_base(self, base: f32) -> Self {
         let Self([_, y, z, w]) = self;
-        let magic = 255.0 / 2.0;
+        let magic = 256.0 / 2.0;
         let offset = (-magic * base + magic).clamp(0.0, 255.0).round();
         let x = offset as u8;
-        Self([x, y, z, w])
-    }
-
-    #[must_use]
-    pub fn alpha_base_by_odd(self, odd: bool) -> Self {
-        // can't represent exactly 0.5 in a normalized u8
-        // so we flip between 127 and 128 and let it interpolate
-        // to 0.5 between vertices
-        let Self([_, y, z, w]) = self;
-        let x = if odd { 128 } else { 127 };
         Self([x, y, z, w])
     }
 

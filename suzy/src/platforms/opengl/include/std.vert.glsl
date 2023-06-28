@@ -34,7 +34,12 @@ void main() {
         (srgb_high * srgb_cond) + (srgb_low * (1.0 - srgb_cond)),
         in_color.a
     );
-    pass_config = in_config.xy;
+    highp float alpha_base = in_config.x;
+    alpha_base *= 0.99609375; // (255/256)
+    pass_config = vec2(
+        alpha_base,
+        in_config.y
+    );
     pass_uv = in_uv;
     pass_distance = vec2(dx, dy);
     pass_smoothing = in_smoothing;
