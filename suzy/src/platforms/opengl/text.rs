@@ -27,7 +27,7 @@ mod default_font;
 #[cfg(not(feature = "default_font"))]
 mod default_font {
     #[track_caller]
-    pub fn default_font() -> Rc<font::Font> {
+    pub fn default_font() -> std::rc::Rc<super::font::Font> {
         panic!(
             "invalid font index specified, and no default font is available"
         );

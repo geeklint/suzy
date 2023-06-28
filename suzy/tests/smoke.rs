@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-#![cfg(feature = "platform_opengl")]
+#![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
     app::{App, AppBuilder},
@@ -20,7 +20,7 @@ fn smoke() {
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
             let color =
-                Color::create_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
+                Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
             assert_eq!(color, Color::BLACK);
         }
     });

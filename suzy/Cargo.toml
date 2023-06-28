@@ -13,7 +13,6 @@ license = "Apache-2.0 OR MIT OR Zlib"
 [features]
 default = []
 quickstart = ["platform_sdl", "inline_tweak", "default_font"]
-ci_build = ["platform_osmesa", "inline_tweak", "default_font"]
 
 platform_opengl = []
 platform_osmesa = ["platform_opengl"]

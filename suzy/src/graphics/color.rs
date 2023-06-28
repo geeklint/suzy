@@ -11,9 +11,9 @@ use crate::animation::{Lerp, LerpDistance};
 ///
 /// ```rust
 /// # use suzy::graphics::Color;
-/// let color0 = Color::create_rgb(0.93333334, 0.50980395, 0.93333334);
-/// let color1 = Color::create_rgb8(238, 130, 238);
-/// let color2: Color = "#EE82EE".parse().unwrap();
+/// let color0 = Color::from_rgba(0.1980693, 0.13843162, 0.8549927, 1.0);
+/// let color1 = Color::from_rgba8(123, 104, 238, 255);
+/// let color2: Color = "#7B68EE".parse().unwrap();
 /// assert_eq!(color0, color1);
 /// assert_eq!(color1, color2);
 /// ```
@@ -21,9 +21,9 @@ use crate::animation::{Lerp, LerpDistance};
 /// Colors can be formatted with hex style to get familar results:
 /// ```rust
 /// # use suzy::graphics::Color;
-/// let color = Color::create_rgb8(238, 130, 238);
+/// let color = Color::from_rgba8(70, 130, 180, 255);
 /// let string = format!("{:X}", color);
-/// assert_eq!(string, "#EE82EEFF");
+/// assert_eq!(string, "#4682B4FF");
 /// ```
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color {
