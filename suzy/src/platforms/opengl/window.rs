@@ -46,13 +46,18 @@ impl Window {
 
     /// Set the viewport. Wrapping windows will probably want to do this
     /// when they detect a resize.
-    pub fn viewport(&mut self, x: i32, y: i32, width: u32, height: u32) {
+    pub fn viewport(&mut self, x: i16, y: i16, width: u16, height: u16) {
         unsafe {
             self.ctx.bindings.Viewport(
-                x as GLint,
-                y as GLint,
-                width as GLsizei,
-                height as GLsizei,
+                x.into(),
+                y.into(),
+                width.into(),
+                height.into(),
+            );
+            self.ctx.mask.configure_for_size(
+                &self.ctx.bindings,
+                width,
+                height,
             );
         }
     }

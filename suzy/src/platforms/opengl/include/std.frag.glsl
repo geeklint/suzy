@@ -10,6 +10,8 @@ uniform sampler2D TEX_ID;
 uniform mediump vec2 TEX_SIZE;
 uniform lowp float TEX_SDF;
 uniform mediump float TEX_COLOR_POW;
+uniform sampler2D MASK_ID;
+uniform mediump vec2 MASK_SIZE;
 
 varying lowp vec4 pass_color;
 varying mediump vec2 pass_config;
@@ -28,5 +30,6 @@ void main() {
     sdf_value = sdf_value * pass_smoothing;
     lowp float alpha = clamp(sdf_value, 0.0, 1.0);
     alpha *= pass_color.a;
+    alpha *= texture2D(MASK_ID, gl_FragCoord.xy / MASK_SIZE).a;
     gl_FragColor = vec4(tex_color.rgb * pass_color.rgb, alpha);
 }

@@ -22,7 +22,7 @@ struct PixelInfo {
     display_index: i32,
     pixels_per_dp: f32,
     dp_per_screen_unit: f32,
-    pixel_size: (u32, u32),
+    pixel_size: (u16, u16),
     screen_size: (u32, u32),
     size: (f32, f32),
 }
@@ -39,17 +39,23 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
         let dpi = (hdpi + vdpi) / 2.0;
         let pixels_per_dp = dpi / crate::units::DPI;
         let screen_size = window.size();
-        let pixel_size = window.drawable_size();
-        let x_px_per_su = (pixel_size.0 as f32) / (screen_size.0 as f32);
-        let y_px_per_su = (pixel_size.1 as f32) / (screen_size.1 as f32);
+        let (px_width, px_height) = window.drawable_size();
+        let px_width: u16 = px_width
+            .try_into()
+            .expect("window sizes of 2^16 and greater are not supported");
+        let px_height: u16 = px_height
+            .try_into()
+            .expect("window sizes of 2^16 and greater are not supported");
+        let x_px_per_su = f32::from(px_width) / (screen_size.0 as f32);
+        let y_px_per_su = f32::from(px_height) / (screen_size.1 as f32);
         let px_per_su = (x_px_per_su + y_px_per_su) / 2.0;
-        let width = (pixel_size.0 as f32) / pixels_per_dp;
-        let height = (pixel_size.1 as f32) / pixels_per_dp;
+        let width = f32::from(px_width);
+        let height = f32::from(px_height);
         Ok(Self {
             display_index,
             pixels_per_dp,
             dp_per_screen_unit: 1.0 / (pixels_per_dp * px_per_su),
-            pixel_size,
+            pixel_size: (px_width, px_height),
             screen_size,
             size: (width, height),
         })

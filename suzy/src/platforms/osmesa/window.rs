@@ -100,8 +100,7 @@ impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
     fn normalize_pointer_event(&self, _event: &mut PointerEventData) {}
 
     fn recalculate_viewport(&mut self) {
-        self.gl_win
-            .viewport(0, 0, self.size.0.into(), self.size.1.into());
+        self.gl_win.viewport(0, 0, self.size.0, self.size.1);
     }
 
     fn flip(&mut self) {

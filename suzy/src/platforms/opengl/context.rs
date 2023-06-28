@@ -5,7 +5,7 @@
 
 use std::rc::Rc;
 
-use super::{stdshaders::Shaders, texture::TextureCache};
+use super::{mask::Mask, stdshaders::Shaders, texture::TextureCache};
 
 pub const DEBUG: bool = option_env!("SUZY_GL_DEBUG").is_some();
 
@@ -28,6 +28,7 @@ pub struct OpenGlContext {
     pub(super) bindings: Rc<OpenGlBindings>,
     pub(super) shaders: Shaders,
     pub(super) texture_cache: TextureCache,
+    pub(super) mask: Mask,
     pub(super) buffers: Vec<bindings::types::GLuint>,
 }
 
@@ -47,10 +48,12 @@ impl OpenGlContext {
             }
         }
         let shaders = Shaders::new(&ptr).expect("Failed to compile shaders");
+        let mask = Mask::new(&ptr);
         Self {
             bindings: ptr,
             shaders,
             texture_cache: TextureCache::default(),
+            mask,
             buffers: Vec::new(),
         }
     }

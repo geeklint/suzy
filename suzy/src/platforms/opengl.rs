@@ -11,6 +11,7 @@ mod texture;
 
 mod context;
 mod graphics;
+mod mask;
 mod matrix;
 pub mod renderer;
 mod shader;
