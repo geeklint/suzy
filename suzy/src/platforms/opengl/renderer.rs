@@ -32,15 +32,15 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
 
     let want_buffers =
         u16::try_from(2 * batches.batches.len()).unwrap_or(u16::MAX);
-    let existing_buffers = ctx.buffers.len();
-    if usize::from(want_buffers) > existing_buffers {
-        let new_buffers = usize::from(want_buffers) - existing_buffers;
-        ctx.buffers.append(&mut vec![0; new_buffers]);
+    let existing_buffers =
+        u16::try_from(ctx.buffers.len()).unwrap_or(want_buffers);
+    if want_buffers > existing_buffers {
+        let new_buffers = want_buffers - existing_buffers;
+        ctx.buffers.append(&mut vec![0; usize::from(new_buffers)]);
+        let tail = &mut ctx.buffers[usize::from(existing_buffers)..];
         unsafe {
-            ctx.bindings.GenBuffers(
-                want_buffers.into(),
-                ctx.buffers[existing_buffers..].as_mut_ptr(),
-            );
+            ctx.bindings
+                .GenBuffers(new_buffers.into(), tail.as_mut_ptr());
         }
     }
 
