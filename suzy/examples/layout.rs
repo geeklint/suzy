@@ -21,16 +21,13 @@ impl widget::Content for Root {
             this.two.content_mut().set_text("Two");
             this.three.content_mut().set_text("Three");
         });
-        desc.child(|this| &mut this.one);
-        desc.child(|this| &mut this.two);
-        desc.child(|this| &mut this.three);
         desc.create_layout_group()
             .stack_right()
             .start_at(|this| this.left())
             .spacing(|_| 10.0)
-            .push(|this| &mut this.one)
-            .push(|this| &mut this.two)
-            .push(|this| &mut this.three);
+            .push_new_child(|this| &mut this.one)
+            .push_new_child(|this| &mut this.two)
+            .push_new_child(|this| &mut this.three);
     }
 }
 
