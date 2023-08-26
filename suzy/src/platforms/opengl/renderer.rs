@@ -57,7 +57,11 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
         ctx.mask.height,
     );
 
-    let Some((solid_color_tex_id, _)) = ctx.texture_cache.lookup(&Texture::solid_color().id()) else { return };
+    let Some((solid_color_tex_id, _)) =
+        ctx.texture_cache.lookup(&Texture::solid_color().id())
+    else {
+        return;
+    };
     let mut main_fbo = None;
 
     let mut main_clear_color = [0f32; 4];
@@ -69,7 +73,11 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
 
     let mut buffer_index: u16 = 0;
     for batch in batches.batches {
-        let Some((tex_id, tex_size)) = ctx.texture_cache.lookup(&batch.texture) else { continue };
+        let Some((tex_id, tex_size)) =
+            ctx.texture_cache.lookup(&batch.texture)
+        else {
+            continue;
+        };
         let tex_id_for_mask_uniform = match batch.masking {
             BatchMasking::Masked => ctx.mask.texture,
             _ => solid_color_tex_id,
