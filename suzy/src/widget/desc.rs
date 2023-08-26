@@ -50,7 +50,7 @@ with_default_render_platform! {
 
         /// Create a layout group which a provides a shorthand for organizing
         /// widgets in common configurations.
-        fn create_layout_group(&mut self) -> layout::LayoutTypes<'_, Self, T>
+        fn create_layout_group(&mut self) -> layout::LayoutTypes<'_, Self>
         where
             Self: Sized,
         {

@@ -35,20 +35,18 @@
 //!     }
 //! }
 
-use std::marker::PhantomData;
-
 use crate::dims::Rect;
 
 use super::WidgetRect;
 
 /// A combined reference to a widget's content and it's Rect, which is passed
 /// to the closures used to customize layouts.
-pub struct ContentRef<'a, T: ?Sized> {
-    content: &'a mut T,
-    rect: &'a mut WidgetRect,
+pub struct ContentWithRect<'a, T: ?Sized> {
+    content: &'a T,
+    rect: &'a WidgetRect,
 }
 
-impl<'a, T: ?Sized> std::ops::Deref for ContentRef<'a, T> {
+impl<'a, T: ?Sized> std::ops::Deref for ContentWithRect<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -56,13 +54,7 @@ impl<'a, T: ?Sized> std::ops::Deref for ContentRef<'a, T> {
     }
 }
 
-impl<'a, T: ?Sized> std::ops::DerefMut for ContentRef<'a, T> {
-    fn deref_mut(&mut self) -> &mut T {
-        self.content
-    }
-}
-
-impl<'a, T: ?Sized> Rect for ContentRef<'a, T> {
+impl<'a, T: ?Sized> Rect for ContentWithRect<'a, T> {
     fn x(&self) -> crate::dims::Dim {
         self.rect.x()
     }
@@ -70,25 +62,34 @@ impl<'a, T: ?Sized> Rect for ContentRef<'a, T> {
         self.rect.y()
     }
 
-    fn x_mut<F, R>(&mut self, f: F) -> R
+    fn x_mut<F, R>(&mut self, _: F) -> R
     where
         F: FnOnce(&mut crate::dims::Dim) -> R,
     {
-        self.rect.x_mut(f)
+        unreachable!("shouldn't ever have a &mut")
     }
 
-    fn y_mut<F, R>(&mut self, f: F) -> R
+    fn y_mut<F, R>(&mut self, _: F) -> R
     where
         F: FnOnce(&mut crate::dims::Dim) -> R,
     {
-        self.rect.y_mut(f)
+        unreachable!("shouldn't ever have a &mut")
     }
 }
 
 /// A trait representing the current values calculated by a layout.
-pub trait LayoutValue<T: ?Sized>: 'static {
+pub trait Value<T: ?Sized>: 'static + Clone {
     /// Get the current calculated value.
-    fn value(&self, content: &mut T, rect: &mut WidgetRect) -> f32;
+    fn value(&self, content: &mut T, rect: &WidgetRect) -> f32;
+}
+
+impl<Content> Value<Content> for f32
+where
+    Content: ?Sized,
+{
+    fn value(&self, _content: &mut Content, _rect: &WidgetRect) -> f32 {
+        *self
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -96,135 +97,67 @@ struct ValueImpl<F> {
     f: F,
 }
 
-impl ValueImpl<()> {
-    fn zero<T: ?Sized>() -> impl Clone + LayoutValue<T> {
-        #[derive(Clone, Copy, Debug, Default)]
-        struct Zero;
-
-        impl<T: ?Sized> LayoutValue<T> for ValueImpl<Zero> {
-            fn value(&self, _content: &mut T, _rect: &mut WidgetRect) -> f32 {
-                0.0
-            }
-        }
-        ValueImpl { f: Zero }
-    }
-}
-
-impl<F, T> LayoutValue<T> for ValueImpl<F>
+impl<F, Content> Value<Content> for ValueImpl<F>
 where
-    T: ?Sized,
-    F: 'static + Fn(&mut ContentRef<'_, T>) -> f32,
+    Content: ?Sized,
+    F: 'static + Clone + Fn(&ContentWithRect<'_, Content>) -> f32,
 {
-    fn value(&self, content: &mut T, rect: &mut WidgetRect) -> f32 {
-        (self.f)(&mut ContentRef { content, rect })
+    fn value(&self, content: &mut Content, rect: &WidgetRect) -> f32 {
+        (self.f)(&ContentWithRect { content, rect })
     }
 }
 
 /// The base type returned from WidgetInit::create_layout_group, used to
 /// create a variety of types of layouts.
 #[derive(Debug)]
-pub struct LayoutTypes<'a, Desc, T>
-where
-    T: ?Sized,
-{
+pub struct LayoutTypes<'a, Desc> {
     desc: &'a mut Desc,
-    _types: PhantomData<&'a T>,
 }
 
-impl<'a, Desc, T> LayoutTypes<'a, Desc, T>
-where
-    T: ?Sized,
-{
+impl<'a, Desc> LayoutTypes<'a, Desc> {
     pub(super) fn new(desc: &'a mut Desc) -> Self {
-        LayoutTypes {
-            desc,
-            _types: PhantomData,
-        }
+        LayoutTypes { desc }
     }
 
-    fn stack<D>(
-        self,
-    ) -> StackLayout<
-        'a,
-        D,
-        Desc,
-        T,
-        impl Clone + LayoutValue<T>,
-        impl LayoutValue<T>,
-    > {
-        let spacing = ValueImpl::zero();
-        let prev = ValueImpl::zero();
-        StackLayout {
+    fn stack<Dir>(self) -> Stack<'a, Dir, Desc, f32, f32>
+    where
+        Dir: Default,
+    {
+        Stack {
             desc: self.desc,
-            spacing,
-            prev,
-            _types: PhantomData,
+            spacing: 0.0,
+            cursor: 0.0,
+            dir: Dir::default(),
         }
     }
 
     /// Create a layout which arranges elements vertically, putting each
     /// element above the previous one.
-    pub fn stack_up(
-        self,
-    ) -> StackLayout<
-        'a,
-        Up,
-        Desc,
-        T,
-        impl Clone + LayoutValue<T>,
-        impl LayoutValue<T>,
-    > {
+    pub fn stack_up(self) -> Stack<'a, Up, Desc, f32, f32> {
         self.stack()
     }
 
     /// Create a layout which arranges elements vertically, putting each
     /// element below the previous one.
-    pub fn stack_down(
-        self,
-    ) -> StackLayout<
-        'a,
-        Down,
-        Desc,
-        T,
-        impl Clone + LayoutValue<T>,
-        impl LayoutValue<T>,
-    > {
+    pub fn stack_down(self) -> Stack<'a, Down, Desc, f32, f32> {
         self.stack()
     }
 
     /// Create a layout which arranges elements horizontally, putting each
     /// element to the left of the previous one.
-    pub fn stack_left(
-        self,
-    ) -> StackLayout<
-        'a,
-        Left,
-        Desc,
-        T,
-        impl Clone + LayoutValue<T>,
-        impl LayoutValue<T>,
-    > {
+    pub fn stack_left(self) -> Stack<'a, Left, Desc, f32, f32> {
         self.stack()
     }
 
     /// Create a layout which arranges elements horizontally, putting each
     /// element to the right of the previous one.
-    pub fn stack_right(
-        self,
-    ) -> StackLayout<
-        'a,
-        Right,
-        Desc,
-        T,
-        impl Clone + LayoutValue<T>,
-        impl LayoutValue<T>,
-    > {
+    pub fn stack_right(self) -> Stack<'a, Right, Desc, f32, f32> {
         self.stack()
     }
 }
 
-/// A trait representing a direction for a stack layout.
-pub trait StackLayoutDirection {
+/// A trait representing the direction items can be layed out.
+pub trait Direction: 'static + Copy {
     /// The sign of the direction.
     fn sign(value: f32) -> f32;
 
@@ -240,7 +173,7 @@ pub trait StackLayoutDirection {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Up;
 
-impl StackLayoutDirection for Up {
+impl Direction for Up {
     fn sign(value: f32) -> f32 {
         value
     }
@@ -259,7 +192,7 @@ impl StackLayoutDirection for Up {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Down;
 
-impl StackLayoutDirection for Down {
+impl Direction for Down {
     fn sign(value: f32) -> f32 {
         -value
     }
@@ -278,7 +211,7 @@ impl StackLayoutDirection for Down {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Left;
 
-impl StackLayoutDirection for Left {
+impl Direction for Left {
     fn sign(value: f32) -> f32 {
         -value
     }
@@ -297,7 +230,7 @@ impl StackLayoutDirection for Left {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Right;
 
-impl StackLayoutDirection for Right {
+impl Direction for Right {
     fn sign(value: f32) -> f32 {
         value
     }
@@ -315,121 +248,117 @@ impl StackLayoutDirection for Right {
 ///
 /// This layout does not control the size of elements.
 #[derive(Debug)]
-pub struct StackLayout<'a, Direction, Desc, Content: ?Sized, Spacing, Value> {
+pub struct Stack<'a, Dir, Desc, Spacing, Cursor> {
     desc: &'a mut Desc,
     spacing: Spacing,
-    prev: Value,
-    _types: PhantomData<(&'a Content, Direction)>,
+    cursor: Cursor,
+    dir: Dir,
 }
 
-impl<'a, Direction, Desc, Content, Spacing, Value>
-    StackLayout<'a, Direction, Desc, Content, Spacing, Value>
-where
-    Content: ?Sized,
-{
+impl<'a, Dir, Desc, Spacing, Cursor> Stack<'a, Dir, Desc, Spacing, Cursor> {
     /// Specify the position the layout stack should start from.
-    pub fn start_at<F>(
+    pub fn start_at<Content, Platform, F>(
         self,
-        f: F,
-    ) -> StackLayout<
-        'a,
-        Direction,
-        Desc,
-        Content,
-        Spacing,
-        impl LayoutValue<Content>,
-    >
+        value: F,
+    ) -> Stack<'a, Dir, Desc, Spacing, impl Value<Content>>
     where
-        F: 'static + Fn(&mut ContentRef<'_, Content>) -> f32,
+        Desc: super::Desc<Content, Platform>,
+        Content: ?Sized,
+        F: 'static + Clone + Fn(&ContentWithRect<'_, Content>) -> f32,
     {
-        let prev = ValueImpl { f };
-        StackLayout {
+        Stack {
             spacing: self.spacing,
             desc: self.desc,
-            prev,
-            _types: PhantomData,
+            cursor: ValueImpl { f: value },
+            dir: self.dir,
         }
     }
 
     /// Specify the spacing between elements in the layout group.
-    pub fn spacing<F>(
+    pub fn spacing<Content, F>(
         self,
-        f: F,
-    ) -> StackLayout<
-        'a,
-        Direction,
-        Desc,
-        Content,
-        impl Clone + LayoutValue<Content>,
-        Value,
-    >
+        value: F,
+    ) -> Stack<'a, Dir, Desc, impl Value<Content>, Cursor>
     where
-        F: 'static + Clone + Fn(&mut ContentRef<'_, Content>) -> f32,
+        Content: ?Sized,
+        F: 'static + Clone + Fn(&ContentWithRect<'_, Content>) -> f32,
     {
-        let spacing = ValueImpl { f };
-        StackLayout {
-            spacing,
+        Stack {
+            spacing: ValueImpl { f: value },
             desc: self.desc,
-            prev: self.prev,
-            _types: PhantomData,
+            cursor: self.cursor,
+            dir: self.dir,
         }
     }
-}
 
-impl<'a, Direction, Desc, Content, Spacing, Value>
-    StackLayout<'a, Direction, Desc, Content, Spacing, Value>
-where
-    Direction: StackLayoutDirection,
-    Content: ?Sized,
-    Spacing: Clone + LayoutValue<Content>,
-    Value: LayoutValue<Content>,
-{
     /// Add a rectangle to the layout group.
-    pub fn push<F, R, Platform>(
+    pub fn push<F, R, Content, Platform>(
         self,
-        f: F,
-    ) -> StackLayout<
-        'a,
-        Direction,
-        Desc,
-        Content,
-        Spacing,
-        impl LayoutValue<Content>,
-    >
+        item: F,
+    ) -> Stack<'a, Dir, Desc, Spacing, impl Value<Content>>
     where
+        Dir: Direction,
         Desc: super::Desc<Content, Platform>,
-        F: 'static
-            + Copy
-            + for<'b> Fn(&'b mut ContentRef<'_, Content>) -> &'b mut R,
+        Spacing: Clone + Value<Content>,
+        Cursor: Value<Content>,
+        Content: ?Sized,
+        F: 'static + Copy + for<'b> Fn(&'b mut Content) -> &'b mut R,
         R: Rect,
     {
         let Self {
             spacing,
             desc,
-            prev,
-            ..
+            cursor,
+            dir,
         } = self;
         let spacing_clone = spacing.clone();
         desc.watch(move |content, rect| {
-            let start = prev.value(content, rect);
-            let mut cr = ContentRef { content, rect };
-            let rect = f(&mut cr);
-            Direction::set_start(rect, start);
+            let start = cursor.value(content, rect);
+            let rect = item(content);
+            Dir::set_start(rect, start);
         });
-        let prev = ValueImpl {
-            f: move |content: &mut ContentRef<'_, Content>| -> f32 {
-                let spacing =
-                    spacing_clone.value(content.content, content.rect);
-                let spacing = Direction::sign(spacing);
-                let rect = f(content);
-                Direction::get_end(rect) + spacing
-            },
-        };
-        StackLayout {
+
+        #[derive(Clone)]
+        struct NewCursor<Spacing, Dir, End> {
+            spacing: Spacing,
+            _dir: Dir,
+            end: End,
+        }
+        impl<Content, Spacing, Dir, End> Value<Content>
+            for NewCursor<Spacing, Dir, End>
+        where
+            Content: ?Sized,
+            Spacing: Value<Content>,
+            Dir: Direction,
+            End: 'static + Copy + Fn(&mut Content) -> f32,
+        {
+            fn value(&self, content: &mut Content, rect: &WidgetRect) -> f32 {
+                let spacing = self.spacing.value(content, rect);
+                let spacing = Dir::sign(spacing);
+                (self.end)(content) + spacing
+            }
+        }
+
+        fn end<Content, F>(f: F) -> F
+        where
+            Content: ?Sized,
+            F: 'static + Copy + Fn(&mut Content) -> f32,
+        {
+            f
+        }
+
+        Stack {
             spacing,
             desc,
-            prev,
-            _types: PhantomData,
+            cursor: NewCursor {
+                spacing: spacing_clone,
+                _dir: dir,
+                end: end::<Content, _>(move |content| {
+                    let rect = item(content);
+                    Dir::get_end(rect)
+                }),
+            },
+            dir,
         }
     }
 }
