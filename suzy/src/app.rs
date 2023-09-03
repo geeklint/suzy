@@ -9,7 +9,7 @@
 use std::{cell::RefCell, rc::Rc, time};
 
 use crate::{
-    dims::{Dim, Rect, SimplePadding2d, SimpleRect},
+    dims::{Dim, Padding2d, Rect, SimpleRect},
     graphics::PlatformDrawContext,
     platform::{Event, EventLoopState, Platform},
     pointer::{PointerEvent, PointerEventData},
@@ -119,7 +119,7 @@ impl<P: Platform> App<P> {
     {
         let (width, height) = self.window.size();
         let rect = SimpleRect::with_size(width, height);
-        widget.set_fill(&rect, &SimplePadding2d::zero());
+        widget.set_fill(&rect, &Padding2d::zero());
         let holder = Rc::new(RefCell::new(widget));
         let watcher = Rc::downgrade(&holder);
         self.roots.push(holder);
@@ -176,8 +176,7 @@ impl<P: Platform> App<P> {
                 let ydim = Dim::with_length(y);
                 let rect = SimpleRect::new(xdim, ydim);
                 for root in self.roots.iter_mut() {
-                    root.borrow_mut()
-                        .set_fill(&rect, &SimplePadding2d::zero());
+                    root.borrow_mut().set_fill(&rect, &Padding2d::zero());
                 }
                 self.window.recalculate_viewport();
             }

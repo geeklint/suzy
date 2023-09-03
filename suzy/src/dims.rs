@@ -44,70 +44,14 @@ impl Padding {
     }
 }
 
-/// Methods associated with retrieving and changing values of two dimensions
-/// of padding.
-pub trait Padding2d {
-    /// Get the padding on the left and right
-    fn x(&self) -> Padding;
-
-    /// Get the padding on the bottom and top
-    fn y(&self) -> Padding;
-
-    /// Get mutable reference to padding on left and right
-    fn x_mut(&mut self) -> &mut Padding;
-
-    /// Get mutable reference to padding on bottom and top
-    fn y_mut(&mut self) -> &mut Padding;
-
-    /// Get the amount of top padding
-    fn top(&self) -> f32 {
-        self.y().after
-    }
-
-    /// Set the amount of top padding
-    fn set_top(&mut self, amount: f32) {
-        self.y_mut().after = amount
-    }
-
-    /// Get the amount of right padding
-    fn right(&self) -> f32 {
-        self.x().after
-    }
-
-    /// Set the amount of right padding
-    fn set_right(&mut self, amount: f32) {
-        self.x_mut().after = amount
-    }
-
-    /// Get the amount of bottom padding
-    fn bottom(&self) -> f32 {
-        self.y().before
-    }
-
-    /// Set the amount of bottom padding
-    fn set_bottom(&mut self, amount: f32) {
-        self.y_mut().before = amount
-    }
-
-    /// Get the amount of left padding
-    fn left(&self) -> f32 {
-        self.x().before
-    }
-
-    /// Set the amount of left padding
-    fn set_left(&mut self, amount: f32) {
-        self.x_mut().before = amount
-    }
-}
-
 /// Representation of two dimensions of padding
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
-pub struct SimplePadding2d {
-    x: Padding,
-    y: Padding,
+pub struct Padding2d {
+    pub x: Padding,
+    pub y: Padding,
 }
 
-impl SimplePadding2d {
+impl Padding2d {
     /// Create a new 2D padding with the specified values.
     pub fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self {
         Self {
@@ -143,29 +87,37 @@ impl SimplePadding2d {
     pub fn windowbox(y: f32, x: f32) -> Self {
         Self::new(y, x, y, x)
     }
-}
 
-impl Padding2d for SimplePadding2d {
-    fn x(&self) -> Padding {
-        self.x
+    pub fn top(&self) -> f32 {
+        self.y.after
     }
-    fn y(&self) -> Padding {
-        self.y
-    }
-    fn x_mut(&mut self) -> &mut Padding {
-        &mut self.x
-    }
-    fn y_mut(&mut self) -> &mut Padding {
-        &mut self.y
-    }
-}
 
-impl<P: Padding2d> From<&P> for SimplePadding2d {
-    fn from(padding: &P) -> Self {
-        Self {
-            x: padding.x(),
-            y: padding.y(),
-        }
+    pub fn set_top(&mut self, amount: f32) {
+        self.y.after = amount
+    }
+
+    pub fn right(&self) -> f32 {
+        self.x.after
+    }
+
+    pub fn set_right(&mut self, amount: f32) {
+        self.x.after = amount
+    }
+
+    pub fn bottom(&self) -> f32 {
+        self.y.before
+    }
+
+    pub fn set_bottom(&mut self, amount: f32) {
+        self.y.before = amount
+    }
+
+    pub fn left(&self) -> f32 {
+        self.x.before
+    }
+
+    pub fn set_left(&mut self, amount: f32) {
+        self.x.before = amount
     }
 }
 
@@ -531,13 +483,12 @@ pub trait Rect {
 
     /// Calculate the size and position of this rect based on another rect
     /// and some padding
-    fn set_fill<R, P>(&mut self, other: &R, padding: &P)
+    fn set_fill<R>(&mut self, other: &R, padding: &Padding2d)
     where
         R: Rect + ?Sized,
-        P: Padding2d + ?Sized,
     {
-        self.x_mut(|x| x.set_fill(other.x(), padding.x()));
-        self.y_mut(|y| y.set_fill(other.y(), padding.y()));
+        self.x_mut(|x| x.set_fill(other.x(), padding.x));
+        self.y_mut(|y| y.set_fill(other.y(), padding.y));
     }
 
     /// Shink one of the lengths of this rect so that the rect's aspect ratio

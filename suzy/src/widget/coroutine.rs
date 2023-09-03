@@ -104,7 +104,7 @@ impl<T> Default for State<T> {
 /// frames.
 ///
 /// ```rust,no_run
-/// # use suzy::dims::{Rect, SimplePadding2d};
+/// # use suzy::dims::Rect;
 /// # use suzy::widget::{self, *};
 /// # use suzy::widgets::Button;
 /// struct Root {

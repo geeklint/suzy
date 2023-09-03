@@ -4,7 +4,7 @@
 use std::convert::TryInto;
 
 use crate::{
-    dims::{Dim, Padding2d, Rect, SimplePadding2d, SimpleRect},
+    dims::{Dim, Padding2d, Rect, SimpleRect},
     graphics::{Color, CornerStyle, DrawContext, Graphic},
     platforms::opengl,
 };
@@ -50,7 +50,7 @@ static SLICED_INDICES: [u8; 18 * 3] = [
 /// See the [Wikipedia article](https://en.wikipedia.org/wiki/9-slice_scaling)
 /// on 9-slice scaling for more information.
 pub struct SlicedImage {
-    pub padding: SimplePadding2d,
+    pub padding: Padding2d,
     pub texture: Texture,
     color: Color,
     corners: CornerStyle,
@@ -60,7 +60,7 @@ pub struct SlicedImage {
 impl Default for SlicedImage {
     fn default() -> Self {
         Self {
-            padding: SimplePadding2d::default(),
+            padding: Padding2d::default(),
             texture: Texture::default(),
             color: Color::WHITE,
             corners: CornerStyle::NotRounded,
@@ -81,8 +81,8 @@ impl crate::platform::graphics::SlicedImage for SlicedImage {
         self.color = color;
     }
 
-    fn set_slice_padding(&mut self, padding: impl Padding2d) {
-        self.padding = (&padding).into();
+    fn set_slice_padding(&mut self, padding: Padding2d) {
+        self.padding = padding;
     }
 
     fn set_corners(&mut self, style: CornerStyle) {

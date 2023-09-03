@@ -228,14 +228,14 @@ where
 {
     fn desc(mut desc: impl widget::Desc<Self, P>) {
         use crate::{
-            dims::{Rect, SimplePadding2d},
+            dims::{Padding2d, Rect},
             graphics::CornerStyle,
             platform::graphics::{SlicedImage, Text},
             text,
         };
 
         desc.watch(|this, rect| {
-            this.image.set_fill(&rect, &SimplePadding2d::zero());
+            this.image.set_fill(&rect, &Padding2d::zero());
         });
         desc.watch(|this, rect| {
             this.text_graphic.set_layout(text::Layout {
@@ -261,7 +261,7 @@ where
         });
         desc.watch(|this, _rect| this.image.set_color(Color::ALICE_BLUE));
         desc.watch(|this, _rect| {
-            this.image.set_slice_padding(SimplePadding2d::uniform(6.0));
+            this.image.set_slice_padding(Padding2d::uniform(6.0));
             this.image.set_corners(CornerStyle::Rounded);
         });
         desc.graphic(|this| &mut this.image);

@@ -4,7 +4,7 @@
 use std::rc::Rc;
 
 use suzy::{
-    dims::{Rect, SimplePadding2d},
+    dims::{Padding2d, Rect},
     platforms::opengl::{
         self, PopulateTexture, PopulateTextureUtil, SlicedImage, Texture,
     },
@@ -30,11 +30,11 @@ impl widget::Content for ImageViewer {
     fn desc(mut desc: impl widget::Desc<Self>) {
         desc.watch(|this, _rect| {
             this.image.texture = Texture::new(Rc::new(Populator));
-            this.image.padding = SimplePadding2d::zero();
+            this.image.padding = Padding2d::zero();
         });
         desc.watch(|this, rect| {
             // fill the screen with the image
-            this.image.set_fill(&rect, &SimplePadding2d::zero());
+            this.image.set_fill(&rect, &Padding2d::zero());
             // but shrink it so it stays the same aspect ratio
             this.image.shrink_to_aspect(IMAGE_ASPECT);
         });

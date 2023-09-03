@@ -192,7 +192,7 @@ impl graphics::SlicedImage for Graphic {
         unreachable!()
     }
 
-    fn set_slice_padding(&mut self, _padding: impl crate::dims::Padding2d) {
+    fn set_slice_padding(&mut self, _padding: crate::dims::Padding2d) {
         unreachable!()
     }
 

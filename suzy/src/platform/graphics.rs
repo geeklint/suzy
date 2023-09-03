@@ -13,7 +13,7 @@ use crate::{
 /// A platform's 9-slice image graphic primitive.
 pub trait SlicedImage {
     fn set_color(&mut self, color: Color);
-    fn set_slice_padding(&mut self, padding: impl Padding2d);
+    fn set_slice_padding(&mut self, padding: Padding2d);
     fn set_corners(&mut self, style: CornerStyle);
 }
 

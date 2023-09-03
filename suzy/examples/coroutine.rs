@@ -2,7 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use suzy::{
-    dims::{Rect, SimplePadding2d},
+    dims::{Padding2d, Rect},
     widget::{self, Coroutine, RunAsApp},
     widgets::Button,
 };
@@ -16,7 +16,7 @@ struct Root {
 impl widget::Content for Root {
     fn desc(mut desc: impl widget::Desc<Self>) {
         desc.watch(|this, rect| {
-            this.button.set_fill(&rect, &SimplePadding2d::uniform(20.0));
+            this.button.set_fill(&rect, &Padding2d::uniform(20.0));
         });
         desc.watch(|this, _rect| {
             let Self { button, coroutine } = this;

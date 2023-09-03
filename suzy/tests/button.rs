@@ -5,7 +5,7 @@
 
 use suzy::{
     app::{App, AppBuilder},
-    dims::{Rect, SimplePadding2d},
+    dims::{Padding2d, Rect},
     graphics::{Color, Conditional},
     platforms::{
         opengl::{OpenGlRenderPlatform, SlicedImage},
@@ -32,7 +32,7 @@ impl Selectable for ButtonContent {
 impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         desc.watch(|this, rect| {
-            this.image.graphic.set_fill(&rect, &SimplePadding2d::zero());
+            this.image.graphic.set_fill(&rect, &Padding2d::zero());
         });
         desc.graphic(|this| &mut this.image);
     }
@@ -46,7 +46,7 @@ struct Root {
 impl widget::Content<OpenGlRenderPlatform> for Root {
     fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         desc.watch(|root, rect| {
-            root.button.set_fill(rect, &SimplePadding2d::zero());
+            root.button.set_fill(rect, &Padding2d::zero());
         });
         desc.child(|this| &mut this.button);
     }

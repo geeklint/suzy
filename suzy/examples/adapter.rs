@@ -3,7 +3,7 @@
 
 use suzy::{
     adapter::{Adaptable, DownwardVecAdapter},
-    dims::{Rect, SimplePadding2d},
+    dims::{Padding2d, Rect},
     graphics::Color,
     platform::graphics::{Text as _TextTrait, TextStyle},
     platforms::opengl::Text,
@@ -69,7 +69,7 @@ impl widget::Content for AdapterExample {
             this.layout.data_mut().extend(WORDS.split_whitespace());
         });
         desc.watch(|this, rect| {
-            this.layout.set_fill(&rect, &SimplePadding2d::zero());
+            this.layout.set_fill(&rect, &Padding2d::zero());
         });
         desc.child(|this| &mut this.layout);
     }

@@ -5,7 +5,7 @@
 
 use suzy::{
     app::{App, AppBuilder},
-    dims::{Padding, Rect, SimplePadding2d},
+    dims::{Padding, Padding2d, Rect},
     graphics::Color,
     platforms::{
         opengl::{Mask, OpenGlRenderPlatform, SlicedImage},
@@ -32,7 +32,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
             root.mask.graphic.set_top(rect.top());
         });
         desc.watch(|root, rect| {
-            root.image.set_fill(&rect, &SimplePadding2d::zero());
+            root.image.set_fill(&rect, &Padding2d::zero());
         });
         desc.graphic(|this| &mut this.mask);
         desc.graphic(|this| &mut this.image);
