@@ -4,7 +4,7 @@
 use std::convert::TryInto;
 
 use crate::{
-    dims::{Dim, Padding2d, Rect, SimpleRect},
+    dims::{Padding2d, Rect, SimpleRect},
     graphics::{Color, CornerStyle, DrawContext, Graphic},
     platforms::opengl,
 };
@@ -74,6 +74,26 @@ impl SlicedImage {
     pub fn new() -> Self {
         Self::default()
     }
+
+    fn proxy_rect<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&SimpleRect) -> R,
+    {
+        f(&self.rect)
+    }
+
+    fn proxy_rect_mut<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut SimpleRect) -> R,
+    {
+        f(&mut self.rect)
+    }
+}
+
+impl Rect for SlicedImage {
+    crate::dims::proxy_rect_impl! {
+        Self::proxy_rect; Self::proxy_rect_mut
+    }
 }
 
 impl crate::platform::graphics::SlicedImage for SlicedImage {
@@ -87,29 +107,6 @@ impl crate::platform::graphics::SlicedImage for SlicedImage {
 
     fn set_corners(&mut self, style: CornerStyle) {
         self.corners = style;
-    }
-}
-
-impl Rect for SlicedImage {
-    fn x(&self) -> Dim {
-        self.rect.x()
-    }
-    fn y(&self) -> Dim {
-        self.rect.y()
-    }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        self.rect.x_mut(f)
-    }
-
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        self.rect.y_mut(f)
     }
 }
 

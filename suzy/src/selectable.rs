@@ -368,7 +368,7 @@ mod extra_impls {
         graphics::{DrawContext, Graphic},
         platform::RenderPlatform,
         pointer::PointerEvent,
-        widget::{self, WidgetExtra},
+        widget::{self, WidgetRect},
     };
 
     impl<T, P> widget::Content<P> for SelectableIgnored<T>
@@ -379,20 +379,16 @@ mod extra_impls {
             desc.bare_child(|this| &mut this.data);
         }
 
-        fn hittest(
-            &self,
-            extra: &mut WidgetExtra<'_>,
-            point: (f32, f32),
-        ) -> bool {
-            self.data.hittest(extra, point)
+        fn hittest(&self, rect: &WidgetRect, point: (f32, f32)) -> bool {
+            self.data.hittest(rect, point)
         }
 
         fn pointer_event(
             &mut self,
-            extra: &mut WidgetExtra<'_>,
+            rect: &WidgetRect,
             event: &mut PointerEvent<'_>,
         ) -> bool {
-            self.data.pointer_event(extra, event)
+            self.data.pointer_event(rect, event)
         }
     }
 

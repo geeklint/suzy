@@ -23,14 +23,14 @@ with_default_render_platform! {
         /// [watch](../watch/index.html) module for more information.
         fn watch<F>(&mut self, func: F)
         where
-            F: 'static + Fn(&mut T, &mut WidgetRect);
+            F: 'static + Fn(&mut T, &WidgetRect);
 
         fn watch_explicit<F>(&mut self, func: F)
         where
             F: 'static
                 + Fn(
                     &mut T,
-                    &mut WidgetRect,
+                    &WidgetRect,
                     &AppState,
                     WatchArg<'_, 'static, DefaultOwner>,
                 );

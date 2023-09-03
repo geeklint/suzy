@@ -8,7 +8,7 @@ use crate::{
     platform::RenderPlatform,
     pointer::{PointerAction, PointerEvent, PointerId},
     selectable::{Selectable, SelectionState, SelectionStateV1},
-    widget::{self, UniqueHandle, Widget, WidgetExtra},
+    widget::{self, UniqueHandle, Widget, WidgetRect},
 };
 
 /// A Widget providing the behavior of a button.
@@ -74,18 +74,18 @@ where
         });
     }
 
-    fn hittest(&self, extra: &mut WidgetExtra<'_>, point: (f32, f32)) -> bool {
-        self.content.hittest(extra, point)
+    fn hittest(&self, rect: &WidgetRect, point: (f32, f32)) -> bool {
+        self.content.hittest(rect, point)
     }
 
     fn pointer_event(
         &mut self,
-        extra: &mut WidgetExtra<'_>,
+        rect: &WidgetRect,
         event: &mut PointerEvent<'_>,
     ) -> bool {
         match event.action() {
             PointerAction::Down => {
-                let grabbed = self.hittest(extra, event.pos())
+                let grabbed = self.hittest(rect, event.pos())
                     && event.try_grab(self.handle.id());
                 if grabbed {
                     self.pointers_down += 1;
@@ -96,7 +96,7 @@ where
                 grabbed
             }
             PointerAction::Move(_, _) => {
-                let ungrabbed = !self.hittest(extra, event.pos())
+                let ungrabbed = !self.hittest(rect, event.pos())
                     && event.try_ungrab(self.handle.id());
                 if ungrabbed {
                     self.pointers_down -= 1;
@@ -122,7 +122,7 @@ where
                 ungrabbed
             }
             PointerAction::Hover(_, _) => {
-                match (self.state.v1(), self.hittest(extra, event.pos())) {
+                match (self.state.v1(), self.hittest(rect, event.pos())) {
                     (SelectionStateV1::Normal, true) => {
                         if *self.interactable {
                             *self.state = SelectionState::hover();
@@ -235,7 +235,7 @@ where
         };
 
         desc.watch(|this, rect| {
-            this.image.set_fill(&rect, &Padding2d::zero());
+            this.image.set_fill(rect, &Padding2d::zero());
         });
         desc.watch(|this, rect| {
             this.text_graphic.set_layout(text::Layout {

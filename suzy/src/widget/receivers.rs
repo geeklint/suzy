@@ -20,11 +20,11 @@ macro_rules! impl_empty {
     ($T:ident; $P:ident; watch) => {
         fn watch<F>(&mut self, _func: F)
         where
-            F: 'static + Fn(&mut $T, &mut WidgetRect)  {}
+            F: 'static + Fn(&mut $T, &WidgetRect)  {}
 
         fn watch_explicit<F>(&mut self, _func: F)
         where
-            F: 'static + Fn(&mut $T, &mut WidgetRect, &AppState, WatchArg<'_, 'static, DefaultOwner>){}
+            F: 'static + Fn(&mut $T, &WidgetRect, &AppState, WatchArg<'_, 'static, DefaultOwner>){}
     };
     ($T:ident; $P:ident; child) => {
         fn child<F, Child>(&mut self, _map_fn: F)
@@ -183,7 +183,7 @@ where
 
     fn watch<F>(&mut self, func: F)
     where
-        F: 'static + Fn(&mut Leaf, &mut WidgetRect),
+        F: 'static + Fn(&mut Leaf, &WidgetRect),
     {
         let state = Rc::clone(self.state);
         self.watch_explicit(move |leaf, rect, _state, arg| {
@@ -200,7 +200,7 @@ where
         F: 'static
             + Fn(
                 &mut Leaf,
-                &mut WidgetRect,
+                &WidgetRect,
                 &AppState,
                 WatchArg<'_, 'static, DefaultOwner>,
             ),

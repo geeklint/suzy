@@ -53,26 +53,25 @@ impl<'a, T: ?Sized> std::ops::Deref for ContentWithRect<'a, T> {
     }
 }
 
+impl<'a, T: ?Sized> ContentWithRect<'a, T> {
+    fn proxy_rect<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&WidgetRect) -> R,
+    {
+        f(self.rect)
+    }
+
+    fn proxy_rect_mut<F, R>(&mut self, _f: F) -> R
+    where
+        F: FnOnce(&mut WidgetRect) -> R,
+    {
+        unreachable!("shouldn't ever have a &mut")
+    }
+}
+
 impl<'a, T: ?Sized> Rect for ContentWithRect<'a, T> {
-    fn x(&self) -> crate::dims::Dim {
-        self.rect.x()
-    }
-    fn y(&self) -> crate::dims::Dim {
-        self.rect.y()
-    }
-
-    fn x_mut<F, R>(&mut self, _: F) -> R
-    where
-        F: FnOnce(&mut crate::dims::Dim) -> R,
-    {
-        unreachable!("shouldn't ever have a &mut")
-    }
-
-    fn y_mut<F, R>(&mut self, _: F) -> R
-    where
-        F: FnOnce(&mut crate::dims::Dim) -> R,
-    {
-        unreachable!("shouldn't ever have a &mut")
+    crate::dims::proxy_rect_impl! {
+        Self::proxy_rect; Self::proxy_rect_mut
     }
 }
 

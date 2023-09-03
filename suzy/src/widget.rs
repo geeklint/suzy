@@ -7,11 +7,8 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    adapter::Adaptable,
-    dims::{Dim, Rect},
-    graphics::DrawContext,
-    platform::RenderPlatform,
-    pointer::PointerEvent,
+    adapter::Adaptable, dims::Rect, graphics::DrawContext,
+    platform::RenderPlatform, pointer::PointerEvent,
 };
 
 mod anon;
@@ -38,7 +35,6 @@ pub use coroutine::Coroutine;
 pub use desc::Desc;
 pub use ephemeral::Ephemeral;
 pub use graphic::WidgetGraphic;
-pub use internal::WidgetExtra;
 pub use rect::WidgetRect;
 pub use unique_handle::{UniqueHandle, UniqueHandleId};
 
@@ -104,7 +100,7 @@ impl<T> Widget<T> {
     {
         Widget {
             internal: WidgetInternal {
-                rect: WidgetRect::external_from(rect),
+                rect: WidgetRect::from_rect(rect),
                 content,
             },
         }
@@ -118,7 +114,7 @@ impl<T> Widget<T> {
     {
         Widget {
             internal: WidgetInternal {
-                rect: WidgetRect::external_from(rect),
+                rect: WidgetRect::from_rect(rect),
                 content: T::default(),
             },
         }
@@ -149,7 +145,7 @@ impl<T> Widget<T> {
     {
         Widget {
             internal: WidgetInternal {
-                rect: WidgetRect::external_from(rect),
+                rect: WidgetRect::from_rect(rect),
                 content: Adaptable::from(data),
             },
         }
@@ -207,11 +203,9 @@ impl<T: ?Sized> Widget<T> {
         T: Content<P>,
     {
         let wid_int = &mut this.internal;
-        let mut extra = WidgetExtra {
-            rect: &mut wid_int.rect,
-        };
         let content = &mut wid_int.content;
-        T::pointer_event_before(content, &mut extra, event)
+        let rect = &wid_int.rect;
+        T::pointer_event_before(content, rect, event)
             || {
                 let mut handled_by_child = false;
                 T::desc(PointerEventChildReceiver {
@@ -221,7 +215,7 @@ impl<T: ?Sized> Widget<T> {
                 });
                 handled_by_child
             }
-            || T::pointer_event(content, &mut extra, event)
+            || T::pointer_event(content, rect, event)
     }
 
     pub(crate) fn pointer_event_self<P>(
@@ -232,10 +226,23 @@ impl<T: ?Sized> Widget<T> {
         T: Content<P>,
     {
         let wid_int = &mut this.internal;
-        let mut extra = WidgetExtra {
-            rect: &mut wid_int.rect,
-        };
-        T::pointer_event(&mut wid_int.content, &mut extra, event)
+        let content = &mut wid_int.content;
+        let rect = &wid_int.rect;
+        T::pointer_event(content, rect, event)
+    }
+
+    fn proxy_rect<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&WidgetRect) -> R,
+    {
+        f(&self.internal.rect)
+    }
+
+    fn proxy_rect_mut<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut WidgetRect) -> R,
+    {
+        f(&mut self.internal.rect)
     }
 }
 
@@ -243,24 +250,7 @@ impl<T> Rect for Widget<T>
 where
     T: ?Sized,
 {
-    fn x(&self) -> Dim {
-        self.internal.rect.x()
-    }
-    fn y(&self) -> Dim {
-        self.internal.rect.y()
-    }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        self.internal.rect.external_x_mut(f)
-    }
-
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        self.internal.rect.external_y_mut(f)
+    crate::dims::proxy_rect_impl! {
+        Self::proxy_rect; Self::proxy_rect_mut
     }
 }

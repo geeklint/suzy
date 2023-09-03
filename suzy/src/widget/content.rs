@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::{dims::Rect, pointer::PointerEvent};
+use crate::pointer::PointerEvent;
 
-use super::WidgetExtra;
+use super::WidgetRect;
 
 with_default_render_platform! {
     /// This trait provides the "glue" between the data you define in custom
@@ -74,10 +74,11 @@ with_default_render_platform! {
         /// event.  The default is a standard rectangular test.
         fn hittest(
             &self,
-            extra: &mut WidgetExtra<'_>,
+            rect: &WidgetRect,
             point: (f32, f32),
         ) -> bool {
-            extra.contains(point)
+            use crate::dims::Rect;
+            rect.contains(point)
         }
 
         /// Override this method to handle pointer events directly by a custom
@@ -86,10 +87,10 @@ with_default_render_platform! {
         /// Return true if this successfully handled the event.
         fn pointer_event(
             &mut self,
-            extra: &mut WidgetExtra<'_>,
+            rect: &WidgetRect,
             event: &mut PointerEvent<'_>,
         ) -> bool {
-            let _unused = (extra, event);
+            let _unused = (rect, event);
             false
         }
 
@@ -98,10 +99,10 @@ with_default_render_platform! {
         /// recomended for special cases.
         fn pointer_event_before(
             &mut self,
-            extra: &mut WidgetExtra<'_>,
+            rect: &WidgetRect,
             event: &mut PointerEvent<'_>,
         ) -> bool {
-            let _unused = (extra, event);
+            let _unused = (rect, event);
             false
         }
     }

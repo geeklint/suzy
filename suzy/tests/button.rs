@@ -32,7 +32,7 @@ impl Selectable for ButtonContent {
 impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         desc.watch(|this, rect| {
-            this.image.graphic.set_fill(&rect, &Padding2d::zero());
+            this.image.graphic.set_fill(rect, &Padding2d::zero());
         });
         desc.graphic(|this| &mut this.image);
     }

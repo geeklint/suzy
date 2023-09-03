@@ -68,6 +68,8 @@ impl Lerp for f32 {
     type Output = f32;
 
     fn lerp(from: &f32, to: &f32, t: f32) -> f32 {
+        // version with an if-statement guarentees we hit the endpoints exactly
+        // at t == 0.0 and t == 1.0 respectively
         let diff = to - from;
         if t <= 0.5 {
             from + diff * t

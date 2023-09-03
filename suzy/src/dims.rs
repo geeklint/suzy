@@ -154,7 +154,7 @@ impl Padding2d {
 /// assert_feq(span.end(), 15.0);
 /// // since we called set_start, changing the length will not effect the
 /// // start position (the span grows outward from start)
-/// span.set_length(13.0);
+/// span.length = 13.0;
 /// assert_feq(span.start(), 10.0);
 /// assert_feq(span.end(), 23.0);
 /// ```
@@ -176,15 +176,15 @@ impl Padding2d {
 /// assert_feq(span.end(), 10.0);
 /// // since we called set_end, changing the length will not effect the
 /// // end position (the span grows backward from end)
-/// span.set_length(7.0);
+/// span.length = 7.0;
 /// assert_feq(span.start(), 3.0);
 /// assert_feq(span.end(), 10.0);
 /// ```
 #[derive(Copy, Clone, Debug)]
 pub struct Dim {
-    pivot: f32,
-    pos: f32,
-    length: f32,
+    pub position: f32,
+    pub pivot: f32,
+    pub length: f32,
 }
 
 impl Default for Dim {
@@ -198,72 +198,36 @@ impl Dim {
     pub fn with_length(length: f32) -> Self {
         Dim {
             pivot: 0.5,
-            pos: 0.5 * length,
+            position: 0.5 * length,
             length,
         }
-    }
-
-    /// Get the pivot. A pivot of 0 indicates that the changing the length
-    /// of the span will keep the start fixed and move the end. Likewise, a
-    /// pivot of 1 will keep the end of the span fixed while adjusting the
-    /// start to fit the length. Default: 0.5
-    pub fn pivot(&self) -> f32 {
-        self.pivot
-    }
-
-    /// Set the pivot. A pivot of 0 indicates that the changing the length
-    /// of the span will keep the start fixed and move the end. Likewise, a
-    /// pivot of 1 will keep the end of the span fixed while adjusting the
-    /// start to fit the length.
-    pub fn set_pivot(&mut self, value: f32) {
-        self.pivot = value
-    }
-
-    /// Get the length of the span
-    pub fn length(&self) -> f32 {
-        self.length
-    }
-
-    /// Grow or shrink the span
-    pub fn set_length(&mut self, value: f32) {
-        self.length = value
-    }
-
-    /// Get the global position of the pivot of the span
-    pub fn pivot_pos(&self) -> f32 {
-        self.pos
-    }
-
-    /// Set the position of the pivot of the wid
-    pub fn set_pivot_pos(&mut self, value: f32) {
-        self.pos = value
     }
 
     /// Get the beginning of the span
     pub fn start(&self) -> f32 {
         let distance_before_pivot = self.pivot * self.length;
-        self.pos - distance_before_pivot
+        self.position - distance_before_pivot
     }
 
     /// Set the position of the beginning of the span, and set it to grow
     /// from that point
     pub fn set_start(&mut self, value: f32) {
         self.pivot = 0.0;
-        self.pos = value;
+        self.position = value;
     }
 
     /// Get the end of the span
     pub fn end(&self) -> f32 {
         let percent_after_pivot = 1.0 - self.pivot;
         let distance_after_pivot = percent_after_pivot * self.length;
-        self.pos + distance_after_pivot
+        self.position + distance_after_pivot
     }
 
     /// Set the position of the end of the span, and set it to grow
     /// from that point
     pub fn set_end(&mut self, value: f32) {
         self.pivot = 1.0;
-        self.pos = value;
+        self.position = value;
     }
 
     /// Get the center of the span
@@ -271,26 +235,31 @@ impl Dim {
         let half_length = 0.5 * self.length;
         let distance_before_pivot = self.pivot * self.length;
         let distance_to_pivot = half_length - distance_before_pivot;
-        self.pos + distance_to_pivot
+        self.position + distance_to_pivot
     }
 
     /// Set the position of the center of the span, and set it to grow
     /// from that point
     pub fn set_center(&mut self, value: f32) {
         self.pivot = 0.5;
-        self.pos = value;
+        self.position = value;
     }
 
     /// Calculate and set the length and position based on a start and end
-    /// value. Set to grow from center.
+    /// value.  Leaves the pivot unchanged.
     pub fn set_stretch(&mut self, start: f32, end: f32) {
         self.length = end - start;
-        self.pivot = 0.5;
-        self.pos = 0.5 * (start + end);
+        // version with an if-statement guarentees we set start and end exactly
+        // when pivot == 0.0 and pivot == 1.0 respectively
+        self.position = if self.pivot <= 0.5 {
+            start + self.length * self.pivot
+        } else {
+            end - self.length * (1.0 - self.pivot)
+        };
     }
 
     /// Calculate and set the length and position based on another dim and
-    /// provided padding. Set to grow from center.
+    /// provided padding.  Leaves the pivot unchanged.
     pub fn set_fill(&mut self, other: Dim, padding: Padding) {
         let start = other.start() + padding.before;
         let end = other.end() - padding.after;
@@ -321,24 +290,13 @@ pub trait Rect {
     /// Get the y dimension of the rectangle.
     fn y(&self) -> Dim;
 
-    /// Apply a transfomation to the x dimension of the rectangle.
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R;
-    /// Apply a transfomation to the y dimension of the rectangle.
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R;
-
     /// Get the left edge of the rectangle
     fn left(&self) -> f32 {
         self.x().start()
     }
 
     /// Set the left edge of the rect and for it to grow to the right
-    fn set_left(&mut self, value: f32) {
-        self.x_mut(|x| x.set_start(value))
-    }
+    fn set_left(&mut self, value: f32);
 
     /// Get the right edge of the rectangle
     fn right(&self) -> f32 {
@@ -346,9 +304,7 @@ pub trait Rect {
     }
 
     /// Set the right edge of the rect and for it to grow to the left
-    fn set_right(&mut self, value: f32) {
-        self.x_mut(|x| x.set_end(value))
-    }
+    fn set_right(&mut self, value: f32);
 
     /// Get the bottom edge of the rectangle
     fn bottom(&self) -> f32 {
@@ -356,9 +312,7 @@ pub trait Rect {
     }
 
     /// Set the bottom edge of the rect and for it to grow upwards
-    fn set_bottom(&mut self, value: f32) {
-        self.y_mut(|y| y.set_start(value));
-    }
+    fn set_bottom(&mut self, value: f32);
 
     /// Get the top edge of the rectangle
     fn top(&self) -> f32 {
@@ -366,9 +320,7 @@ pub trait Rect {
     }
 
     /// Set the top edge of the rect and for it to grow downwards
-    fn set_top(&mut self, value: f32) {
-        self.y_mut(|y| y.set_end(value))
-    }
+    fn set_top(&mut self, value: f32);
 
     /// Get the horizontal center of the rect
     fn center_x(&self) -> f32 {
@@ -376,9 +328,7 @@ pub trait Rect {
     }
 
     /// Set the horizontal center of the rect and for it to grow evenly wider
-    fn set_center_x(&mut self, value: f32) {
-        self.x_mut(|x| x.set_center(value));
-    }
+    fn set_center_x(&mut self, value: f32);
 
     /// Get the vertical center of the rect
     fn center_y(&self) -> f32 {
@@ -386,9 +336,7 @@ pub trait Rect {
     }
 
     /// Set the vertical center of the rect and for it to grow evenly taller
-    fn set_center_y(&mut self, value: f32) {
-        self.y_mut(|y| y.set_center(value));
-    }
+    fn set_center_y(&mut self, value: f32);
 
     /// Get the center of the rect
     fn center(&self) -> (f32, f32) {
@@ -397,8 +345,8 @@ pub trait Rect {
 
     /// Set the center of the rect and for it to grow evenly outwards
     fn set_center(&mut self, value: (f32, f32)) {
-        self.x_mut(|x| x.set_center(value.0));
-        self.y_mut(|y| y.set_center(value.1));
+        self.set_center_x(value.0);
+        self.set_center_y(value.0);
     }
 
     /// Get the width of the rectangle
@@ -407,9 +355,7 @@ pub trait Rect {
     }
 
     /// Set the width of the rectangle
-    fn set_width(&mut self, value: f32) {
-        self.x_mut(|x| x.length = value)
-    }
+    fn set_width(&mut self, value: f32);
 
     /// Get the height of the rectangle
     fn height(&self) -> f32 {
@@ -417,39 +363,31 @@ pub trait Rect {
     }
 
     /// Set the height of the rectangle
-    fn set_height(&mut self, value: f32) {
-        self.y_mut(|y| y.length = value)
-    }
+    fn set_height(&mut self, value: f32);
 
     /// Set the pivot. A pivot of (0.5, 0.5) indicates that a rect will
     /// grow from it's center, whereas a pivot of (0, 0) indicates that a
     /// rect will grow from it's bottom left corner.
     fn pivot(&self) -> (f32, f32) {
-        (self.x().pivot(), self.y().pivot())
+        (self.x().pivot, self.y().pivot)
     }
 
     /// Set the pivot. A pivot of (0.5, 0.5) indicates that a rect will
     /// grow from it's center, whereas a pivot of (0, 0) indicates that a
     /// rect will grow from it's bottom left corner.
-    fn set_pivot(&mut self, value: (f32, f32)) {
-        self.x_mut(|x| x.set_pivot(value.0));
-        self.y_mut(|y| y.set_pivot(value.1));
-    }
+    fn set_pivot(&mut self, value: (f32, f32));
 
     /// Get the global position of the pivot of the rectangle
     fn pivot_pos(&self) -> (f32, f32) {
-        (self.x().pivot_pos(), self.y().pivot_pos())
+        (self.x().position, self.y().position)
     }
 
     /// Set the global position of the pivot of the rectangle
-    fn set_pivot_pos(&mut self, value: (f32, f32)) {
-        self.x_mut(|x| x.set_pivot_pos(value.0));
-        self.y_mut(|y| y.set_pivot_pos(value.1));
-    }
+    fn set_pivot_pos(&mut self, value: (f32, f32));
 
     /// Get the area of the rectangle
     fn area(&self) -> f32 {
-        self.x().length * self.y().length
+        self.width() * self.height()
     }
 
     /// Get the aspect ratio of this rectangle (width / height)
@@ -463,33 +401,13 @@ pub trait Rect {
         self.x().contains(point.0) && self.y().contains(point.1)
     }
 
-    /// Calculate the width and horizontal position of this rect based on
-    /// another rect and some padding
-    fn set_fill_width<R>(&mut self, other: &R, padding: Padding)
-    where
-        R: Rect + ?Sized,
-    {
-        self.x_mut(|x| x.set_fill(other.x(), padding));
-    }
+    /// Set the width and x-position based on a left and right
+    /// value.  Leaves the x-pivot unchanged.
+    fn set_horizontal_stretch(&mut self, left: f32, right: f32);
 
-    /// Calculate the height and vertical position of this rect based on
-    /// another rect and some padding
-    fn set_fill_height<R>(&mut self, other: &R, padding: Padding)
-    where
-        R: Rect + ?Sized,
-    {
-        self.y_mut(|y| y.set_fill(other.y(), padding));
-    }
-
-    /// Calculate the size and position of this rect based on another rect
-    /// and some padding
-    fn set_fill<R>(&mut self, other: &R, padding: &Padding2d)
-    where
-        R: Rect + ?Sized,
-    {
-        self.x_mut(|x| x.set_fill(other.x(), padding.x));
-        self.y_mut(|y| y.set_fill(other.y(), padding.y));
-    }
+    /// Set the height and y-position based on a bottom and top
+    /// value.  Leaves the y-pivot unchanged.
+    fn set_vertical_stretch(&mut self, bottom: f32, top: f32);
 
     /// Shink one of the lengths of this rect so that the rect's aspect ratio
     /// becomes the one provided
@@ -497,11 +415,11 @@ pub trait Rect {
         let self_aspect = self.aspect();
         if self_aspect < aspect {
             // we are relatively taller
-            let new = self.x().length / aspect;
+            let new = self.width() / aspect;
             self.set_height(new);
         } else if self_aspect > aspect {
             // we're relatively wider
-            let new = self.y().length * aspect;
+            let new = self.height() * aspect;
             self.set_width(new);
         }
     }
@@ -512,25 +430,130 @@ pub trait Rect {
         let self_aspect = self.aspect();
         if self_aspect < aspect {
             // we are relatively taller
-            let new = self.y().length * aspect;
+            let new = self.height() * aspect;
             self.set_width(new);
         } else if self_aspect > aspect {
             // we're relatively wider
-            let new = self.x().length / aspect;
+            let new = self.width() / aspect;
             self.set_height(new)
         }
     }
 
+    /// Calculate the width and horizontal position of this rect based on
+    /// another rect and some padding
+    fn set_fill_width<R>(&mut self, other: &R, padding: Padding)
+    where
+        Self: Sized,
+        R: Rect + ?Sized,
+    {
+        let left = other.left() + padding.before;
+        let right = other.right() - padding.after;
+        self.set_horizontal_stretch(left, right)
+    }
+
+    /// Calculate the height and vertical position of this rect based on
+    /// another rect and some padding
+    fn set_fill_height<R>(&mut self, other: &R, padding: Padding)
+    where
+        Self: Sized,
+        R: Rect + ?Sized,
+    {
+        let bottom = other.bottom() + padding.before;
+        let top = other.top() - padding.after;
+        self.set_vertical_stretch(bottom, top)
+    }
+
+    /// Calculate the size and position of this rect based on another rect
+    /// and some padding
+    fn set_fill<R>(&mut self, other: &R, padding: &Padding2d)
+    where
+        Self: Sized,
+        R: Rect + ?Sized,
+    {
+        self.set_fill_width(other, padding.x);
+        self.set_fill_height(other, padding.y);
+    }
+
     /// Check if another rect is completely contained within this one
-    fn surrounds<R: Rect + ?Sized>(&self, other: &R) -> bool {
+    fn surrounds<R>(&self, other: &R) -> bool
+    where
+        Self: Sized,
+        R: Rect + ?Sized,
+    {
         self.x().surrounds(other.x()) && self.y().surrounds(other.y())
     }
 
     /// Check if this rect overlaps at all with another
-    fn overlaps<R: Rect + ?Sized>(&self, other: &R) -> bool {
+    fn overlaps<R>(&self, other: &R) -> bool
+    where
+        Self: Sized,
+        R: Rect + ?Sized,
+    {
         self.x().overlaps(other.x()) && self.y().overlaps(other.y())
     }
 }
+
+macro_rules! proxy_rect_impl {
+    ($shared:expr; $exclusive:expr) => {
+        fn x(&self) -> crate::dims::Dim {
+            $shared(self, |rect| rect.x())
+        }
+
+        fn y(&self) -> crate::dims::Dim {
+            $shared(self, |rect| rect.y())
+        }
+
+        fn set_left(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_left(value))
+        }
+
+        fn set_right(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_right(value))
+        }
+
+        fn set_bottom(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_bottom(value))
+        }
+
+        fn set_top(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_top(value))
+        }
+
+        fn set_center_x(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_center_x(value))
+        }
+
+        fn set_center_y(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_center_y(value))
+        }
+
+        fn set_width(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_width(value))
+        }
+
+        fn set_height(&mut self, value: f32) {
+            $exclusive(self, |rect| rect.set_height(value))
+        }
+
+        fn set_pivot(&mut self, value: (f32, f32)) {
+            $exclusive(self, |rect| rect.set_pivot(value))
+        }
+
+        fn set_pivot_pos(&mut self, value: (f32, f32)) {
+            $exclusive(self, |rect| rect.set_pivot_pos(value))
+        }
+
+        fn set_horizontal_stretch(&mut self, left: f32, right: f32) {
+            $exclusive(self, |rect| rect.set_horizontal_stretch(left, right))
+        }
+
+        fn set_vertical_stretch(&mut self, bottom: f32, top: f32) {
+            $exclusive(self, |rect| rect.set_vertical_stretch(bottom, top))
+        }
+    };
+}
+
+pub(crate) use proxy_rect_impl;
 
 /// A struct representing a rectangular region
 #[derive(Copy, Clone, Debug, Default)]
@@ -562,18 +585,54 @@ impl Rect for SimpleRect {
         self.y
     }
 
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        (f)(&mut self.x)
+    fn set_left(&mut self, value: f32) {
+        self.x.set_start(value)
     }
 
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        (f)(&mut self.y)
+    fn set_right(&mut self, value: f32) {
+        self.x.set_end(value)
+    }
+
+    fn set_bottom(&mut self, value: f32) {
+        self.y.set_start(value)
+    }
+
+    fn set_top(&mut self, value: f32) {
+        self.y.set_end(value)
+    }
+
+    fn set_center_x(&mut self, value: f32) {
+        self.x.set_center(value)
+    }
+
+    fn set_center_y(&mut self, value: f32) {
+        self.y.set_center(value)
+    }
+
+    fn set_width(&mut self, value: f32) {
+        self.x.length = value;
+    }
+
+    fn set_height(&mut self, value: f32) {
+        self.y.length = value;
+    }
+
+    fn set_pivot(&mut self, value: (f32, f32)) {
+        self.x.pivot = value.0;
+        self.y.pivot = value.1;
+    }
+
+    fn set_pivot_pos(&mut self, value: (f32, f32)) {
+        self.x.position = value.0;
+        self.y.position = value.1;
+    }
+
+    fn set_horizontal_stretch(&mut self, left: f32, right: f32) {
+        self.x.set_stretch(left, right)
+    }
+
+    fn set_vertical_stretch(&mut self, bottom: f32, top: f32) {
+        self.y.set_stretch(bottom, top)
     }
 }
 
@@ -583,238 +642,5 @@ impl<R: Rect> From<&R> for SimpleRect {
             x: rect.x(),
             y: rect.y(),
         }
-    }
-}
-
-/// A rectangular region which will ignore changes to size
-#[derive(Copy, Clone)]
-pub struct FixedSizeRect {
-    x: Dim,
-    y: Dim,
-}
-
-impl FixedSizeRect {
-    /// Create a new FixedSizeRect with the specified dimensions.
-    pub fn new(x: Dim, y: Dim) -> Self {
-        Self { x, y }
-    }
-
-    /// Create a new FixedSizeRect with the specified size, positioned at the
-    /// bottom left.
-    pub fn default_pos(width: f32, height: f32) -> Self {
-        let x = Dim::with_length(width);
-        let y = Dim::with_length(height);
-        Self { x, y }
-    }
-}
-
-impl Rect for FixedSizeRect {
-    fn x(&self) -> Dim {
-        self.x
-    }
-    fn y(&self) -> Dim {
-        self.y
-    }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        let width = self.x.length;
-        let res = (f)(&mut self.x);
-        self.x.length = width;
-        res
-    }
-
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        let height = self.y.length;
-        let res = (f)(&mut self.y);
-        self.y.length = height;
-        res
-    }
-}
-
-impl From<SimpleRect> for FixedSizeRect {
-    fn from(rect: SimpleRect) -> Self {
-        Self {
-            x: rect.x,
-            y: rect.y,
-        }
-    }
-}
-
-/// An object-safe version of the Rect trait
-pub trait DynRect {
-    /// Get the x dimension of the rectangle.
-    fn x(&self) -> Dim;
-    /// Get the y dimension of the rectangle.
-    fn y(&self) -> Dim;
-    /// Apply a transfomation to the x dimension of the rectangle.
-    fn x_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>);
-    /// Apply a transfomation to the y dimension of the rectangle.
-    fn y_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>);
-
-    /// Set the left edge of the rect and for it to grow to the right
-    fn set_left(&mut self, value: f32);
-    /// Set the right edge of the rect and for it to grow to the left
-    fn set_right(&mut self, value: f32);
-    /// Set the bottom edge of the rect and for it to grow upwards
-    fn set_bottom(&mut self, value: f32);
-    /// Set the top edge of the rect and for it to grow downwards
-    fn set_top(&mut self, value: f32);
-    /// Set the horizontal center of the rect and for it to grow evenly wider
-    fn set_center_x(&mut self, value: f32);
-    /// Set the vertical center of the rect and for it to grow evenly taller
-    fn set_center_y(&mut self, value: f32);
-    /// Set the center of the rect and for it to grow evenly outwards
-    fn set_center(&mut self, value: (f32, f32));
-    /// Set the width of the rectangle
-    fn set_width(&mut self, value: f32);
-    /// Set the height of the rectangle
-    fn set_height(&mut self, value: f32);
-    /// Set the pivot. A pivot of (0.5, 0.5) indicates that a rect will
-    /// grow from it's center, whereas a pivot of (0, 0) indicates that a
-    /// rect will grow from it's bottom left corner.
-    fn set_pivot(&mut self, value: (f32, f32));
-    /// Set the global position of the pivot of the rectangle
-    fn set_pivot_pos(&mut self, value: (f32, f32));
-    /// Shink one of the lengths of this rect so that the rect's aspect ratio
-    /// becomes the one provided
-    fn shrink_to_aspect(&mut self, aspect: f32);
-    /// Expand one of the lengths of this rect so that the rect's aspect ratio
-    /// becomes the one provided
-    fn grow_to_aspect(&mut self, aspect: f32);
-}
-
-impl<T: Rect> DynRect for T {
-    fn x(&self) -> Dim {
-        Rect::x(self)
-    }
-    fn y(&self) -> Dim {
-        Rect::y(self)
-    }
-    fn x_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>) {
-        Rect::x_mut(self, |dim| f(dim))
-    }
-    fn y_mut<'a>(&mut self, f: Box<dyn FnOnce(&mut Dim) + 'a>) {
-        Rect::y_mut(self, |dim| f(dim))
-    }
-
-    fn set_left(&mut self, value: f32) {
-        Rect::set_left(self, value)
-    }
-    fn set_right(&mut self, value: f32) {
-        Rect::set_right(self, value)
-    }
-    fn set_bottom(&mut self, value: f32) {
-        Rect::set_bottom(self, value)
-    }
-    fn set_top(&mut self, value: f32) {
-        Rect::set_top(self, value)
-    }
-    fn set_center_x(&mut self, value: f32) {
-        Rect::set_center_x(self, value)
-    }
-    fn set_center_y(&mut self, value: f32) {
-        Rect::set_center_y(self, value)
-    }
-    fn set_center(&mut self, value: (f32, f32)) {
-        Rect::set_center(self, value)
-    }
-    fn set_width(&mut self, value: f32) {
-        Rect::set_width(self, value)
-    }
-    fn set_height(&mut self, value: f32) {
-        Rect::set_height(self, value)
-    }
-    fn set_pivot(&mut self, value: (f32, f32)) {
-        Rect::set_pivot(self, value)
-    }
-    fn set_pivot_pos(&mut self, value: (f32, f32)) {
-        Rect::set_pivot_pos(self, value)
-    }
-    fn shrink_to_aspect(&mut self, aspect: f32) {
-        Rect::shrink_to_aspect(self, aspect)
-    }
-    fn grow_to_aspect(&mut self, aspect: f32) {
-        Rect::grow_to_aspect(self, aspect)
-    }
-}
-
-impl Rect for dyn DynRect {
-    fn x(&self) -> Dim {
-        (*self).x()
-    }
-    fn y(&self) -> Dim {
-        (*self).y()
-    }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        let mut res = None;
-        (*self).x_mut(Box::new(|dim| {
-            res = Some(f(dim));
-        }));
-        res.expect(
-            "DynRect implementation did not call the closure passed to x_mut",
-        )
-    }
-
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut Dim) -> R,
-    {
-        let mut res = None;
-        (*self).y_mut(Box::new(|dim| {
-            res = Some(f(dim));
-        }));
-        res.expect(
-            "DynRect implementation did not call the closure passed to y_mut",
-        )
-    }
-
-    fn set_left(&mut self, value: f32) {
-        (*self).set_left(value)
-    }
-    fn set_right(&mut self, value: f32) {
-        (*self).set_right(value)
-    }
-    fn set_bottom(&mut self, value: f32) {
-        (*self).set_bottom(value)
-    }
-    fn set_top(&mut self, value: f32) {
-        (*self).set_top(value)
-    }
-    fn set_center_x(&mut self, value: f32) {
-        (*self).set_center_x(value)
-    }
-    fn set_center_y(&mut self, value: f32) {
-        (*self).set_center_y(value)
-    }
-    fn set_center(&mut self, value: (f32, f32)) {
-        (*self).set_center(value)
-    }
-    fn set_width(&mut self, value: f32) {
-        (*self).set_width(value)
-    }
-    fn set_height(&mut self, value: f32) {
-        (*self).set_height(value)
-    }
-    fn set_pivot(&mut self, value: (f32, f32)) {
-        (*self).set_pivot(value)
-    }
-    fn set_pivot_pos(&mut self, value: (f32, f32)) {
-        (*self).set_pivot_pos(value)
-    }
-    fn shrink_to_aspect(&mut self, aspect: f32) {
-        (*self).shrink_to_aspect(aspect)
-    }
-    fn grow_to_aspect(&mut self, aspect: f32) {
-        (*self).grow_to_aspect(aspect)
     }
 }

@@ -12,7 +12,7 @@ use suzy::{
         TestPlatform,
     },
     selectable::{Selectable, SelectionState},
-    widget::{self, Widget, WidgetExtra},
+    widget::{self, Widget, WidgetRect},
     widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue},
     window::WindowSettings,
 };
@@ -33,7 +33,7 @@ impl Selectable for ButtonContent {
 }
 
 impl ToggleButtonValue<i32> for ButtonContent {
-    fn get_value(&self, _extra: &WidgetExtra) -> i32 {
+    fn get_value(&self, _extra: &WidgetRect) -> i32 {
         self.value
     }
 }
@@ -41,7 +41,7 @@ impl ToggleButtonValue<i32> for ButtonContent {
 impl widget::Content<OpenGlRenderPlatform> for ButtonContent {
     fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         desc.watch(|this, rect| {
-            this.image.graphic.set_fill(&rect, &Padding2d::zero());
+            this.image.graphic.set_fill(rect, &Padding2d::zero());
         });
         desc.graphic(|this| &mut this.image);
     }

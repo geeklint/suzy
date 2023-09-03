@@ -9,7 +9,7 @@
 use std::{cell::RefCell, rc::Rc, time};
 
 use crate::{
-    dims::{Dim, Padding2d, Rect, SimpleRect},
+    dims::{Padding2d, Rect, SimpleRect},
     graphics::PlatformDrawContext,
     platform::{Event, EventLoopState, Platform},
     pointer::{PointerEvent, PointerEventData},
@@ -168,15 +168,16 @@ impl<P: Platform> App<P> {
                 state.request_shutdown();
             }
             Event::WindowEvent(Resize) => {
-                let (x, y) = self.window.size();
-                self.state.cell_size.set_external(get_cell_size(x, y));
-                self.state.window_width.set_external(x);
-                self.state.window_height.set_external(y);
-                let xdim = Dim::with_length(x);
-                let ydim = Dim::with_length(y);
-                let rect = SimpleRect::new(xdim, ydim);
+                let (width, height) = self.window.size();
+                self.state
+                    .cell_size
+                    .set_external(get_cell_size(width, height));
+                self.state.window_width.set_external(width);
+                self.state.window_height.set_external(height);
                 for root in self.roots.iter_mut() {
-                    root.borrow_mut().set_fill(&rect, &Padding2d::zero());
+                    let mut wid = root.borrow_mut();
+                    wid.set_horizontal_stretch(0.0, width);
+                    wid.set_vertical_stretch(0.0, height);
                 }
                 self.window.recalculate_viewport();
             }

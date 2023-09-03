@@ -34,7 +34,7 @@ impl widget::Content for ImageViewer {
         });
         desc.watch(|this, rect| {
             // fill the screen with the image
-            this.image.set_fill(&rect, &Padding2d::zero());
+            this.image.set_fill(rect, &Padding2d::zero());
             // but shrink it so it stays the same aspect ratio
             this.image.shrink_to_aspect(IMAGE_ASPECT);
         });

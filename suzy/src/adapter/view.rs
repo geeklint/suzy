@@ -142,13 +142,13 @@ where
 
     fn pointer_event_before(
         &mut self,
-        extra: &mut crate::widget::WidgetExtra<'_>,
+        rect: &crate::widget::WidgetRect,
         event: &mut crate::pointer::PointerEvent<'_>,
     ) -> bool {
         use crate::pointer::PointerAction;
         match event.action() {
             PointerAction::Down => {
-                if self.hittest(extra, event.pos()) {
+                if self.hittest(rect, event.pos()) {
                     self.current_pointers.add_pending(event.id());
                 }
                 false
@@ -176,13 +176,13 @@ where
 
     fn pointer_event(
         &mut self,
-        extra: &mut crate::widget::WidgetExtra<'_>,
+        rect: &crate::widget::WidgetRect,
         event: &mut crate::pointer::PointerEvent<'_>,
     ) -> bool {
         use crate::pointer::PointerAction;
         match event.action() {
             PointerAction::Down => {
-                let grabbed = self.hittest(extra, event.pos())
+                let grabbed = self.hittest(rect, event.pos())
                     && event.try_grab(self.handle.id());
                 if grabbed {
                     self.current_pointers.add_grabbed(event.id());
@@ -201,7 +201,7 @@ where
             }
             PointerAction::Wheel(x, y) => {
                 if self.current_pointers.primary_pointer().is_none()
-                    && self.hittest(extra, event.pos())
+                    && self.hittest(rect, event.pos())
                 {
                     self.inner.move_content(*x, *y);
                     self.position_flag.trigger_auto();

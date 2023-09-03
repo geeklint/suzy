@@ -134,26 +134,8 @@ impl<T> Rect for Ephemeral<T>
 where
     T: ?Sized,
 {
-    fn x(&self) -> crate::dims::Dim {
-        self.access(Rect::x)
-    }
-
-    fn y(&self) -> crate::dims::Dim {
-        self.access(Rect::y)
-    }
-
-    fn x_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut crate::dims::Dim) -> R,
-    {
-        self.access_mut(|wid| wid.x_mut(f))
-    }
-
-    fn y_mut<F, R>(&mut self, f: F) -> R
-    where
-        F: FnOnce(&mut crate::dims::Dim) -> R,
-    {
-        self.access_mut(|wid| wid.y_mut(f))
+    crate::dims::proxy_rect_impl! {
+        Self::access; Self::access_mut
     }
 }
 

@@ -15,7 +15,7 @@ struct Root {
 impl widget::Content for Root {
     fn desc(mut desc: impl widget::Desc<Self>) {
         desc.watch(|this, rect| {
-            this.button.set_fill(&rect, &Padding2d::uniform(20.0));
+            this.button.set_fill(rect, &Padding2d::uniform(20.0));
         });
         desc.child(|this| &mut this.button);
     }

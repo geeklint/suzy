@@ -27,12 +27,12 @@ struct Root {
 impl widget::Content<OpenGlRenderPlatform> for Root {
     fn desc(mut desc: impl widget::Desc<Self, OpenGlRenderPlatform>) {
         desc.watch(|root, rect| {
-            root.mask.graphic.set_fill_width(&rect, Padding::zero());
+            root.mask.graphic.set_fill_width(rect, Padding::zero());
             root.mask.graphic.set_height(rect.height() / 2.0);
             root.mask.graphic.set_top(rect.top());
         });
         desc.watch(|root, rect| {
-            root.image.set_fill(&rect, &Padding2d::zero());
+            root.image.set_fill(rect, &Padding2d::zero());
         });
         desc.graphic(|this| &mut this.mask);
         desc.graphic(|this| &mut this.image);
