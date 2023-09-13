@@ -20,7 +20,7 @@ default_font = ["suzy-default-font"]
 platform_sdl = ["sdl2", "platform_opengl"]
 
 [dependencies]
-drying_paint = "0.5.2"
+drying_paint = "0.5.3"
 inline_tweak = { version = "1.0.8", optional = true }
 suzy-default-font = { path = "../suzy-default-font", optional = true }
 

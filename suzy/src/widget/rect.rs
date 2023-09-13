@@ -32,52 +32,64 @@ impl Rect for WidgetRect {
         *self.y
     }
 
+    #[track_caller]
     fn set_left(&mut self, value: f32) {
         self.x.set_start(value)
     }
 
+    #[track_caller]
     fn set_right(&mut self, value: f32) {
         self.x.set_end(value)
     }
 
+    #[track_caller]
     fn set_bottom(&mut self, value: f32) {
         self.y.set_start(value)
     }
 
+    #[track_caller]
     fn set_top(&mut self, value: f32) {
         self.y.set_end(value)
     }
 
+    #[track_caller]
     fn set_center_x(&mut self, value: f32) {
         self.x.set_center(value)
     }
 
+    #[track_caller]
     fn set_center_y(&mut self, value: f32) {
         self.y.set_center(value)
     }
 
+    #[track_caller]
     fn set_width(&mut self, value: f32) {
         self.x.length = value;
     }
 
+    #[track_caller]
     fn set_height(&mut self, value: f32) {
         self.y.length = value;
     }
 
+    #[track_caller]
     fn set_pivot(&mut self, value: (f32, f32)) {
         self.x.pivot = value.0;
         self.y.pivot = value.0;
     }
 
+    #[track_caller]
     fn set_pivot_pos(&mut self, value: (f32, f32)) {
         self.x.position = value.0;
         self.y.position = value.1;
     }
 
+    #[track_caller]
     fn set_horizontal_stretch(&mut self, left: f32, right: f32) {
         self.x.set_stretch(left, right)
     }
 
+    #[track_caller]
     fn set_vertical_stretch(&mut self, bottom: f32, top: f32) {
         self.y.set_stretch(bottom, top)
     }

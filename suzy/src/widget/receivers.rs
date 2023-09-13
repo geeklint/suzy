@@ -11,7 +11,7 @@ use crate::{
     graphics::{DrawContext, Graphic},
     platform::RenderPlatform,
     pointer::PointerEvent,
-    watch::{self, DefaultOwner, WatchArg},
+    watch::{self, DefaultOwner, WatchArg, WatchName, WatchedMeta},
 };
 
 use super::{Desc, Ephemeral, Widget, WidgetGraphic, WidgetRect};
@@ -137,6 +137,7 @@ pub(super) struct WidgetInitImpl<'a, Path> {
 }
 
 impl<'a, Path> WidgetInitImpl<'a, Path> {
+    #[track_caller]
     fn iter_children_raw<Leaf, Plat, F, Child>(&mut self, iter_fn: F)
     where
         F: 'static,
@@ -151,12 +152,12 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
         Leaf: ?Sized + super::Content<Plat>,
         Path: 'static + Holder<Content = Leaf>,
     {
-        use crate::watch::WatchedMeta;
+        let watch_name = WatchName::from_caller();
         let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
         let current_path = self.path.clone();
         let state = Rc::clone(self.state);
         self.watch_ctx
-            .add_watch_raw("<unknown>", move |mut raw_arg| {
+            .add_watch_raw(watch_name, move |mut raw_arg| {
                 let (_, arg) = raw_arg.as_owner_and_arg();
                 maybe_more.watched(arg);
                 let mut holder = None;
@@ -181,6 +182,7 @@ where
 {
     impl_empty! { Leaf; Plat; graphic }
 
+    #[track_caller]
     fn watch<F>(&mut self, func: F)
     where
         F: 'static + Fn(&mut Leaf, &WidgetRect),
@@ -195,6 +197,7 @@ where
         });
     }
 
+    #[track_caller]
     fn watch_explicit<F>(&mut self, func: F)
     where
         F: 'static
@@ -205,10 +208,11 @@ where
                 WatchArg<'_, 'static, DefaultOwner>,
             ),
     {
+        let watch_name = WatchName::from_caller();
         let current_path = self.path.clone();
         let state = Rc::clone(self.state);
         self.watch_ctx
-            .add_watch_raw("<unknown>", move |mut raw_arg| {
+            .add_watch_raw(watch_name, move |mut raw_arg| {
                 let (_, arg) = raw_arg.as_owner_and_arg();
                 current_path
                     .get_mut(|leaf, rect| func(leaf, rect, &state, arg));
@@ -233,6 +237,7 @@ where
         })
     }
 
+    #[track_caller]
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
         F: 'static,
@@ -249,6 +254,7 @@ where
         });
     }
 
+    #[track_caller]
     fn iter_children_explicit<F, Child>(&mut self, iter_fn: F)
     where
         F: 'static,

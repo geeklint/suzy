@@ -39,9 +39,9 @@ checksum = "0dc013e70da3bfe5b552de26a1f34ecf67d61ea811251d2bf75c1324a1ecb425"
 
 [[package]]
 name = "drying_paint"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb3266ed033cf603a493647e0ea468add5db078e908477345a427ffe588d4b4e"
+checksum = "810e717eeb1981eaa574b1ba70ab53da7e6b15227567bdede673095150b66cd8"
 
 [[package]]
 name = "inline_tweak"
