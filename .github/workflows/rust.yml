@@ -31,6 +31,12 @@ jobs:
     - name: Update Rust
       run: rustup update stable
 
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+
+    - name: Check macro formatting
+      run: ./check_macro_fmt.bash
+
     - name: Clippy each feature set
       run: |
         cargo clippy --all-targets
@@ -49,9 +55,5 @@ jobs:
 
     - name: Validate documentation
       run: cargo doc --no-deps --all-features
-
-    - name: Check formatting
-      run: cargo fmt --all -- --check
-
-    - name: Check macro formatting
-      run: ./check_macro_fmt.bash
+      env:
+        RUSTDOCFLAGS: -Dwarnings
