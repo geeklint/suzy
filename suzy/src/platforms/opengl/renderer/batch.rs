@@ -21,7 +21,7 @@ pub struct BatchRef<'a> {
 }
 
 pub struct BatchPool {
-    pub(super) matrix: Mat4,
+    pub(in crate::platforms::opengl) matrix: Mat4,
     pub(super) batches: Vec<Batch>,
 }
 

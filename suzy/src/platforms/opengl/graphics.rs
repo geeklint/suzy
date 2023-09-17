@@ -3,10 +3,14 @@
 
 mod image;
 mod mask;
+mod transform;
 
-pub use {image::SlicedImage, mask::Mask};
+pub use {image::SlicedImage, mask::Mask, transform::Transform};
 
-use super::renderer::{BatchMasking, BatchPool};
+use super::{
+    renderer::{BatchMasking, BatchPool},
+    Mat4,
+};
 
 enum DrawPass {
     GatherTextures,
@@ -122,6 +126,20 @@ impl<'a> DrawContext<'a> {
                 num_vertices,
                 draw_area,
             ),
+        }
+    }
+
+    pub fn update_matrix<F>(&mut self, f: F)
+    where
+        F: FnOnce(Mat4) -> Mat4,
+    {
+        match &mut self.pass {
+            DrawPass::GatherTextures => (),
+            DrawPass::Main { batch_pool, .. } => {
+                let new_pool = BatchPool::new(f(batch_pool.matrix));
+                let old_pool = std::mem::replace(batch_pool, new_pool);
+                super::renderer::render(self.context, old_pool);
+            }
         }
     }
 }
