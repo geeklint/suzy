@@ -65,18 +65,18 @@ macro_rules! impl_empty {
     }
 }
 
-pub(super) trait Holder: Clone {
+pub(super) trait Holder<O: ?Sized>: Clone {
     type Content: ?Sized;
 
-    fn get_mut<F>(&self, f: F)
+    fn get_mut<F>(&self, owner: &mut O, f: F)
     where
         F: FnOnce(&mut Self::Content, &mut WidgetRect);
 }
 
-impl<T: ?Sized> Holder for Weak<RefCell<Widget<T>>> {
+impl<T: ?Sized, O: ?Sized> Holder<O> for Weak<RefCell<Widget<T>>> {
     type Content = T;
 
-    fn get_mut<F>(&self, f: F)
+    fn get_mut<F>(&self, _owner: &mut O, f: F)
     where
         F: FnOnce(&mut Self::Content, &mut WidgetRect),
     {
@@ -94,23 +94,24 @@ struct MapHolder<Base, MapFn> {
     map: MapFn,
 }
 
-impl<Base, MapFn, Leaf: ?Sized> Holder for MapHolder<Base, MapFn>
+impl<Base, MapFn, Leaf, Owner> Holder<Owner> for MapHolder<Base, MapFn>
 where
-    Base: Holder,
+    Base: Holder<Owner>,
     MapFn: Clone
         + for<'a> Fn(
             &'a mut Base::Content,
             &'a mut WidgetRect,
         ) -> (&'a mut Leaf, &'a mut WidgetRect),
+    Leaf: ?Sized,
 {
     type Content = Leaf;
 
-    fn get_mut<F>(&self, f: F)
+    fn get_mut<F>(&self, owner: &mut Owner, f: F)
     where
         F: FnOnce(&mut Self::Content, &mut WidgetRect),
     {
         let map = &self.map;
-        self.base.get_mut(|base_content, base_rect| {
+        self.base.get_mut(owner, |base_content, base_rect| {
             let (leaf_content, leaf_rect) = map(base_content, base_rect);
             f(leaf_content, leaf_rect)
         });
@@ -150,7 +151,7 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
         Child: super::Content<Plat>,
         Plat: 'static,
         Leaf: ?Sized + super::Content<Plat>,
-        Path: 'static + Holder<Content = Leaf>,
+        Path: 'static + Holder<DefaultOwner, Content = Leaf>,
     {
         let watch_name = WatchName::from_caller();
         let maybe_more = WatchedMeta::<'static, DefaultOwner>::new();
@@ -158,10 +159,10 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
         let state = Rc::clone(self.state);
         self.watch_ctx
             .add_watch_raw(watch_name, move |mut raw_arg| {
-                let (_, arg) = raw_arg.as_owner_and_arg();
+                let (owner, arg) = raw_arg.as_owner_and_arg();
                 maybe_more.watched(arg);
                 let mut holder = None;
-                current_path.get_mut(|content, _rect| {
+                current_path.get_mut(owner, |content, _rect| {
                     holder = iter_fn(content, arg)
                         .filter_map(|e| e.uninit_holder::<Plat>())
                         .next();
@@ -178,7 +179,7 @@ impl<'a, Leaf, Plat, Path> Desc<Leaf, Plat> for WidgetInitImpl<'a, Path>
 where
     Plat: 'static,
     Leaf: ?Sized + super::Content<Plat>,
-    Path: 'static + Holder<Content = Leaf>,
+    Path: 'static + Holder<DefaultOwner, Content = Leaf>,
 {
     impl_empty! { Leaf; Plat; graphic }
 
@@ -213,9 +214,10 @@ where
         let state = Rc::clone(self.state);
         self.watch_ctx
             .add_watch_raw(watch_name, move |mut raw_arg| {
-                let (_, arg) = raw_arg.as_owner_and_arg();
-                current_path
-                    .get_mut(|leaf, rect| func(leaf, rect, &state, arg));
+                let (owner, arg) = raw_arg.as_owner_and_arg();
+                current_path.get_mut(owner, |leaf, rect| {
+                    func(leaf, rect, &state, arg)
+                });
             });
     }
 

@@ -163,13 +163,14 @@ mod holder {
         }
     }
 
-    impl<T, P> widget::receivers::Holder for EphemeralHolder<T, P>
+    impl<T, P, O> widget::receivers::Holder<O> for EphemeralHolder<T, P>
     where
+        O: ?Sized,
         T: ?Sized,
     {
         type Content = T;
 
-        fn get_mut<F>(&self, f: F)
+        fn get_mut<F>(&self, _owner: &mut O, f: F)
         where
             F: FnOnce(&mut Self::Content, &mut widget::WidgetRect),
         {
