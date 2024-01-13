@@ -5,7 +5,7 @@ use std::{cell::Cell, rc::Rc, time::Duration};
 
 use suzy::{
     animation::Animation,
-    app::{App, AppBuilder},
+    app::AppBuilder,
     graphics::Color,
     platforms::no_graphics::NoGraphics,
     widget::{self, Widget},
@@ -37,7 +37,7 @@ fn animation() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
-    let mut app: App<NoGraphics> = builder.build();
+    let mut app = builder.build(&mut NoGraphics);
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
     let mut root = Widget::<Root>::default();

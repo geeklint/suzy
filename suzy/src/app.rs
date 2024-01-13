@@ -49,21 +49,11 @@ mod app_struct {
     where
         P: Platform,
     {
-        pub(super) platform: Option<P>,
         pub(crate) watch_ctx: WatchContext<'static>,
         pub(super) window: P::Window,
         pub(super) roots: Vec<RootHolder<P::Renderer>>,
         pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
         pub(crate) state: Rc<super::AppState>,
-    }
-}
-
-impl<P> Default for App<P>
-where
-    P: Platform,
-{
-    fn default() -> Self {
-        AppBuilder::default().build()
     }
 }
 
@@ -99,12 +89,10 @@ impl<P: Platform> App<P> {
     ///
     /// Because of platform-specific requirements, this requires control
     /// of the current thread.
-    pub fn run(mut self) -> ! {
-        self.platform.take().expect("app lost its platform").run(
-            move |state, event| {
-                self.handle_event(state, event);
-            },
-        )
+    pub fn run(mut self, platform: P) -> ! {
+        platform.run(move |state, event| {
+            self.handle_event(state, event);
+        })
     }
 
     /// Add a root widget to the app.
@@ -117,7 +105,8 @@ impl<P: Platform> App<P> {
     where
         T: widget::Content<P::Renderer>,
     {
-        let (width, height) = self.window.size();
+        let width = self.state.window_width.get_unwatched();
+        let height = self.state.window_height.get_unwatched();
         let rect = SimpleRect::with_size(width, height);
         widget.set_fill(&rect, &Padding2d::zero());
         let holder = Rc::new(RefCell::new(widget));
@@ -133,69 +122,26 @@ impl<P: Platform> App<P> {
         func(AppTesterInterface::new(&mut self));
         std::mem::drop(self.roots);
         std::mem::drop(self.window);
-        std::mem::drop(self.platform);
     }
 
-    fn handle_event<E: EventLoopState>(
-        &mut self,
-        state: &mut E,
-        event: Event<'_>,
-    ) {
-        use self::WindowEvent::*;
-
-        match event {
-            Event::StartFrame(frame_time) => {
-                self.state.frame_start.set_external(frame_time);
-                let duration = frame_time
-                    .duration_since(self.state.coarse_time().get_unwatched());
-                if duration >= AppState::COARSE_STEP {
-                    self.state.coarse_time.set_external(frame_time);
-                }
-            }
-            Event::Update => {
-                self.watch_ctx.update();
-            }
-            Event::TakeScreenshot(dest) => {
-                *dest = self.window.take_screenshot();
-            }
-            Event::Draw => {
-                self.draw();
-            }
-            Event::FinishDraw => {
-                self.window.flip();
-            }
-            Event::WindowEvent(Quit) => {
-                state.request_shutdown();
-            }
-            Event::WindowEvent(Resize) => {
-                let (width, height) = self.window.size();
-                self.state
-                    .cell_size
-                    .set_external(get_cell_size(width, height));
-                self.state.window_width.set_external(width);
-                self.state.window_height.set_external(height);
-                for root in self.roots.iter_mut() {
-                    let mut wid = root.borrow_mut();
-                    wid.set_horizontal_stretch(0.0, width);
-                    wid.set_vertical_stretch(0.0, height);
-                }
-                self.window.recalculate_viewport();
-            }
-            Event::WindowEvent(DpScaleChange) => {
-                let ppd = self.window.pixels_per_dp();
-                self.state.px_per_dp.set_external(ppd);
-            }
-            Event::WindowEvent(KeyDown(_key)) => {}
-            Event::WindowEvent(Pointer(mut pointer)) => {
-                if !pointer.normalized {
-                    self.window.normalize_pointer_event(&mut pointer);
-                }
-                self.pointer_event(pointer);
-            }
+    pub fn start_frame(&mut self, frame_time: time::Instant) {
+        self.state.frame_start.set_external(frame_time);
+        let duration = frame_time
+            .duration_since(self.state.coarse_time().get_unwatched());
+        if duration >= AppState::COARSE_STEP {
+            self.state.coarse_time.set_external(frame_time);
         }
     }
 
-    fn draw(&mut self) {
+    pub fn update_watches(&mut self) {
+        self.watch_ctx.update()
+    }
+
+    pub fn take_screenshot(&self) -> Box<[u8]> {
+        self.window.take_screenshot()
+    }
+
+    pub fn draw(&mut self) {
         let mut loop_count: u32 = 0;
         let mut pass_arg = None;
         loop {
@@ -216,7 +162,34 @@ impl<P: Platform> App<P> {
         }
     }
 
-    fn pointer_event(&mut self, pointer: PointerEventData) {
+    pub fn finish_draw(&mut self) {
+        self.window.flip()
+    }
+
+    pub fn update_window_size(&mut self) {
+        let (width, height) = self.window.size();
+        self.state
+            .cell_size
+            .set_external(get_cell_size(width, height));
+        self.state.window_width.set_external(width);
+        self.state.window_height.set_external(height);
+        for root in self.roots.iter_mut() {
+            let mut wid = root.borrow_mut();
+            wid.set_horizontal_stretch(0.0, width);
+            wid.set_vertical_stretch(0.0, height);
+        }
+        self.window.recalculate_viewport();
+    }
+
+    pub fn update_scale_factor(&mut self) {
+        let ppd = self.window.pixels_per_dp();
+        self.state.px_per_dp.set_external(ppd);
+    }
+
+    pub fn pointer_event(&mut self, mut pointer: PointerEventData) {
+        if !pointer.normalized {
+            self.window.normalize_pointer_event(&mut pointer);
+        }
         let mut event = PointerEvent::new(pointer, &mut self.pointer_grab_map);
         let mut handled = false;
         let mut iter = self.roots.iter_mut().rev();
@@ -230,5 +203,32 @@ impl<P: Platform> App<P> {
         let Self { window, roots, .. } = self;
         std::mem::drop(roots);
         std::mem::drop(window);
+    }
+
+    fn handle_event<E: EventLoopState>(
+        &mut self,
+        state: &mut E,
+        event: Event<'_>,
+    ) {
+        use self::WindowEvent::*;
+
+        match event {
+            Event::StartFrame(frame_time) => self.start_frame(frame_time),
+            Event::Update => self.update_watches(),
+            Event::TakeScreenshot(dest) => {
+                *dest = self.take_screenshot();
+            }
+            Event::Draw => self.draw(),
+            Event::FinishDraw => self.finish_draw(),
+            Event::WindowEvent(Quit) => {
+                state.request_shutdown();
+            }
+            Event::WindowEvent(Resize) => self.update_window_size(),
+            Event::WindowEvent(DpScaleChange) => self.update_scale_factor(),
+            Event::WindowEvent(KeyDown(_key)) => {}
+            Event::WindowEvent(Pointer(pointer)) => {
+                self.pointer_event(pointer)
+            }
+        }
     }
 }

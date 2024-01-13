@@ -19,8 +19,7 @@ pub struct AppBuilder {
 
 impl AppBuilder {
     /// Build the app
-    pub fn build<P: Platform>(self) -> App<P> {
-        let mut platform = P::new();
+    pub fn build<P: Platform>(self, platform: &mut P) -> App<P> {
         let window = platform
             .create_window(self.win)
             .expect("Failed to create window");
@@ -31,7 +30,6 @@ impl AppBuilder {
         let watch_ctx: WatchContext<'static> = WatchContext::new();
 
         App {
-            platform: Some(platform),
             watch_ctx,
             window,
             roots: Vec::new(),

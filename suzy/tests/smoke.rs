@@ -4,9 +4,7 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::{App, AppBuilder},
-    graphics::Color,
-    platforms::TestPlatform,
+    app::AppBuilder, graphics::Color, platforms::TestPlatform,
     window::WindowSettings,
 };
 
@@ -15,7 +13,8 @@ fn smoke() {
     let mut builder = AppBuilder::default();
     builder.set_size((480.0, 360.0));
     builder.set_background_color(Color::BLACK);
-    let app: App<TestPlatform> = builder.build();
+    let mut platform = <TestPlatform as suzy::platform::Platform>::new();
+    let app = builder.build(&mut platform);
     app.test(|mut app| {
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {

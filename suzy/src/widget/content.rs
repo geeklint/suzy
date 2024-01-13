@@ -1,23 +1,20 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::pointer::PointerEvent;
-
-use super::WidgetRect;
+use crate::{
+    pointer::PointerEvent,
+    widget::{self, WidgetRect},
+};
 
 with_default_render_platform! {
     /// This trait provides the "glue" between the data you define in custom
-    /// widgets and the behavior suzy defines for widgets.  There are three
-    /// required methods: `init`, `children`, and `graphics`.
+    /// widgets and the behavior suzy defines for widgets.
     ///
-    /// The `init` method is the primary point for registering the `watch`
+    /// The desc method allows you to provide the description of your custom
+    /// widget, which includes the child widgets, graphics, and `watch`
     /// functions that define the behavior of a widget. See the
-    /// [watch](../watch/index.html) module for more information.
-    ///
-    /// The methods `children` and `graphics` should be fairly straightforward
-    /// to implement: they provide a simple "internal iterator" format which
-    /// allows suzy to iterate over the children and graphics a custom widget
-    /// contains.
+    /// [watch](../watch/index.html) module for more information on `watch`
+    /// functions.
     ///
     /// Custom widgets may contain any number of graphics and child widgets, or
     /// none of either.
@@ -66,7 +63,7 @@ with_default_render_platform! {
     {
         /// This method should be implemented to describe a custom widget,
         /// including watch functions, children, graphics, and more.
-        fn desc(desc: impl super::Desc<Self, P>);
+        fn desc(desc: impl widget::Desc<Self, P>);
 
         /// Override this method to define a custom shape for the widget.
         ///
@@ -105,7 +102,7 @@ with_default_render_platform! {
 }
 
 impl<P> Content<P> for () {
-    fn desc(_desc: impl super::Desc<Self, P>) {}
+    fn desc(_desc: impl widget::Desc<Self, P>) {}
 }
 
 /// This is a convience function to create and run an App with this
@@ -121,8 +118,7 @@ where
 {
     fn run_as_app() -> ! {
         use crate::{
-            app::{App, AppBuilder},
-            platforms::DefaultPlatform,
+            app::AppBuilder, platforms::DefaultPlatform,
             window::WindowSettings,
         };
 
@@ -142,8 +138,10 @@ where
         );
         let mut builder = AppBuilder::default();
         builder.set_title(title);
-        let mut app: App<DefaultPlatform> = builder.build();
-        app.add_root(super::Widget::<T>::default());
-        app.run();
+        let mut platform =
+            <DefaultPlatform as crate::platform::Platform>::new();
+        let mut app = builder.build(&mut platform);
+        app.add_root(widget::Widget::<T>::default());
+        app.run(platform);
     }
 }
