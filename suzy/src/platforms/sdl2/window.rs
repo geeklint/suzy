@@ -11,8 +11,8 @@ use sdl2::{
 use crate::{
     graphics::{Color, DrawContext},
     platforms::opengl,
-    pointer::{PointerAction, PointerEventData},
-    window::{self, WindowBuilder, WindowEvent, WindowSettings},
+    pointer::{AltMouseButton, PointerAction, PointerEventData, PointerId},
+    window::{self, WindowBuilder, WindowSettings},
 };
 
 //use super::texture_loader::load_texture;
@@ -266,136 +266,135 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     }
 }
 
-pub struct Events {
-    pub(super) events: sdl2::EventPump,
-    pub(super) send_dp: bool,
+fn handle_win_event(
+    win_event: sdl_WindowEvent,
+    state: &mut crate::platform::SimpleEventLoopState,
+    app: &mut crate::app::App,
+) {
+    match win_event {
+        sdl_WindowEvent::SizeChanged(_, _) | sdl_WindowEvent::Moved { .. } => {
+            app.update_window_size();
+            app.update_scale_factor();
+        }
+        sdl_WindowEvent::Close => state.running = false,
+        sdl_WindowEvent::Leave => app.pointer_event(PointerEventData {
+            id: PointerId::Mouse,
+            action: PointerAction::Hover(f32::NAN, f32::NAN),
+            x: f32::NAN,
+            y: f32::NAN,
+            normalized: true,
+        }),
+        _ => {}
+    }
 }
 
-impl Events {
-    fn win_event(
-        &mut self,
-        win_event: sdl_WindowEvent,
-    ) -> Option<WindowEvent> {
-        Some(match win_event {
-            sdl_WindowEvent::SizeChanged(_, _)
-            | sdl_WindowEvent::Moved { .. } => {
-                self.send_dp = true;
-                WindowEvent::Resize
+pub fn pump(
+    events: &mut sdl2::EventPump,
+    state: &mut crate::platform::SimpleEventLoopState,
+    app: &mut crate::app::App,
+) {
+    while let Some(event) = events.poll_event() {
+        match event {
+            Event::Quit { .. } => state.running = false,
+            Event::Window { win_event, .. } => {
+                handle_win_event(win_event, state, app);
             }
-            sdl_WindowEvent::Close => WindowEvent::Quit,
-            sdl_WindowEvent::Leave => {
-                WindowEvent::Pointer(PointerEventData::new(
-                    crate::pointer::PointerId::Mouse,
-                    PointerAction::Hover(f32::NAN, f32::NAN),
-                    f32::NAN,
-                    f32::NAN,
-                ))
-            }
-            _ => return None,
-        })
-    }
-
-    pub fn next(&mut self) -> Option<WindowEvent> {
-        if self.send_dp {
-            self.send_dp = false;
-            return Some(WindowEvent::DpScaleChange);
-        }
-        while let Some(event) = self.events.poll_event() {
-            return Some(match event {
-                Event::Quit { .. } => WindowEvent::Quit,
-                Event::Window { win_event, .. } => {
-                    match self.win_event(win_event) {
-                        Some(ev) => ev,
-                        None => continue,
+            Event::MouseButtonDown {
+                mouse_btn, x, y, ..
+            } => {
+                let [x, y] = [x as f32, y as f32];
+                let action = match to_alt_mouse_button(mouse_btn) {
+                    AltMouseButtonResult::Primary => PointerAction::Down,
+                    AltMouseButtonResult::Alt(btn) => {
+                        PointerAction::AltDown(btn)
                     }
-                }
-                Event::MouseButtonDown {
-                    mouse_btn, x, y, ..
-                } => {
-                    use crate::pointer::*;
-                    use sdl2::mouse::MouseButton::*;
-                    let [x, y] = [x as f32, y as f32];
-                    let action = match mouse_btn {
-                        Left => PointerAction::Down,
-                        X1 => PointerAction::AltDown(AltMouseButton::X1),
-                        X2 => PointerAction::AltDown(AltMouseButton::X2),
-                        Middle => {
-                            PointerAction::AltDown(AltMouseButton::Middle)
-                        }
-                        Right => PointerAction::AltDown(AltMouseButton::Right),
-                        Unknown => continue,
-                    };
-                    WindowEvent::Pointer(PointerEventData::new(
-                        PointerId::Mouse,
-                        action,
-                        x,
-                        y,
-                    ))
-                }
-                Event::MouseButtonUp {
-                    mouse_btn, x, y, ..
-                } => {
-                    use crate::pointer::*;
-                    use sdl2::mouse::MouseButton::*;
-                    let [x, y] = [x as f32, y as f32];
-                    let action = match mouse_btn {
-                        Left => PointerAction::Up,
-                        X1 => PointerAction::AltUp(AltMouseButton::X1),
-                        X2 => PointerAction::AltUp(AltMouseButton::X2),
-                        Middle => PointerAction::AltUp(AltMouseButton::Middle),
-                        Right => PointerAction::AltUp(AltMouseButton::Right),
-                        Unknown => continue,
-                    };
-                    WindowEvent::Pointer(PointerEventData::new(
-                        PointerId::Mouse,
-                        action,
-                        x,
-                        y,
-                    ))
-                }
-                Event::MouseMotion {
-                    mousestate,
+                    AltMouseButtonResult::Unknown => continue,
+                };
+                app.pointer_event(PointerEventData::new(
+                    PointerId::Mouse,
+                    action,
                     x,
                     y,
-                    xrel,
-                    yrel,
-                    ..
-                } => {
-                    use crate::pointer::*;
-                    let [x, y] = [x as f32, y as f32];
-                    let [xrel, yrel] = [xrel as f32, yrel as f32];
-                    if mousestate.left() {
-                        WindowEvent::Pointer(PointerEventData::new(
-                            PointerId::Mouse,
-                            PointerAction::Move(xrel, yrel),
-                            x,
-                            y,
-                        ))
-                    } else {
-                        WindowEvent::Pointer(PointerEventData::new(
-                            PointerId::Mouse,
-                            PointerAction::Hover(xrel, yrel),
-                            x,
-                            y,
-                        ))
+                ));
+            }
+            Event::MouseButtonUp {
+                mouse_btn, x, y, ..
+            } => {
+                let [x, y] = [x as f32, y as f32];
+                let action = match to_alt_mouse_button(mouse_btn) {
+                    AltMouseButtonResult::Primary => PointerAction::Up,
+                    AltMouseButtonResult::Alt(btn) => {
+                        PointerAction::AltUp(btn)
                     }
-                }
-                Event::MouseWheel { x, y, .. } => {
-                    use crate::pointer::*;
-                    let state = self.events.mouse_state();
-                    let [xrel, yrel] = [x as f32, y as f32];
-                    let x = state.x() as f32;
-                    let y = state.y() as f32;
-                    WindowEvent::Pointer(PointerEventData::new(
+                    AltMouseButtonResult::Unknown => continue,
+                };
+                app.pointer_event(PointerEventData::new(
+                    PointerId::Mouse,
+                    action,
+                    x,
+                    y,
+                ));
+            }
+            Event::MouseMotion {
+                mousestate,
+                x,
+                y,
+                xrel,
+                yrel,
+                ..
+            } => {
+                let [x, y] = [x as f32, y as f32];
+                let [xrel, yrel] = [xrel as f32, yrel as f32];
+                let pointer_event = if mousestate.left() {
+                    PointerEventData::new(
                         PointerId::Mouse,
-                        PointerAction::Wheel(xrel, yrel),
+                        PointerAction::Move(xrel, yrel),
                         x,
                         y,
-                    ))
-                }
-                _ => continue,
-            });
+                    )
+                } else {
+                    PointerEventData::new(
+                        PointerId::Mouse,
+                        PointerAction::Hover(xrel, yrel),
+                        x,
+                        y,
+                    )
+                };
+                app.pointer_event(pointer_event);
+            }
+            Event::MouseWheel { x, y, .. } => {
+                let state = events.mouse_state();
+                let [xrel, yrel] = [x as f32, y as f32];
+                let x = state.x() as f32;
+                let y = state.y() as f32;
+                app.pointer_event(PointerEventData::new(
+                    PointerId::Mouse,
+                    PointerAction::Wheel(xrel, yrel),
+                    x,
+                    y,
+                ));
+            }
+            _ => continue,
         }
-        None
+    }
+}
+
+enum AltMouseButtonResult {
+    Primary,
+    Alt(AltMouseButton),
+    Unknown,
+}
+
+fn to_alt_mouse_button(
+    button: sdl2::mouse::MouseButton,
+) -> AltMouseButtonResult {
+    use AltMouseButtonResult::*;
+    match button {
+        sdl2::mouse::MouseButton::Unknown => Unknown,
+        sdl2::mouse::MouseButton::Left => Primary,
+        sdl2::mouse::MouseButton::Middle => Alt(AltMouseButton::Middle),
+        sdl2::mouse::MouseButton::Right => Alt(AltMouseButton::Right),
+        sdl2::mouse::MouseButton::X1 => Alt(AltMouseButton::X1),
+        sdl2::mouse::MouseButton::X2 => Alt(AltMouseButton::X2),
     }
 }

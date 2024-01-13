@@ -9,24 +9,6 @@ use crate::{
     pointer::PointerEventData,
 };
 
-/// An event that happened on a window.
-pub enum WindowEvent {
-    /// The window size changed.
-    Resize,
-
-    /// The scale of the window changed.
-    DpScaleChange,
-
-    /// A key was pressed.
-    KeyDown(i32),
-
-    /// The window close button was clicked.
-    Quit,
-
-    /// A pointer event happened on the window.
-    Pointer(PointerEventData),
-}
-
 /// A trait which represents the settings a window might have.
 pub trait WindowSettings {
     /// Get the size of the window in dp

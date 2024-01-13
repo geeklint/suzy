@@ -4,8 +4,7 @@
 #![allow(missing_docs)]
 
 use crate::{
-    platform::{Event, SimpleEventLoopState},
-    platforms::opengl::OpenGlRenderPlatform,
+    platform::SimpleEventLoopState, platforms::opengl::OpenGlRenderPlatform,
 };
 
 mod window;
@@ -34,24 +33,16 @@ impl crate::platform::Platform for SdlPlatform {
 
     fn run(self, app: &mut crate::app::App<Self>) -> ! {
         let mut state = SimpleEventLoopState::default();
-        let mut events = window::Events {
-            events: self
-                .sdl
-                .event_pump()
-                .expect("Failed to create SDL2 event pump"),
-            send_dp: false,
-        };
+        let mut event_pump = self
+            .sdl
+            .event_pump()
+            .expect("Failed to create SDL2 event pump");
         while state.running {
-            app.handle_event(
-                &mut state,
-                Event::StartFrame(std::time::Instant::now()),
-            );
-            while let Some(event) = events.next() {
-                app.handle_event(&mut state, Event::WindowEvent(event));
-            }
-            app.handle_event(&mut state, Event::Update);
-            app.handle_event(&mut state, Event::Draw);
-            app.handle_event(&mut state, Event::FinishDraw);
+            app.start_frame(std::time::Instant::now());
+            window::pump(&mut event_pump, &mut state, app);
+            app.update_watches();
+            app.draw();
+            app.finish_draw();
         }
         std::process::exit(0)
     }

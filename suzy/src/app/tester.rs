@@ -4,9 +4,8 @@
 use std::time;
 
 use crate::{
-    platform::{Event, Platform, SimpleEventLoopState},
+    platform::{Platform, SimpleEventLoopState},
     pointer::PointerEventData,
-    window::WindowEvent,
 };
 
 use super::App;
@@ -25,8 +24,8 @@ impl<'a, P: Platform> AppTesterInterface<'a, P> {
     /// Create a tester interface from a CurrentApp.
     pub fn new(app: &'a mut App<P>) -> Self {
         let start_time = std::time::Instant::now();
-        let mut state = SimpleEventLoopState::default();
-        app.handle_event(&mut state, Event::StartFrame(start_time));
+        let state = SimpleEventLoopState::default();
+        app.start_frame(start_time);
         Self {
             app,
             state,
@@ -54,8 +53,8 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// Issue an update to ensure all events have fully resolved
     pub fn draw_if_needed(&mut self) {
         if self.needs_draw {
-            self.app.handle_event(&mut self.state, Event::Update);
-            self.app.handle_event(&mut self.state, Event::Draw);
+            self.app.update_watches();
+            self.app.draw();
             self.needs_draw = false;
         }
     }
@@ -70,10 +69,9 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     pub fn next_frame(&mut self, frame_time: time::Duration) {
         self.assert_running();
         self.draw_if_needed();
-        self.app.handle_event(&mut self.state, Event::FinishDraw);
+        self.app.finish_draw();
         self.start_time += frame_time;
-        self.app
-            .handle_event(&mut self.state, Event::StartFrame(self.start_time));
+        self.app.start_frame(self.start_time);
         self.needs_draw = true;
     }
 
@@ -83,10 +81,7 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// remember to set `normalized` to true.
     pub fn pointer(&mut self, pointer: PointerEventData) {
         self.assert_running();
-        self.app.handle_event(
-            &mut self.state,
-            Event::WindowEvent(WindowEvent::Pointer(pointer)),
-        );
+        self.app.pointer_event(pointer);
         self.needs_draw = true;
     }
 
@@ -97,10 +92,7 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     pub fn take_screenshot(&mut self) -> Box<[u8]> {
         self.assert_running();
         self.draw_if_needed();
-        let mut data: Box<[u8]> = Box::new([0u8; 0]);
-        self.app
-            .handle_event(&mut self.state, Event::TakeScreenshot(&mut data));
-        data
+        self.app.take_screenshot()
     }
 
     /// Short-hand to simulate a mouse click

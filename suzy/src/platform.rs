@@ -10,7 +10,7 @@
 //! automated testing.
 
 mod event;
-pub use event::{Event, EventLoopState, SimpleEventLoopState};
+pub use event::{EventLoopState, SimpleEventLoopState};
 
 use crate::dims::Rect;
 

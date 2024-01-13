@@ -1,31 +1,6 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::window::WindowEvent;
-
-/// Possible events a platform could generate.
-pub enum Event<'a> {
-    /// Window event, such as resize
-    WindowEvent(WindowEvent),
-
-    /// Emitted when a new frame is being started.
-    StartFrame(std::time::Instant),
-
-    /// Update all pending watch closures.
-    Update,
-
-    /// Render all widgets.
-    Draw,
-
-    /// After rendering, finalize displaying the results to the user.
-    FinishDraw,
-
-    /// Take a screenshot.
-    ///
-    /// Sent by testing platform in some circumstances.
-    TakeScreenshot(&'a mut Box<[u8]>),
-}
-
 /// A trait which the event handler can use to shutdown the event loop.
 pub trait EventLoopState {
     /// Signal that the event loop should stop.

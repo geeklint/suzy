@@ -11,10 +11,10 @@ use std::{cell::RefCell, rc::Rc, time};
 use crate::{
     dims::{Padding2d, Rect, SimpleRect},
     graphics::PlatformDrawContext,
-    platform::{Event, EventLoopState, Platform},
+    platform::Platform,
     pointer::{PointerEvent, PointerEventData},
     widget::{self, Widget},
-    window::{Window, WindowEvent, WindowSettings},
+    window::{Window, WindowSettings},
 };
 
 mod builder;
@@ -205,32 +205,5 @@ impl<P: Platform> App<P> {
         let Self { window, roots, .. } = self;
         std::mem::drop(roots);
         std::mem::drop(window);
-    }
-
-    pub fn handle_event<E: EventLoopState>(
-        &mut self,
-        state: &mut E,
-        event: Event<'_>,
-    ) {
-        use self::WindowEvent::*;
-
-        match event {
-            Event::StartFrame(frame_time) => self.start_frame(frame_time),
-            Event::Update => self.update_watches(),
-            Event::TakeScreenshot(dest) => {
-                *dest = self.take_screenshot();
-            }
-            Event::Draw => self.draw(),
-            Event::FinishDraw => self.finish_draw(),
-            Event::WindowEvent(Quit) => {
-                state.request_shutdown();
-            }
-            Event::WindowEvent(Resize) => self.update_window_size(),
-            Event::WindowEvent(DpScaleChange) => self.update_scale_factor(),
-            Event::WindowEvent(KeyDown(_key)) => {}
-            Event::WindowEvent(Pointer(pointer)) => {
-                self.pointer_event(pointer)
-            }
-        }
     }
 }
