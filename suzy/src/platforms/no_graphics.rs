@@ -45,10 +45,7 @@ impl Platform for NoGraphics {
         })
     }
 
-    fn run<F>(self, _event_handlerr: F) -> !
-    where
-        F: 'static + FnMut(&mut Self::State, crate::platform::Event<'_>),
-    {
+    fn run(self, _app: &mut crate::app::App<Self>) -> ! {
         unimplemented!(
             "NoGraphics platform has no concept of running as an app"
         );

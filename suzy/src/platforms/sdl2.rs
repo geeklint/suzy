@@ -32,10 +32,7 @@ impl crate::platform::Platform for SdlPlatform {
         window::Window::new_window(&self.sdl, settings)
     }
 
-    fn run<F>(self, mut event_handler: F) -> !
-    where
-        F: 'static + FnMut(&mut Self::State, Event<'_>),
-    {
+    fn run(self, app: &mut crate::app::App<Self>) -> ! {
         let mut state = SimpleEventLoopState::default();
         let mut events = window::Events {
             events: self
@@ -45,16 +42,16 @@ impl crate::platform::Platform for SdlPlatform {
             send_dp: false,
         };
         while state.running {
-            event_handler(
+            app.handle_event(
                 &mut state,
                 Event::StartFrame(std::time::Instant::now()),
             );
             while let Some(event) = events.next() {
-                event_handler(&mut state, Event::WindowEvent(event));
+                app.handle_event(&mut state, Event::WindowEvent(event));
             }
-            event_handler(&mut state, Event::Update);
-            event_handler(&mut state, Event::Draw);
-            event_handler(&mut state, Event::FinishDraw);
+            app.handle_event(&mut state, Event::Update);
+            app.handle_event(&mut state, Event::Draw);
+            app.handle_event(&mut state, Event::FinishDraw);
         }
         std::process::exit(0)
     }

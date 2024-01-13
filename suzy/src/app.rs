@@ -47,7 +47,7 @@ mod app_struct {
     /// See the [module-level documentation](./index.html) for more details.
     pub struct App<P>
     where
-        P: Platform,
+        P: ?Sized + Platform,
     {
         pub(crate) watch_ctx: WatchContext<'static>,
         pub(super) window: P::Window,
@@ -90,9 +90,7 @@ impl<P: Platform> App<P> {
     /// Because of platform-specific requirements, this requires control
     /// of the current thread.
     pub fn run(mut self, platform: P) -> ! {
-        platform.run(move |state, event| {
-            self.handle_event(state, event);
-        })
+        platform.run(&mut self)
     }
 
     /// Add a root widget to the app.
@@ -209,7 +207,7 @@ impl<P: Platform> App<P> {
         std::mem::drop(window);
     }
 
-    fn handle_event<E: EventLoopState>(
+    pub fn handle_event<E: EventLoopState>(
         &mut self,
         state: &mut E,
         event: Event<'_>,

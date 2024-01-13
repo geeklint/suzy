@@ -9,8 +9,7 @@
 //! automation, e.g. tests.
 
 use crate::{
-    platform::{Event, SimpleEventLoopState},
-    platforms::opengl::OpenGlRenderPlatform,
+    platform::SimpleEventLoopState, platforms::opengl::OpenGlRenderPlatform,
 };
 
 mod bindings;
@@ -44,10 +43,7 @@ impl crate::platform::Platform for OsMesaPlatform {
     }
 
     #[allow(clippy::unimplemented)]
-    fn run<F>(self, _event_handler: F) -> !
-    where
-        F: 'static + FnMut(&mut Self::State, Event<'_>),
-    {
+    fn run(self, _app: &mut crate::app::App<Self>) -> ! {
         unimplemented!("Platform::run called for OSMesa Platform");
     }
 }

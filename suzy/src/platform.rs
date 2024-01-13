@@ -37,9 +37,7 @@ pub trait Platform: 'static {
     ) -> Result<Self::Window, String>;
 
     /// Run, the event loop, calling the provided closure with each new event.
-    fn run<F>(self, event_handler: F) -> !
-    where
-        F: 'static + FnMut(&mut Self::State, Event<'_>);
+    fn run(self, app: &mut crate::app::App<Self>) -> !;
 }
 
 /// A RenderPlatform provides tools to create Graphics.
