@@ -170,7 +170,7 @@ where
         });
     }
 
-    fn hittest(&self, rect: &WidgetRect, point: (f32, f32)) -> bool {
+    fn hittest(&self, rect: &WidgetRect, point: [f32; 2]) -> bool {
         self.content.hittest(rect, point)
     }
 

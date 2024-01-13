@@ -30,10 +30,10 @@ pub enum WindowEvent {
 /// A trait which represents the settings a window might have.
 pub trait WindowSettings {
     /// Get the size of the window in dp
-    fn size(&self) -> (f32, f32);
+    fn size(&self) -> [f32; 2];
 
     /// Set the size of the window in dp
-    fn set_size(&mut self, size: (f32, f32));
+    fn set_size(&mut self, size: [f32; 2]);
 
     /// Get the window title
     fn title(&self) -> &str;
@@ -56,7 +56,7 @@ pub trait WindowSettings {
 
 /// A structure which defines the initial creation parameters for a window
 pub struct WindowBuilder {
-    size: (f32, f32),
+    size: [f32; 2],
     title: String,
     fullscreen: bool,
     background_color: Color,
@@ -72,7 +72,7 @@ impl WindowBuilder {
 impl Default for WindowBuilder {
     fn default() -> Self {
         Self {
-            size: (1000.0, 500.0),
+            size: [1000.0, 500.0],
             title: "Suzy Window".to_string(),
             fullscreen: false,
             background_color: Color::from_rgba(
@@ -86,11 +86,11 @@ impl Default for WindowBuilder {
 }
 
 impl WindowSettings for WindowBuilder {
-    fn size(&self) -> (f32, f32) {
+    fn size(&self) -> [f32; 2] {
         self.size
     }
 
-    fn set_size(&mut self, size: (f32, f32)) {
+    fn set_size(&mut self, size: [f32; 2]) {
         self.size = size;
     }
 

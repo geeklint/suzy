@@ -109,20 +109,21 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// 1) sending a mouse-down pointer event
     /// 2) advancing the frame with the default frame time
     /// 3) sending a mouse-up pointer event
-    pub fn mouse_click(&mut self, pos: (f32, f32)) {
+    pub fn mouse_click(&mut self, pos: [f32; 2]) {
+        let [px, py] = pos;
         self.pointer(PointerEventData {
             id: crate::pointer::PointerId::Mouse,
             action: crate::pointer::PointerAction::Down,
-            x: pos.0,
-            y: pos.1,
+            x: px,
+            y: py,
             normalized: true,
         });
         self.next_frame_60fps();
         self.pointer(PointerEventData {
             id: crate::pointer::PointerId::Mouse,
             action: crate::pointer::PointerAction::Up,
-            x: pos.0,
-            y: pos.1,
+            x: px,
+            y: py,
             normalized: true,
         });
     }

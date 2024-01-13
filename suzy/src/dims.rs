@@ -339,14 +339,15 @@ pub trait Rect {
     fn set_center_y(&mut self, value: f32);
 
     /// Get the center of the rect
-    fn center(&self) -> (f32, f32) {
-        (self.x().center(), self.y().center())
+    fn center(&self) -> [f32; 2] {
+        [self.x().center(), self.y().center()]
     }
 
     /// Set the center of the rect and for it to grow evenly outwards
-    fn set_center(&mut self, value: (f32, f32)) {
-        self.set_center_x(value.0);
-        self.set_center_y(value.0);
+    fn set_center(&mut self, value: [f32; 2]) {
+        let [cx, cy] = value;
+        self.set_center_x(cx);
+        self.set_center_y(cy);
     }
 
     /// Get the width of the rectangle
@@ -365,25 +366,25 @@ pub trait Rect {
     /// Set the height of the rectangle
     fn set_height(&mut self, value: f32);
 
-    /// Set the pivot. A pivot of (0.5, 0.5) indicates that a rect will
-    /// grow from it's center, whereas a pivot of (0, 0) indicates that a
+    /// Set the pivot. A pivot of [0.5, 0.5] indicates that a rect will
+    /// grow from it's center, whereas a pivot of [0, 0] indicates that a
     /// rect will grow from it's bottom left corner.
-    fn pivot(&self) -> (f32, f32) {
-        (self.x().pivot, self.y().pivot)
+    fn pivot(&self) -> [f32; 2] {
+        [self.x().pivot, self.y().pivot]
     }
 
-    /// Set the pivot. A pivot of (0.5, 0.5) indicates that a rect will
-    /// grow from it's center, whereas a pivot of (0, 0) indicates that a
+    /// Set the pivot. A pivot of [0.5, 0.5] indicates that a rect will
+    /// grow from it's center, whereas a pivot of [0, 0] indicates that a
     /// rect will grow from it's bottom left corner.
-    fn set_pivot(&mut self, value: (f32, f32));
+    fn set_pivot(&mut self, value: [f32; 2]);
 
     /// Get the global position of the pivot of the rectangle
-    fn pivot_pos(&self) -> (f32, f32) {
-        (self.x().position, self.y().position)
+    fn pivot_pos(&self) -> [f32; 2] {
+        [self.x().position, self.y().position]
     }
 
     /// Set the global position of the pivot of the rectangle
-    fn set_pivot_pos(&mut self, value: (f32, f32));
+    fn set_pivot_pos(&mut self, value: [f32; 2]);
 
     /// Get the area of the rectangle
     fn area(&self) -> f32 {
@@ -397,8 +398,9 @@ pub trait Rect {
     }
 
     /// Check if a point is inside the rectangle
-    fn contains(&self, point: (f32, f32)) -> bool {
-        self.x().contains(point.0) && self.y().contains(point.1)
+    fn contains(&self, point: [f32; 2]) -> bool {
+        let [px, py] = point;
+        self.x().contains(px) && self.y().contains(py)
     }
 
     /// Set the width and x-position based on a left and right
@@ -535,11 +537,11 @@ macro_rules! proxy_rect_impl {
             $exclusive(self, |rect| rect.set_height(value))
         }
 
-        fn set_pivot(&mut self, value: (f32, f32)) {
+        fn set_pivot(&mut self, value: [f32; 2]) {
             $exclusive(self, |rect| rect.set_pivot(value))
         }
 
-        fn set_pivot_pos(&mut self, value: (f32, f32)) {
+        fn set_pivot_pos(&mut self, value: [f32; 2]) {
             $exclusive(self, |rect| rect.set_pivot_pos(value))
         }
 
@@ -617,14 +619,16 @@ impl Rect for SimpleRect {
         self.y.length = value;
     }
 
-    fn set_pivot(&mut self, value: (f32, f32)) {
-        self.x.pivot = value.0;
-        self.y.pivot = value.1;
+    fn set_pivot(&mut self, value: [f32; 2]) {
+        let [px, py] = value;
+        self.x.pivot = px;
+        self.y.pivot = py;
     }
 
-    fn set_pivot_pos(&mut self, value: (f32, f32)) {
-        self.x.position = value.0;
-        self.y.position = value.1;
+    fn set_pivot_pos(&mut self, value: [f32; 2]) {
+        let [px, py] = value;
+        self.x.position = px;
+        self.y.position = py;
     }
 
     fn set_horizontal_stretch(&mut self, left: f32, right: f32) {

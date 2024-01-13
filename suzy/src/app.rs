@@ -166,8 +166,12 @@ impl<P: Platform> App<P> {
         self.window.flip()
     }
 
+    pub fn get_window_size(&self) -> [f32; 2] {
+        self.window.size()
+    }
+
     pub fn update_window_size(&mut self) {
-        let (width, height) = self.window.size();
+        let [width, height] = self.window.size();
         self.state
             .cell_size
             .set_external(get_cell_size(width, height));

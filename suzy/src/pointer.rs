@@ -154,8 +154,8 @@ impl PointerEvent<'_> {
     }
 
     /// Get the position of the pointer during this event
-    pub fn pos(&self) -> (f32, f32) {
-        (self.data.x, self.data.y)
+    pub fn pos(&self) -> [f32; 2] {
+        [self.data.x, self.data.y]
     }
 
     /// Try to "grab" the pointer, indicating that the identified handle

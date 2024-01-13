@@ -73,15 +73,17 @@ impl Rect for WidgetRect {
     }
 
     #[track_caller]
-    fn set_pivot(&mut self, value: (f32, f32)) {
-        self.x.pivot = value.0;
-        self.y.pivot = value.0;
+    fn set_pivot(&mut self, value: [f32; 2]) {
+        let [px, py] = value;
+        self.x.pivot = px;
+        self.y.pivot = py;
     }
 
     #[track_caller]
-    fn set_pivot_pos(&mut self, value: (f32, f32)) {
-        self.x.position = value.0;
-        self.y.position = value.1;
+    fn set_pivot_pos(&mut self, value: [f32; 2]) {
+        let [px, py] = value;
+        self.x.position = px;
+        self.y.position = py;
     }
 
     #[track_caller]

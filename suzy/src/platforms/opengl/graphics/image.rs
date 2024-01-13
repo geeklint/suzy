@@ -229,9 +229,9 @@ impl SlicedImage {
         let mut odd = false;
         for (y, v, y_inside, y_padding) in vertical_values {
             for &(x, u, x_inside, x_padding) in &horiz_values {
-                let smoothing = match (x_inside, y_inside) {
-                    (true, false) => x_padding,
-                    (false, true) => y_padding,
+                let smoothing = match [x_inside, y_inside] {
+                    [true, false] => x_padding,
+                    [false, true] => y_padding,
                     _ => (x_padding + y_padding) / 2.0,
                 };
                 let config = VertexConfig::new()

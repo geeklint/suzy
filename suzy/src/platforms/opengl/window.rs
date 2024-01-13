@@ -64,15 +64,16 @@ impl Window {
 
     pub fn prepare_draw(
         &mut self,
-        screen_size: (f32, f32),
+        screen_size: [f32; 2],
         first_pass: bool,
     ) -> DrawContext<'_, OpenGlRenderPlatform> {
         unsafe {
             self.ctx.bindings.Enable(BLEND);
             self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
         }
+        let [screen_width, screen_height] = screen_size;
         let matrix = Mat4::translate(-1.0, -1.0)
-            * Mat4::scale(2.0 / screen_size.0, 2.0 / screen_size.1);
+            * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);
         super::DrawContext::new(&mut self.ctx, matrix, first_pass)
     }
 

@@ -40,7 +40,7 @@ pub trait PopulateTexture {
 
     /// This function should return Some, if the populator can perfectly
     /// determine the size the texture will be without loading it.
-    fn get_known_size(&self) -> Option<(f32, f32)> {
+    fn get_known_size(&self) -> Option<[f32; 2]> {
         None
     }
 
@@ -89,11 +89,11 @@ impl PopulateTextureUtil {
         gl: &OpenGlBindings,
         target: GLenum,
         format: GLint,
-        size_align: (u16, u16, u16),
+        [width, height]: [u16; 2],
+        alignment: u16,
         sdf: bool,
         pixels: &[u8],
     ) -> TextureSize {
-        let (width, height, alignment) = size_align;
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, alignment.into());
         }
@@ -184,8 +184,10 @@ impl PopulateTextureUtil {
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 3));
-        let size_align = (width, height, alignment);
-        Self::populate_format(gl, target, RGB as _, size_align, false, pixels)
+        let size = [width, height];
+        Self::populate_format(
+            gl, target, RGB as _, size, alignment, false, pixels,
+        )
     }
 
     pub fn populate_color_rgba(
@@ -197,8 +199,10 @@ impl PopulateTextureUtil {
         pixels: &[u8],
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 4));
-        let size_align = (width, height, alignment);
-        Self::populate_format(gl, target, RGBA as _, size_align, false, pixels)
+        let size = [width, height];
+        Self::populate_format(
+            gl, target, RGBA as _, size, alignment, false, pixels,
+        )
     }
 }
 
@@ -210,8 +214,8 @@ impl PopulateTexture for DefaultTexturePopulator {
         &[]
     }
 
-    fn get_known_size(&self) -> Option<(f32, f32)> {
-        Some((2.0, 2.0))
+    fn get_known_size(&self) -> Option<[f32; 2]> {
+        Some([2.0, 2.0])
     }
 
     fn populate(

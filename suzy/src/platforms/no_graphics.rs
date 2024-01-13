@@ -14,7 +14,7 @@ pub struct NoGraphics;
 #[derive(Clone, Debug)]
 pub struct Window {
     title: String,
-    size: (f32, f32),
+    size: [f32; 2],
     fullscreen: bool,
     background_color: Color,
 }
@@ -74,11 +74,11 @@ impl crate::graphics::PlatformDrawContext<()> for NoGraphics {
 }
 
 impl WindowSettings for Window {
-    fn size(&self) -> (f32, f32) {
+    fn size(&self) -> [f32; 2] {
         self.size
     }
 
-    fn set_size(&mut self, size: (f32, f32)) {
+    fn set_size(&mut self, size: [f32; 2]) {
         self.size = size;
     }
 
@@ -204,11 +204,11 @@ impl Rect for Graphic {
         unreachable!()
     }
 
-    fn set_pivot(&mut self, _value: (f32, f32)) {
+    fn set_pivot(&mut self, _value: [f32; 2]) {
         unreachable!()
     }
 
-    fn set_pivot_pos(&mut self, _value: (f32, f32)) {
+    fn set_pivot_pos(&mut self, _value: [f32; 2]) {
         unreachable!()
     }
 

@@ -82,11 +82,11 @@ impl Texture {
         use super::renderer::UvType;
         match self.crop {
             None => {
-                match (
+                match [
                     u16::try_from_f32(size.image_width),
                     u16::try_from_f32(size.image_height),
-                ) {
-                    (Some(width), Some(height)) => UvRect::U16(UvRectValues {
+                ] {
+                    [Some(width), Some(height)] => UvRect::U16(UvRectValues {
                         left: 0,
                         right: width,
                         bottom: 0,

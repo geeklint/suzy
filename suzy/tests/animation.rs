@@ -35,7 +35,7 @@ impl widget::Content<NoGraphics> for Root {
 #[test]
 fn animation() {
     let mut builder = AppBuilder::default();
-    builder.set_size((480.0, 360.0));
+    builder.set_size([480.0, 360.0]);
     builder.set_background_color(Color::BLACK);
     let mut app = builder.build(&mut NoGraphics);
     let value_output = Rc::new(Cell::new(142.0));

@@ -61,12 +61,12 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
         &mut self,
         mut interface: impl AdapterLayoutInterface<usize, T>,
     ) {
-        let (top, bottom) = {
+        let [top, bottom] = {
             let bounds = interface.bounds();
-            (bounds.top(), bounds.bottom())
+            [bounds.top(), bounds.bottom()]
         };
         let middle = (top + bottom) / 2.0;
-        let mut cursor_back = top + interface.reference_position().1;
+        let mut cursor_back = top + interface.reference_position()[1];
         let ref_index = self.reference_index;
         let prev_index = ref_index.saturating_sub(1);
         let mut cursor_fwd;
@@ -92,8 +92,8 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
             // we have nothing to go off of, so just update the rest position
             self.avg_size = 100.0;
             self.reference_index = self.data.len();
-            let reference_update = (0.0, 0.0);
-            let rest_update = (0.0, bottom - top);
+            let reference_update = [0.0, 0.0];
+            let rest_update = [0.0, bottom - top];
             interface.update_positions(reference_update, rest_update);
             return;
         }
@@ -155,16 +155,16 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
             nearest.pos
         };
         self.reference_index = nearest.index;
-        let reference_update = (0.0, nearest.pos - top);
-        let rest_update = (0.0, rest_pos - top);
+        let reference_update = [0.0, nearest.pos - top];
+        let rest_update = [0.0, rest_pos - top];
         interface.update_positions(reference_update, rest_update);
     }
 
     fn element_location(
         &mut self,
         item: &Self::ElementKey,
-        reference_position: (f32, f32),
-    ) -> Option<(f32, f32)> {
+        reference_position: [f32; 2],
+    ) -> Option<[f32; 2]> {
         let item = *item;
         let dist = if item >= self.data.len() {
             return None;
@@ -173,7 +173,8 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
         } else {
             (self.reference_index - item) as f32
         };
-        let pos = reference_position.1 + (dist * self.avg_size);
-        Some((reference_position.0, pos))
+        let [ref_x, ref_y] = reference_position;
+        let pos = ref_y + (dist * self.avg_size);
+        Some([ref_x, pos])
     }
 }

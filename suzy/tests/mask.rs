@@ -42,7 +42,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 #[test]
 fn mask_right_half() {
     let mut builder = AppBuilder::default();
-    builder.set_size((480.0, 360.0));
+    builder.set_size([480.0, 360.0]);
     builder.set_background_color(Color::BLACK);
     let mut platform = <TestPlatform as suzy::platform::Platform>::new();
     let mut app = builder.build(&mut platform);

@@ -176,14 +176,11 @@ impl<T: LerpDistance> Animation<T> {
     }
 }
 
-impl Animation<(f32, f32)> {
-    /// `LerpDistance` is intentionally not implemented for tuples, because
-    /// tuples may be used to implement more than just a position.
-    /// This function is the same as `set_speed`, but explicitly treats
-    /// tuples as a position.
+impl Animation<[f32; 2]> {
     pub fn set_position_speed(&mut self, speed: f32) {
         self.speed = Speed::Speed(speed, |a, b| {
-            ((b.0 - a.0).powi(2) + (b.1 - a.1).powi(2)).sqrt()
+            let [[ax, ay], [bx, by]] = [a, b];
+            ((bx - ax).powi(2) + (by - ay).powi(2)).sqrt()
         });
     }
 }

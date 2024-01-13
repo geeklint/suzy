@@ -100,7 +100,7 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
 #[test]
 fn togglebutton_group() {
     let mut builder = AppBuilder::default();
-    builder.set_size((480.0, 360.0));
+    builder.set_size([480.0, 360.0]);
     builder.set_background_color(Color::BLACK);
     let mut platform = <TestPlatform as suzy::platform::Platform>::new();
     let mut app = builder.build(&mut platform);
@@ -114,7 +114,7 @@ fn togglebutton_group() {
         assert_eq!(group_value_output.get(), None);
         assert!(is_color(&capture, Color::BLACK));
         // click the bottom button
-        app.mouse_click((240.0, 60.0));
+        app.mouse_click([240.0, 60.0]);
         let capture = app.take_screenshot();
         let index = (capture.len() / 3) & ALIGN_MASK;
         let (bottom_3rd, top) = capture.split_at(index);
@@ -124,7 +124,7 @@ fn togglebutton_group() {
         assert!(is_color(bottom_3rd, Color::WHITE));
         assert!(is_color(top, Color::BLACK));
         // click the top button
-        app.mouse_click((240.0, 300.0));
+        app.mouse_click([240.0, 300.0]);
         let capture = app.take_screenshot();
         let index = (capture.len() / 3) & ALIGN_MASK;
         let (bottom, top_3rd) = capture.split_at(2 * index);
@@ -134,7 +134,7 @@ fn togglebutton_group() {
         assert!(is_color(bottom, Color::BLACK));
         assert!(is_color(top_3rd, Color::WHITE));
         // click the middle button
-        app.mouse_click((240.0, 180.0));
+        app.mouse_click([240.0, 180.0]);
         let capture = app.take_screenshot();
         let index = (capture.len() / 3) & ALIGN_MASK;
         let (bottom_3rd, top) = capture.split_at(index);
@@ -148,7 +148,7 @@ fn togglebutton_group() {
         assert!(is_color(middle_3rd, Color::WHITE));
         assert!(is_color(top_3rd, Color::BLACK));
         // click the middle button again
-        app.mouse_click((240.0, 180.0));
+        app.mouse_click([240.0, 180.0]);
         let capture = app.take_screenshot();
         assert_eq!(group_value_output.get(), None);
         assert!(is_color(&capture, Color::BLACK));

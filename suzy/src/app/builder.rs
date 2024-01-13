@@ -24,7 +24,7 @@ impl AppBuilder {
             .create_window(self.win)
             .expect("Failed to create window");
 
-        let (width, height) = window.size();
+        let [width, height] = window.size();
         let state = Rc::new(AppState::new_now(width, height));
 
         let watch_ctx: WatchContext<'static> = WatchContext::new();
@@ -40,11 +40,11 @@ impl AppBuilder {
 }
 
 impl WindowSettings for AppBuilder {
-    fn size(&self) -> (f32, f32) {
+    fn size(&self) -> [f32; 2] {
         self.win.size()
     }
 
-    fn set_size(&mut self, size: (f32, f32)) {
+    fn set_size(&mut self, size: [f32; 2]) {
         self.win.set_size(size);
     }
 

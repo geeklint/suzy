@@ -22,9 +22,9 @@ struct PixelInfo {
     display_index: i32,
     pixels_per_dp: f32,
     dp_per_screen_unit: f32,
-    pixel_size: (u16, u16),
-    screen_size: (u32, u32),
-    size: (f32, f32),
+    pixel_size: [u16; 2],
+    screen_size: [u32; 2],
+    size: [f32; 2],
 }
 
 impl TryFrom<&sdl2::video::Window> for PixelInfo {
@@ -38,7 +38,7 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
             .unwrap_or((1.0, 1.0, 1.0));
         let dpi = (hdpi + vdpi) / 2.0;
         let pixels_per_dp = dpi / crate::units::DPI;
-        let screen_size = window.size();
+        let (screen_width, screen_height) = window.size();
         let (px_width, px_height) = window.drawable_size();
         let px_width: u16 = px_width
             .try_into()
@@ -46,8 +46,8 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
         let px_height: u16 = px_height
             .try_into()
             .expect("window sizes of 2^16 and greater are not supported");
-        let x_px_per_su = f32::from(px_width) / (screen_size.0 as f32);
-        let y_px_per_su = f32::from(px_height) / (screen_size.1 as f32);
+        let x_px_per_su = f32::from(px_width) / (screen_width as f32);
+        let y_px_per_su = f32::from(px_height) / (screen_height as f32);
         let px_per_su = (x_px_per_su + y_px_per_su) / 2.0;
         let width = f32::from(px_width);
         let height = f32::from(px_height);
@@ -55,9 +55,9 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
             display_index,
             pixels_per_dp,
             dp_per_screen_unit: 1.0 / (pixels_per_dp * px_per_su),
-            pixel_size: (px_width, px_height),
-            screen_size,
-            size: (width, height),
+            pixel_size: [px_width, px_height],
+            screen_size: [screen_width, screen_height],
+            size: [width, height],
         })
     }
 }
@@ -95,15 +95,15 @@ impl Window {
         if opengl::DEBUG {
             gl_attr.set_context_flags().debug().set();
         }
-        let (width, height) = builder.size();
+        let [requested_width, requested_height] = builder.size();
         let guess_px_per_dp = {
             let (_ddpi, hdpi, vdpi) =
                 video.display_dpi(0).unwrap_or((1.0, 1.0, 1.0));
             let dpi = (hdpi + vdpi) / 2.0;
             dpi / crate::units::DPI
         };
-        let guess_width = width * guess_px_per_dp;
-        let guess_height = height * guess_px_per_dp;
+        let guess_width = requested_width * guess_px_per_dp;
+        let guess_height = requested_height * guess_px_per_dp;
         let mut win_builder = video.window(
             builder.title(),
             guess_width as u32,
@@ -119,12 +119,13 @@ impl Window {
         // units might be anything (vs what we care about, dp and px)
         {
             let pixel_info: PixelInfo = (&window).try_into()?;
-            if (width - pixel_info.size.0).abs() >= 1.0
-                || (height - pixel_info.size.1).abs() >= 1.0
+            let [width, height] = pixel_info.size;
+            if (requested_width - width).abs() >= 1.0
+                || (requested_height - height).abs() >= 1.0
             {
                 let dp_per_su = pixel_info.dp_per_screen_unit;
-                let calc_width = (width / dp_per_su) as u32;
-                let calc_height = (height / dp_per_su) as u32;
+                let calc_width = (requested_width / dp_per_su) as u32;
+                let calc_height = (requested_height / dp_per_su) as u32;
                 window.set_size(calc_width, calc_height).map_err(|err| {
                     match err {
                         sdl2::IntegerOrSdlError::SdlError(msg) => msg,
@@ -152,20 +153,21 @@ impl Window {
 }
 
 impl WindowSettings for Window {
-    fn size(&self) -> (f32, f32) {
+    fn size(&self) -> [f32; 2] {
         let info: PixelInfo = (&self.info.window)
             .try_into()
             .expect("Unable to get pixel info from current SDL window");
         info.size
     }
 
-    fn set_size(&mut self, size: (f32, f32)) {
+    fn set_size(&mut self, size: [f32; 2]) {
         let info: PixelInfo = (&self.info.window)
             .try_into()
             .expect("Unable to get pixel info from current SDL window");
+        let [set_width, set_height] = size;
         let dp_per_su = info.dp_per_screen_unit;
-        let calc_width = (size.0 / dp_per_su) as u32;
-        let calc_height = (size.1 / dp_per_su) as u32;
+        let calc_width = (set_width / dp_per_su) as u32;
+        let calc_height = (set_height / dp_per_su) as u32;
         let _res = self.info.window.set_size(calc_width, calc_height);
     }
 
@@ -204,20 +206,6 @@ impl WindowSettings for Window {
 }
 
 impl window::Window<opengl::OpenGlRenderPlatform> for Window {
-    /*
-    pub fn before_draw(&mut self) -> DrawContext {
-        unsafe {
-            gl::BindVertexArray(self.vao);
-            let mut std_shader = self.std_shader.borrow_mut();
-            std_shader.set_current();
-            let (width, height) = self.get_size();
-            std_shader.set_uniform_vec2("SCREEN_SIZE", (width, height));
-        }
-        let starting = DrawParams::new(self.std_shader.clone());
-        DrawContext::new(starting)
-    }
-    */
-
     fn pixels_per_dp(&self) -> f32 {
         let info: PixelInfo = (&self.info.window)
             .try_into()
@@ -231,7 +219,7 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
             .expect("Unable to get pixel info from current SDL window");
         event.x *= info.dp_per_screen_unit;
         event.y *= info.dp_per_screen_unit;
-        event.y = info.size.1 - event.y;
+        event.y = info.size[1] - event.y;
         match event.action {
             PointerAction::Move(ref mut x, ref mut y) => {
                 *x *= info.dp_per_screen_unit;
@@ -253,9 +241,8 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         let info: PixelInfo = (&self.info.window)
             .try_into()
             .expect("Unable to get pixel info from current SDL window");
-        self.info
-            .gl_win
-            .viewport(0, 0, info.pixel_size.0, info.pixel_size.1);
+        let [pixel_width, pixel_height] = info.pixel_size;
+        self.info.gl_win.viewport(0, 0, pixel_width, pixel_height);
     }
 
     fn flip(&mut self) {
@@ -327,7 +314,7 @@ impl Events {
                 } => {
                     use crate::pointer::*;
                     use sdl2::mouse::MouseButton::*;
-                    let (x, y) = (x as f32, y as f32);
+                    let [x, y] = [x as f32, y as f32];
                     let action = match mouse_btn {
                         Left => PointerAction::Down,
                         X1 => PointerAction::AltDown(AltMouseButton::X1),
@@ -350,7 +337,7 @@ impl Events {
                 } => {
                     use crate::pointer::*;
                     use sdl2::mouse::MouseButton::*;
-                    let (x, y) = (x as f32, y as f32);
+                    let [x, y] = [x as f32, y as f32];
                     let action = match mouse_btn {
                         Left => PointerAction::Up,
                         X1 => PointerAction::AltUp(AltMouseButton::X1),
@@ -375,8 +362,8 @@ impl Events {
                     ..
                 } => {
                     use crate::pointer::*;
-                    let (x, y) = (x as f32, y as f32);
-                    let (xrel, yrel) = (xrel as f32, yrel as f32);
+                    let [x, y] = [x as f32, y as f32];
+                    let [xrel, yrel] = [xrel as f32, yrel as f32];
                     if mousestate.left() {
                         WindowEvent::Pointer(PointerEventData::new(
                             PointerId::Mouse,
@@ -396,7 +383,7 @@ impl Events {
                 Event::MouseWheel { x, y, .. } => {
                     use crate::pointer::*;
                     let state = self.events.mouse_state();
-                    let (xrel, yrel) = (x as f32, y as f32);
+                    let [xrel, yrel] = [x as f32, y as f32];
                     let x = state.x() as f32;
                     let y = state.y() as f32;
                     WindowEvent::Pointer(PointerEventData::new(

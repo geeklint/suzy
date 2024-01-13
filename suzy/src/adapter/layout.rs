@@ -25,7 +25,7 @@ pub trait AdapterLayoutInterface<Key, Data> {
 
     /// Get the position last set with `update_reference`, offset by any
     /// scrolling that has happened since.
-    fn reference_position(&self) -> (f32, f32);
+    fn reference_position(&self) -> [f32; 2];
 
     /// Get the rectangle which represents the extants of the view.
     fn bounds(&self) -> &Self::Bounds;
@@ -36,8 +36,8 @@ pub trait AdapterLayoutInterface<Key, Data> {
     /// list to a preferred position.
     fn update_positions(
         &mut self,
-        reference_position: (f32, f32),
-        rest_position: (f32, f32),
+        reference_position: [f32; 2],
+        rest_position: [f32; 2],
     );
 
     /// Get the number of times get_element has been called during this
@@ -76,16 +76,16 @@ pub trait AdapterLayout {
     fn element_location(
         &mut self,
         item: &Self::ElementKey,
-        reference_position: (f32, f32),
-    ) -> Option<(f32, f32)>;
+        reference_position: [f32; 2],
+    ) -> Option<[f32; 2]>;
 }
 
 pub(super) struct AdapterLayoutData<ElementKey, Content> {
     active: HashMap<ElementKey, widget::Ephemeral<Content>>,
     inactive: Vec<widget::Ephemeral<Content>>,
     child_flag: WatchedMeta<'static>,
-    position: (f32, f32),
-    rest_position: (f32, f32),
+    position: [f32; 2],
+    rest_position: [f32; 2],
 }
 
 impl<ElementKey, Content> Default for AdapterLayoutData<ElementKey, Content> {
@@ -94,8 +94,8 @@ impl<ElementKey, Content> Default for AdapterLayoutData<ElementKey, Content> {
             active: HashMap::default(),
             inactive: Vec::default(),
             child_flag: WatchedMeta::default(),
-            position: (0.0, 0.0),
-            rest_position: (0.0, 0.0),
+            position: [0.0, 0.0],
+            rest_position: [0.0, 0.0],
         }
     }
 }
@@ -137,8 +137,9 @@ impl<ElementKey, Content> AdapterLayoutData<ElementKey, Content> {
     }
 
     pub fn move_content(&mut self, dx: f32, dy: f32) {
-        self.position.0 += dx;
-        self.position.1 += dy;
+        let [px, py] = &mut self.position;
+        *px += dx;
+        *py += dy;
     }
 }
 
@@ -157,7 +158,7 @@ where
     type Bounds = WidgetRect;
     type Element = widget::Ephemeral<Content>;
 
-    fn reference_position(&self) -> (f32, f32) {
+    fn reference_position(&self) -> [f32; 2] {
         self.data.position
     }
 
@@ -167,8 +168,8 @@ where
 
     fn update_positions(
         &mut self,
-        position: (f32, f32),
-        rest_position: (f32, f32),
+        position: [f32; 2],
+        rest_position: [f32; 2],
     ) {
         self.data.position = position;
         self.data.rest_position = rest_position;

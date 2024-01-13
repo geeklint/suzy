@@ -14,7 +14,7 @@ use super::bindings;
 
 pub struct OsMesaWindow {
     title: String,
-    size: (u16, u16),
+    size: [u16; 2],
     gl_win: opengl::Window,
     buffer: Vec<u8>,
 }
@@ -24,7 +24,7 @@ impl OsMesaWindow {
         ctx: bindings::OsMesaContext,
         builder: WindowBuilder,
     ) -> Self {
-        let (width, height) = builder.size();
+        let [width, height] = builder.size();
         let width = width.max(1.0).min(1280.0) as u16;
         let height = height.max(1.0).min(1024.0) as u16;
         let title = builder.title().to_string();
@@ -48,7 +48,7 @@ impl OsMesaWindow {
         gl_win.clear_color(builder.background_color());
         Self {
             title,
-            size: (width, height),
+            size: [width, height],
             gl_win,
             buffer,
         }
@@ -56,15 +56,16 @@ impl OsMesaWindow {
 }
 
 impl WindowSettings for OsMesaWindow {
-    fn size(&self) -> (f32, f32) {
-        (self.size.0.into(), self.size.1.into())
+    fn size(&self) -> [f32; 2] {
+        let [width, height] = self.size;
+        [width.into(), height.into()]
     }
 
-    fn set_size(&mut self, size: (f32, f32)) {
-        let (width, height) = size;
+    fn set_size(&mut self, size: [f32; 2]) {
+        let [width, height] = size;
         let width = width.max(1.0).min(1280.0) as u16;
         let height = height.max(1.0).min(1024.0) as u16;
-        self.size = (width, height);
+        self.size = [width, height];
         let bufsize = 4 * (width as usize) * (height as usize);
         self.buffer.resize(bufsize, 0);
     }
@@ -100,7 +101,8 @@ impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
     fn normalize_pointer_event(&self, _event: &mut PointerEventData) {}
 
     fn recalculate_viewport(&mut self) {
-        self.gl_win.viewport(0, 0, self.size.0, self.size.1);
+        let [width, height] = self.size;
+        self.gl_win.viewport(0, 0, width, height);
     }
 
     fn flip(&mut self) {

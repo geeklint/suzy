@@ -69,7 +69,7 @@ with_default_render_platform! {
         ///
         /// This is used by e.g. Button to test if it should handle a pointer
         /// event.  The default is a standard rectangular test.
-        fn hittest(&self, rect: &WidgetRect, point: (f32, f32)) -> bool {
+        fn hittest(&self, rect: &WidgetRect, point: [f32; 2]) -> bool {
             use crate::dims::Rect;
             rect.contains(point)
         }

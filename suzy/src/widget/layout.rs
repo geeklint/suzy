@@ -130,14 +130,14 @@ impl<'a, Desc> LayoutTypes<'a, Desc> {
         }
     }
 
-    fn distribute<Dir>(self) -> Distribute<'a, Dir, Desc, (f32, f32), f32, f32>
+    fn distribute<Dir>(self) -> Distribute<'a, Dir, Desc, [f32; 2], f32, f32>
     where
         Dir: Default,
     {
         Distribute {
             desc: self.desc,
             dir: Dir::default(),
-            bounds: (0.0, 300.0),
+            bounds: [0.0, 300.0],
             weight: 1.0,
             cursor: 0.0,
             total_weight: Rc::default(),
@@ -170,25 +170,25 @@ impl<'a, Desc> LayoutTypes<'a, Desc> {
 
     pub fn distribute_up(
         self,
-    ) -> Distribute<'a, Up, Desc, (f32, f32), f32, f32> {
+    ) -> Distribute<'a, Up, Desc, [f32; 2], f32, f32> {
         self.distribute()
     }
 
     pub fn distribute_down(
         self,
-    ) -> Distribute<'a, Down, Desc, (f32, f32), f32, f32> {
+    ) -> Distribute<'a, Down, Desc, [f32; 2], f32, f32> {
         self.distribute()
     }
 
     pub fn distribute_left(
         self,
-    ) -> Distribute<'a, Right, Desc, (f32, f32), f32, f32> {
+    ) -> Distribute<'a, Right, Desc, [f32; 2], f32, f32> {
         self.distribute()
     }
 
     pub fn distribute_right(
         self,
-    ) -> Distribute<'a, Right, Desc, (f32, f32), f32, f32> {
+    ) -> Distribute<'a, Right, Desc, [f32; 2], f32, f32> {
         self.distribute()
     }
 }
@@ -199,7 +199,7 @@ pub trait Direction: 'static + Copy {
     fn sign(value: f32) -> f32;
 
     /// Given two bounds, return which one of them is the starting point.
-    fn bounds_origin(bounds: (f32, f32)) -> f32;
+    fn bounds_origin(bounds: [f32; 2]) -> f32;
 
     /// Set the start of the rect, as understood by this direction.
     fn set_start<R: Rect>(rect: &mut R, value: f32);
@@ -221,7 +221,7 @@ impl Direction for Up {
         value
     }
 
-    fn bounds_origin((a, b): (f32, f32)) -> f32 {
+    fn bounds_origin([a, b]: [f32; 2]) -> f32 {
         a.min(b)
     }
 
@@ -248,7 +248,7 @@ impl Direction for Down {
         -value
     }
 
-    fn bounds_origin((a, b): (f32, f32)) -> f32 {
+    fn bounds_origin([a, b]: [f32; 2]) -> f32 {
         a.max(b)
     }
 
@@ -275,7 +275,7 @@ impl Direction for Left {
         -value
     }
 
-    fn bounds_origin((a, b): (f32, f32)) -> f32 {
+    fn bounds_origin([a, b]: [f32; 2]) -> f32 {
         a.max(b)
     }
 
@@ -302,7 +302,7 @@ impl Direction for Right {
         value
     }
 
-    fn bounds_origin((a, b): (f32, f32)) -> f32 {
+    fn bounds_origin([a, b]: [f32; 2]) -> f32 {
         a.min(b)
     }
 
@@ -477,18 +477,11 @@ impl<'a, Dir, Desc, Bounds, Weight, Cursor>
     pub fn between<Content, Platform, F>(
         self,
         value: F,
-    ) -> Distribute<
-        'a,
-        Dir,
-        Desc,
-        impl Value<Content, (f32, f32)>,
-        Weight,
-        Cursor,
-    >
+    ) -> Distribute<'a, Dir, Desc, impl Value<Content, [f32; 2]>, Weight, Cursor>
     where
         Desc: super::Desc<Content, Platform>,
         Content: ?Sized,
-        F: 'static + Clone + Fn(&ContentWithRect<'_, Content>) -> (f32, f32),
+        F: 'static + Clone + Fn(&ContentWithRect<'_, Content>) -> [f32; 2],
     {
         Distribute {
             desc: self.desc,
@@ -547,7 +540,7 @@ impl<'a, Dir, Desc, Bounds, Weight, Cursor>
     where
         Dir: Direction,
         Desc: super::Desc<Content, Platform>,
-        Bounds: Value<Content, (f32, f32)>,
+        Bounds: Value<Content, [f32; 2]>,
         Weight: Value<Content>,
         Cursor: Value<Content>,
         F: 'static
@@ -569,7 +562,7 @@ impl<'a, Dir, Desc, Bounds, Weight, Cursor>
     where
         Dir: Direction,
         Desc: super::Desc<Content, Platform>,
-        Bounds: Value<Content, (f32, f32)>,
+        Bounds: Value<Content, [f32; 2]>,
         Weight: Value<Content>,
         Cursor: Value<Content>,
         F: 'static + Clone + for<'b> Fn(&'b mut Content) -> &'b mut R,
@@ -590,7 +583,7 @@ impl<'a, Dir, Desc, Bounds, Weight, Cursor>
             let cursor = cursor.clone();
             let total_weight = Rc::clone(&total_weight);
             move |content, rect| {
-                let (ba, bb) = bounds.value(content, rect);
+                let [ba, bb] = bounds.value(content, rect);
                 let this_weight = weight.value(content, rect);
                 let cursor_weight = cursor.value(content, rect);
                 let bounds_size = (ba - bb).abs();
@@ -598,7 +591,7 @@ impl<'a, Dir, Desc, Bounds, Weight, Cursor>
                 let size = this_weight * conv_weight;
                 let pos = cursor_weight * conv_weight;
                 let item_rect = item(content);
-                let origin = Dir::bounds_origin((ba, bb));
+                let origin = Dir::bounds_origin([ba, bb]);
                 Dir::set_start(item_rect, origin + Dir::sign(pos));
                 Dir::set_size(item_rect, size);
             }
