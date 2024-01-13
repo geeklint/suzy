@@ -108,7 +108,6 @@ impl<P: Platform> AppTesterInterface<'_, P> {
             action: crate::pointer::PointerAction::Down,
             x: px,
             y: py,
-            normalized: true,
         });
         self.next_frame_60fps();
         self.pointer(PointerEventData {
@@ -116,7 +115,6 @@ impl<P: Platform> AppTesterInterface<'_, P> {
             action: crate::pointer::PointerAction::Up,
             x: px,
             y: py,
-            normalized: true,
         });
     }
 }

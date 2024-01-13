@@ -168,8 +168,7 @@ impl<P: Platform> App<P> {
         self.window.size()
     }
 
-    pub fn update_window_size(&mut self) {
-        let [width, height] = self.window.size();
+    pub fn resize(&mut self, width: f32, height: f32) {
         self.state
             .cell_size
             .set_external(get_cell_size(width, height));
@@ -188,10 +187,11 @@ impl<P: Platform> App<P> {
         self.state.px_per_dp.set_external(ppd);
     }
 
-    pub fn pointer_event(&mut self, mut pointer: PointerEventData) {
-        if !pointer.normalized {
-            self.window.normalize_pointer_event(&mut pointer);
-        }
+    pub fn normalize_pointer_event(&self, pointer: &mut PointerEventData) {
+        self.window.normalize_pointer_event(pointer);
+    }
+
+    pub fn pointer_event(&mut self, pointer: PointerEventData) {
         let mut event = PointerEvent::new(pointer, &mut self.pointer_grab_map);
         let mut handled = false;
         let mut iter = self.roots.iter_mut().rev();

@@ -85,27 +85,6 @@ mod internal {
         pub x: f32,
         /// The vertical position of the pointer
         pub y: f32,
-        /// If the coordinates in this event are correctly in Suzy's
-        /// coordinate system
-        pub normalized: bool,
-    }
-
-    impl PointerEvent {
-        /// Create new pointer event data.
-        pub fn new(
-            id: super::PointerId,
-            action: super::PointerAction,
-            x: f32,
-            y: f32,
-        ) -> Self {
-            Self {
-                id,
-                action,
-                x,
-                y,
-                normalized: false,
-            }
-        }
     }
 }
 

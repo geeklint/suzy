@@ -32,12 +32,7 @@ impl TryFrom<&sdl2::video::Window> for PixelInfo {
 
     fn try_from(window: &sdl2::video::Window) -> Result<Self, Self::Error> {
         let display_index = window.display_index()?;
-        let (_ddpi, hdpi, vdpi) = window
-            .subsystem()
-            .display_dpi(display_index)
-            .unwrap_or((1.0, 1.0, 1.0));
-        let dpi = (hdpi + vdpi) / 2.0;
-        let pixels_per_dp = dpi / crate::units::DPI;
+        let pixels_per_dp = 1.0;
         let (screen_width, screen_height) = window.size();
         let (px_width, px_height) = window.drawable_size();
         let px_width: u16 = px_width
@@ -234,7 +229,6 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
             }
             _ => (),
         }
-        event.normalized = true;
     }
 
     fn recalculate_viewport(&mut self) {
@@ -266,28 +260,6 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     }
 }
 
-fn handle_win_event(
-    win_event: sdl_WindowEvent,
-    state: &mut crate::platform::SimpleEventLoopState,
-    app: &mut crate::app::App,
-) {
-    match win_event {
-        sdl_WindowEvent::SizeChanged(_, _) | sdl_WindowEvent::Moved { .. } => {
-            app.update_window_size();
-            app.update_scale_factor();
-        }
-        sdl_WindowEvent::Close => state.running = false,
-        sdl_WindowEvent::Leave => app.pointer_event(PointerEventData {
-            id: PointerId::Mouse,
-            action: PointerAction::Hover(f32::NAN, f32::NAN),
-            x: f32::NAN,
-            y: f32::NAN,
-            normalized: true,
-        }),
-        _ => {}
-    }
-}
-
 pub fn pump(
     events: &mut sdl2::EventPump,
     state: &mut crate::platform::SimpleEventLoopState,
@@ -297,7 +269,24 @@ pub fn pump(
         match event {
             Event::Quit { .. } => state.running = false,
             Event::Window { win_event, .. } => {
-                handle_win_event(win_event, state, app);
+                match win_event {
+                    sdl_WindowEvent::SizeChanged(_, _)
+                    | sdl_WindowEvent::Moved { .. } => {
+                        let [width, height] = app.get_window_size();
+                        app.resize(width, height);
+                        app.update_scale_factor();
+                    }
+                    sdl_WindowEvent::Close => state.running = false,
+                    sdl_WindowEvent::Leave => {
+                        app.pointer_event(PointerEventData {
+                            id: PointerId::Mouse,
+                            action: PointerAction::Hover(f32::NAN, f32::NAN),
+                            x: f32::NAN,
+                            y: f32::NAN,
+                        })
+                    }
+                    _ => {}
+                };
             }
             Event::MouseButtonDown {
                 mouse_btn, x, y, ..
@@ -310,12 +299,14 @@ pub fn pump(
                     }
                     AltMouseButtonResult::Unknown => continue,
                 };
-                app.pointer_event(PointerEventData::new(
-                    PointerId::Mouse,
+                let mut pointer_data = PointerEventData {
+                    id: PointerId::Mouse,
                     action,
                     x,
                     y,
-                ));
+                };
+                app.normalize_pointer_event(&mut pointer_data);
+                app.pointer_event(pointer_data);
             }
             Event::MouseButtonUp {
                 mouse_btn, x, y, ..
@@ -328,12 +319,14 @@ pub fn pump(
                     }
                     AltMouseButtonResult::Unknown => continue,
                 };
-                app.pointer_event(PointerEventData::new(
-                    PointerId::Mouse,
+                let mut pointer_data = PointerEventData {
+                    id: PointerId::Mouse,
                     action,
                     x,
                     y,
-                ));
+                };
+                app.normalize_pointer_event(&mut pointer_data);
+                app.pointer_event(pointer_data);
             }
             Event::MouseMotion {
                 mousestate,
@@ -345,21 +338,22 @@ pub fn pump(
             } => {
                 let [x, y] = [x as f32, y as f32];
                 let [xrel, yrel] = [xrel as f32, yrel as f32];
-                let pointer_event = if mousestate.left() {
-                    PointerEventData::new(
-                        PointerId::Mouse,
-                        PointerAction::Move(xrel, yrel),
+                let mut pointer_event = if mousestate.left() {
+                    PointerEventData {
+                        id: PointerId::Mouse,
+                        action: PointerAction::Move(xrel, yrel),
                         x,
                         y,
-                    )
+                    }
                 } else {
-                    PointerEventData::new(
-                        PointerId::Mouse,
-                        PointerAction::Hover(xrel, yrel),
+                    PointerEventData {
+                        id: PointerId::Mouse,
+                        action: PointerAction::Hover(xrel, yrel),
                         x,
                         y,
-                    )
+                    }
                 };
+                app.normalize_pointer_event(&mut pointer_event);
                 app.pointer_event(pointer_event);
             }
             Event::MouseWheel { x, y, .. } => {
@@ -367,12 +361,14 @@ pub fn pump(
                 let [xrel, yrel] = [x as f32, y as f32];
                 let x = state.x() as f32;
                 let y = state.y() as f32;
-                app.pointer_event(PointerEventData::new(
-                    PointerId::Mouse,
-                    PointerAction::Wheel(xrel, yrel),
+                let mut pointer_data = PointerEventData {
+                    id: PointerId::Mouse,
+                    action: PointerAction::Wheel(xrel, yrel),
                     x,
                     y,
-                ));
+                };
+                app.normalize_pointer_event(&mut pointer_data);
+                app.pointer_event(pointer_data);
             }
             _ => continue,
         }

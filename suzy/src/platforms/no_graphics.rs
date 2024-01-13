@@ -109,9 +109,8 @@ impl crate::window::Window<NoGraphics> for Window {
 
     fn normalize_pointer_event(
         &self,
-        event: &mut crate::pointer::PointerEventData,
+        _event: &mut crate::pointer::PointerEventData,
     ) {
-        event.normalized = true;
     }
 
     fn recalculate_viewport(&mut self) {}

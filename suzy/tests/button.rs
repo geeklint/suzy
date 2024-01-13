@@ -73,7 +73,6 @@ fn button() {
             action: PointerAction::Down,
             x: 240.0,
             y: 180.0,
-            normalized: true,
         });
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
@@ -86,7 +85,6 @@ fn button() {
             action: PointerAction::Up,
             x: 240.0,
             y: 180.0,
-            normalized: true,
         });
         let capture = app.take_screenshot();
         for chunk in capture.chunks_exact(4) {
