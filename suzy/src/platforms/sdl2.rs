@@ -14,7 +14,6 @@ pub struct SdlPlatform {
 }
 
 impl crate::platform::Platform for SdlPlatform {
-    type State = SimpleEventLoopState;
     type Window = window::Window;
     type Renderer = OpenGlRenderPlatform;
 

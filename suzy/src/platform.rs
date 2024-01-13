@@ -10,7 +10,7 @@
 //! automated testing.
 
 mod event;
-pub use event::{EventLoopState, SimpleEventLoopState};
+pub use event::SimpleEventLoopState;
 
 use crate::dims::Rect;
 
@@ -18,9 +18,6 @@ pub mod graphics;
 
 /// A platform handles window creation and manages an event loop.
 pub trait Platform: 'static {
-    /// The event loop state tracked by this platform.
-    type State: EventLoopState;
-
     /// The RenderPlatform this platform supports.
     type Renderer: RenderPlatform;
 

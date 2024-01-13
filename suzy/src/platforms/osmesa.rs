@@ -8,9 +8,7 @@
 //! no window to recieve events from.  Mostly it should be used for
 //! automation, e.g. tests.
 
-use crate::{
-    platform::SimpleEventLoopState, platforms::opengl::OpenGlRenderPlatform,
-};
+use crate::platforms::opengl::OpenGlRenderPlatform;
 
 mod bindings;
 mod window;
@@ -23,7 +21,6 @@ pub struct OsMesaPlatform {
 }
 
 impl crate::platform::Platform for OsMesaPlatform {
-    type State = SimpleEventLoopState;
     type Window = window::OsMesaWindow;
     type Renderer = OpenGlRenderPlatform;
 

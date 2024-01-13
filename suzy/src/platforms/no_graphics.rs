@@ -4,7 +4,7 @@
 use crate::{
     dims::Rect,
     graphics::Color,
-    platform::{graphics, Platform, RenderPlatform, SimpleEventLoopState},
+    platform::{graphics, Platform, RenderPlatform},
     window::WindowSettings,
 };
 
@@ -23,8 +23,6 @@ pub enum TextStyle {}
 pub enum Graphic {}
 
 impl Platform for NoGraphics {
-    type State = SimpleEventLoopState;
-
     type Renderer = Self;
 
     type Window = Window;
