@@ -4,7 +4,6 @@
 use crate::{
     graphics::Color,
     graphics::DrawContext,
-    pointer::PointerEventData,
     window::{Window, WindowBuilder, WindowSettings},
 };
 
@@ -94,8 +93,6 @@ impl WindowSettings for OsMesaWindow {
 }
 
 impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
-    fn normalize_pointer_event(&self, _event: &mut PointerEventData) {}
-
     fn recalculate_viewport(&mut self) {
         let [width, height] = self.size;
         self.gl_win.viewport(0, 0, width, height);

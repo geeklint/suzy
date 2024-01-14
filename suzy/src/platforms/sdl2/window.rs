@@ -15,8 +15,6 @@ use crate::{
     window::{self, WindowBuilder, WindowSettings},
 };
 
-//use super::texture_loader::load_texture;
-
 #[derive(Copy, Clone, PartialEq)]
 struct PixelInfo {
     display_index: i32,
@@ -168,8 +166,6 @@ impl WindowSettings for Window {
 }
 
 impl window::Window<opengl::OpenGlRenderPlatform> for Window {
-    fn normalize_pointer_event(&self, _event: &mut PointerEventData) {}
-
     fn recalculate_viewport(&mut self) {
         let info: PixelInfo = (&self.info.window)
             .try_into()
@@ -204,6 +200,7 @@ pub fn pump(
     state: &mut crate::platform::SimpleEventLoopState,
     app: &mut crate::app::App,
 ) {
+    let mut window_height = app.window.info.window.size().1 as f32;
     while let Some(event) = events.poll_event() {
         match event {
             Event::Quit { .. } => state.running = false,
@@ -215,6 +212,7 @@ pub fn pump(
                             "Unable to get pixel info from current SDL window",
                         );
                         let [width, height] = info.size;
+                        window_height = height;
                         app.resize(width, height);
                         app.update_dpi(info.dpi);
                     }
@@ -233,7 +231,7 @@ pub fn pump(
             Event::MouseButtonDown {
                 mouse_btn, x, y, ..
             } => {
-                let [x, y] = [x as f32, y as f32];
+                let [x, y] = [x as f32, window_height - y as f32];
                 let action = match to_alt_mouse_button(mouse_btn) {
                     AltMouseButtonResult::Primary => PointerAction::Down,
                     AltMouseButtonResult::Alt(btn) => {
@@ -241,19 +239,17 @@ pub fn pump(
                     }
                     AltMouseButtonResult::Unknown => continue,
                 };
-                let mut pointer_data = PointerEventData {
+                app.pointer_event(PointerEventData {
                     id: PointerId::Mouse,
                     action,
                     x,
                     y,
-                };
-                app.normalize_pointer_event(&mut pointer_data);
-                app.pointer_event(pointer_data);
+                });
             }
             Event::MouseButtonUp {
                 mouse_btn, x, y, ..
             } => {
-                let [x, y] = [x as f32, y as f32];
+                let [x, y] = [x as f32, window_height - y as f32];
                 let action = match to_alt_mouse_button(mouse_btn) {
                     AltMouseButtonResult::Primary => PointerAction::Up,
                     AltMouseButtonResult::Alt(btn) => {
@@ -261,14 +257,12 @@ pub fn pump(
                     }
                     AltMouseButtonResult::Unknown => continue,
                 };
-                let mut pointer_data = PointerEventData {
+                app.pointer_event(PointerEventData {
                     id: PointerId::Mouse,
                     action,
                     x,
                     y,
-                };
-                app.normalize_pointer_event(&mut pointer_data);
-                app.pointer_event(pointer_data);
+                });
             }
             Event::MouseMotion {
                 mousestate,
@@ -278,9 +272,9 @@ pub fn pump(
                 yrel,
                 ..
             } => {
-                let [x, y] = [x as f32, y as f32];
-                let [xrel, yrel] = [xrel as f32, yrel as f32];
-                let mut pointer_event = if mousestate.left() {
+                let [x, y] = [x as f32, window_height - y as f32];
+                let [xrel, yrel] = [xrel as f32, -(yrel as f32)];
+                let pointer_event = if mousestate.left() {
                     PointerEventData {
                         id: PointerId::Mouse,
                         action: PointerAction::Move(xrel, yrel),
@@ -295,22 +289,20 @@ pub fn pump(
                         y,
                     }
                 };
-                app.normalize_pointer_event(&mut pointer_event);
                 app.pointer_event(pointer_event);
             }
             Event::MouseWheel { x, y, .. } => {
                 let state = events.mouse_state();
-                let [xrel, yrel] = [x as f32, y as f32];
+                let xrel = x as f32 * 125.0;
+                let yrel = -(y as f32 * 125.0);
                 let x = state.x() as f32;
-                let y = state.y() as f32;
-                let mut pointer_data = PointerEventData {
+                let y = window_height - state.y() as f32;
+                app.pointer_event(PointerEventData {
                     id: PointerId::Mouse,
                     action: PointerAction::Wheel(xrel, yrel),
                     x,
                     y,
-                };
-                app.normalize_pointer_event(&mut pointer_data);
-                app.pointer_event(pointer_data);
+                });
             }
             _ => continue,
         }

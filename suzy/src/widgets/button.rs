@@ -215,8 +215,8 @@ where
                 self.image.set_color(Color::LAVENDER);
             }
             _ => {
-                *self.text_color = Color::WHITE;
-                self.image.set_color(Color::DIM_GRAY);
+                *self.text_color = Color::LAVENDER;
+                self.image.set_color(Color::SLATE_BLUE);
             }
         };
     }

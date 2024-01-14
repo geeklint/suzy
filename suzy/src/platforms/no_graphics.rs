@@ -103,12 +103,6 @@ impl WindowSettings for Window {
 }
 
 impl crate::window::Window<NoGraphics> for Window {
-    fn normalize_pointer_event(
-        &self,
-        _event: &mut crate::pointer::PointerEventData,
-    ) {
-    }
-
     fn recalculate_viewport(&mut self) {}
 
     fn flip(&mut self) {}

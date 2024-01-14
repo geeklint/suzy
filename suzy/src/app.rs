@@ -179,10 +179,6 @@ impl<P: Platform> App<P> {
         self.state.dpi.set_external(dpi);
     }
 
-    pub fn normalize_pointer_event(&self, pointer: &mut PointerEventData) {
-        self.window.normalize_pointer_event(pointer);
-    }
-
     pub fn pointer_event(&mut self, pointer: PointerEventData) {
         let mut event = PointerEvent::new(pointer, &mut self.pointer_grab_map);
         let mut handled = false;
