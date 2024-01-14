@@ -94,10 +94,6 @@ impl WindowSettings for OsMesaWindow {
 }
 
 impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
-    fn pixels_per_dp(&self) -> f32 {
-        1.0
-    }
-
     fn normalize_pointer_event(&self, _event: &mut PointerEventData) {}
 
     fn recalculate_viewport(&mut self) {

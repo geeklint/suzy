@@ -14,7 +14,7 @@ use crate::{
     platform::Platform,
     pointer::{PointerEvent, PointerEventData},
     widget::{self, Widget},
-    window::{Window, WindowSettings},
+    window::Window,
 };
 
 mod builder;
@@ -23,7 +23,7 @@ mod values;
 
 pub use builder::AppBuilder;
 pub use tester::AppTesterInterface;
-pub(crate) use values::{get_cell_size, AppState};
+pub(crate) use values::AppState;
 
 #[cfg(feature = "platform_sdl")]
 pub type App<P = crate::platforms::DefaultPlatform> = app_struct::App<P>;
@@ -50,7 +50,7 @@ mod app_struct {
         P: ?Sized + Platform,
     {
         pub(crate) watch_ctx: WatchContext<'static>,
-        pub(super) window: P::Window,
+        pub(crate) window: P::Window,
         pub(super) roots: Vec<RootHolder<P::Renderer>>,
         pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
         pub(crate) state: Rc<super::AppState>,
@@ -62,13 +62,13 @@ mod app_struct {
 /// This will bind watch closures it is called in, and can be used to
 /// intentionally cause a watch closure to re-run every frame.
 pub fn time() -> time::Instant {
-    AppState::try_with_current(|state| state.time().get_auto())
+    AppState::try_with_current(|state| state.frame_start.get_auto())
         .expect("there is no valid app state to get time from")
 }
 
 /// A version of `time` which will not bind watch closures.
 pub fn time_unwatched() -> time::Instant {
-    AppState::try_with_current(|state| state.time().get_unwatched())
+    AppState::try_with_current(|state| state.frame_start.get_unwatched())
         .unwrap_or_else(time::Instant::now)
 }
 
@@ -80,7 +80,7 @@ pub fn time_unwatched() -> time::Instant {
 /// Current precision is 1 second, however this should not be relied
 /// upon and may change in the future.
 pub fn coarse_time() -> time::Instant {
-    AppState::try_with_current(|state| state.coarse_time().get_auto())
+    AppState::try_with_current(|state| state.coarse_time.get_auto())
         .expect("there is no valid app state to get coarse_time from")
 }
 
@@ -124,8 +124,8 @@ impl<P: Platform> App<P> {
 
     pub fn start_frame(&mut self, frame_time: time::Instant) {
         self.state.frame_start.set_external(frame_time);
-        let duration = frame_time
-            .duration_since(self.state.coarse_time().get_unwatched());
+        let duration =
+            frame_time.duration_since(self.state.coarse_time.get_unwatched());
         if duration >= AppState::COARSE_STEP {
             self.state.coarse_time.set_external(frame_time);
         }
@@ -164,14 +164,7 @@ impl<P: Platform> App<P> {
         self.window.flip()
     }
 
-    pub fn get_window_size(&self) -> [f32; 2] {
-        self.window.size()
-    }
-
     pub fn resize(&mut self, width: f32, height: f32) {
-        self.state
-            .cell_size
-            .set_external(get_cell_size(width, height));
         self.state.window_width.set_external(width);
         self.state.window_height.set_external(height);
         for root in self.roots.iter_mut() {
@@ -182,9 +175,8 @@ impl<P: Platform> App<P> {
         self.window.recalculate_viewport();
     }
 
-    pub fn update_scale_factor(&mut self) {
-        let ppd = self.window.pixels_per_dp();
-        self.state.px_per_dp.set_external(ppd);
+    pub fn update_dpi(&mut self, dpi: [f32; 2]) {
+        self.state.dpi.set_external(dpi);
     }
 
     pub fn normalize_pointer_event(&self, pointer: &mut PointerEventData) {

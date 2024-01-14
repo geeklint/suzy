@@ -103,10 +103,6 @@ impl WindowSettings for Window {
 }
 
 impl crate::window::Window<NoGraphics> for Window {
-    fn pixels_per_dp(&self) -> f32 {
-        1.0
-    }
-
     fn normalize_pointer_event(
         &self,
         _event: &mut crate::pointer::PointerEventData,

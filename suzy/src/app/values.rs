@@ -13,42 +13,24 @@ thread_local! {
 }
 
 pub struct AppState {
-    pub(super) frame_start: WatchedCellCore<time::Instant>,
-    pub(super) coarse_time: WatchedCellCore<time::Instant>,
-    pub(super) cell_size: WatchedCellCore<f32>,
-    pub(super) px_per_dp: WatchedCellCore<f32>,
+    pub(crate) frame_start: WatchedCellCore<time::Instant>,
+    pub(crate) coarse_time: WatchedCellCore<time::Instant>,
     pub(super) window_width: WatchedCellCore<f32>,
     pub(super) window_height: WatchedCellCore<f32>,
+    pub(crate) dpi: WatchedCellCore<[f32; 2]>,
 }
 
 impl AppState {
     pub const COARSE_STEP: time::Duration = time::Duration::from_secs(1);
-
-    pub fn time(&self) -> &WatchedCellCore<time::Instant> {
-        &self.frame_start
-    }
-
-    pub fn coarse_time(&self) -> &WatchedCellCore<time::Instant> {
-        &self.coarse_time
-    }
-
-    pub fn cell_size(&self) -> &WatchedCellCore<f32> {
-        &self.cell_size
-    }
-
-    pub fn px_per_dp(&self) -> &WatchedCellCore<f32> {
-        &self.px_per_dp
-    }
 
     pub(crate) fn new_now(width: f32, height: f32) -> Self {
         let now = time::Instant::now();
         Self {
             frame_start: WatchedCellCore::new(now),
             coarse_time: WatchedCellCore::new(now),
-            cell_size: WatchedCellCore::new(get_cell_size(width, height)),
-            px_per_dp: WatchedCellCore::new(1.0),
             window_width: WatchedCellCore::new(width),
             window_height: WatchedCellCore::new(height),
+            dpi: WatchedCellCore::new([96.0, 96.0]),
         }
     }
 
@@ -75,36 +57,4 @@ impl AppState {
             Some(ret)
         })
     }
-}
-
-pub(crate) fn get_cell_size(width: f32, height: f32) -> f32 {
-    for dist in 0_u8..=4 {
-        let dist = f32::from(dist);
-        let high = 16.0 + dist;
-        let low = 16.0 - dist;
-        if width % high == 0.0 && height % high == 0.0 {
-            return high;
-        } else if width % low == 0.0 && height % low == 0.0 {
-            return low;
-        }
-    }
-    let (longer, shorter) = if width > height {
-        (width, height)
-    } else {
-        (height, width)
-    };
-    let min_cells = (longer / 12.0).ceil() as u32;
-    let max_cells = (longer / 20.0).floor() as u32;
-    let mut best = 0.0;
-    let mut best_dist = std::f32::INFINITY;
-    for test_cells in min_cells..=max_cells {
-        let cell_size = longer / (test_cells as f32);
-        let tiles_shorter = shorter / cell_size;
-        let dist = (tiles_shorter - tiles_shorter.round()).abs();
-        if dist < best_dist {
-            best = cell_size;
-            best_dist = dist;
-        }
-    }
-    best
 }
