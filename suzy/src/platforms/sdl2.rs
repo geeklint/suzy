@@ -4,7 +4,9 @@
 #![allow(missing_docs)]
 
 use crate::{
-    platforms::opengl::OpenGlRenderPlatform, pointer::AltMouseButton,
+    platforms::opengl::OpenGlRenderPlatform,
+    pointer::{AltMouseButton, PointerAction, PointerEventData, PointerId},
+    watch::WatchedValueCore,
 };
 
 mod window;
@@ -54,8 +56,9 @@ impl SdlPlatform {
                     } => {
                         return Ok(());
                     }
-                    other => window::submit_event(app, other, || {
-                        event_pump.mouse_state()
+                    event => app.handle_event(event, || {
+                        let state = event_pump.mouse_state();
+                        (state.x() as f32, state.y() as f32)
                     }),
                 }
             }
@@ -66,23 +69,127 @@ impl SdlPlatform {
     }
 }
 
-//pub trait AppHandleSdlEvent {
-//    fn handle_event(
-//        &mut self,
-//        event: sdl2::event::Event,
-//        mouse_pos: impl FnOnce() -> (f32, f32),
-//    );
-//}
-//
-//impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
-//    fn handle_event(
-//        &mut self,
-//        event: sdl2::event::Event,
-//        mouse_pos: impl FnOnce() -> (f32, f32),
-//    ) {
-//        todo!()
-//    }
-//}
+pub trait AppHandleSdlEvent {
+    fn handle_event(
+        &mut self,
+        event: sdl2::event::Event,
+        mouse_pos: impl FnOnce() -> (f32, f32),
+    );
+}
+
+impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
+    fn handle_event(
+        &mut self,
+        event: sdl2::event::Event,
+        mouse_pos: impl FnOnce() -> (f32, f32),
+    ) {
+        use sdl2::event::{Event, WindowEvent};
+        match event {
+            Event::Window { win_event, .. } => {
+                match win_event {
+                    WindowEvent::SizeChanged(_, _)
+                    | WindowEvent::Moved { .. } => {
+                        let info: window::PixelInfo =
+                            (&self.window.info.window).into();
+                        let [width, height] = info.size;
+                        self.resize(width, height);
+                        self.update_dpi(info.dpi);
+                    }
+                    WindowEvent::Leave => {
+                        self.pointer_event(PointerEventData {
+                            id: PointerId::Mouse,
+                            action: PointerAction::Hover(f32::NAN, f32::NAN),
+                            x: f32::NAN,
+                            y: f32::NAN,
+                        })
+                    }
+                    _ => {}
+                };
+            }
+            Event::MouseButtonDown {
+                mouse_btn, x, y, ..
+            } => {
+                let height = self.state().window_height().get_unwatched();
+                let [x, y] = [x as f32, height - y as f32];
+                let action = match mouse_btn.to_suzy_mouse_button() {
+                    AltMouseButtonResult::Primary => PointerAction::Down,
+                    AltMouseButtonResult::Alt(btn) => {
+                        PointerAction::AltDown(btn)
+                    }
+                    AltMouseButtonResult::Unknown => return,
+                };
+                self.pointer_event(PointerEventData {
+                    id: PointerId::Mouse,
+                    action,
+                    x,
+                    y,
+                });
+            }
+            Event::MouseButtonUp {
+                mouse_btn, x, y, ..
+            } => {
+                let height = self.state().window_height().get_unwatched();
+                let [x, y] = [x as f32, height - y as f32];
+                let action = match mouse_btn.to_suzy_mouse_button() {
+                    AltMouseButtonResult::Primary => PointerAction::Up,
+                    AltMouseButtonResult::Alt(btn) => {
+                        PointerAction::AltUp(btn)
+                    }
+                    AltMouseButtonResult::Unknown => return,
+                };
+                self.pointer_event(PointerEventData {
+                    id: PointerId::Mouse,
+                    action,
+                    x,
+                    y,
+                });
+            }
+            Event::MouseMotion {
+                mousestate,
+                x,
+                y,
+                xrel,
+                yrel,
+                ..
+            } => {
+                let height = self.state().window_height().get_unwatched();
+                let [x, y] = [x as f32, height - y as f32];
+                let [xrel, yrel] = [xrel as f32, -(yrel as f32)];
+                let pointer_event = if mousestate.left() {
+                    PointerEventData {
+                        id: PointerId::Mouse,
+                        action: PointerAction::Move(xrel, yrel),
+                        x,
+                        y,
+                    }
+                } else {
+                    PointerEventData {
+                        id: PointerId::Mouse,
+                        action: PointerAction::Hover(xrel, yrel),
+                        x,
+                        y,
+                    }
+                };
+                self.pointer_event(pointer_event);
+            }
+            Event::MouseWheel { x, y, .. } => {
+                let height = self.state().window_height().get_unwatched();
+                let (mouse_x, mouse_y) = mouse_pos();
+                let xrel = x as f32 * 125.0;
+                let yrel = -(y as f32 * 125.0);
+                let x = mouse_x;
+                let y = height - mouse_y;
+                self.pointer_event(PointerEventData {
+                    id: PointerId::Mouse,
+                    action: PointerAction::Wheel(xrel, yrel),
+                    x,
+                    y,
+                });
+            }
+            _ => {}
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AltMouseButtonResult {

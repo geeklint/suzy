@@ -3,25 +3,20 @@
 
 use std::convert::TryInto;
 
-use sdl2::{
-    event::{Event, WindowEvent as sdl_WindowEvent},
-    video::WindowBuildError,
-};
+use sdl2::video::WindowBuildError;
 
 use crate::{
     graphics::{Color, DrawContext},
     platforms::opengl,
-    pointer::{PointerAction, PointerEventData, PointerId},
-    watch::WatchedValueCore,
     window::{self, WindowBuilder, WindowSettings},
 };
 
 #[derive(Copy, Clone, PartialEq)]
-struct PixelInfo {
-    dpi: [f32; 2],
-    pixel_size: [u16; 2],
-    screen_size: [u32; 2],
-    size: [f32; 2],
+pub(super) struct PixelInfo {
+    pub dpi: [f32; 2],
+    pub pixel_size: [u16; 2],
+    pub screen_size: [u32; 2],
+    pub size: [f32; 2],
 }
 
 impl From<&sdl2::video::Window> for PixelInfo {
@@ -186,112 +181,5 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
 
     fn take_screenshot(&self) -> Box<[u8]> {
         self.info.gl_win.take_screenshot()
-    }
-}
-
-pub fn submit_event(
-    app: &mut crate::app::App<super::SdlPlatform>,
-    event: sdl2::event::Event,
-    mouse_state: impl FnOnce() -> sdl2::mouse::MouseState,
-) {
-    use super::{AltMouseButtonResult, ToSuzyMouseButton};
-    match event {
-        Event::Window { win_event, .. } => {
-            match win_event {
-                sdl_WindowEvent::SizeChanged(_, _)
-                | sdl_WindowEvent::Moved { .. } => {
-                    let info: PixelInfo = (&app.window.info.window).into();
-                    let [width, height] = info.size;
-                    app.resize(width, height);
-                    app.update_dpi(info.dpi);
-                }
-                sdl_WindowEvent::Leave => {
-                    app.pointer_event(PointerEventData {
-                        id: PointerId::Mouse,
-                        action: PointerAction::Hover(f32::NAN, f32::NAN),
-                        x: f32::NAN,
-                        y: f32::NAN,
-                    })
-                }
-                _ => {}
-            };
-        }
-        Event::MouseButtonDown {
-            mouse_btn, x, y, ..
-        } => {
-            let height = app.state().window_height().get_unwatched();
-            let [x, y] = [x as f32, height - y as f32];
-            let action = match mouse_btn.to_suzy_mouse_button() {
-                AltMouseButtonResult::Primary => PointerAction::Down,
-                AltMouseButtonResult::Alt(btn) => PointerAction::AltDown(btn),
-                AltMouseButtonResult::Unknown => return,
-            };
-            app.pointer_event(PointerEventData {
-                id: PointerId::Mouse,
-                action,
-                x,
-                y,
-            });
-        }
-        Event::MouseButtonUp {
-            mouse_btn, x, y, ..
-        } => {
-            let height = app.state().window_height().get_unwatched();
-            let [x, y] = [x as f32, height - y as f32];
-            let action = match mouse_btn.to_suzy_mouse_button() {
-                AltMouseButtonResult::Primary => PointerAction::Up,
-                AltMouseButtonResult::Alt(btn) => PointerAction::AltUp(btn),
-                AltMouseButtonResult::Unknown => return,
-            };
-            app.pointer_event(PointerEventData {
-                id: PointerId::Mouse,
-                action,
-                x,
-                y,
-            });
-        }
-        Event::MouseMotion {
-            mousestate,
-            x,
-            y,
-            xrel,
-            yrel,
-            ..
-        } => {
-            let height = app.state().window_height().get_unwatched();
-            let [x, y] = [x as f32, height - y as f32];
-            let [xrel, yrel] = [xrel as f32, -(yrel as f32)];
-            let pointer_event = if mousestate.left() {
-                PointerEventData {
-                    id: PointerId::Mouse,
-                    action: PointerAction::Move(xrel, yrel),
-                    x,
-                    y,
-                }
-            } else {
-                PointerEventData {
-                    id: PointerId::Mouse,
-                    action: PointerAction::Hover(xrel, yrel),
-                    x,
-                    y,
-                }
-            };
-            app.pointer_event(pointer_event);
-        }
-        Event::MouseWheel { x, y, .. } => {
-            let height = app.state().window_height().get_unwatched();
-            let state = mouse_state();
-            let xrel = x as f32 * 125.0;
-            let yrel = -(y as f32 * 125.0);
-            let x = state.x() as f32;
-            let y = height - state.y() as f32;
-            app.pointer_event(PointerEventData {
-                id: PointerId::Mouse,
-                action: PointerAction::Wheel(xrel, yrel),
-                x,
-                y,
-            });
-        }
-        _ => {}
     }
 }
