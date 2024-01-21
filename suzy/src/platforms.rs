@@ -28,28 +28,28 @@ pub type TestPlatform = self::sdl2::SdlPlatform;
 
 #[cfg(feature = "platform_opengl")]
 macro_rules! with_default_render_platform {
-    ($(#[$Attr:meta])* pub trait $Trait:ident < $T:ident, $P:ident > $($body:tt)* ) => {
+    ($(#[$Attr:meta])* pub $Def:ident $Item:ident < $T:ident, $P:ident > $($body:tt)* ) => {
         $(#[$Attr])*
-        pub trait $Trait < $T, $P = crate::platforms::DefaultRenderPlatform >
+        pub $Def $Item < $T, $P = crate::platforms::DefaultRenderPlatform >
             $($body)*
     };
-    ($(#[$Attr:meta])* pub trait $Trait:ident < $P:ident > $($body:tt)* ) => {
+    ($(#[$Attr:meta])* pub $Def:ident $Item:ident < $P:ident > $($body:tt)* ) => {
         $(#[$Attr])*
-        pub trait $Trait < $P = crate::platforms::DefaultRenderPlatform >
+        pub $Def $Item < $P = crate::platforms::DefaultRenderPlatform >
             $($body)*
     };
 }
 
 #[cfg(not(feature = "platform_opengl"))]
 macro_rules! with_default_render_platform {
-    ($(#[$Attr:meta])* pub trait $Trait:ident < $T:ident, $P:ident > $($body:tt)* ) => {
+    ($(#[$Attr:meta])* pub $Def:ident $Item:ident < $T:ident, $P:ident > $($body:tt)* ) => {
         $(#[$Attr])*
-        pub trait $Trait < $T, $P >
+        pub $Def $Item < $T, $P >
             $($body)*
     };
-    ($(#[$Attr:meta])* pub trait $Trait:ident < $P:ident > $($body:tt)* ) => {
+    ($(#[$Attr:meta])* pub $Def:ident $Item:ident < $P:ident > $($body:tt)* ) => {
         $(#[$Attr])*
-        pub trait $Trait < $P >
+        pub $Def $Item < $P >
             $($body)*
     };
 }
