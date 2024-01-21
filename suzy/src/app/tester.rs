@@ -3,10 +3,7 @@
 
 use std::time;
 
-use crate::{
-    platform::{Platform, SimpleEventLoopState},
-    pointer::PointerEventData,
-};
+use crate::{platform::Platform, pointer::PointerEventData};
 
 use super::App;
 
@@ -15,7 +12,6 @@ use super::App;
 /// Retrieve with [`App::test`](struct.App.html#method.test)
 pub struct AppTesterInterface<'a, P: Platform> {
     start_time: time::Instant,
-    state: SimpleEventLoopState,
     app: &'a mut App<P>,
     needs_draw: bool,
 }
@@ -24,11 +20,9 @@ impl<'a, P: Platform> AppTesterInterface<'a, P> {
     /// Create a tester interface from a CurrentApp.
     pub fn new(app: &'a mut App<P>) -> Self {
         let start_time = std::time::Instant::now();
-        let state = SimpleEventLoopState::default();
         app.start_frame(start_time);
         Self {
             app,
-            state,
             start_time,
             needs_draw: true,
         }
@@ -36,20 +30,6 @@ impl<'a, P: Platform> AppTesterInterface<'a, P> {
 }
 
 impl<P: Platform> AppTesterInterface<'_, P> {
-    /// Panic if the tested app is still running.
-    pub fn assert_exited(self) {
-        if self.state.running {
-            panic!("assert_exited called but app has not exited");
-        }
-    }
-
-    /// Panic if the tested app has quit.
-    fn assert_running(&self) {
-        if !self.state.running {
-            panic!("app exited unexpectedly during test");
-        }
-    }
-
     /// Issue an update to ensure all events have fully resolved
     pub fn draw_if_needed(&mut self) {
         if self.needs_draw {
@@ -67,7 +47,6 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// Update and draw the current frame, then start a new one, acting as
     /// though `frame_time` has passed (e.g. for the purposes of App::time).
     pub fn next_frame(&mut self, frame_time: time::Duration) {
-        self.assert_running();
         self.draw_if_needed();
         self.app.finish_draw();
         self.start_time += frame_time;
@@ -80,7 +59,6 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// If the passed in event is already in the suzy coordinate system,
     /// remember to set `normalized` to true.
     pub fn pointer(&mut self, pointer: PointerEventData) {
-        self.assert_running();
         self.app.pointer_event(pointer);
         self.needs_draw = true;
     }
@@ -90,7 +68,6 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// Data returned by this function may be dependent on the suzy platform
     /// in use.
     pub fn take_screenshot(&mut self) -> Box<[u8]> {
-        self.assert_running();
         self.draw_if_needed();
         self.app.take_screenshot()
     }
