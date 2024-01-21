@@ -3,7 +3,7 @@
 
 use std::{cell::Cell, rc::Rc, time};
 
-use crate::watch::DefaultOwner;
+use crate::watch::{DefaultOwner, WatchedValue};
 
 type WatchedCellCore<T> =
     crate::watch::WatchedCellCore<'static, T, DefaultOwner>;
@@ -13,15 +13,37 @@ thread_local! {
 }
 
 pub struct AppState {
-    pub(crate) frame_start: WatchedCellCore<time::Instant>,
-    pub(crate) coarse_time: WatchedCellCore<time::Instant>,
+    pub(super) frame_start: WatchedCellCore<time::Instant>,
+    pub(super) coarse_time: WatchedCellCore<time::Instant>,
     pub(super) window_width: WatchedCellCore<f32>,
     pub(super) window_height: WatchedCellCore<f32>,
-    pub(crate) dpi: WatchedCellCore<[f32; 2]>,
+    pub(super) dpi: WatchedCellCore<[f32; 2]>,
 }
 
 impl AppState {
     pub const COARSE_STEP: time::Duration = time::Duration::from_secs(1);
+
+    pub fn time(&self) -> impl '_ + WatchedValue<Value = time::Instant> {
+        &self.frame_start
+    }
+
+    pub fn coarse_time(
+        &self,
+    ) -> impl '_ + WatchedValue<Value = time::Instant> {
+        &self.coarse_time
+    }
+
+    pub fn window_width(&self) -> impl '_ + WatchedValue<Value = f32> {
+        &self.window_width
+    }
+
+    pub fn window_height(&self) -> impl '_ + WatchedValue<Value = f32> {
+        &self.window_height
+    }
+
+    pub fn dpi(&self) -> impl '_ + WatchedValue<Value = [f32; 2]> {
+        &self.dpi
+    }
 
     pub(crate) fn new_now(width: f32, height: f32) -> Self {
         let now = time::Instant::now();

@@ -93,6 +93,10 @@ impl<P: Platform> App<P> {
         platform.run(&mut self)
     }
 
+    pub fn state(&self) -> &AppState {
+        &self.state
+    }
+
     /// Add a root widget to the app.
     ///
     /// Root widgets are assigned a Rect representing the whole window.

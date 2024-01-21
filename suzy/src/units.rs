@@ -16,9 +16,6 @@ use drying_paint::DefaultOwner;
 
 use crate::{app::AppState, watch::WatchArg};
 
-/// The ratio Suzy assumes between dp and inches.
-pub const DPI: f32 = 96.0;
-
 const MM_PER_INCH: f32 = 25.4;
 
 pub trait UnitConversion: Sized {
@@ -115,9 +112,10 @@ impl Convert<'_> {
     where
         F: FnOnce(f32, f32) -> f32,
     {
+        use crate::watch::WatchedValueCore;
         AxisRelValue {
             source: self.source,
-            dpi: self.state.dpi.get(self.ctx),
+            dpi: self.state.dpi().get(self.ctx),
             f,
         }
     }
