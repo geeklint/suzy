@@ -34,7 +34,7 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     pub fn draw_if_needed(&mut self) {
         if self.needs_draw {
             self.app.update_watches();
-            self.app.draw();
+            self.app.loop_draw();
             self.needs_draw = false;
         }
     }

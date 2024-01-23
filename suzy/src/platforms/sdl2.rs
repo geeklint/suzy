@@ -63,7 +63,7 @@ impl SdlPlatform {
                 }
             }
             app.update_watches();
-            app.draw();
+            app.loop_draw();
             app.finish_draw();
         }
     }

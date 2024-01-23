@@ -37,7 +37,7 @@ impl From<&sdl2::video::Window> for PixelInfo {
             .expect("window sizes of 2^16 and greater are not supported");
         const LIMIT: u32 = 1_u32 << 24_u8;
         if screen_width > LIMIT || screen_height > LIMIT {
-            panic!("logical screen size is too big for f32");
+            panic!("logical screen size is too big for an f32");
         }
         let width = screen_width as f32;
         let height = screen_height as f32;

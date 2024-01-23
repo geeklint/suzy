@@ -143,7 +143,7 @@ impl<P: Platform> App<P> {
         self.window.take_screenshot()
     }
 
-    pub fn draw(&mut self) {
+    pub fn loop_draw(&mut self) {
         let mut loop_count: u32 = 0;
         let mut pass_arg = None;
         loop {
@@ -161,6 +161,15 @@ impl<P: Platform> App<P> {
             );
             self.watch_ctx.update();
             loop_count += 1;
+        }
+    }
+
+    pub fn draw(
+        &mut self,
+        ctx: &mut crate::graphics::DrawContext<'_, P::Renderer>,
+    ) {
+        for root in self.roots.iter_mut() {
+            root.borrow_mut().draw(ctx);
         }
     }
 
