@@ -142,6 +142,10 @@ where
             <DefaultPlatform as crate::platform::Platform>::new();
         let mut app = builder.build(&mut platform);
         app.add_root(widget::Widget::<T>::default());
-        app.run(platform);
+        let code: i32 = match platform.run(&mut app) {
+            Ok(()) => 0,
+            Err(_) => 1,
+        };
+        std::process::exit(code)
     }
 }

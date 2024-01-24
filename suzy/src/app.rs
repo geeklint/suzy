@@ -85,14 +85,6 @@ pub fn coarse_time() -> time::Instant {
 }
 
 impl<P: Platform> App<P> {
-    /// Start running the app.
-    ///
-    /// Because of platform-specific requirements, this requires control
-    /// of the current thread.
-    pub fn run(mut self, platform: P) -> ! {
-        platform.run(&mut self)
-    }
-
     pub fn state(&self) -> &AppState {
         &self.state
     }

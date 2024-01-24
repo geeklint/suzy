@@ -38,11 +38,6 @@ impl crate::platform::Platform for OsMesaPlatform {
     ) -> Result<Self::Window, String> {
         Ok(window::OsMesaWindow::new(self.ctx, settings))
     }
-
-    #[allow(clippy::unimplemented)]
-    fn run(self, _app: &mut crate::app::App<Self>) -> ! {
-        unimplemented!("Platform::run called for OSMesa Platform");
-    }
 }
 
 impl Drop for OsMesaPlatform {

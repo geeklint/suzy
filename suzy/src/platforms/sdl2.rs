@@ -31,14 +31,6 @@ impl crate::platform::Platform for SdlPlatform {
     ) -> Result<Self::Window, String> {
         window::Window::new_window(&self.sdl, settings)
     }
-
-    fn run(self, app: &mut crate::app::App<Self>) -> ! {
-        let code: i32 = match self.run(app) {
-            Ok(()) => 0,
-            Err(_) => 1,
-        };
-        std::process::exit(code)
-    }
 }
 
 impl SdlPlatform {

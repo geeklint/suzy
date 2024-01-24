@@ -32,9 +32,6 @@ pub trait Platform: 'static {
         &mut self,
         settings: crate::window::WindowBuilder,
     ) -> Result<Self::Window, String>;
-
-    /// Run, the event loop, calling the provided closure with each new event.
-    fn run(self, app: &mut crate::app::App<Self>) -> !;
 }
 
 /// A RenderPlatform provides tools to create Graphics.

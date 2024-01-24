@@ -42,12 +42,6 @@ impl Platform for NoGraphics {
             title: settings.into_title(),
         })
     }
-
-    fn run(self, _app: &mut crate::app::App<Self>) -> ! {
-        unimplemented!(
-            "NoGraphics platform has no concept of running as an app"
-        );
-    }
 }
 
 impl RenderPlatform for NoGraphics {
