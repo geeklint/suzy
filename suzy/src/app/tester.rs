@@ -3,6 +3,8 @@
 
 use std::time;
 
+use drying_paint::WatchedValueCore;
+
 use crate::{platform::Platform, pointer::PointerEventData};
 
 use super::App;
@@ -11,7 +13,6 @@ use super::App;
 ///
 /// Retrieve with [`App::test`](struct.App.html#method.test)
 pub struct AppTesterInterface<'a, P: Platform> {
-    start_time: time::Instant,
     app: &'a mut App<P>,
 }
 
@@ -20,7 +21,7 @@ impl<'a, P: Platform> AppTesterInterface<'a, P> {
     pub fn new(app: &'a mut App<P>) -> Self {
         let start_time = std::time::Instant::now();
         app.start_frame(start_time);
-        Self { app, start_time }
+        Self { app }
     }
 }
 
@@ -43,8 +44,8 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     pub fn next_frame(&mut self, frame_time: time::Duration) {
         self.draw_if_needed();
         self.app.finish_draw();
-        self.start_time += frame_time;
-        self.app.start_frame(self.start_time);
+        let frame_time = self.app.state().time().get_unwatched() + frame_time;
+        self.app.start_frame(frame_time);
     }
 
     /// Simulate a pointer event.
