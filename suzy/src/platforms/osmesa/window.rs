@@ -24,9 +24,10 @@ impl OsMesaWindow {
         builder: WindowBuilder,
     ) -> Self {
         let [width, height] = builder.size();
+        let background_color = builder.background_color();
         let width = width.max(1.0).min(1280.0) as u16;
         let height = height.max(1.0).min(1024.0) as u16;
-        let title = builder.title().to_string();
+        let title = builder.into_title();
         let mut buffer = vec![0_u8; 4 * (width as usize) * (height as usize)];
         unsafe {
             bindings::OSMesaMakeCurrent(
@@ -44,7 +45,7 @@ impl OsMesaWindow {
             unsafe { bindings::OSMesaGetProcAddress(name.as_ptr()) }
         });
         let mut gl_win = opengl::Window::new(plat_gl_context);
-        gl_win.clear_color(builder.background_color());
+        gl_win.clear_color(background_color);
         Self {
             title,
             size: [width, height],
@@ -67,10 +68,6 @@ impl WindowSettings for OsMesaWindow {
         self.size = [width, height];
         let bufsize = 4 * (width as usize) * (height as usize);
         self.buffer.resize(bufsize, 0);
-    }
-
-    fn title(&self) -> &str {
-        &self.title
     }
 
     fn set_title(&mut self, title: String) {

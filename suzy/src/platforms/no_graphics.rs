@@ -77,10 +77,6 @@ impl WindowSettings for Window {
         self.size = size;
     }
 
-    fn title(&self) -> &str {
-        &self.title
-    }
-
     fn set_title(&mut self, title: String) {
         self.title = title;
     }

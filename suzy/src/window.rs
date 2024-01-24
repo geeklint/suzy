@@ -16,9 +16,6 @@ pub trait WindowSettings {
     /// Set the size of the window in dp
     fn set_size(&mut self, size: [f32; 2]);
 
-    /// Get the window title
-    fn title(&self) -> &str;
-
     /// Set the window title
     fn set_title(&mut self, title: String);
 
@@ -73,10 +70,6 @@ impl WindowSettings for WindowBuilder {
 
     fn set_size(&mut self, size: [f32; 2]) {
         self.size = size;
-    }
-
-    fn title(&self) -> &str {
-        &self.title
     }
 
     fn set_title(&mut self, title: String) {

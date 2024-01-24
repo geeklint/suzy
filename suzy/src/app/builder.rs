@@ -48,10 +48,6 @@ impl WindowSettings for AppBuilder {
         self.win.set_size(size);
     }
 
-    fn title(&self) -> &str {
-        self.win.title()
-    }
-
     fn set_title(&mut self, title: String) {
         self.win.set_title(title);
     }

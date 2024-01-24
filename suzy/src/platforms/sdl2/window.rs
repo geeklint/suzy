@@ -11,55 +11,11 @@ use crate::{
     window::{self, WindowBuilder, WindowSettings},
 };
 
-#[derive(Copy, Clone, PartialEq)]
-pub(super) struct PixelInfo {
-    pub dpi: [f32; 2],
-    pub pixel_size: [u16; 2],
-    pub screen_size: [u32; 2],
-    pub size: [f32; 2],
-}
-
-impl From<&sdl2::video::Window> for PixelInfo {
-    fn from(window: &sdl2::video::Window) -> Self {
-        let (_, hdpi, vdpi) = window
-            .display_index()
-            .and_then(|display_index| {
-                window.subsystem().display_dpi(display_index)
-            })
-            .unwrap_or((96.0, 96.0, 96.0));
-        let (screen_width, screen_height) = window.size();
-        let (px_width, px_height) = window.drawable_size();
-        let px_width: u16 = px_width
-            .try_into()
-            .expect("window sizes of 2^16 and greater are not supported");
-        let px_height: u16 = px_height
-            .try_into()
-            .expect("window sizes of 2^16 and greater are not supported");
-        const LIMIT: u32 = 1_u32 << 24_u8;
-        if screen_width > LIMIT || screen_height > LIMIT {
-            panic!("logical screen size is too big for an f32");
-        }
-        let width = screen_width as f32;
-        let height = screen_height as f32;
-        Self {
-            dpi: [hdpi, vdpi],
-            pixel_size: [px_width, px_height],
-            screen_size: [screen_width, screen_height],
-            size: [width, height],
-        }
-    }
-}
-
-pub(super) struct WindowInfo {
-    pub(super) window: sdl2::video::Window,
-    pub(super) gl_win: opengl::Window,
-}
-
 pub struct Window {
-    title: String,
-    pub(super) info: WindowInfo,
-    _context: sdl2::video::GLContext,
     _video: sdl2::VideoSubsystem,
+    pub(super) window: sdl2::video::Window,
+    _context: sdl2::video::GLContext,
+    pub(super) gl_win: opengl::Window,
 }
 
 impl Window {
@@ -84,8 +40,10 @@ impl Window {
             gl_attr.set_context_flags().debug().set();
         }
         let [requested_width, requested_height] = builder.size();
+        let background_color = builder.background_color();
+        let title = builder.into_title();
         let mut win_builder = video.window(
-            builder.title(),
+            &title,
             requested_width as u32,
             requested_height as u32,
         );
@@ -102,41 +60,63 @@ impl Window {
             opengl::OpenGlContext::new(|s| video.gl_get_proc_address(s).cast())
         };
         let mut gl_win = opengl::Window::new(plat_gl_context);
-        gl_win.clear_color(builder.background_color());
+        gl_win.clear_color(background_color);
         Ok(Window {
-            title: builder.into_title(),
-            info: WindowInfo { window, gl_win },
             _video: video,
+            window,
             _context: context,
+            gl_win,
         })
+    }
+
+    pub(super) fn dpi(&self) -> [f32; 2] {
+        let (_, hdpi, vdpi) = self
+            .window
+            .display_index()
+            .and_then(|display_index| {
+                self.window.subsystem().display_dpi(display_index)
+            })
+            .unwrap_or((96.0, 96.0, 96.0));
+        [hdpi, vdpi]
+    }
+
+    pub(super) fn logical_size(&self) -> [f32; 2] {
+        const LIMIT: u32 = 1_u32 << 24_u8;
+        let (width, height) = self.window.size();
+        if width > LIMIT || height > LIMIT {
+            panic!("logical screen size is too big for an f32");
+        }
+        [width as f32, height as f32]
+    }
+
+    pub(super) fn physical_size(&self) -> [u16; 2] {
+        let (width, height) = self.window.drawable_size();
+        let width: u16 = width
+            .try_into()
+            .expect("window sizes of 2^16 and greater are not supported");
+        let height: u16 = height
+            .try_into()
+            .expect("window sizes of 2^16 and greater are not supported");
+        [width, height]
     }
 }
 
 impl WindowSettings for Window {
     fn size(&self) -> [f32; 2] {
-        let info: PixelInfo = (&self.info.window).into();
-        info.size
+        self.logical_size()
     }
 
     fn set_size(&mut self, size: [f32; 2]) {
         let [set_width, set_height] = size;
-        let _res = self
-            .info
-            .window
-            .set_size(set_width as u32, set_height as u32);
-    }
-
-    fn title(&self) -> &str {
-        &self.title
+        let _res = self.window.set_size(set_width as u32, set_height as u32);
     }
 
     fn set_title(&mut self, title: String) {
-        let _res = self.info.window.set_title(&title);
-        self.title = title;
+        let _res = self.window.set_title(&title);
     }
 
     fn fullscreen(&self) -> bool {
-        match self.info.window.fullscreen_state() {
+        match self.window.fullscreen_state() {
             sdl2::video::FullscreenType::Off => false,
             sdl2::video::FullscreenType::Desktop
             | sdl2::video::FullscreenType::True => true,
@@ -144,7 +124,7 @@ impl WindowSettings for Window {
     }
 
     fn set_fullscreen(&mut self, fullscreen: bool) {
-        let _res = self.info.window.set_fullscreen(if fullscreen {
+        let _res = self.window.set_fullscreen(if fullscreen {
             sdl2::video::FullscreenType::Desktop
         } else {
             sdl2::video::FullscreenType::Off
@@ -152,24 +132,23 @@ impl WindowSettings for Window {
     }
 
     fn background_color(&self) -> Color {
-        self.info.gl_win.get_clear_color()
+        self.gl_win.get_clear_color()
     }
 
     fn set_background_color(&mut self, color: Color) {
-        self.info.gl_win.clear_color(color);
+        self.gl_win.clear_color(color);
     }
 }
 
 impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     fn recalculate_viewport(&mut self) {
-        let info: PixelInfo = (&self.info.window).into();
-        let [pixel_width, pixel_height] = info.pixel_size;
-        self.info.gl_win.viewport(0, 0, pixel_width, pixel_height);
+        let [width, height] = self.physical_size();
+        self.gl_win.viewport(0, 0, width, height);
     }
 
     fn flip(&mut self) {
-        self.info.gl_win.flip();
-        self.info.window.gl_swap_window();
+        self.gl_win.flip();
+        self.window.gl_swap_window();
     }
 
     fn prepare_draw(
@@ -178,12 +157,12 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     ) -> DrawContext<'_, opengl::OpenGlRenderPlatform> {
         let first_pass = pass_arg.is_none();
         if first_pass {
-            self.info.gl_win.clear();
+            self.gl_win.clear();
         }
-        self.info.gl_win.prepare_draw(self.size(), first_pass)
+        self.gl_win.prepare_draw(self.size(), first_pass)
     }
 
     fn take_screenshot(&self) -> Box<[u8]> {
-        self.info.gl_win.take_screenshot()
+        self.gl_win.take_screenshot()
     }
 }

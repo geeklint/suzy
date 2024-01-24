@@ -89,11 +89,9 @@ impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
                 match win_event {
                     WindowEvent::SizeChanged(_, _)
                     | WindowEvent::Moved { .. } => {
-                        let info: window::PixelInfo =
-                            (&self.window.info.window).into();
-                        let [width, height] = info.size;
+                        let [width, height] = self.window.logical_size();
                         self.resize(width, height);
-                        self.update_dpi(info.dpi);
+                        self.update_dpi(self.window.dpi());
                     }
                     WindowEvent::Leave => {
                         self.pointer_event(PointerEventData {
