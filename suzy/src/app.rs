@@ -114,8 +114,8 @@ impl<P: Platform> App<P> {
     /// Create a test interface for this app, which allows simulating
     /// behavior.
     pub fn test<F: FnOnce(AppTesterInterface<'_, P>)>(mut self, func: F) {
-        self.window.recalculate_viewport();
-        func(AppTesterInterface::new(&mut self));
+        self.start_frame(std::time::Instant::now());
+        func(AppTesterInterface { app: &mut self });
         std::mem::drop(self.roots);
         std::mem::drop(self.window);
     }

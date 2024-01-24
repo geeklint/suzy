@@ -5,24 +5,12 @@ use std::time;
 
 use drying_paint::WatchedValueCore;
 
-use crate::{platform::Platform, pointer::PointerEventData};
+use crate::{platform::Platform, pointer::PointerEventData, window::Window};
 
 use super::App;
 
-/// An interface to enable some automated testing of an app.
-///
-/// Retrieve with [`App::test`](struct.App.html#method.test)
 pub struct AppTesterInterface<'a, P: Platform> {
-    app: &'a mut App<P>,
-}
-
-impl<'a, P: Platform> AppTesterInterface<'a, P> {
-    /// Create a tester interface from a CurrentApp.
-    pub fn new(app: &'a mut App<P>) -> Self {
-        let start_time = std::time::Instant::now();
-        app.start_frame(start_time);
-        Self { app }
-    }
+    pub(super) app: &'a mut App<P>,
 }
 
 impl<P: Platform> AppTesterInterface<'_, P> {

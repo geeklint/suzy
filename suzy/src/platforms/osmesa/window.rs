@@ -28,7 +28,8 @@ impl OsMesaWindow {
         let width = width.max(1.0).min(1280.0) as u16;
         let height = height.max(1.0).min(1024.0) as u16;
         let title = builder.into_title();
-        let mut buffer = vec![0_u8; 4 * (width as usize) * (height as usize)];
+        let mut buffer =
+            vec![0_u8; 4 * usize::from(width) * usize::from(height)];
         unsafe {
             bindings::OSMesaMakeCurrent(
                 ctx,
@@ -46,6 +47,7 @@ impl OsMesaWindow {
         });
         let mut gl_win = opengl::Window::new(plat_gl_context);
         gl_win.clear_color(background_color);
+        gl_win.viewport(0, 0, width, height);
         Self {
             title,
             size: [width, height],
