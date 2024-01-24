@@ -4,7 +4,7 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::AppBuilder,
+    app::{AppBuilder, AppTestingExt},
     dims::{Padding, Padding2d, Rect},
     graphics::Color,
     platforms::{
@@ -47,13 +47,11 @@ fn mask_right_half() {
     let mut platform = <TestPlatform as suzy::platform::Platform>::new();
     let mut app = builder.build(&mut platform);
     app.add_root(Widget::<Root>::default());
-    app.test(|mut app| {
-        let capture = app.take_screenshot();
-        let index = (capture.len() / 2) & ALIGN_MASK;
-        let (bottom, top) = capture.split_at(index);
-        let bottom = round_back(bottom);
-        let top = round_front(top);
-        assert!(is_color(bottom, Color::BLACK));
-        assert!(is_color(top, Color::WHITE));
-    });
+    let capture = app.draw_and_take_screenshot();
+    let index = (capture.len() / 2) & ALIGN_MASK;
+    let (bottom, top) = capture.split_at(index);
+    let bottom = round_back(bottom);
+    let top = round_front(top);
+    assert!(is_color(bottom, Color::BLACK));
+    assert!(is_color(top, Color::WHITE));
 }

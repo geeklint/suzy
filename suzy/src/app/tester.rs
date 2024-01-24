@@ -5,53 +5,13 @@ use std::time;
 
 use drying_paint::WatchedValueCore;
 
-use crate::{platform::Platform, pointer::PointerEventData, window::Window};
+use crate::{platform::Platform, pointer::PointerEventData};
 
 use super::App;
 
-pub struct AppTesterInterface<'a, P: Platform> {
-    pub(super) app: &'a mut App<P>,
-}
-
-impl<P: Platform> AppTesterInterface<'_, P> {
+pub trait AppTestingExt {
     /// Issue an update to ensure all events have fully resolved
-    pub fn draw_if_needed(&mut self) {
-        if self.app.needs_draw {
-            self.app.update_watches();
-            self.app.loop_draw();
-        }
-    }
-
-    /// Start the next frame with a default frame time.
-    pub fn next_frame_60fps(&mut self) {
-        self.next_frame(time::Duration::from_nanos(16666667));
-    }
-
-    /// Update and draw the current frame, then start a new one, acting as
-    /// though `frame_time` has passed (e.g. for the purposes of App::time).
-    pub fn next_frame(&mut self, frame_time: time::Duration) {
-        self.draw_if_needed();
-        self.app.finish_draw();
-        let frame_time = self.app.state().time().get_unwatched() + frame_time;
-        self.app.start_frame(frame_time);
-    }
-
-    /// Simulate a pointer event.
-    ///
-    /// If the passed in event is already in the suzy coordinate system,
-    /// remember to set `normalized` to true.
-    pub fn pointer(&mut self, pointer: PointerEventData) {
-        self.app.pointer_event(pointer);
-    }
-
-    /// Take a screenshot.
-    ///
-    /// Data returned by this function may be dependent on the suzy platform
-    /// in use.
-    pub fn take_screenshot(&mut self) -> Box<[u8]> {
-        self.draw_if_needed();
-        self.app.take_screenshot()
-    }
+    fn draw_if_needed(&mut self);
 
     /// Short-hand to simulate a mouse click
     ///
@@ -59,16 +19,55 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// 1) sending a mouse-down pointer event
     /// 2) advancing the frame with the default frame time
     /// 3) sending a mouse-up pointer event
-    pub fn mouse_click(&mut self, pos: [f32; 2]) {
+    fn mouse_click(&mut self, pos: [f32; 2]);
+
+    /// Take a screenshot.
+    ///
+    /// Data returned by this function may be dependent on the suzy platform
+    /// in use.
+    fn draw_and_take_screenshot(&mut self) -> Box<[u8]>;
+
+    /// Update and draw the current frame, then start a new one, acting as
+    /// though `frame_time` has passed (e.g. for the purposes of App::time).
+    fn next_frame(&mut self, frame_time: time::Duration);
+
+    /// Start the next frame with a default frame time.
+    fn next_frame_60fps(&mut self) {
+        let frame_time = time::Duration::from_nanos(16666667);
+        self.next_frame(frame_time);
+    }
+}
+
+impl<P: Platform> AppTestingExt for App<P> {
+    fn draw_if_needed(&mut self) {
+        if self.needs_draw {
+            self.update_watches();
+            self.loop_draw();
+        }
+    }
+
+    fn next_frame(&mut self, frame_time: time::Duration) {
+        self.draw_if_needed();
+        self.finish_draw();
+        let frame_time = self.state().time().get_unwatched() + frame_time;
+        self.start_frame(frame_time);
+    }
+
+    fn draw_and_take_screenshot(&mut self) -> Box<[u8]> {
+        self.draw_if_needed();
+        self.take_screenshot()
+    }
+
+    fn mouse_click(&mut self, pos: [f32; 2]) {
         let [px, py] = pos;
-        self.pointer(PointerEventData {
+        self.pointer_event(PointerEventData {
             id: crate::pointer::PointerId::Mouse,
             action: crate::pointer::PointerAction::Down,
             x: px,
             y: py,
         });
         self.next_frame_60fps();
-        self.pointer(PointerEventData {
+        self.pointer_event(PointerEventData {
             id: crate::pointer::PointerId::Mouse,
             action: crate::pointer::PointerAction::Up,
             x: px,

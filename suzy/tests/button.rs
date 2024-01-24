@@ -4,7 +4,7 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::AppBuilder,
+    app::{AppBuilder, AppTestingExt},
     dims::{Padding2d, Rect},
     graphics::{Color, Conditional},
     platform,
@@ -61,36 +61,31 @@ fn button() {
     let mut platform = <TestPlatform as platform::Platform>::new();
     let mut app = builder.build(&mut platform);
     app.add_root(Widget::<Root>::default());
-    app.test(|mut app| {
-        let capture = app.take_screenshot();
-        for chunk in capture.chunks_exact(4) {
-            let color =
-                Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
-            assert_eq!(color, Color::BLACK);
-        }
-        app.pointer(PointerEventData {
-            id: PointerId::Other(1),
-            action: PointerAction::Down,
-            x: 240.0,
-            y: 180.0,
-        });
-        let capture = app.take_screenshot();
-        for chunk in capture.chunks_exact(4) {
-            let color =
-                Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
-            assert_eq!(color, Color::WHITE);
-        }
-        app.pointer(PointerEventData {
-            id: PointerId::Other(1),
-            action: PointerAction::Up,
-            x: 240.0,
-            y: 180.0,
-        });
-        let capture = app.take_screenshot();
-        for chunk in capture.chunks_exact(4) {
-            let color =
-                Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
-            assert_eq!(color, Color::BLACK);
-        }
+    let capture = app.draw_and_take_screenshot();
+    for chunk in capture.chunks_exact(4) {
+        let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
+        assert_eq!(color, Color::BLACK);
+    }
+    app.pointer_event(PointerEventData {
+        id: PointerId::Other(1),
+        action: PointerAction::Down,
+        x: 240.0,
+        y: 180.0,
     });
+    let capture = app.draw_and_take_screenshot();
+    for chunk in capture.chunks_exact(4) {
+        let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
+        assert_eq!(color, Color::WHITE);
+    }
+    app.pointer_event(PointerEventData {
+        id: PointerId::Other(1),
+        action: PointerAction::Up,
+        x: 240.0,
+        y: 180.0,
+    });
+    let capture = app.draw_and_take_screenshot();
+    for chunk in capture.chunks_exact(4) {
+        let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
+        assert_eq!(color, Color::BLACK);
+    }
 }

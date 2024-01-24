@@ -22,7 +22,7 @@ mod tester;
 mod values;
 
 pub use builder::AppBuilder;
-pub use tester::AppTesterInterface;
+pub use tester::AppTestingExt;
 pub(crate) use values::AppState;
 
 #[cfg(feature = "platform_sdl")]
@@ -109,15 +109,6 @@ impl<P: Platform> App<P> {
         self.roots.push(holder);
         Widget::init(watcher, self);
         self.needs_draw = true;
-    }
-
-    /// Create a test interface for this app, which allows simulating
-    /// behavior.
-    pub fn test<F: FnOnce(AppTesterInterface<'_, P>)>(mut self, func: F) {
-        self.start_frame(std::time::Instant::now());
-        func(AppTesterInterface { app: &mut self });
-        std::mem::drop(self.roots);
-        std::mem::drop(self.window);
     }
 
     pub fn start_frame(&mut self, frame_time: time::Instant) {

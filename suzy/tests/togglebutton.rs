@@ -4,7 +4,7 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::AppBuilder,
+    app::{AppBuilder, AppTestingExt},
     dims::{Padding2d, Rect},
     graphics::{Color, Conditional},
     platforms::{
@@ -109,48 +109,46 @@ fn togglebutton_group() {
     let mut root = Widget::<GroupRoot>::default();
     root.value_feedback = group_value_feedback;
     app.add_root(root);
-    app.test(|mut app| {
-        let capture = app.take_screenshot();
-        assert_eq!(group_value_output.get(), None);
-        assert!(is_color(&capture, Color::BLACK));
-        // click the bottom button
-        app.mouse_click([240.0, 60.0]);
-        let capture = app.take_screenshot();
-        let index = (capture.len() / 3) & ALIGN_MASK;
-        let (bottom_3rd, top) = capture.split_at(index);
-        let bottom_3rd = round_back(bottom_3rd);
-        let top = round_front(top);
-        assert_eq!(group_value_output.get(), Some(3));
-        assert!(is_color(bottom_3rd, Color::WHITE));
-        assert!(is_color(top, Color::BLACK));
-        // click the top button
-        app.mouse_click([240.0, 300.0]);
-        let capture = app.take_screenshot();
-        let index = (capture.len() / 3) & ALIGN_MASK;
-        let (bottom, top_3rd) = capture.split_at(2 * index);
-        let bottom = round_back(bottom);
-        let top_3rd = round_front(top_3rd);
-        assert_eq!(group_value_output.get(), Some(1));
-        assert!(is_color(bottom, Color::BLACK));
-        assert!(is_color(top_3rd, Color::WHITE));
-        // click the middle button
-        app.mouse_click([240.0, 180.0]);
-        let capture = app.take_screenshot();
-        let index = (capture.len() / 3) & ALIGN_MASK;
-        let (bottom_3rd, top) = capture.split_at(index);
-        let index = (top.len() / 2) & ALIGN_MASK;
-        let (middle_3rd, top_3rd) = top.split_at(index);
-        let bottom_3rd = round_back(bottom_3rd);
-        let middle_3rd = round_both(middle_3rd);
-        let top_3rd = round_front(top_3rd);
-        assert_eq!(group_value_output.get(), Some(2));
-        assert!(is_color(bottom_3rd, Color::BLACK));
-        assert!(is_color(middle_3rd, Color::WHITE));
-        assert!(is_color(top_3rd, Color::BLACK));
-        // click the middle button again
-        app.mouse_click([240.0, 180.0]);
-        let capture = app.take_screenshot();
-        assert_eq!(group_value_output.get(), None);
-        assert!(is_color(&capture, Color::BLACK));
-    });
+    let capture = app.draw_and_take_screenshot();
+    assert_eq!(group_value_output.get(), None);
+    assert!(is_color(&capture, Color::BLACK));
+    // click the bottom button
+    app.mouse_click([240.0, 60.0]);
+    let capture = app.draw_and_take_screenshot();
+    let index = (capture.len() / 3) & ALIGN_MASK;
+    let (bottom_3rd, top) = capture.split_at(index);
+    let bottom_3rd = round_back(bottom_3rd);
+    let top = round_front(top);
+    assert_eq!(group_value_output.get(), Some(3));
+    assert!(is_color(bottom_3rd, Color::WHITE));
+    assert!(is_color(top, Color::BLACK));
+    // click the top button
+    app.mouse_click([240.0, 300.0]);
+    let capture = app.draw_and_take_screenshot();
+    let index = (capture.len() / 3) & ALIGN_MASK;
+    let (bottom, top_3rd) = capture.split_at(2 * index);
+    let bottom = round_back(bottom);
+    let top_3rd = round_front(top_3rd);
+    assert_eq!(group_value_output.get(), Some(1));
+    assert!(is_color(bottom, Color::BLACK));
+    assert!(is_color(top_3rd, Color::WHITE));
+    // click the middle button
+    app.mouse_click([240.0, 180.0]);
+    let capture = app.draw_and_take_screenshot();
+    let index = (capture.len() / 3) & ALIGN_MASK;
+    let (bottom_3rd, top) = capture.split_at(index);
+    let index = (top.len() / 2) & ALIGN_MASK;
+    let (middle_3rd, top_3rd) = top.split_at(index);
+    let bottom_3rd = round_back(bottom_3rd);
+    let middle_3rd = round_both(middle_3rd);
+    let top_3rd = round_front(top_3rd);
+    assert_eq!(group_value_output.get(), Some(2));
+    assert!(is_color(bottom_3rd, Color::BLACK));
+    assert!(is_color(middle_3rd, Color::WHITE));
+    assert!(is_color(top_3rd, Color::BLACK));
+    // click the middle button again
+    app.mouse_click([240.0, 180.0]);
+    let capture = app.draw_and_take_screenshot();
+    assert_eq!(group_value_output.get(), None);
+    assert!(is_color(&capture, Color::BLACK));
 }
