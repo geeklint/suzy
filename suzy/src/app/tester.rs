@@ -13,7 +13,6 @@ use super::App;
 pub struct AppTesterInterface<'a, P: Platform> {
     start_time: time::Instant,
     app: &'a mut App<P>,
-    needs_draw: bool,
 }
 
 impl<'a, P: Platform> AppTesterInterface<'a, P> {
@@ -21,21 +20,16 @@ impl<'a, P: Platform> AppTesterInterface<'a, P> {
     pub fn new(app: &'a mut App<P>) -> Self {
         let start_time = std::time::Instant::now();
         app.start_frame(start_time);
-        Self {
-            app,
-            start_time,
-            needs_draw: true,
-        }
+        Self { app, start_time }
     }
 }
 
 impl<P: Platform> AppTesterInterface<'_, P> {
     /// Issue an update to ensure all events have fully resolved
     pub fn draw_if_needed(&mut self) {
-        if self.needs_draw {
+        if self.app.needs_draw {
             self.app.update_watches();
             self.app.loop_draw();
-            self.needs_draw = false;
         }
     }
 
@@ -51,7 +45,6 @@ impl<P: Platform> AppTesterInterface<'_, P> {
         self.app.finish_draw();
         self.start_time += frame_time;
         self.app.start_frame(self.start_time);
-        self.needs_draw = true;
     }
 
     /// Simulate a pointer event.
@@ -60,7 +53,6 @@ impl<P: Platform> AppTesterInterface<'_, P> {
     /// remember to set `normalized` to true.
     pub fn pointer(&mut self, pointer: PointerEventData) {
         self.app.pointer_event(pointer);
-        self.needs_draw = true;
     }
 
     /// Take a screenshot.

@@ -54,6 +54,7 @@ mod app_struct {
         pub(super) roots: Vec<RootHolder<P::Renderer>>,
         pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
         pub(crate) state: Rc<super::AppState>,
+        pub(super) needs_draw: bool,
     }
 }
 
@@ -107,6 +108,7 @@ impl<P: Platform> App<P> {
         let watcher = Rc::downgrade(&holder);
         self.roots.push(holder);
         Widget::init(watcher, self);
+        self.needs_draw = true;
     }
 
     /// Create a test interface for this app, which allows simulating
@@ -125,10 +127,12 @@ impl<P: Platform> App<P> {
         if duration >= AppState::COARSE_STEP {
             self.state.coarse_time.set_external(frame_time);
         }
+        self.needs_draw = true;
     }
 
     pub fn update_watches(&mut self) {
-        self.watch_ctx.update()
+        self.watch_ctx.update();
+        self.needs_draw = true;
     }
 
     pub fn take_screenshot(&self) -> Box<[u8]> {
@@ -154,6 +158,7 @@ impl<P: Platform> App<P> {
             self.watch_ctx.update();
             loop_count += 1;
         }
+        self.needs_draw = false;
     }
 
     pub fn draw(
@@ -177,11 +182,13 @@ impl<P: Platform> App<P> {
             wid.set_horizontal_stretch(0.0, width);
             wid.set_vertical_stretch(0.0, height);
         }
+        self.needs_draw = true;
         self.window.recalculate_viewport();
     }
 
     pub fn update_dpi(&mut self, dpi: [f32; 2]) {
         self.state.dpi.set_external(dpi);
+        self.needs_draw = true;
     }
 
     pub fn pointer_event(&mut self, pointer: PointerEventData) {
@@ -191,6 +198,7 @@ impl<P: Platform> App<P> {
         while let (false, Some(root)) = (handled, iter.next()) {
             handled = root.borrow_mut().pointer_event(&mut event);
         }
+        self.needs_draw = true;
     }
 
     /// Consume the current app, cleaning up its resources immediately.

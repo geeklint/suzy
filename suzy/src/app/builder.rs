@@ -35,6 +35,7 @@ impl AppBuilder {
             roots: Vec::new(),
             pointer_grab_map: HashMap::new(),
             state,
+            needs_draw: true,
         }
     }
 }
