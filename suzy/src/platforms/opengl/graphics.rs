@@ -41,20 +41,24 @@ impl<'a> crate::graphics::PlatformDrawContext<()> for DrawContext<'a> {
 }
 
 impl<'a> DrawContext<'a> {
-    pub(crate) fn new(
+    pub(crate) fn gather_textures(
         context: &'a mut super::context::OpenGlContext,
-        matrix: super::Mat4,
-        first_pass: bool,
     ) -> Self {
         Self {
             context,
-            pass: if first_pass {
-                DrawPass::GatherTextures
-            } else {
-                DrawPass::Main {
-                    masking: BatchMasking::Unmasked,
-                    batch_pool: BatchPool::new(matrix),
-                }
+            pass: DrawPass::GatherTextures,
+        }
+    }
+
+    pub(crate) fn main_draw_pass(
+        context: &'a mut super::context::OpenGlContext,
+        matrix: super::Mat4,
+    ) -> Self {
+        Self {
+            context,
+            pass: DrawPass::Main {
+                masking: BatchMasking::Unmasked,
+                batch_pool: BatchPool::new(matrix),
             },
         }
     }

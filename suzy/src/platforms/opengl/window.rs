@@ -71,10 +71,34 @@ impl Window {
             self.ctx.bindings.Enable(BLEND);
             self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
         }
-        let [screen_width, screen_height] = screen_size;
+        if first_pass {
+            super::DrawContext::gather_textures(&mut self.ctx)
+        } else {
+            let [screen_width, screen_height] = screen_size;
+            let matrix = Mat4::translate(-1.0, -1.0)
+                * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);
+            super::DrawContext::main_draw_pass(&mut self.ctx, matrix)
+        }
+    }
+
+    pub fn draw_app<P>(&mut self, app: &mut crate::app::App<P>)
+    where
+        P: crate::platform::Platform<Renderer = OpenGlRenderPlatform>,
+    {
+        use crate::watch::WatchedValueCore;
+        let screen_width = app.state().window_width().get_unwatched();
+        let screen_height = app.state().window_height().get_unwatched();
+        unsafe {
+            self.ctx.bindings.Enable(BLEND);
+            self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
+        }
         let matrix = Mat4::translate(-1.0, -1.0)
             * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);
-        super::DrawContext::new(&mut self.ctx, matrix, first_pass)
+        app.draw(&mut super::DrawContext::gather_textures(&mut self.ctx));
+        app.draw(&mut super::DrawContext::main_draw_pass(
+            &mut self.ctx,
+            matrix,
+        ));
     }
 
     /// Issue opengl call to clear the screen.

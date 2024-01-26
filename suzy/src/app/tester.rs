@@ -47,8 +47,7 @@ impl<P: Platform> AppTestingExt for App<P> {
     }
 
     fn next_frame(&mut self, frame_time: time::Duration) {
-        self.draw_if_needed();
-        self.finish_draw();
+        self.update_watches();
         let frame_time = self.state().time().get_unwatched() + frame_time;
         self.start_frame(frame_time);
     }
