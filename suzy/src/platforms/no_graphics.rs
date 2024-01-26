@@ -93,10 +93,6 @@ impl WindowSettings for Window {
 }
 
 impl crate::window::Window<NoGraphics> for Window {
-    fn recalculate_viewport(&mut self) {}
-
-    fn flip(&mut self) {}
-
     fn prepare_draw(
         &mut self,
         _pass_arg: Option<()>,

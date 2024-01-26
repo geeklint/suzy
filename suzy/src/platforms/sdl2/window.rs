@@ -8,8 +8,32 @@ use sdl2::video::WindowBuildError;
 use crate::{
     graphics::{Color, DrawContext},
     platforms::opengl,
-    window::{self, WindowBuilder, WindowSettings},
+    window::{self},
 };
+
+#[derive(Clone, Copy, Debug)]
+pub struct WindowSettings<'a> {
+    pub title: &'a str,
+    pub width: u32,
+    pub height: u32,
+    pub background_color: Color,
+}
+
+impl Default for WindowSettings<'static> {
+    fn default() -> Self {
+        Self {
+            title: "Suzy Window",
+            width: 809,
+            height: 500,
+            background_color: Color::from_rgba(
+                0.026113365,
+                0.026113365,
+                0.026113365,
+                1.0,
+            ),
+        }
+    }
+}
 
 pub struct Window {
     _video: sdl2::VideoSubsystem,
@@ -21,7 +45,7 @@ pub struct Window {
 impl Window {
     pub fn new_window(
         sdl: &sdl2::Sdl,
-        builder: WindowBuilder,
+        settings: WindowSettings<'_>,
     ) -> Result<Self, String> {
         // initialize systems
         let video = sdl.video()?;
@@ -39,14 +63,8 @@ impl Window {
         if opengl::DEBUG {
             gl_attr.set_context_flags().debug().set();
         }
-        let [requested_width, requested_height] = builder.size();
-        let background_color = builder.background_color();
-        let title = builder.into_title();
-        let mut win_builder = video.window(
-            &title,
-            requested_width as u32,
-            requested_height as u32,
-        );
+        let mut win_builder =
+            video.window(settings.title, settings.width, settings.height);
         win_builder.opengl().allow_highdpi().resizable();
         // build window
         let window = win_builder.build().map_err(|err| match err {
@@ -60,13 +78,26 @@ impl Window {
             opengl::OpenGlContext::new(|s| video.gl_get_proc_address(s).cast())
         };
         let mut gl_win = opengl::Window::new(plat_gl_context);
-        gl_win.clear_color(background_color);
+        gl_win.clear_color(settings.background_color);
         Ok(Window {
             _video: video,
             window,
             _context: context,
             gl_win,
         })
+    }
+
+    pub fn take_screenshot(&self) -> Box<[u8]> {
+        self.gl_win.take_screenshot()
+    }
+
+    pub fn flip(&self) {
+        self.window.gl_swap_window();
+    }
+
+    pub fn recalculate_viewport(&mut self) {
+        let [width, height] = self.physical_size();
+        self.gl_win.viewport(0, 0, width, height);
     }
 
     pub(super) fn dpi(&self) -> [f32; 2] {
@@ -101,7 +132,7 @@ impl Window {
     }
 }
 
-impl WindowSettings for Window {
+impl crate::window::WindowSettings for Window {
     fn size(&self) -> [f32; 2] {
         self.logical_size()
     }
@@ -141,16 +172,6 @@ impl WindowSettings for Window {
 }
 
 impl window::Window<opengl::OpenGlRenderPlatform> for Window {
-    fn recalculate_viewport(&mut self) {
-        let [width, height] = self.physical_size();
-        self.gl_win.viewport(0, 0, width, height);
-    }
-
-    fn flip(&mut self) {
-        self.gl_win.flip();
-        self.window.gl_swap_window();
-    }
-
     fn prepare_draw(
         &mut self,
         pass_arg: Option<()>,
@@ -159,10 +180,10 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         if first_pass {
             self.gl_win.clear();
         }
-        self.gl_win.prepare_draw(self.size(), first_pass)
+        self.gl_win.prepare_draw(self.logical_size(), first_pass)
     }
 
     fn take_screenshot(&self) -> Box<[u8]> {
-        self.gl_win.take_screenshot()
+        self.take_screenshot()
     }
 }

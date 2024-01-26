@@ -161,10 +161,6 @@ impl<P: Platform> App<P> {
         }
     }
 
-    pub fn finish_draw(&mut self) {
-        self.window.flip()
-    }
-
     pub fn resize(&mut self, width: f32, height: f32) {
         self.state.window_width.set_external(width);
         self.state.window_height.set_external(height);
@@ -174,7 +170,6 @@ impl<P: Platform> App<P> {
             wid.set_vertical_stretch(0.0, height);
         }
         self.needs_draw = true;
-        self.window.recalculate_viewport();
     }
 
     pub fn update_dpi(&mut self, dpi: [f32; 2]) {

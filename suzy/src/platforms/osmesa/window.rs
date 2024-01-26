@@ -92,15 +92,6 @@ impl WindowSettings for OsMesaWindow {
 }
 
 impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
-    fn recalculate_viewport(&mut self) {
-        let [width, height] = self.size;
-        self.gl_win.viewport(0, 0, width, height);
-    }
-
-    fn flip(&mut self) {
-        self.gl_win.flip();
-    }
-
     fn prepare_draw(
         &mut self,
         frame_arg: Option<()>,

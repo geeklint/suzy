@@ -98,14 +98,6 @@ pub trait Window<P>: WindowSettings
 where
     P: ?Sized + RenderPlatform,
 {
-    /// Called in response to an event indicating a change in size.
-    fn recalculate_viewport(&mut self);
-
-    /// Do some sort of synchonization - this function is expected to block
-    /// for some period of time. In a double buffered context, this will
-    /// usually cause the back buffer to be displayed.
-    fn flip(&mut self);
-
     /// Prepare to draw to this window, create a DrawContext.
     fn prepare_draw(
         &mut self,

@@ -108,9 +108,6 @@ impl Window {
         }
     }
 
-    /// This function does not block like window::Window requires.
-    pub fn flip(&mut self) {}
-
     pub fn take_screenshot(&self) -> Box<[u8]> {
         let mut answer: [GLint; 4] = [0; 4];
         unsafe {

@@ -11,6 +11,8 @@ use crate::{
 
 mod window;
 
+pub use window::{Window, WindowSettings};
+
 pub struct SdlPlatform {
     sdl: sdl2::Sdl,
 }
@@ -29,7 +31,17 @@ impl crate::platform::Platform for SdlPlatform {
         &mut self,
         settings: crate::window::WindowBuilder,
     ) -> Result<Self::Window, String> {
-        window::Window::new_window(&self.sdl, settings)
+        use crate::window::WindowSettings as _;
+        let [width, height] = settings.size();
+        Window::new_window(
+            &self.sdl,
+            WindowSettings {
+                width: width as u32,
+                height: height as u32,
+                background_color: settings.background_color(),
+                title: &settings.into_title(),
+            },
+        )
     }
 }
 
@@ -56,7 +68,8 @@ impl SdlPlatform {
             }
             app.update_watches();
             app.loop_draw();
-            app.finish_draw();
+            //app.window.gl_win.draw_app(&mut app);
+            app.window.flip();
         }
     }
 }
@@ -84,6 +97,7 @@ impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
                         let [width, height] = self.window.logical_size();
                         self.resize(width, height);
                         self.update_dpi(self.window.dpi());
+                        self.window.recalculate_viewport();
                     }
                     WindowEvent::Leave => {
                         self.pointer_event(PointerEventData {
