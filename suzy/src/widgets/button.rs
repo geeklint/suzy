@@ -261,7 +261,7 @@ where
         });
         desc.watch(|this, _rect| this.image.set_color(Color::ALICE_BLUE));
         desc.watch(|this, _rect| {
-            this.image.set_slice_padding(Padding2d::uniform(6.0));
+            this.image.set_slice_padding(Padding2d::uniform(12.0));
             this.image.set_corners(CornerStyle::Rounded);
         });
         desc.graphic(|this| &mut this.image);

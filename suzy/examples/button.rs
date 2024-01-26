@@ -2,7 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use suzy::{
-    dims::{Padding2d, Rect},
+    dims::Rect,
     widget::{self, RunAsApp},
     widgets::Button,
 };
@@ -15,7 +15,9 @@ struct Root {
 impl widget::Content for Root {
     fn desc(mut desc: impl widget::Desc<Self>) {
         desc.watch(|this, rect| {
-            this.button.set_fill(rect, &Padding2d::uniform(20.0));
+            this.button.set_center(rect.center());
+            this.button.set_width(200.0);
+            this.button.set_height(50.0);
         });
         desc.child(|this| &mut this.button);
     }
