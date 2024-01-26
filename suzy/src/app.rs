@@ -177,7 +177,7 @@ impl<P: Platform> App<P> {
         self.needs_draw = true;
     }
 
-    pub fn pointer_event(&mut self, pointer: PointerEventData) {
+    pub fn pointer_event(&mut self, pointer: PointerEventData) -> bool {
         let mut event = PointerEvent::new(pointer, &mut self.pointer_grab_map);
         let mut handled = false;
         let mut iter = self.roots.iter_mut().rev();
@@ -185,6 +185,7 @@ impl<P: Platform> App<P> {
             handled = root.borrow_mut().pointer_event(&mut event);
         }
         self.needs_draw = true;
+        handled
     }
 
     /// Consume the current app, cleaning up its resources immediately.

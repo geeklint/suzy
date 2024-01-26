@@ -105,7 +105,7 @@ impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
                             action: PointerAction::Hover(f32::NAN, f32::NAN),
                             x: f32::NAN,
                             y: f32::NAN,
-                        })
+                        });
                     }
                     _ => {}
                 };
