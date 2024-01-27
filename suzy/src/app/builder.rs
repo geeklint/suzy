@@ -38,6 +38,10 @@ impl AppBuilder {
             needs_draw: true,
         }
     }
+
+    pub fn set_title(&mut self, title: String) {
+        self.win.set_title(title)
+    }
 }
 
 impl WindowSettings for AppBuilder {
@@ -47,10 +51,6 @@ impl WindowSettings for AppBuilder {
 
     fn set_size(&mut self, size: [f32; 2]) {
         self.win.set_size(size);
-    }
-
-    fn set_title(&mut self, title: String) {
-        self.win.set_title(title);
     }
 
     fn fullscreen(&self) -> bool {

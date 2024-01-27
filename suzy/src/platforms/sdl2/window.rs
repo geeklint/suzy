@@ -142,10 +142,6 @@ impl crate::window::WindowSettings for Window {
         let _res = self.window.set_size(set_width as u32, set_height as u32);
     }
 
-    fn set_title(&mut self, title: String) {
-        let _res = self.window.set_title(&title);
-    }
-
     fn fullscreen(&self) -> bool {
         match self.window.fullscreen_state() {
             sdl2::video::FullscreenType::Off => false,

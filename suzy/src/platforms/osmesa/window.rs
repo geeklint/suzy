@@ -12,7 +12,6 @@ use crate::platforms::opengl;
 use super::bindings;
 
 pub struct OsMesaWindow {
-    title: String,
     size: [u16; 2],
     gl_win: opengl::Window,
     buffer: Vec<u8>,
@@ -27,7 +26,6 @@ impl OsMesaWindow {
         let background_color = builder.background_color();
         let width = width.max(1.0).min(1280.0) as u16;
         let height = height.max(1.0).min(1024.0) as u16;
-        let title = builder.into_title();
         let mut buffer =
             vec![0_u8; 4 * usize::from(width) * usize::from(height)];
         unsafe {
@@ -49,7 +47,6 @@ impl OsMesaWindow {
         gl_win.clear_color(background_color);
         gl_win.viewport(0, 0, width, height);
         Self {
-            title,
             size: [width, height],
             gl_win,
             buffer,
@@ -70,10 +67,6 @@ impl WindowSettings for OsMesaWindow {
         self.size = [width, height];
         let bufsize = 4 * (width as usize) * (height as usize);
         self.buffer.resize(bufsize, 0);
-    }
-
-    fn set_title(&mut self, title: String) {
-        self.title = title;
     }
 
     fn fullscreen(&self) -> bool {

@@ -16,9 +16,6 @@ pub trait WindowSettings {
     /// Set the size of the window in dp
     fn set_size(&mut self, size: [f32; 2]);
 
-    /// Set the window title
-    fn set_title(&mut self, title: String);
-
     /// Get the window fullscreen state
     fn fullscreen(&self) -> bool;
 
@@ -45,6 +42,9 @@ impl WindowBuilder {
     pub fn into_title(self) -> String {
         self.title
     }
+    pub fn set_title(&mut self, title: String) {
+        self.title = title;
+    }
 }
 
 impl Default for WindowBuilder {
@@ -70,10 +70,6 @@ impl WindowSettings for WindowBuilder {
 
     fn set_size(&mut self, size: [f32; 2]) {
         self.size = size;
-    }
-
-    fn set_title(&mut self, title: String) {
-        self.title = title;
     }
 
     fn fullscreen(&self) -> bool {

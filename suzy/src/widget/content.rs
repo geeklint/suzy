@@ -117,10 +117,7 @@ where
     T: Default + Content<crate::platforms::DefaultRenderPlatform>,
 {
     fn run_as_app() -> ! {
-        use crate::{
-            app::AppBuilder, platforms::DefaultPlatform,
-            window::WindowSettings,
-        };
+        use crate::{app::AppBuilder, platforms::DefaultPlatform};
 
         let name = std::any::type_name::<T>()
             .rsplit("::")
