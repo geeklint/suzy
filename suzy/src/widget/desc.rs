@@ -11,7 +11,7 @@ use super::{layout, Ephemeral, Widget, WidgetGraphic, WidgetRect};
 
 with_default_render_platform! {
     /// Instances of this trait are provided to
-    /// [`widget::Content::init`](crate::widget::Content::init).
+    /// [`widget::Content::desc`](crate::widget::Content::desc).
     ///
     /// It's primary use is to provide the `watch` method, which custom widgets
     /// use to submit watch closures.
