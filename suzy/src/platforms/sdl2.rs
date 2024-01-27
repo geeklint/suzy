@@ -31,14 +31,13 @@ impl crate::platform::Platform for SdlPlatform {
         &mut self,
         settings: crate::window::WindowBuilder,
     ) -> Result<Self::Window, String> {
-        use crate::window::WindowSettings as _;
-        let [width, height] = settings.size();
+        let [width, height] = settings.size;
         Window::new_window(
             &self.sdl,
             WindowSettings {
                 width: width as u32,
                 height: height as u32,
-                background_color: settings.background_color(),
+                background_color: settings.background_color,
                 title: &settings.into_title(),
             },
         )

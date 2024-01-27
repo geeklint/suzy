@@ -14,7 +14,6 @@ pub struct NoGraphics;
 #[derive(Clone, Debug)]
 pub struct Window {
     size: [f32; 2],
-    background_color: Color,
 }
 
 pub enum TextStyle {}
@@ -34,8 +33,7 @@ impl Platform for NoGraphics {
         settings: crate::window::WindowBuilder,
     ) -> Result<Self::Window, String> {
         Ok(Window {
-            size: settings.size(),
-            background_color: settings.background_color(),
+            size: settings.size,
         })
     }
 }
@@ -61,18 +59,6 @@ impl crate::graphics::PlatformDrawContext<()> for NoGraphics {
 impl WindowSettings for Window {
     fn size(&self) -> [f32; 2] {
         self.size
-    }
-
-    fn set_size(&mut self, size: [f32; 2]) {
-        self.size = size;
-    }
-
-    fn background_color(&self) -> Color {
-        self.background_color
-    }
-
-    fn set_background_color(&mut self, color: Color) {
-        self.background_color = color;
     }
 }
 

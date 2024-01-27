@@ -12,22 +12,13 @@ use crate::{
 pub trait WindowSettings {
     /// Get the size of the window in dp
     fn size(&self) -> [f32; 2];
-
-    /// Set the size of the window in dp
-    fn set_size(&mut self, size: [f32; 2]);
-
-    /// Get the window background color
-    fn background_color(&self) -> Color;
-
-    /// Set the window background color
-    fn set_background_color(&mut self, color: Color);
 }
 
 /// A structure which defines the initial creation parameters for a window
 pub struct WindowBuilder {
     pub size: [f32; 2],
     pub title: String,
-    background_color: Color,
+    pub background_color: Color,
 }
 
 impl WindowBuilder {
@@ -35,8 +26,17 @@ impl WindowBuilder {
     pub fn into_title(self) -> String {
         self.title
     }
+
     pub fn set_title(&mut self, title: String) {
         self.title = title;
+    }
+
+    pub fn set_size(&mut self, size: [f32; 2]) {
+        self.size = size;
+    }
+
+    pub fn set_background_color(&mut self, color: Color) {
+        self.background_color = color;
     }
 }
 
@@ -58,18 +58,6 @@ impl Default for WindowBuilder {
 impl WindowSettings for WindowBuilder {
     fn size(&self) -> [f32; 2] {
         self.size
-    }
-
-    fn set_size(&mut self, size: [f32; 2]) {
-        self.size = size;
-    }
-
-    fn background_color(&self) -> Color {
-        self.background_color
-    }
-
-    fn set_background_color(&mut self, color: Color) {
-        self.background_color = color;
     }
 }
 

@@ -100,6 +100,10 @@ impl Window {
         self.gl_win.viewport(0, 0, width, height);
     }
 
+    pub fn set_background_color(&mut self, color: Color) {
+        self.gl_win.clear_color(color);
+    }
+
     pub(super) fn dpi(&self) -> [f32; 2] {
         let (_, hdpi, vdpi) = self
             .window
@@ -135,19 +139,6 @@ impl Window {
 impl crate::window::WindowSettings for Window {
     fn size(&self) -> [f32; 2] {
         self.logical_size()
-    }
-
-    fn set_size(&mut self, size: [f32; 2]) {
-        let [set_width, set_height] = size;
-        let _res = self.window.set_size(set_width as u32, set_height as u32);
-    }
-
-    fn background_color(&self) -> Color {
-        self.gl_win.get_clear_color()
-    }
-
-    fn set_background_color(&mut self, color: Color) {
-        self.gl_win.clear_color(color);
     }
 }
 

@@ -14,7 +14,6 @@ use suzy::{
     selectable::{Selectable, SelectionState},
     widget::{self, Widget, WidgetRect},
     widgets::{ToggleButton, ToggleButtonGroup, ToggleButtonValue},
-    window::WindowSettings,
 };
 
 mod utils;

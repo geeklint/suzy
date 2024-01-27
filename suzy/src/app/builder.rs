@@ -42,22 +42,18 @@ impl AppBuilder {
     pub fn set_title(&mut self, title: String) {
         self.win.set_title(title)
     }
+
+    pub fn set_size(&mut self, size: [f32; 2]) {
+        self.win.set_size(size)
+    }
+
+    pub fn set_background_color(&mut self, color: crate::graphics::Color) {
+        self.win.set_background_color(color);
+    }
 }
 
 impl WindowSettings for AppBuilder {
     fn size(&self) -> [f32; 2] {
-        self.win.size()
-    }
-
-    fn set_size(&mut self, size: [f32; 2]) {
-        self.win.set_size(size);
-    }
-
-    fn background_color(&self) -> crate::graphics::Color {
-        self.win.background_color()
-    }
-
-    fn set_background_color(&mut self, color: crate::graphics::Color) {
-        self.win.set_background_color(color);
+        self.win.size
     }
 }

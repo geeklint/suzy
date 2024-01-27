@@ -3,6 +3,7 @@
 
 use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
 pub(super) struct osmesa_context {
     _unused: [u8; 0],

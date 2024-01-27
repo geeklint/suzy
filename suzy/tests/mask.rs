@@ -12,7 +12,6 @@ use suzy::{
         TestPlatform,
     },
     widget::{self, Widget},
-    window::WindowSettings,
 };
 
 mod utils;

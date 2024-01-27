@@ -9,7 +9,6 @@ use suzy::{
     graphics::Color,
     platforms::no_graphics::NoGraphics,
     widget::{self, Widget},
-    window::WindowSettings,
 };
 
 #[derive(Default)]

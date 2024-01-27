@@ -7,7 +7,6 @@ use suzy::{
     app::{AppBuilder, AppTestingExt},
     graphics::Color,
     platforms::TestPlatform,
-    window::WindowSettings,
 };
 
 #[test]

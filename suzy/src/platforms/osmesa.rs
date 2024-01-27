@@ -36,7 +36,15 @@ impl crate::platform::Platform for OsMesaPlatform {
         &mut self,
         settings: crate::window::WindowBuilder,
     ) -> Result<Self::Window, String> {
-        Ok(window::OsMesaWindow::new(self.ctx, settings))
+        let [width, height] = settings.size;
+        Ok(window::OsMesaWindow::new(
+            self.ctx,
+            window::WindowSettings {
+                width: width as u16,
+                height: height as u16,
+                background_color: settings.background_color,
+            },
+        ))
     }
 }
 

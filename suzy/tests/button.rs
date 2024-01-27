@@ -16,7 +16,6 @@ use suzy::{
     selectable::{Selectable, SelectionState},
     widget::{self, Widget},
     widgets::Button,
-    window::WindowSettings,
 };
 
 #[derive(Default)]
