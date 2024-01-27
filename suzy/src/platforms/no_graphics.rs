@@ -14,7 +14,6 @@ pub struct NoGraphics;
 #[derive(Clone, Debug)]
 pub struct Window {
     size: [f32; 2],
-    fullscreen: bool,
     background_color: Color,
 }
 
@@ -36,7 +35,6 @@ impl Platform for NoGraphics {
     ) -> Result<Self::Window, String> {
         Ok(Window {
             size: settings.size(),
-            fullscreen: settings.fullscreen(),
             background_color: settings.background_color(),
         })
     }
@@ -67,14 +65,6 @@ impl WindowSettings for Window {
 
     fn set_size(&mut self, size: [f32; 2]) {
         self.size = size;
-    }
-
-    fn fullscreen(&self) -> bool {
-        self.fullscreen
-    }
-
-    fn set_fullscreen(&mut self, fullscreen: bool) {
-        self.fullscreen = fullscreen;
     }
 
     fn background_color(&self) -> Color {

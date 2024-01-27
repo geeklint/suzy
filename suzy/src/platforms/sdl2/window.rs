@@ -142,22 +142,6 @@ impl crate::window::WindowSettings for Window {
         let _res = self.window.set_size(set_width as u32, set_height as u32);
     }
 
-    fn fullscreen(&self) -> bool {
-        match self.window.fullscreen_state() {
-            sdl2::video::FullscreenType::Off => false,
-            sdl2::video::FullscreenType::Desktop
-            | sdl2::video::FullscreenType::True => true,
-        }
-    }
-
-    fn set_fullscreen(&mut self, fullscreen: bool) {
-        let _res = self.window.set_fullscreen(if fullscreen {
-            sdl2::video::FullscreenType::Desktop
-        } else {
-            sdl2::video::FullscreenType::Off
-        });
-    }
-
     fn background_color(&self) -> Color {
         self.gl_win.get_clear_color()
     }

@@ -53,14 +53,6 @@ impl WindowSettings for AppBuilder {
         self.win.set_size(size);
     }
 
-    fn fullscreen(&self) -> bool {
-        self.win.fullscreen()
-    }
-
-    fn set_fullscreen(&mut self, fullscreen: bool) {
-        self.win.set_fullscreen(fullscreen);
-    }
-
     fn background_color(&self) -> crate::graphics::Color {
         self.win.background_color()
     }

@@ -69,12 +69,6 @@ impl WindowSettings for OsMesaWindow {
         self.buffer.resize(bufsize, 0);
     }
 
-    fn fullscreen(&self) -> bool {
-        false
-    }
-
-    fn set_fullscreen(&mut self, _fullscreen: bool) {}
-
     fn background_color(&self) -> Color {
         self.gl_win.get_clear_color()
     }

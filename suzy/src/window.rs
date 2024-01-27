@@ -16,12 +16,6 @@ pub trait WindowSettings {
     /// Set the size of the window in dp
     fn set_size(&mut self, size: [f32; 2]);
 
-    /// Get the window fullscreen state
-    fn fullscreen(&self) -> bool;
-
-    /// Set the fullscreen state
-    fn set_fullscreen(&mut self, fullscreen: bool);
-
     /// Get the window background color
     fn background_color(&self) -> Color;
 
@@ -31,9 +25,8 @@ pub trait WindowSettings {
 
 /// A structure which defines the initial creation parameters for a window
 pub struct WindowBuilder {
-    size: [f32; 2],
-    title: String,
-    fullscreen: bool,
+    pub size: [f32; 2],
+    pub title: String,
     background_color: Color,
 }
 
@@ -52,7 +45,6 @@ impl Default for WindowBuilder {
         Self {
             size: [1000.0, 500.0],
             title: "Suzy Window".to_string(),
-            fullscreen: false,
             background_color: Color::from_rgba(
                 0.026113365,
                 0.026113365,
@@ -70,14 +62,6 @@ impl WindowSettings for WindowBuilder {
 
     fn set_size(&mut self, size: [f32; 2]) {
         self.size = size;
-    }
-
-    fn fullscreen(&self) -> bool {
-        self.fullscreen
-    }
-
-    fn set_fullscreen(&mut self, fullscreen: bool) {
-        self.fullscreen = fullscreen;
     }
 
     fn background_color(&self) -> Color {
