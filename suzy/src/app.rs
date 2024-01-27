@@ -126,10 +126,6 @@ impl<P: Platform> App<P> {
         self.needs_draw = true;
     }
 
-    pub fn take_screenshot(&self) -> Box<[u8]> {
-        self.window.take_screenshot()
-    }
-
     pub fn loop_draw(&mut self) {
         let mut loop_count: u32 = 0;
         let mut pass_arg = None;

@@ -5,7 +5,7 @@ use std::time;
 
 use drying_paint::WatchedValueCore;
 
-use crate::{platform::Platform, pointer::PointerEventData};
+use crate::{platform::Platform, pointer::PointerEventData, window::Window};
 
 use super::App;
 
@@ -54,7 +54,7 @@ impl<P: Platform> AppTestingExt for App<P> {
 
     fn draw_and_take_screenshot(&mut self) -> Box<[u8]> {
         self.draw_if_needed();
-        self.take_screenshot()
+        self.window.take_screenshot()
     }
 
     fn mouse_click(&mut self, pos: [f32; 2]) {
