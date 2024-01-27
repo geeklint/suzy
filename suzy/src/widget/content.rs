@@ -21,7 +21,9 @@ with_default_render_platform! {
     ///
     /// For example, if a custom widget contains two buttons as children:
     ///
-    #[cfg_attr(feature = "platform_opengl", doc = "```rust
+    #[cfg_attr(
+        feature = "platform_opengl",
+        doc = "```rust
 # use suzy::widget;
 # use suzy::selectable::SelectableIgnored;
 # type ButtonContent = SelectableIgnored<()>;
@@ -38,11 +40,14 @@ impl widget::Content for MyWidgetData {
         desc.child(|this| &mut this.button_two);
     }
 }
-```")]
+```"
+    )]
     ///
     /// Or, if the custom widget only has a single graphic:
     ///
-    #[cfg_attr(feature = "platform_opengl", doc = "```rust
+    #[cfg_attr(
+        feature = "platform_opengl",
+        doc = "```rust
 # use suzy::widget::{self, *};
 # type MyGraphic = ();
 
@@ -55,7 +60,8 @@ impl widget::Content for MyWidgetData {
         desc.graphic(|this| &mut this.graphic);
     }
 }
-```")]
+```"
+    )]
     ///
     pub trait Content<P>
     where
