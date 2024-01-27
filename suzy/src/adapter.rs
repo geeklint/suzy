@@ -23,7 +23,7 @@ pub use view::AdapterView;
 /// Trait representing some view which may "adapt" to a specific change in
 /// external data.
 ///
-/// See the [module-level documentation](./index.html) for more details.
+/// See the [module-level documentation](self) for more details.
 pub trait Adaptable<T: ?Sized> {
     /// Update `self` in acordance with the provided `data`
     fn adapt(&mut self, data: &T);

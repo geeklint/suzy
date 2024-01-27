@@ -44,7 +44,7 @@ mod app_struct {
 
     /// A type which contains the context in which widgets run.
     ///
-    /// See the [module-level documentation](./index.html) for more details.
+    /// See the [module-level documentation](crate::app) for more details.
     pub struct App<P>
     where
         P: ?Sized + Platform,

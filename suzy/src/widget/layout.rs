@@ -8,29 +8,33 @@
 //! instance of `LayoutTypes`, which will allow you to create a variety of
 //! different layout types.
 //!
-//! ```rust
-//! use suzy::dims::Rect;
-//! use suzy::widget;
-//! use suzy::widgets::{Button, TextContent};
-//!
-//! struct CustomWidget {
-//!     one: Button,
-//!     two: Button,
-//!     three: Button,
-//! }
-//!
-//! impl widget::Content for CustomWidget {
-//!     fn desc(mut desc: impl widget::Desc<Self>) {
-//!         desc.create_layout_group()
-//!             .stack_right()
-//!             .start_at(|this| this.left())
-//!             .spacing(|_| 10.0)
-//!             .push_new_child(|this| &mut this.one)
-//!             .push_new_child(|this| &mut this.two)
-//!             .push_new_child(|this| &mut this.three)
-//!         ;
-//!     }
-//! }
+#![cfg_attr(
+    feature = "platform_opengl",
+    doc = "```rust
+use suzy::dims::Rect;
+use suzy::widget;
+use suzy::widgets::{Button, TextContent};
+
+struct CustomWidget {
+    one: Button,
+    two: Button,
+    three: Button,
+}
+
+impl widget::Content for CustomWidget {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.create_layout_group()
+            .stack_right()
+            .start_at(|this| this.left())
+            .spacing(|_| 10.0)
+            .push_new_child(|this| &mut this.one)
+            .push_new_child(|this| &mut this.two)
+            .push_new_child(|this| &mut this.three)
+        ;
+    }
+}
+```"
+)]
 
 use std::rc::Rc;
 

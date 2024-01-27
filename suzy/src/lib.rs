@@ -13,7 +13,6 @@
     clippy::unwrap_used,
     clippy::ptr_as_ptr,
 )]
-#![allow(clippy::needless_doctest_main)]
 
 //! ## Create an application with Suzy
 //!
@@ -21,19 +20,25 @@
 //!
 //! The most basic app template will look something like this:
 //!
-//! ```rust,no_run
-//! # use suzy::widget::{self, *};
-//! #[derive(Default)]
-//! struct Data { }
-//!
-//! impl widget::Content for Data {
-//!     fn desc(_desc: impl widget::Desc<Self>) {}
-//! }
-//!
-//! fn main() {
-//!     Data::run_as_app();
-//! }
-//! ```
+#![cfg_attr(
+    feature = "platform_opengl",
+    doc = "```rust,no_run
+# use suzy::widget;
+#[derive(Default)]
+struct Data { }
+
+impl widget::Content for Data {
+    fn desc(_desc: impl widget::Desc<Self>) {}
+}"
+)]
+#![cfg_attr(
+    feature = "platform_sdl",
+    doc = "
+# use suzy::widget::RunAsApp;
+    Data::run_as_app();
+"
+)]
+#![cfg_attr(feature = "platform_opengl", doc = "```")]
 //!
 //! ## Watch System
 //!
@@ -44,23 +49,25 @@
 //! For example, if you wanted to make a widget half the width of its
 //! parent:
 //!
-//! ```rust
-//! # use suzy::widget::{self, *};
-//! # use suzy::dims::Rect;
-//! # struct Data { child: Widget<()> }
-//! # impl widget::Content for Data {
-//! #     fn desc(mut desc: impl widget::Desc<Self>) {
-//! desc.watch(|this, rect| {
-//!     this.child.set_width(rect.width() / 2.0);
-//! });
-//! #     }
-//! # }
-//! ```
+#![cfg_attr(
+    feature = "platform_opengl",
+    doc = "```rust
+# use suzy::widget::{self, Widget};
+# use suzy::dims::Rect;
+# struct Data { child: Widget<()> }
+# impl widget::Content for Data {
+#     fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, rect| {
+            this.child.set_width(rect.width() / 2.0);
+        });
+# }}
+```"
+)]
 //!
 //! When the parent changes size, the closure will be re-run and update the
 //! size of the child.
 //!
-//! See the [`watch`](watch/index.html) module documentation for more
+//! See the [`watch`](crate::watch) module documentation for more
 //! information about the watch system.
 
 pub mod adapter;

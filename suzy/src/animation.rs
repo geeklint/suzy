@@ -4,35 +4,38 @@
 //! Animations integrate with Suzy's watch system to interpolate values over
 //! time.
 //!
-//! [`watch`](../widget/trait.WidgetInit.html#tymethod.watch)
+//! [`watch`](crate::widget::Desc::watch)
 //! closures which contain
-//! [`Animation::apply`](struct.Animation.html#method.apply) will be re-run
+//! [`Animation::apply`] will be re-run
 //! every frame while the animation is in progress.
 //!
 //! ## Examples
 //!
 //! Animate a color to green with a speed of 1.
 //!
-//! ```rust
-//! # use suzy::{animation::Animation, widget::{self, *}, graphics::Color};
-//! struct MyWidgetData {
-//!     current_color: Color,
-//!     animation: Animation<Color>,
-//! }
-//!
-//! impl widget::Content for MyWidgetData {
-//!     fn desc(mut desc: impl widget::Desc<Self>) {
-//!         desc.watch(|this, rect| {
-//!             this.animation.set_speed(1.0);
-//!             this.animation.animate_to(Color::GREEN);
-//!         });
-//!         desc.watch(|this, rect| {
-//!             this.animation.apply(&mut this.current_color);
-//!             println!("current color value: {:x}", this.current_color);
-//!         });
-//!     }
-//! }
-//! ```
+#![cfg_attr(
+    feature = "platform_opengl",
+    doc = r#"```rust
+# use suzy::{animation::Animation, widget, graphics::Color};
+struct MyWidgetData {
+    current_color: Color,
+    animation: Animation<Color>,
+}
+
+impl widget::Content for MyWidgetData {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, rect| {
+            this.animation.set_speed(1.0);
+            this.animation.animate_to(Color::GREEN);
+        });
+        desc.watch(|this, rect| {
+            this.animation.apply(&mut this.current_color);
+            println!("current color value: {:x}", this.current_color);
+        });
+    }
+}
+```"#
+)]
 
 use std::time::{Duration, Instant};
 
@@ -46,6 +49,7 @@ pub use easing::{eases, CubicPoly, Easing};
 /// of the type.
 ///
 /// A trivial example with floats:
+///
 /// ```rust
 /// # use suzy::animation::Lerp;
 /// let (start, end) = (2.0, 9.0);
@@ -136,7 +140,7 @@ enum RefTime {
 
 /// An instance of an animation.
 ///
-/// See the [module-level documentation](./index.html) for more details.
+/// See the [module-level documentation](self) for more details.
 pub struct Animation<T> {
     speed: Speed<T>,
     start_value: Option<T>,

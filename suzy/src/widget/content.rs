@@ -13,7 +13,7 @@ with_default_render_platform! {
     /// The desc method allows you to provide the description of your custom
     /// widget, which includes the child widgets, graphics, and `watch`
     /// functions that define the behavior of a widget. See the
-    /// [watch](../watch/index.html) module for more information on `watch`
+    /// [watch](crate::watch) module for more information on `watch`
     /// functions.
     ///
     /// Custom widgets may contain any number of graphics and child widgets, or
@@ -21,41 +21,41 @@ with_default_render_platform! {
     ///
     /// For example, if a custom widget contains two buttons as children:
     ///
-    /// ```rust
-    /// # use suzy::widget::{self, *};
-    /// # use suzy::selectable::SelectableIgnored;
-    /// # type ButtonContent = SelectableIgnored<()>;
-    /// use suzy::widgets::Button;
-    ///
-    /// struct MyWidgetData {
-    ///     button_one: Button<ButtonContent>,
-    ///     button_two: Button<ButtonContent>,
-    /// }
-    ///
-    /// impl widget::Content for MyWidgetData {
-    ///     fn desc(mut desc: impl widget::Desc<Self>) {
-    ///         desc.child(|this| &mut this.button_one);
-    ///         desc.child(|this| &mut this.button_two);
-    ///     }
-    /// }
-    /// ```
+    #[cfg_attr(feature = "platform_opengl", doc = "```rust
+# use suzy::widget;
+# use suzy::selectable::SelectableIgnored;
+# type ButtonContent = SelectableIgnored<()>;
+use suzy::widgets::Button;
+
+struct MyWidgetData {
+    button_one: Button<ButtonContent>,
+    button_two: Button<ButtonContent>,
+}
+
+impl widget::Content for MyWidgetData {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.child(|this| &mut this.button_one);
+        desc.child(|this| &mut this.button_two);
+    }
+}
+```")]
     ///
     /// Or, if the custom widget only has a single graphic:
     ///
-    /// ```rust
-    /// # use suzy::widget::{self, *};
-    /// # type MyGraphic = ();
-    ///
-    /// struct MyWidgetData {
-    ///     graphic: MyGraphic,
-    /// }
-    ///
-    /// impl widget::Content for MyWidgetData {
-    ///     fn desc(mut desc: impl widget::Desc<Self>) {
-    ///         desc.graphic(|this| &mut this.graphic);
-    ///     }
-    /// }
-    /// ```
+    #[cfg_attr(feature = "platform_opengl", doc = "```rust
+# use suzy::widget::{self, *};
+# type MyGraphic = ();
+
+struct MyWidgetData {
+    graphic: MyGraphic,
+}
+
+impl widget::Content for MyWidgetData {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.graphic(|this| &mut this.graphic);
+    }
+}
+```")]
     ///
     pub trait Content<P>
     where

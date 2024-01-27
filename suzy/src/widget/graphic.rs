@@ -22,7 +22,7 @@ where
 /// A trait which represents a graphic a widget might contain.
 ///
 /// Automatically implemented for anything which implements
-/// [`Graphic`](../graphics/trait.Graphic.html).
+/// [`Graphic`](crate::graphics::Graphic).
 ///
 /// Widget graphics are rendered in two passes: one before the widget's
 /// children, and one after.  The typical behavior is to ignore the second

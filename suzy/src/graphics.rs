@@ -10,7 +10,7 @@
 //! Because Graphic implementations are tightly coupled with the renderer,
 //! there are no actual implementations in this module; Suzy's "built-in"
 //! graphics can be found in the
-//! [module for the opengl platform](../platform/opengl/index.html)
+//! [module for the opengl platform](crate::platforms::opengl)
 
 mod color;
 mod context;
@@ -22,7 +22,7 @@ use crate::platform::RenderPlatform;
 
 /// A trait which represents a drawable graphic.
 ///
-/// See [module-level documentation](index.html) for more information.
+/// See [module-level documentation](self) for more information.
 pub trait Graphic<P>
 where
     P: ?Sized + RenderPlatform,

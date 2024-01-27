@@ -103,34 +103,37 @@ impl<T> Default for State<T> {
 /// Suzy's watch system.  This can be used to sequence events over multiple
 /// frames.
 ///
-/// ```rust,no_run
-/// # use suzy::dims::Rect;
-/// # use suzy::widget::{self, *};
-/// # use suzy::widgets::Button;
-/// struct Root {
-///     button: Button,
-///     coroutine: Coroutine<()>,
-/// }
-///
-/// impl widget::Content for Root {
-///     fn desc(mut desc: impl widget::Desc<Self>) {
-///         desc.watch(|this, _rect| {
-///             let Self { button, coroutine } = this;
-///             button.on_click(|| {
-///                 coroutine.start(());
-///             });
-///         });
-///         desc.register_coroutine(
-///             |this| &mut this.coroutine,
-///             |()| async {
-///                 Coroutine::delay_secs(5.0).await;
-///                 println!("Button clicked after delay");
-///             },
-///         );
-///         desc.child(|this| &mut this.button);
-///     }
-/// }
-/// ```
+#[cfg_attr(
+    feature = "platform_opengl",
+    doc = r#"```rust,no_run
+# use suzy::dims::Rect;
+# use suzy::widget::{self, *};
+# use suzy::widgets::Button;
+struct Root {
+    button: Button,
+    coroutine: Coroutine<()>,
+}
+
+impl widget::Content for Root {
+    fn desc(mut desc: impl widget::Desc<Self>) {
+        desc.watch(|this, _rect| {
+            let Self { button, coroutine } = this;
+            button.on_click(|| {
+                coroutine.start(());
+            });
+        });
+        desc.register_coroutine(
+            |this| &mut this.coroutine,
+            |()| async {
+                Coroutine::delay_secs(5.0).await;
+                println!("Button clicked after delay");
+            },
+        );
+        desc.child(|this| &mut this.button);
+    }
+}
+```"#
+)]
 #[derive(Default)]
 pub struct Coroutine<T> {
     wake_meta: watch::SyncWatchedMeta,

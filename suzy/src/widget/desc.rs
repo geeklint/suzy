@@ -11,7 +11,7 @@ use super::{layout, Ephemeral, Widget, WidgetGraphic, WidgetRect};
 
 with_default_render_platform! {
     /// Instances of this trait are provided to
-    /// [`widget::Content::init`](trait.widget::Content.html#tymethod.init).
+    /// [`widget::Content::init`](crate::widget::Content::init).
     ///
     /// It's primary use is to provide the `watch` method, which custom widgets
     /// use to submit watch closures.
@@ -20,7 +20,7 @@ with_default_render_platform! {
         T: ?Sized,
     {
         /// Register a watch function associated with this widget.  See the
-        /// [watch](../watch/index.html) module for more information.
+        /// [watch](crate::watch) module for more information.
         fn watch<F>(&mut self, func: F)
         where
             F: 'static + Fn(&mut T, &WidgetRect);
