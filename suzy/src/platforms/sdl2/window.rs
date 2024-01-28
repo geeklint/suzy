@@ -136,12 +136,6 @@ impl Window {
     }
 }
 
-impl crate::window::WindowSettings for Window {
-    fn size(&self) -> [f32; 2] {
-        self.logical_size()
-    }
-}
-
 impl window::Window<opengl::OpenGlRenderPlatform> for Window {
     fn prepare_draw(
         &mut self,
@@ -156,5 +150,9 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
 
     fn take_screenshot(&self) -> Box<[u8]> {
         self.take_screenshot()
+    }
+
+    fn size(&self) -> [f32; 2] {
+        self.logical_size()
     }
 }

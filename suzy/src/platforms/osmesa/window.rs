@@ -73,23 +73,21 @@ impl OsMesaWindow {
     }
 }
 
-impl crate::window::WindowSettings for OsMesaWindow {
-    fn size(&self) -> [f32; 2] {
-        [self.width.into(), self.height.into()]
-    }
-}
-
 impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
     fn prepare_draw(
         &mut self,
         frame_arg: Option<()>,
     ) -> DrawContext<'_, opengl::OpenGlRenderPlatform> {
-        use crate::window::WindowSettings;
+        let size = [self.width.into(), self.height.into()];
         self.gl_win.clear();
-        self.gl_win.prepare_draw(self.size(), frame_arg.is_none())
+        self.gl_win.prepare_draw(size, frame_arg.is_none())
     }
 
     fn take_screenshot(&self) -> Box<[u8]> {
         self.gl_win.take_screenshot()
+    }
+
+    fn size(&self) -> [f32; 2] {
+        [self.width.into(), self.height.into()]
     }
 }

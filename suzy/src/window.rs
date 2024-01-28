@@ -8,12 +8,6 @@ use crate::{
     platform::RenderPlatform,
 };
 
-/// A trait which represents the settings a window might have.
-pub trait WindowSettings {
-    /// Get the size of the window in dp
-    fn size(&self) -> [f32; 2];
-}
-
 /// A structure which defines the initial creation parameters for a window
 pub struct WindowBuilder {
     pub size: [f32; 2],
@@ -55,14 +49,8 @@ impl Default for WindowBuilder {
     }
 }
 
-impl WindowSettings for WindowBuilder {
-    fn size(&self) -> [f32; 2] {
-        self.size
-    }
-}
-
 /// A trait which represents a window.
-pub trait Window<P>: WindowSettings
+pub trait Window<P>
 where
     P: ?Sized + RenderPlatform,
 {
@@ -74,4 +62,6 @@ where
 
     /// Take a screenshot of the contents of window.
     fn take_screenshot(&self) -> Box<[u8]>;
+
+    fn size(&self) -> [f32; 2];
 }

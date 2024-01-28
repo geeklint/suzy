@@ -6,7 +6,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     platform::Platform,
     watch::WatchContext,
-    window::{WindowBuilder, WindowSettings},
+    window::{Window, WindowBuilder},
 };
 
 use super::{App, AppState};
@@ -49,11 +49,5 @@ impl AppBuilder {
 
     pub fn set_background_color(&mut self, color: crate::graphics::Color) {
         self.win.set_background_color(color);
-    }
-}
-
-impl WindowSettings for AppBuilder {
-    fn size(&self) -> [f32; 2] {
-        self.win.size
     }
 }

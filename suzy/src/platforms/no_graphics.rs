@@ -5,7 +5,6 @@ use crate::{
     dims::Rect,
     graphics::Color,
     platform::{graphics, Platform, RenderPlatform},
-    window::WindowSettings,
 };
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -56,12 +55,6 @@ impl crate::graphics::PlatformDrawContext<()> for NoGraphics {
     }
 }
 
-impl WindowSettings for Window {
-    fn size(&self) -> [f32; 2] {
-        self.size
-    }
-}
-
 impl crate::window::Window<NoGraphics> for Window {
     fn prepare_draw(
         &mut self,
@@ -72,6 +65,10 @@ impl crate::window::Window<NoGraphics> for Window {
 
     fn take_screenshot(&self) -> Box<[u8]> {
         unimplemented!("Can't take screenshot with a NoGraphics window");
+    }
+
+    fn size(&self) -> [f32; 2] {
+        self.size
     }
 }
 
