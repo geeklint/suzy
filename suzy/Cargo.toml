@@ -31,24 +31,24 @@ default-features = false
 
 [[example]]
 name = "adapter"
-required-features = ["platform_sdl", "default_font"]
+required-features = ["quickstart"]
 
 [[example]]
 name = "button"
-required-features = ["platform_sdl", "default_font"]
+required-features = ["quickstart"]
 
 [[example]]
 name = "coroutine"
-required-features = ["platform_sdl", "default_font"]
+required-features = ["quickstart"]
 
 [[example]]
 name = "image"
-required-features = ["platform_sdl"]
+required-features = ["quickstart"]
 
 [[example]]
 name = "layout"
-required-features = ["platform_sdl", "default_font"]
+required-features = ["quickstart"]
 
 [[example]]
 name = "text"
-required-features = ["platform_sdl", "default_font"]
+required-features = ["quickstart"]

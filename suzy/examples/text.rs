@@ -7,7 +7,7 @@ use suzy::{
     platform::graphics::{Text as _TextTrait, TextStyle},
     platforms::opengl::Text,
     text,
-    widget::{self, *},
+    widget::{self, RunAsApp},
 };
 
 #[derive(Default)]

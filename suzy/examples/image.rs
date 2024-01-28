@@ -8,7 +8,7 @@ use suzy::{
     platforms::opengl::{
         self, PopulateTexture, PopulateTextureUtil, SlicedImage, Texture,
     },
-    widget::{self, *},
+    widget::{self, RunAsApp},
 };
 
 const IMAGE: &[u8] = include_bytes!("cute.data");

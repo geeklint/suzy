@@ -9,7 +9,7 @@ use suzy::{
     platforms::opengl::Text,
     text,
     watch::Watched,
-    widget::{self, *},
+    widget::{self, RunAsApp},
 };
 
 const WORDS: &str = include_str!("words.txt");

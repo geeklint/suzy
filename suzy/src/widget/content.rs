@@ -131,12 +131,21 @@ impl<P> Content<P> for () {
 
 /// This is a convience function to create and run an App with this
 /// content as the only initial root widget.
-#[cfg(feature = "platform_sdl")]
+///
+/// Note: this is intended to be a quick way to run a Suzy app, but it may be
+/// unsound in the presence of other crates which interact with the OpenGL
+/// context. This isn't a typical use-case, and users may be mislead if it was
+/// an unsafe fn, but you may avoid this unsoundness by using the more explict
+/// API(s).
+#[cfg(feature = "quickstart")]
 pub trait RunAsApp {
+    /// Run an app.
+    ///
+    /// See [trait-level documentation](RunAsApp) for more information.
     fn run_as_app() -> !;
 }
 
-#[cfg(feature = "platform_sdl")]
+#[cfg(feature = "quickstart")]
 impl<T> RunAsApp for T
 where
     T: Default + Content<crate::platforms::DefaultRenderPlatform>,

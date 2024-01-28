@@ -32,7 +32,7 @@ impl widget::Content for Data {
 }"
 )]
 #![cfg_attr(
-    feature = "platform_sdl",
+    feature = "quickstart",
     doc = "
 # use suzy::widget::RunAsApp;
     Data::run_as_app();
