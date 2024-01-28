@@ -54,7 +54,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 
 #[test]
 fn button() {
-    let mut platform = <TestPlatform as platform::Platform>::new();
+    let mut platform = TestPlatform::new();
     let window = platform::Platform::create_window(
         &mut platform,
         suzy::window::WindowBuilder {

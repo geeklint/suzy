@@ -23,10 +23,6 @@ impl Platform for NoGraphics {
 
     type Window = Window;
 
-    fn new() -> Self {
-        Self
-    }
-
     fn create_window(
         &mut self,
         settings: crate::window::WindowBuilder,

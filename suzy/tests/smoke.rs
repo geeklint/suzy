@@ -11,7 +11,7 @@ use suzy::{
 
 #[test]
 fn smoke() {
-    let mut platform = <TestPlatform as suzy::platform::Platform>::new();
+    let mut platform = TestPlatform::new();
     let window = suzy::platform::Platform::create_window(
         &mut platform,
         suzy::window::WindowBuilder {

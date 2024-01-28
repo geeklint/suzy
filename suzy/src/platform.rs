@@ -24,9 +24,6 @@ pub trait Platform: 'static {
     /// The type of window this platform creates.
     type Window: crate::window::Window<Self::Renderer>;
 
-    /// Initialize the platform.
-    fn new() -> Self;
-
     /// Create a window.
     fn create_window(
         &mut self,

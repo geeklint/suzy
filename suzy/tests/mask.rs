@@ -40,7 +40,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 
 #[test]
 fn mask_right_half() {
-    let mut platform = <TestPlatform as suzy::platform::Platform>::new();
+    let mut platform = TestPlatform::new();
     let window = suzy::platform::Platform::create_window(
         &mut platform,
         suzy::window::WindowBuilder {

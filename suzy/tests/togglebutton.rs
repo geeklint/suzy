@@ -98,7 +98,7 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
 
 #[test]
 fn togglebutton_group() {
-    let mut platform = <TestPlatform as suzy::platform::Platform>::new();
+    let mut platform = TestPlatform::new();
     let window = suzy::platform::Platform::create_window(
         &mut platform,
         suzy::window::WindowBuilder {

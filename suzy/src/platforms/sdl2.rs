@@ -21,12 +21,6 @@ impl crate::platform::Platform for SdlPlatform {
     type Window = window::Window;
     type Renderer = OpenGlRenderPlatform;
 
-    fn new() -> Self {
-        SdlPlatform {
-            sdl: sdl2::init().expect("Failed to initialize SDL2"),
-        }
-    }
-
     fn create_window(
         &mut self,
         settings: crate::window::WindowBuilder,
@@ -45,6 +39,12 @@ impl crate::platform::Platform for SdlPlatform {
 }
 
 impl SdlPlatform {
+    pub fn new() -> Self {
+        SdlPlatform {
+            sdl: sdl2::init().expect("Failed to initialize SDL2"),
+        }
+    }
+
     pub fn run(self, app: &mut crate::app::App<Self>) -> Result<(), String> {
         let mut event_pump = self.sdl.event_pump()?;
         loop {
@@ -70,6 +70,12 @@ impl SdlPlatform {
             //app.window.gl_win.draw_app(&mut app);
             app.window.flip();
         }
+    }
+}
+
+impl Default for SdlPlatform {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

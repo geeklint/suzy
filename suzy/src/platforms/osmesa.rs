@@ -20,17 +20,27 @@ pub struct OsMesaPlatform {
     ctx: bindings::OsMesaContext,
 }
 
-impl crate::platform::Platform for OsMesaPlatform {
-    type Window = window::OsMesaWindow;
-    type Renderer = OpenGlRenderPlatform;
+impl Drop for OsMesaPlatform {
+    fn drop(&mut self) {
+        unsafe {
+            bindings::OSMesaDestroyContext(self.ctx);
+        }
+    }
+}
 
-    fn new() -> Self {
+impl OsMesaPlatform {
+    pub fn new() -> Self {
         let format = 0x1908; // GL_RGBA
         let ctx = unsafe {
             bindings::OSMesaCreateContext(format, std::ptr::null_mut())
         };
         Self { ctx }
     }
+}
+
+impl crate::platform::Platform for OsMesaPlatform {
+    type Window = window::OsMesaWindow;
+    type Renderer = OpenGlRenderPlatform;
 
     fn create_window(
         &mut self,
@@ -48,10 +58,8 @@ impl crate::platform::Platform for OsMesaPlatform {
     }
 }
 
-impl Drop for OsMesaPlatform {
-    fn drop(&mut self) {
-        unsafe {
-            bindings::OSMesaDestroyContext(self.ctx);
-        }
+impl Default for OsMesaPlatform {
+    fn default() -> Self {
+        Self::new()
     }
 }
