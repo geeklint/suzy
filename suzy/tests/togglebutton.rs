@@ -4,7 +4,7 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::{AppBuilder, AppTestingExt},
+    app::{App, AppTestingExt},
     dims::{Padding2d, Rect},
     graphics::{Color, Conditional},
     platforms::{
@@ -98,11 +98,17 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
 
 #[test]
 fn togglebutton_group() {
-    let mut builder = AppBuilder::default();
-    builder.set_size([480.0, 360.0]);
-    builder.set_background_color(Color::BLACK);
     let mut platform = <TestPlatform as suzy::platform::Platform>::new();
-    let mut app = builder.build(&mut platform);
+    let window = suzy::platform::Platform::create_window(
+        &mut platform,
+        suzy::window::WindowBuilder {
+            size: [480.0, 360.0],
+            background_color: Color::BLACK,
+            ..suzy::window::WindowBuilder::default()
+        },
+    )
+    .expect("Failed to create window");
+    let mut app = App::<TestPlatform>::from_window(window);
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
     let mut root = Widget::<GroupRoot>::default();

@@ -4,7 +4,7 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::{AppBuilder, AppTestingExt},
+    app::{App, AppTestingExt},
     dims::{Padding, Padding2d, Rect},
     graphics::Color,
     platforms::{
@@ -40,11 +40,17 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 
 #[test]
 fn mask_right_half() {
-    let mut builder = AppBuilder::default();
-    builder.set_size([480.0, 360.0]);
-    builder.set_background_color(Color::BLACK);
     let mut platform = <TestPlatform as suzy::platform::Platform>::new();
-    let mut app = builder.build(&mut platform);
+    let window = suzy::platform::Platform::create_window(
+        &mut platform,
+        suzy::window::WindowBuilder {
+            size: [480.0, 360.0],
+            background_color: Color::BLACK,
+            ..suzy::window::WindowBuilder::default()
+        },
+    )
+    .expect("Failed to create window");
+    let mut app = App::<TestPlatform>::from_window(window);
     app.add_root(Widget::<Root>::default());
     let capture = app.draw_and_take_screenshot();
     let index = (capture.len() / 2) & ALIGN_MASK;

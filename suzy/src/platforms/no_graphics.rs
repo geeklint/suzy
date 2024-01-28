@@ -12,7 +12,7 @@ pub struct NoGraphics;
 
 #[derive(Clone, Debug)]
 pub struct Window {
-    size: [f32; 2],
+    pub size: [f32; 2],
 }
 
 pub enum TextStyle {}

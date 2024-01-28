@@ -142,13 +142,24 @@ where
     T: Default + Content<crate::platforms::DefaultRenderPlatform>,
 {
     fn run_as_app() -> ! {
-        use crate::{app::AppBuilder, platforms::DefaultPlatform};
+        use crate::{
+            app::App,
+            platforms::sdl2::{Window, WindowSettings},
+            platforms::DefaultPlatform,
+        };
 
-        let mut builder = AppBuilder::default();
-        builder.set_title(T::app_title());
-        let mut platform =
-            <DefaultPlatform as crate::platform::Platform>::new();
-        let mut app = builder.build(&mut platform);
+        let platform = DefaultPlatform {
+            sdl: sdl2::init().expect("Failed to initialize SDL2"),
+        };
+        let window = Window::new_window(
+            &platform.sdl,
+            WindowSettings {
+                title: &T::app_title(),
+                ..WindowSettings::default()
+            },
+        )
+        .expect("Failed to open window");
+        let mut app = App::<DefaultPlatform>::from_window(window);
         app.add_root(widget::Widget::<T>::default());
         let code: i32 = match platform.run(&mut app) {
             Ok(()) => 0,

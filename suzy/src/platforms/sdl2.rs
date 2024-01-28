@@ -14,7 +14,7 @@ mod window;
 pub use window::{Window, WindowSettings};
 
 pub struct SdlPlatform {
-    sdl: sdl2::Sdl,
+    pub sdl: sdl2::Sdl,
 }
 
 impl crate::platform::Platform for SdlPlatform {

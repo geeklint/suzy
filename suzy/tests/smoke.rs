@@ -4,18 +4,24 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::{AppBuilder, AppTestingExt},
+    app::{App, AppTestingExt},
     graphics::Color,
     platforms::TestPlatform,
 };
 
 #[test]
 fn smoke() {
-    let mut builder = AppBuilder::default();
-    builder.set_size([480.0, 360.0]);
-    builder.set_background_color(Color::BLACK);
     let mut platform = <TestPlatform as suzy::platform::Platform>::new();
-    let mut app = builder.build(&mut platform);
+    let window = suzy::platform::Platform::create_window(
+        &mut platform,
+        suzy::window::WindowBuilder {
+            size: [480.0, 360.0],
+            background_color: Color::BLACK,
+            ..suzy::window::WindowBuilder::default()
+        },
+    )
+    .expect("Failed to create window");
+    let mut app = App::<TestPlatform>::from_window(window);
     let capture = app.draw_and_take_screenshot();
     for chunk in capture.chunks_exact(4) {
         let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);

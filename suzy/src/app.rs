@@ -17,11 +17,9 @@ use crate::{
     window::Window,
 };
 
-mod builder;
 mod tester;
 mod values;
 
-pub use builder::AppBuilder;
 pub use tester::AppTestingExt;
 pub(crate) use values::AppState;
 
@@ -86,6 +84,26 @@ pub fn coarse_time() -> time::Instant {
 }
 
 impl<P: Platform> App<P> {
+    pub fn from_window(window: P::Window) -> Self {
+        use std::collections::HashMap;
+
+        use crate::watch::WatchContext;
+
+        let [width, height] = window.size();
+        let state = Rc::new(AppState::new_now(width, height));
+
+        let watch_ctx: WatchContext<'static> = WatchContext::new();
+
+        Self {
+            watch_ctx,
+            window,
+            roots: Vec::new(),
+            pointer_grab_map: HashMap::new(),
+            state,
+            needs_draw: true,
+        }
+    }
+
     pub fn state(&self) -> &AppState {
         &self.state
     }
