@@ -58,22 +58,17 @@ mod private {
     }
 }
 
-/// A trait which represents a Widget with an unknown content type.
-///
-/// This can be used for the same patterns trait-objects usually are, e.g.
-/// a heterogeneous collection of Widgets.
-#[cfg(feature = "platform_opengl")]
-pub trait AnonWidget<P = crate::platforms::DefaultRenderPlatform>:
-    Rect + private::Widget<P>
-{
+with_default_render_platform! {
+    /// A trait which represents a Widget with an unknown content type.
+    ///
+    /// This can be used for the same patterns trait-objects usually are, e.g.
+    /// a heterogeneous collection of Widgets.
+    pub trait AnonWidget<P>
+    where
+        Self: Rect + private::Widget<P>,
+    {
+    }
 }
-
-/// A trait which represents a Widget with an unknown content type.
-///
-/// This can be used for the same patterns trait-objects usually are, e.g.
-/// a heterogeneous collection of Widgets.
-#[cfg(not(feature = "platform_opengl"))]
-pub trait AnonWidget<P>: Rect + private::Widget<P> {}
 
 impl<P, T> AnonWidget<P> for Widget<T>
 where

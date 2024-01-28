@@ -62,7 +62,6 @@ impl widget::Content for MyWidgetData {
 }
 ```"
     )]
-    ///
     pub trait Content<P>
     where
         Self: 'static,
@@ -104,6 +103,25 @@ impl widget::Content for MyWidgetData {
             let _unused = (rect, event);
             false
         }
+
+        /// If this widget is used with RunAsApp, defines the window title.
+        fn app_title() -> String {
+            let name = std::any::type_name::<Self>()
+                .rsplit("::")
+                .next()
+                .expect("Iterator Returned by str::rsplit was empty.");
+            let (_accum, title) = name.chars().fold(
+                (false, String::new()),
+                |(prev, mut title), ch| {
+                    if prev && ch.is_uppercase() {
+                        title.push(' ');
+                    }
+                    title.push(ch);
+                    (ch.is_lowercase(), title)
+                },
+            );
+            title
+        }
     }
 }
 
@@ -113,6 +131,7 @@ impl<P> Content<P> for () {
 
 /// This is a convience function to create and run an App with this
 /// content as the only initial root widget.
+#[cfg(feature = "platform_sdl")]
 pub trait RunAsApp {
     fn run_as_app() -> !;
 }
@@ -125,22 +144,8 @@ where
     fn run_as_app() -> ! {
         use crate::{app::AppBuilder, platforms::DefaultPlatform};
 
-        let name = std::any::type_name::<T>()
-            .rsplit("::")
-            .next()
-            .expect("Iterator Returned by str::rsplit was empty.");
-        let (_, title) = name.chars().fold(
-            (false, String::new()),
-            |(prev, mut title), ch| {
-                if prev && ch.is_uppercase() {
-                    title.push(' ');
-                }
-                title.push(ch);
-                (ch.is_lowercase(), title)
-            },
-        );
         let mut builder = AppBuilder::default();
-        builder.set_title(title);
+        builder.set_title(T::app_title());
         let mut platform =
             <DefaultPlatform as crate::platform::Platform>::new();
         let mut app = builder.build(&mut platform);
