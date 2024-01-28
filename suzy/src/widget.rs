@@ -30,7 +30,9 @@ use receivers::{
 };
 
 pub use anon::AnonWidget;
-pub use content::{Content, RunAsApp};
+pub use content::Content;
+#[cfg(feature = "platform_sdl")]
+pub use content::RunAsApp;
 pub use coroutine::Coroutine;
 pub use desc::Desc;
 pub use ephemeral::Ephemeral;
