@@ -39,7 +39,7 @@ pub struct Window {
     _video: sdl2::VideoSubsystem,
     pub(super) window: sdl2::video::Window,
     _context: sdl2::video::GLContext,
-    pub(super) gl_win: opengl::Window,
+    pub gl_win: opengl::Window,
 }
 
 impl Window {

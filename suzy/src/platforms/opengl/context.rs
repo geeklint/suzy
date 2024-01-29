@@ -25,6 +25,7 @@ pub mod bindings {
 pub type OpenGlBindings = bindings::Gles2;
 
 pub struct OpenGlContext {
+    // must be first so it drops first, avoding UAF
     pub(super) bindings: Rc<OpenGlBindings>,
     pub(super) shaders: Shaders,
     pub(super) texture_cache: TextureCache,

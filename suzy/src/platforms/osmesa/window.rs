@@ -67,10 +67,6 @@ impl OsMesaWindow {
             _buffer_ptr: buffer_ptr,
         }
     }
-
-    pub fn set_background_color(&mut self, color: Color) {
-        self.gl_win.clear_color(color);
-    }
 }
 
 impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {

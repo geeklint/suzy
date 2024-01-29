@@ -27,6 +27,24 @@ pub type TestPlatform = self::osmesa::OsMesaPlatform;
 pub type TestPlatform = self::sdl2::SdlPlatform;
 
 #[cfg(feature = "platform_opengl")]
+pub trait TestEnvironment {
+    /// # Safety
+    ///
+    /// OpenGL uses global state which can cause unsoundness if user code or
+    /// other crates adjust things that Suzy cannot account for. The safety
+    /// precondition of this function is: if any other crate is making OpenGL
+    /// calls, you have reviewed the semantics of all of the OpenGL code for
+    /// potential errors.
+    ///
+    /// This function is intended to be safe when not combined with sources of
+    /// interaction with the OpenGL state from outside Suzy.
+    unsafe fn initialize(
+        &self,
+        size: [u16; 2],
+    ) -> Box<dyn AsMut<opengl::Window>>;
+}
+
+#[cfg(feature = "platform_opengl")]
 macro_rules! with_default_render_platform {
     ($(#[$Attr:meta])* pub $Def:ident $Item:ident < $T:ident, $P:ident > $($body:tt)* ) => {
         $(#[$Attr])*

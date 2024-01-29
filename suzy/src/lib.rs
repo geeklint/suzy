@@ -89,6 +89,7 @@ pub mod window;
 
 /// The Suzy prelude contains exports of the most frequently-used types
 pub mod prelude {
+    #[doc(no_inline)]
     pub use crate::{
         dims::Rect,
         watch::Watched,

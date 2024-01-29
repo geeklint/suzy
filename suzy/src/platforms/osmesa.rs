@@ -8,7 +8,7 @@
 //! no window to recieve events from.  Mostly it should be used for
 //! automation, e.g. tests.
 
-use crate::platforms::opengl::OpenGlRenderPlatform;
+use crate::{graphics::Color, platforms::opengl};
 
 mod bindings;
 mod window;
@@ -40,7 +40,7 @@ impl OsMesaPlatform {
 
 impl crate::platform::Platform for OsMesaPlatform {
     type Window = window::OsMesaWindow;
-    type Renderer = OpenGlRenderPlatform;
+    type Renderer = opengl::OpenGlRenderPlatform;
 
     fn create_window(
         &mut self,
@@ -61,5 +61,68 @@ impl crate::platform::Platform for OsMesaPlatform {
 impl Default for OsMesaPlatform {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) struct TestEnvironment;
+
+impl super::TestEnvironment for TestEnvironment {
+    unsafe fn initialize(
+        &self,
+        size: [u16; 2],
+    ) -> Box<dyn AsMut<opengl::Window>> {
+        const GL_RGBA: std::ffi::c_uint = 0x1908;
+        const GL_UNSIGNED_BYTE: std::ffi::c_uint = 0x1401;
+        let [width, height] = size;
+        let buffer = vec![0_u8; 4 * usize::from(width) * usize::from(height)];
+        let buffer_ptr = Box::into_raw(buffer.into_boxed_slice());
+        let ctx;
+        unsafe {
+            ctx = bindings::OSMesaCreateContext(GL_RGBA, std::ptr::null_mut());
+            bindings::OSMesaMakeCurrent(
+                ctx,
+                buffer_ptr.cast(),
+                GL_UNSIGNED_BYTE,
+                width.into(),
+                height.into(),
+            );
+        }
+        let plat_gl_context = opengl::OpenGlContext::new(|s| {
+            let name = std::ffi::CString::new(s).expect(
+                "Requested OpenGL function name contained a null byte",
+            );
+            unsafe { bindings::OSMesaGetProcAddress(name.as_ptr()) }
+        });
+        let mut gl_win = opengl::Window::new(plat_gl_context);
+        gl_win.clear_color(Color::BLACK);
+        gl_win.viewport(0, 0, width, height);
+
+        struct OsMesaTestEnvironment {
+            buffer_ptr: *mut [u8],
+            ctx: bindings::OsMesaContext,
+            gl_win: opengl::Window,
+        }
+
+        impl Drop for OsMesaTestEnvironment {
+            fn drop(&mut self) {
+                unsafe {
+                    bindings::OSMesaDestroyContext(self.ctx);
+                    std::mem::drop(Box::from_raw(self.buffer_ptr));
+                }
+            }
+        }
+
+        impl AsMut<opengl::Window> for OsMesaTestEnvironment {
+            fn as_mut(&mut self) -> &mut opengl::Window {
+                &mut self.gl_win
+            }
+        }
+
+        Box::new(OsMesaTestEnvironment {
+            buffer_ptr,
+            ctx,
+            gl_win,
+        })
     }
 }

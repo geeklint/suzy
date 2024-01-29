@@ -4,6 +4,7 @@
 #![allow(missing_docs)]
 
 use crate::{
+    graphics::Color,
     platforms::opengl::OpenGlRenderPlatform,
     pointer::{AltMouseButton, PointerAction, PointerEventData, PointerId},
     watch::WatchedValueCore,
@@ -222,5 +223,37 @@ impl ToSuzyMouseButton for sdl2::mouse::MouseButton {
             sdl2::mouse::MouseButton::X1 => Alt(AltMouseButton::X1),
             sdl2::mouse::MouseButton::X2 => Alt(AltMouseButton::X2),
         }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) struct TestEnvironment;
+
+impl super::TestEnvironment for TestEnvironment {
+    unsafe fn initialize(
+        &self,
+        size: [u16; 2],
+    ) -> Box<dyn AsMut<super::opengl::Window>> {
+        let [width, height] = size;
+        let sdl = sdl2::init().expect("Failed to initialize SDL2");
+        let window = Window::new_window(
+            &sdl,
+            WindowSettings {
+                title: "Suzy Test",
+                width: width.into(),
+                height: height.into(),
+                background_color: Color::BLACK,
+            },
+        )
+        .expect("failed to open window");
+        struct Wrapper {
+            window: Window,
+        }
+        impl AsMut<super::opengl::Window> for Wrapper {
+            fn as_mut(&mut self) -> &mut super::opengl::Window {
+                &mut self.window.gl_win
+            }
+        }
+        Box::new(Wrapper { window })
     }
 }
