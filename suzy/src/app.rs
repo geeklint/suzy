@@ -201,11 +201,4 @@ impl<P: Platform> App<P> {
         self.needs_draw = true;
         handled
     }
-
-    /// Consume the current app, cleaning up its resources immediately.
-    pub fn shutdown(self) {
-        let Self { window, roots, .. } = self;
-        std::mem::drop(roots);
-        std::mem::drop(window);
-    }
 }
