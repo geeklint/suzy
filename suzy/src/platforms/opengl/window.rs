@@ -77,7 +77,8 @@ impl Window {
             let [screen_width, screen_height] = screen_size;
             let matrix = Mat4::translate(-1.0, -1.0)
                 * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);
-            super::DrawContext::main_draw_pass(&mut self.ctx, matrix)
+            let batch_pool = super::renderer::BatchPool::new(matrix);
+            super::DrawContext::main_draw_pass(&mut self.ctx, batch_pool)
         }
     }
 
@@ -95,10 +96,13 @@ impl Window {
         let matrix = Mat4::translate(-1.0, -1.0)
             * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);
         app.draw(&mut super::DrawContext::gather_textures(&mut self.ctx));
+        self.ctx.run_texture_populators();
+        let current_batches = super::renderer::BatchPool::new(matrix);
         app.draw(&mut super::DrawContext::main_draw_pass(
             &mut self.ctx,
-            matrix,
+            current_batches,
         ));
+        //super::renderer::render(&mut self.ctx, current_batches);
     }
 
     /// Issue opengl call to clear the screen.

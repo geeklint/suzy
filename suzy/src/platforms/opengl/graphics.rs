@@ -52,13 +52,13 @@ impl<'a> DrawContext<'a> {
 
     pub(crate) fn main_draw_pass(
         context: &'a mut super::context::OpenGlContext,
-        matrix: super::Mat4,
+        batch_pool: BatchPool,
     ) -> Self {
         Self {
             context,
             pass: DrawPass::Main {
                 masking: BatchMasking::Unmasked,
-                batch_pool: BatchPool::new(matrix),
+                batch_pool,
             },
         }
     }
