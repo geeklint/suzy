@@ -109,17 +109,18 @@ fn togglebutton_group() {
     )
     .expect("Failed to create window");
     let mut app = App::<TestPlatform>::from_window(window);
+    let mut window = app.screenshot_tmp();
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
     let mut root = Widget::<GroupRoot>::default();
     root.value_feedback = group_value_feedback;
     app.add_root(root);
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     assert_eq!(group_value_output.get(), None);
     assert!(is_color(&capture, Color::BLACK));
     // click the bottom button
     app.mouse_click([240.0, 60.0]);
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     let index = (capture.len() / 3) & ALIGN_MASK;
     let (bottom_3rd, top) = capture.split_at(index);
     let bottom_3rd = round_back(bottom_3rd);
@@ -129,7 +130,7 @@ fn togglebutton_group() {
     assert!(is_color(top, Color::BLACK));
     // click the top button
     app.mouse_click([240.0, 300.0]);
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     let index = (capture.len() / 3) & ALIGN_MASK;
     let (bottom, top_3rd) = capture.split_at(2 * index);
     let bottom = round_back(bottom);
@@ -139,7 +140,7 @@ fn togglebutton_group() {
     assert!(is_color(top_3rd, Color::WHITE));
     // click the middle button
     app.mouse_click([240.0, 180.0]);
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     let index = (capture.len() / 3) & ALIGN_MASK;
     let (bottom_3rd, top) = capture.split_at(index);
     let index = (top.len() / 2) & ALIGN_MASK;
@@ -153,7 +154,7 @@ fn togglebutton_group() {
     assert!(is_color(top_3rd, Color::BLACK));
     // click the middle button again
     app.mouse_click([240.0, 180.0]);
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     assert_eq!(group_value_output.get(), None);
     assert!(is_color(&capture, Color::BLACK));
 }

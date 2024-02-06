@@ -138,4 +138,16 @@ impl Window {
         }
         buffer
     }
+
+    pub fn draw_and_take_screenshot<P>(
+        &mut self,
+        app: &mut crate::app::App<P>,
+    ) -> Box<[u8]>
+    where
+        P: crate::platform::Platform<Renderer = OpenGlRenderPlatform>,
+    {
+        app.update_watches();
+        self.draw_app(app);
+        self.take_screenshot()
+    }
 }

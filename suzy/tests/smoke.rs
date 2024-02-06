@@ -22,7 +22,8 @@ fn smoke() {
     )
     .expect("Failed to create window");
     let mut app = App::<TestPlatform>::from_window(window);
-    let capture = app.draw_and_take_screenshot();
+    let mut window = app.screenshot_tmp();
+    let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {
         let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
         assert_eq!(color, Color::BLACK);

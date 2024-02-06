@@ -10,9 +10,6 @@ use crate::{platform::Platform, pointer::PointerEventData, window::Window};
 use super::App;
 
 pub trait AppTestingExt {
-    /// Issue an update to ensure all events have fully resolved
-    fn draw_if_needed(&mut self);
-
     /// Short-hand to simulate a mouse click
     ///
     /// This is equivalent to:
@@ -20,12 +17,6 @@ pub trait AppTestingExt {
     /// 2) advancing the frame with the default frame time
     /// 3) sending a mouse-up pointer event
     fn mouse_click(&mut self, pos: [f32; 2]);
-
-    /// Take a screenshot.
-    ///
-    /// Data returned by this function may be dependent on the suzy platform
-    /// in use.
-    fn draw_and_take_screenshot(&mut self) -> Box<[u8]>;
 
     /// Update and draw the current frame, then start a new one, acting as
     /// though `frame_time` has passed (e.g. for the purposes of App::time).
@@ -36,25 +27,15 @@ pub trait AppTestingExt {
         let frame_time = time::Duration::from_nanos(16666667);
         self.next_frame(frame_time);
     }
+
+    fn screenshot_tmp(&self) -> ScreenshotTaker;
 }
 
 impl<P: Platform> AppTestingExt for App<P> {
-    fn draw_if_needed(&mut self) {
-        if self.needs_draw {
-            self.update_watches();
-            self.loop_draw();
-        }
-    }
-
     fn next_frame(&mut self, frame_time: time::Duration) {
         self.update_watches();
         let frame_time = self.state().time().get_unwatched() + frame_time;
         self.start_frame(frame_time);
-    }
-
-    fn draw_and_take_screenshot(&mut self) -> Box<[u8]> {
-        self.draw_if_needed();
-        self.window.take_screenshot()
     }
 
     fn mouse_click(&mut self, pos: [f32; 2]) {
@@ -72,5 +53,25 @@ impl<P: Platform> AppTestingExt for App<P> {
             x: px,
             y: py,
         });
+    }
+
+    fn screenshot_tmp(&self) -> ScreenshotTaker {
+        ScreenshotTaker
+    }
+}
+
+pub struct ScreenshotTaker;
+
+impl ScreenshotTaker {
+    pub fn draw_and_take_screenshot<P>(
+        &mut self,
+        app: &mut App<P>,
+    ) -> Box<[u8]>
+    where
+        P: Platform,
+    {
+        app.update_watches();
+        app.loop_draw();
+        app.window.take_screenshot()
     }
 }

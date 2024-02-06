@@ -65,8 +65,9 @@ fn button() {
     )
     .expect("Failed to create window");
     let mut app = App::<TestPlatform>::from_window(window);
+    let mut window = app.screenshot_tmp();
     app.add_root(Widget::<Root>::default());
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {
         let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
         assert_eq!(color, Color::BLACK);
@@ -77,7 +78,7 @@ fn button() {
         x: 240.0,
         y: 180.0,
     });
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {
         let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
         assert_eq!(color, Color::WHITE);
@@ -88,7 +89,7 @@ fn button() {
         x: 240.0,
         y: 180.0,
     });
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {
         let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
         assert_eq!(color, Color::BLACK);

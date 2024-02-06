@@ -51,8 +51,9 @@ fn mask_right_half() {
     )
     .expect("Failed to create window");
     let mut app = App::<TestPlatform>::from_window(window);
+    let mut window = app.screenshot_tmp();
     app.add_root(Widget::<Root>::default());
-    let capture = app.draw_and_take_screenshot();
+    let capture = window.draw_and_take_screenshot(&mut app);
     let index = (capture.len() / 2) & ALIGN_MASK;
     let (bottom, top) = capture.split_at(index);
     let bottom = round_back(bottom);
