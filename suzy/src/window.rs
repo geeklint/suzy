@@ -61,7 +61,7 @@ where
     ) -> DrawContext<'_, P>;
 
     /// Take a screenshot of the contents of window.
-    fn take_screenshot(&self) -> Box<[u8]>;
+    fn take_screenshot(&mut self) -> Box<[u8]>;
 
     fn size(&self) -> [f32; 2];
 }

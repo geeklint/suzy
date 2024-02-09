@@ -9,7 +9,7 @@ use suzy::{
     graphics::{Color, Conditional},
     platforms::{
         opengl::{OpenGlRenderPlatform, SlicedImage},
-        TestPlatform,
+        TestEnvWindow, TestPlatform,
     },
     selectable::{Selectable, SelectionState},
     widget::{self, Widget, WidgetRect},
@@ -98,16 +98,7 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
 
 #[test]
 fn togglebutton_group() {
-    let mut platform = TestPlatform::new();
-    let window = suzy::platform::Platform::create_window(
-        &mut platform,
-        suzy::window::WindowBuilder {
-            size: [480.0, 360.0],
-            background_color: Color::BLACK,
-            ..suzy::window::WindowBuilder::default()
-        },
-    )
-    .expect("Failed to create window");
+    let window = unsafe { TestEnvWindow::new(480, 360) };
     let mut app = App::<TestPlatform>::from_window(window);
     let mut window = app.screenshot_tmp();
     let group_value_output = std::rc::Rc::default();

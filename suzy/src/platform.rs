@@ -23,12 +23,6 @@ pub trait Platform: 'static {
 
     /// The type of window this platform creates.
     type Window: crate::window::Window<Self::Renderer>;
-
-    /// Create a window.
-    fn create_window(
-        &mut self,
-        settings: crate::window::WindowBuilder,
-    ) -> Result<Self::Window, String>;
 }
 
 /// A RenderPlatform provides tools to create Graphics.

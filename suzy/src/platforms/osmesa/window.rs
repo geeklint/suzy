@@ -32,10 +32,8 @@ pub struct OsMesaWindow {
 }
 
 impl OsMesaWindow {
-    pub(super) fn new(
-        ctx: bindings::OsMesaContext,
-        settings: WindowSettings,
-    ) -> Self {
+    pub fn new(ctx: &super::OsMesaPlatform, settings: WindowSettings) -> Self {
+        let ctx = ctx.ctx;
         let buffer = vec![
             0_u8;
             4 * usize::from(settings.width)
@@ -79,7 +77,7 @@ impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
         self.gl_win.prepare_draw(size, frame_arg.is_none())
     }
 
-    fn take_screenshot(&self) -> Box<[u8]> {
+    fn take_screenshot(&mut self) -> Box<[u8]> {
         self.gl_win.take_screenshot()
     }
 

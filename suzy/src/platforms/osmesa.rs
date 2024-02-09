@@ -41,21 +41,6 @@ impl OsMesaPlatform {
 impl crate::platform::Platform for OsMesaPlatform {
     type Window = window::OsMesaWindow;
     type Renderer = opengl::OpenGlRenderPlatform;
-
-    fn create_window(
-        &mut self,
-        settings: crate::window::WindowBuilder,
-    ) -> Result<Self::Window, String> {
-        let [width, height] = settings.size;
-        Ok(window::OsMesaWindow::new(
-            self.ctx,
-            window::WindowSettings {
-                width: width as u16,
-                height: height as u16,
-                background_color: settings.background_color,
-            },
-        ))
-    }
 }
 
 impl Default for OsMesaPlatform {
@@ -70,11 +55,11 @@ pub(super) struct TestEnvironment;
 impl super::TestEnvironment for TestEnvironment {
     unsafe fn initialize(
         &self,
-        size: [u16; 2],
+        width: u16,
+        height: u16,
     ) -> Box<dyn AsMut<opengl::Window>> {
         const GL_RGBA: std::ffi::c_uint = 0x1908;
         const GL_UNSIGNED_BYTE: std::ffi::c_uint = 0x1401;
-        let [width, height] = size;
         let buffer = vec![0_u8; 4 * usize::from(width) * usize::from(height)];
         let buffer_ptr = Box::into_raw(buffer.into_boxed_slice());
         let ctx;

@@ -22,15 +22,6 @@ impl Platform for NoGraphics {
     type Renderer = Self;
 
     type Window = Window;
-
-    fn create_window(
-        &mut self,
-        settings: crate::window::WindowBuilder,
-    ) -> Result<Self::Window, String> {
-        Ok(Window {
-            size: settings.size,
-        })
-    }
 }
 
 impl RenderPlatform for NoGraphics {
@@ -59,7 +50,7 @@ impl crate::window::Window<NoGraphics> for Window {
         NoGraphics
     }
 
-    fn take_screenshot(&self) -> Box<[u8]> {
+    fn take_screenshot(&mut self) -> Box<[u8]> {
         unimplemented!("Can't take screenshot with a NoGraphics window");
     }
 

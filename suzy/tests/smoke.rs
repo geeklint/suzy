@@ -6,21 +6,12 @@
 use suzy::{
     app::{App, AppTestingExt},
     graphics::Color,
-    platforms::TestPlatform,
+    platforms::{TestEnvWindow, TestPlatform},
 };
 
 #[test]
 fn smoke() {
-    let mut platform = TestPlatform::new();
-    let window = suzy::platform::Platform::create_window(
-        &mut platform,
-        suzy::window::WindowBuilder {
-            size: [480.0, 360.0],
-            background_color: Color::BLACK,
-            ..suzy::window::WindowBuilder::default()
-        },
-    )
-    .expect("Failed to create window");
+    let window = unsafe { TestEnvWindow::new(480, 360) };
     let mut app = App::<TestPlatform>::from_window(window);
     let mut window = app.screenshot_tmp();
     let capture = window.draw_and_take_screenshot(&mut app);

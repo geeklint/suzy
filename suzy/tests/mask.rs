@@ -9,7 +9,7 @@ use suzy::{
     graphics::Color,
     platforms::{
         opengl::{Mask, OpenGlRenderPlatform, SlicedImage},
-        TestPlatform,
+        TestEnvWindow, TestPlatform,
     },
     widget::{self, Widget},
 };
@@ -40,16 +40,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 
 #[test]
 fn mask_right_half() {
-    let mut platform = TestPlatform::new();
-    let window = suzy::platform::Platform::create_window(
-        &mut platform,
-        suzy::window::WindowBuilder {
-            size: [480.0, 360.0],
-            background_color: Color::BLACK,
-            ..suzy::window::WindowBuilder::default()
-        },
-    )
-    .expect("Failed to create window");
+    let window = unsafe { TestEnvWindow::new(480, 360) };
     let mut app = App::<TestPlatform>::from_window(window);
     let mut window = app.screenshot_tmp();
     app.add_root(Widget::<Root>::default());

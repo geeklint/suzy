@@ -31,7 +31,7 @@ use receivers::{
 
 pub use anon::AnonWidget;
 pub use content::Content;
-#[cfg(feature = "platform_sdl")]
+#[cfg(feature = "quickstart")]
 pub use content::RunAsApp;
 pub use coroutine::Coroutine;
 pub use desc::Desc;

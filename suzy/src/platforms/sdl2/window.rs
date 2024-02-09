@@ -148,8 +148,8 @@ impl window::Window<opengl::OpenGlRenderPlatform> for Window {
         self.gl_win.prepare_draw(self.logical_size(), first_pass)
     }
 
-    fn take_screenshot(&self) -> Box<[u8]> {
-        self.take_screenshot()
+    fn take_screenshot(&mut self) -> Box<[u8]> {
+        (*self).take_screenshot()
     }
 
     fn size(&self) -> [f32; 2] {

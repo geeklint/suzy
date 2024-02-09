@@ -21,22 +21,6 @@ pub struct SdlPlatform {
 impl crate::platform::Platform for SdlPlatform {
     type Window = window::Window;
     type Renderer = OpenGlRenderPlatform;
-
-    fn create_window(
-        &mut self,
-        settings: crate::window::WindowBuilder,
-    ) -> Result<Self::Window, String> {
-        let [width, height] = settings.size;
-        Window::new_window(
-            &self.sdl,
-            WindowSettings {
-                width: width as u32,
-                height: height as u32,
-                background_color: settings.background_color,
-                title: &settings.into_title(),
-            },
-        )
-    }
 }
 
 impl SdlPlatform {
@@ -232,9 +216,9 @@ pub(super) struct TestEnvironment;
 impl super::TestEnvironment for TestEnvironment {
     unsafe fn initialize(
         &self,
-        size: [u16; 2],
+        width: u16,
+        height: u16,
     ) -> Box<dyn AsMut<super::opengl::Window>> {
-        let [width, height] = size;
         let sdl = sdl2::init().expect("Failed to initialize SDL2");
         let window = Window::new_window(
             &sdl,
