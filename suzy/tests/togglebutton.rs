@@ -98,9 +98,8 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
 
 #[test]
 fn togglebutton_group() {
-    let window = unsafe { TestEnvWindow::new(480, 360) };
-    let mut app = App::<TestPlatform>::from_window(window);
-    let mut window = app.screenshot_tmp();
+    let mut window = unsafe { TestEnvWindow::new(480, 360) };
+    let mut app = App::<TestPlatform>::from_window(&window);
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
     let mut root = Widget::<GroupRoot>::default();

@@ -6,7 +6,7 @@ use std::convert::TryInto;
 use sdl2::video::WindowBuildError;
 
 use crate::{
-    graphics::{Color, DrawContext},
+    graphics::Color,
     platforms::opengl,
     window::{self},
 };
@@ -137,17 +137,6 @@ impl Window {
 }
 
 impl window::Window<opengl::OpenGlRenderPlatform> for Window {
-    fn prepare_draw(
-        &mut self,
-        pass_arg: Option<()>,
-    ) -> DrawContext<'_, opengl::OpenGlRenderPlatform> {
-        let first_pass = pass_arg.is_none();
-        if first_pass {
-            self.gl_win.clear();
-        }
-        self.gl_win.prepare_draw(self.logical_size(), first_pass)
-    }
-
     fn take_screenshot(&mut self) -> Box<[u8]> {
         (*self).take_screenshot()
     }

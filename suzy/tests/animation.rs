@@ -32,7 +32,7 @@ impl widget::Content<NoGraphics> for Root {
 
 #[test]
 fn animation() {
-    let mut app = App::<NoGraphics>::from_window(Window {
+    let mut app = App::<NoGraphics>::from_window(&Window {
         size: [480.0, 360.0],
     });
     let value_output = Rc::new(Cell::new(142.0));

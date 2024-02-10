@@ -30,7 +30,11 @@ impl SdlPlatform {
         }
     }
 
-    pub fn run(self, app: &mut crate::app::App<Self>) -> Result<(), String> {
+    pub fn run(
+        self,
+        window: &mut window::Window,
+        app: &mut crate::app::App<Self>,
+    ) -> Result<(), String> {
         let mut event_pump = self.sdl.event_pump()?;
         loop {
             use sdl2::event::{Event, WindowEvent};
@@ -44,16 +48,15 @@ impl SdlPlatform {
                     } => {
                         return Ok(());
                     }
-                    event => app.handle_event(event, || {
+                    event => app.handle_event(window, event, || {
                         let state = event_pump.mouse_state();
                         (state.x() as f32, state.y() as f32)
                     }),
                 }
             }
             app.update_watches();
-            app.loop_draw();
-            //app.window.gl_win.draw_app(&mut app);
-            app.window.flip();
+            window.gl_win.draw_app(app);
+            window.flip();
         }
     }
 }
@@ -67,6 +70,7 @@ impl Default for SdlPlatform {
 pub trait AppHandleSdlEvent {
     fn handle_event(
         &mut self,
+        window: &mut window::Window,
         event: sdl2::event::Event,
         mouse_pos: impl FnOnce() -> (f32, f32),
     );
@@ -75,6 +79,7 @@ pub trait AppHandleSdlEvent {
 impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
     fn handle_event(
         &mut self,
+        window: &mut window::Window,
         event: sdl2::event::Event,
         mouse_pos: impl FnOnce() -> (f32, f32),
     ) {
@@ -84,10 +89,10 @@ impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
                 match win_event {
                     WindowEvent::SizeChanged(_, _)
                     | WindowEvent::Moved { .. } => {
-                        let [width, height] = self.window.logical_size();
+                        let [width, height] = window.logical_size();
                         self.resize(width, height);
-                        self.update_dpi(self.window.dpi());
-                        self.window.recalculate_viewport();
+                        self.update_dpi(window.dpi());
+                        window.recalculate_viewport();
                     }
                     WindowEvent::Leave => {
                         self.pointer_event(PointerEventData {

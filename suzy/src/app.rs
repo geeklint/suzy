@@ -10,7 +10,6 @@ use std::{cell::RefCell, rc::Rc, time};
 
 use crate::{
     dims::{Padding2d, Rect, SimpleRect},
-    graphics::PlatformDrawContext,
     platform::Platform,
     pointer::{PointerEvent, PointerEventData},
     widget::{self, Widget},
@@ -48,7 +47,6 @@ mod app_struct {
         P: ?Sized + Platform,
     {
         pub(crate) watch_ctx: WatchContext<'static>,
-        pub(crate) window: P::Window,
         pub(super) roots: Vec<RootHolder<P::Renderer>>,
         pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
         pub(crate) state: Rc<super::AppState>,
@@ -84,7 +82,7 @@ pub fn coarse_time() -> time::Instant {
 }
 
 impl<P: Platform> App<P> {
-    pub fn from_window(window: P::Window) -> Self {
+    pub fn from_window(window: &P::Window) -> Self {
         use std::collections::HashMap;
 
         use crate::watch::WatchContext;
@@ -96,7 +94,6 @@ impl<P: Platform> App<P> {
 
         Self {
             watch_ctx,
-            window,
             roots: Vec::new(),
             pointer_grab_map: HashMap::new(),
             state,
@@ -142,28 +139,6 @@ impl<P: Platform> App<P> {
     pub fn update_watches(&mut self) {
         self.watch_ctx.update();
         self.needs_draw = true;
-    }
-
-    pub fn loop_draw(&mut self) {
-        let mut loop_count: u32 = 0;
-        let mut pass_arg = None;
-        loop {
-            let mut ctx = self.window.prepare_draw(pass_arg);
-            for root in self.roots.iter_mut() {
-                root.borrow_mut().draw(&mut ctx);
-            }
-            pass_arg = ctx.finish();
-            if pass_arg.is_none() {
-                break;
-            }
-            debug_assert!(
-                loop_count < 1024,
-                "render exceeded its loop count (possible infinite loop)",
-            );
-            self.watch_ctx.update();
-            loop_count += 1;
-        }
-        self.needs_draw = false;
     }
 
     pub fn draw(

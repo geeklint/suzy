@@ -99,23 +99,18 @@ impl TestEnvWindow {
             gl_win,
         }
     }
+
+    pub fn draw_and_take_screenshot(
+        &mut self,
+        app: &mut crate::app::App<TestPlatform>,
+    ) -> Box<[u8]> {
+        let gl_win = (*self.gl_win).as_mut();
+        gl_win.draw_and_take_screenshot(app)
+    }
 }
 
 #[cfg(feature = "platform_opengl")]
 impl crate::window::Window<opengl::OpenGlRenderPlatform> for TestEnvWindow {
-    fn prepare_draw(
-        &mut self,
-        pass_arg: Option<<crate::platforms::opengl::OpenGlRenderPlatform as crate::platform::RenderPlatform>::DrawPassInfo>,
-    ) -> crate::graphics::DrawContext<'_, opengl::OpenGlRenderPlatform> {
-        let first_pass = pass_arg.is_none();
-        let gl_win = (*self.gl_win).as_mut();
-        if first_pass {
-            gl_win.clear();
-        }
-        let size = [self.width.into(), self.height.into()];
-        gl_win.prepare_draw(size, first_pass)
-    }
-
     fn take_screenshot(&mut self) -> Box<[u8]> {
         let gl_win = (*self.gl_win).as_mut();
         gl_win.take_screenshot()

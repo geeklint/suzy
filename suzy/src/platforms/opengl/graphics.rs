@@ -12,31 +12,22 @@ use super::{
     Mat4,
 };
 
-enum DrawPass {
+enum DrawPass<'a> {
     GatherTextures,
     Main {
         masking: BatchMasking,
-        batch_pool: BatchPool,
+        batch_pool: &'a mut BatchPool,
     },
 }
 
 pub struct DrawContext<'a> {
     context: &'a mut super::context::OpenGlContext,
-    pass: DrawPass,
+    pass: DrawPass<'a>,
 }
 
 impl<'a> crate::graphics::PlatformDrawContext<()> for DrawContext<'a> {
     fn finish(self) -> Option<()> {
-        match self.pass {
-            DrawPass::GatherTextures => {
-                self.context.run_texture_populators();
-                Some(())
-            }
-            DrawPass::Main { batch_pool, .. } => {
-                super::renderer::render(self.context, batch_pool);
-                None
-            }
-        }
+        unimplemented!()
     }
 }
 
@@ -52,7 +43,7 @@ impl<'a> DrawContext<'a> {
 
     pub(crate) fn main_draw_pass(
         context: &'a mut super::context::OpenGlContext,
-        batch_pool: BatchPool,
+        batch_pool: &'a mut BatchPool,
     ) -> Self {
         Self {
             context,
@@ -141,7 +132,7 @@ impl<'a> DrawContext<'a> {
             DrawPass::GatherTextures => (),
             DrawPass::Main { batch_pool, .. } => {
                 let new_pool = BatchPool::new(f(batch_pool.matrix));
-                let old_pool = std::mem::replace(batch_pool, new_pool);
+                let old_pool = std::mem::replace(*batch_pool, new_pool);
                 super::renderer::render(self.context, old_pool);
             }
         }

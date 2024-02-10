@@ -43,13 +43,6 @@ impl crate::graphics::PlatformDrawContext<()> for NoGraphics {
 }
 
 impl crate::window::Window<NoGraphics> for Window {
-    fn prepare_draw(
-        &mut self,
-        _pass_arg: Option<()>,
-    ) -> crate::graphics::DrawContext<'_, NoGraphics> {
-        NoGraphics
-    }
-
     fn take_screenshot(&mut self) -> Box<[u8]> {
         unimplemented!("Can't take screenshot with a NoGraphics window");
     }

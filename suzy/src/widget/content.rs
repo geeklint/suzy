@@ -160,7 +160,7 @@ where
         let platform = DefaultPlatform {
             sdl: sdl2::init().expect("Failed to initialize SDL2"),
         };
-        let window = Window::new_window(
+        let mut window = Window::new_window(
             &platform.sdl,
             WindowSettings {
                 title: &T::app_title(),
@@ -168,9 +168,9 @@ where
             },
         )
         .expect("Failed to open window");
-        let mut app = App::<DefaultPlatform>::from_window(window);
+        let mut app = App::<DefaultPlatform>::from_window(&window);
         app.add_root(widget::Widget::<T>::default());
-        let code: i32 = match platform.run(&mut app) {
+        let code: i32 = match platform.run(&mut window, &mut app) {
             Ok(()) => 0,
             Err(_) => 1,
         };

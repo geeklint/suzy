@@ -3,7 +3,7 @@
 
 #![allow(missing_docs)]
 
-use crate::graphics::{Color, DrawContext};
+use crate::graphics::Color;
 
 use super::{
     context::bindings::types::*,
@@ -62,26 +62,6 @@ impl Window {
         }
     }
 
-    pub fn prepare_draw(
-        &mut self,
-        screen_size: [f32; 2],
-        first_pass: bool,
-    ) -> DrawContext<'_, OpenGlRenderPlatform> {
-        unsafe {
-            self.ctx.bindings.Enable(BLEND);
-            self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
-        }
-        if first_pass {
-            super::DrawContext::gather_textures(&mut self.ctx)
-        } else {
-            let [screen_width, screen_height] = screen_size;
-            let matrix = Mat4::translate(-1.0, -1.0)
-                * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);
-            let batch_pool = super::renderer::BatchPool::new(matrix);
-            super::DrawContext::main_draw_pass(&mut self.ctx, batch_pool)
-        }
-    }
-
     pub fn draw_app<P>(&mut self, app: &mut crate::app::App<P>)
     where
         P: crate::platform::Platform<Renderer = OpenGlRenderPlatform>,
@@ -97,12 +77,12 @@ impl Window {
             * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);
         app.draw(&mut super::DrawContext::gather_textures(&mut self.ctx));
         self.ctx.run_texture_populators();
-        let current_batches = super::renderer::BatchPool::new(matrix);
+        let mut current_batches = super::renderer::BatchPool::new(matrix);
         app.draw(&mut super::DrawContext::main_draw_pass(
             &mut self.ctx,
-            current_batches,
+            &mut current_batches,
         ));
-        //super::renderer::render(&mut self.ctx, current_batches);
+        super::renderer::render(&mut self.ctx, current_batches);
     }
 
     /// Issue opengl call to clear the screen.
@@ -147,6 +127,7 @@ impl Window {
         P: crate::platform::Platform<Renderer = OpenGlRenderPlatform>,
     {
         app.update_watches();
+        self.clear();
         self.draw_app(app);
         self.take_screenshot()
     }

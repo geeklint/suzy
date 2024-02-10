@@ -3,10 +3,7 @@
 
 //! Types associated with the creation and control of windows.
 
-use crate::{
-    graphics::{Color, DrawContext},
-    platform::RenderPlatform,
-};
+use crate::{graphics::Color, platform::RenderPlatform};
 
 /// A structure which defines the initial creation parameters for a window
 pub struct WindowBuilder {
@@ -54,12 +51,6 @@ pub trait Window<P>
 where
     P: ?Sized + RenderPlatform,
 {
-    /// Prepare to draw to this window, create a DrawContext.
-    fn prepare_draw(
-        &mut self,
-        pass_arg: Option<P::DrawPassInfo>,
-    ) -> DrawContext<'_, P>;
-
     /// Take a screenshot of the contents of window.
     fn take_screenshot(&mut self) -> Box<[u8]>;
 

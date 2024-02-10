@@ -4,7 +4,7 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::{App, AppTestingExt},
+    app::App,
     dims::{Padding2d, Rect},
     graphics::{Color, Conditional},
     platforms::{
@@ -53,9 +53,8 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 
 #[test]
 fn button() {
-    let window = unsafe { TestEnvWindow::new(480, 360) };
-    let mut app = App::<TestPlatform>::from_window(window);
-    let mut window = app.screenshot_tmp();
+    let mut window = unsafe { TestEnvWindow::new(480, 360) };
+    let mut app = App::<TestPlatform>::from_window(&window);
     app.add_root(Widget::<Root>::default());
     let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {

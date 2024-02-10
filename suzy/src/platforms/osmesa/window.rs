@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-use crate::{graphics::Color, graphics::DrawContext, window::Window};
+use crate::{graphics::Color, window::Window};
 
 use crate::platforms::opengl;
 
@@ -68,15 +68,6 @@ impl OsMesaWindow {
 }
 
 impl Window<opengl::OpenGlRenderPlatform> for OsMesaWindow {
-    fn prepare_draw(
-        &mut self,
-        frame_arg: Option<()>,
-    ) -> DrawContext<'_, opengl::OpenGlRenderPlatform> {
-        let size = [self.width.into(), self.height.into()];
-        self.gl_win.clear();
-        self.gl_win.prepare_draw(size, frame_arg.is_none())
-    }
-
     fn take_screenshot(&mut self) -> Box<[u8]> {
         self.gl_win.take_screenshot()
     }

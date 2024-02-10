@@ -5,7 +5,7 @@ use std::time;
 
 use drying_paint::WatchedValueCore;
 
-use crate::{platform::Platform, pointer::PointerEventData, window::Window};
+use crate::{platform::Platform, pointer::PointerEventData};
 
 use super::App;
 
@@ -27,8 +27,6 @@ pub trait AppTestingExt {
         let frame_time = time::Duration::from_nanos(16666667);
         self.next_frame(frame_time);
     }
-
-    fn screenshot_tmp(&self) -> ScreenshotTaker;
 }
 
 impl<P: Platform> AppTestingExt for App<P> {
@@ -53,25 +51,5 @@ impl<P: Platform> AppTestingExt for App<P> {
             x: px,
             y: py,
         });
-    }
-
-    fn screenshot_tmp(&self) -> ScreenshotTaker {
-        ScreenshotTaker
-    }
-}
-
-pub struct ScreenshotTaker;
-
-impl ScreenshotTaker {
-    pub fn draw_and_take_screenshot<P>(
-        &mut self,
-        app: &mut App<P>,
-    ) -> Box<[u8]>
-    where
-        P: Platform,
-    {
-        app.update_watches();
-        app.loop_draw();
-        app.window.take_screenshot()
     }
 }

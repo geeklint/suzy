@@ -4,16 +4,15 @@
 #![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
 
 use suzy::{
-    app::{App, AppTestingExt},
+    app::App,
     graphics::Color,
     platforms::{TestEnvWindow, TestPlatform},
 };
 
 #[test]
 fn smoke() {
-    let window = unsafe { TestEnvWindow::new(480, 360) };
-    let mut app = App::<TestPlatform>::from_window(window);
-    let mut window = app.screenshot_tmp();
+    let mut window = unsafe { TestEnvWindow::new(480, 360) };
+    let mut app = App::<TestPlatform>::from_window(&window);
     let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {
         let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);
