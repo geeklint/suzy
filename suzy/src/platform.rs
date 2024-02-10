@@ -20,9 +20,6 @@ pub mod graphics;
 pub trait Platform: 'static {
     /// The RenderPlatform this platform supports.
     type Renderer: RenderPlatform;
-
-    /// The type of window this platform creates.
-    type Window: crate::window::Window<Self::Renderer>;
 }
 
 /// A RenderPlatform provides tools to create Graphics.

@@ -11,7 +11,6 @@
 use crate::{graphics::Color, platforms::opengl};
 
 mod bindings;
-mod window;
 
 /// OS Mesa Platform.  See [the module level documentation](self)
 /// for more.
@@ -39,7 +38,6 @@ impl OsMesaPlatform {
 }
 
 impl crate::platform::Platform for OsMesaPlatform {
-    type Window = window::OsMesaWindow;
     type Renderer = opengl::OpenGlRenderPlatform;
 }
 

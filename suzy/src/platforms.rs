@@ -82,9 +82,7 @@ macro_rules! with_default_render_platform {
 
 #[cfg(feature = "platform_opengl")]
 pub struct TestEnvWindow {
-    width: u16,
-    height: u16,
-    gl_win: Box<dyn AsMut<opengl::Window>>,
+    _gl_win: Box<dyn AsMut<opengl::Window>>,
 }
 
 #[cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
@@ -92,27 +90,16 @@ impl TestEnvWindow {
     /// # Safety
     /// see [`TestEnvironment::initialize`]
     pub unsafe fn new(width: u16, height: u16) -> Self {
-        let gl_win = TEST_ENV.initialize(width, height);
-        Self {
-            width,
-            height,
-            gl_win,
-        }
+        let _gl_win = TEST_ENV.initialize(width, height);
+        Self { _gl_win }
     }
 
     pub fn draw_and_take_screenshot(
         &mut self,
         app: &mut crate::app::App<TestPlatform>,
     ) -> Box<[u8]> {
-        let gl_win = (*self.gl_win).as_mut();
+        let gl_win = (*self._gl_win).as_mut();
         gl_win.draw_and_take_screenshot(app)
-    }
-}
-
-#[cfg(feature = "platform_opengl")]
-impl crate::window::Window<opengl::OpenGlRenderPlatform> for TestEnvWindow {
-    fn size(&self) -> [f32; 2] {
-        [self.width.into(), self.height.into()]
     }
 }
 
@@ -123,6 +110,4 @@ pub struct TestPlatform;
 #[cfg(feature = "platform_opengl")]
 impl crate::platform::Platform for TestPlatform {
     type Renderer = opengl::OpenGlRenderPlatform;
-
-    type Window = TestEnvWindow;
 }

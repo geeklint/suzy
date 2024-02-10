@@ -10,18 +10,11 @@ use crate::{
 #[derive(Clone, Copy, Debug, Default)]
 pub struct NoGraphics;
 
-#[derive(Clone, Debug)]
-pub struct Window {
-    pub size: [f32; 2],
-}
-
 pub enum TextStyle {}
 pub enum Graphic {}
 
 impl Platform for NoGraphics {
     type Renderer = Self;
-
-    type Window = Window;
 }
 
 impl RenderPlatform for NoGraphics {
@@ -39,12 +32,6 @@ impl RenderPlatform for NoGraphics {
 impl crate::graphics::PlatformDrawContext<()> for NoGraphics {
     fn finish(self) -> Option<()> {
         None
-    }
-}
-
-impl crate::window::Window<NoGraphics> for Window {
-    fn size(&self) -> [f32; 2] {
-        self.size
     }
 }
 

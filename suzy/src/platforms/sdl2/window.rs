@@ -5,11 +5,7 @@ use std::convert::TryInto;
 
 use sdl2::video::WindowBuildError;
 
-use crate::{
-    graphics::Color,
-    platforms::opengl,
-    window::{self},
-};
+use crate::{graphics::Color, platforms::opengl};
 
 #[derive(Clone, Copy, Debug)]
 pub struct WindowSettings<'a> {
@@ -133,11 +129,5 @@ impl Window {
             .try_into()
             .expect("window sizes of 2^16 and greater are not supported");
         [width, height]
-    }
-}
-
-impl window::Window<opengl::OpenGlRenderPlatform> for Window {
-    fn size(&self) -> [f32; 2] {
-        self.logical_size()
     }
 }

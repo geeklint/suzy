@@ -85,7 +85,6 @@ pub mod units;
 pub mod watch;
 pub mod widget;
 pub mod widgets;
-pub mod window;
 
 /// The Suzy prelude contains exports of the most frequently-used types
 pub mod prelude {

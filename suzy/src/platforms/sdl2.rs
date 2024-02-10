@@ -19,7 +19,6 @@ pub struct SdlPlatform {
 }
 
 impl crate::platform::Platform for SdlPlatform {
-    type Window = window::Window;
     type Renderer = OpenGlRenderPlatform;
 }
 
