@@ -51,8 +51,5 @@ pub trait Window<P>
 where
     P: ?Sized + RenderPlatform,
 {
-    /// Take a screenshot of the contents of window.
-    fn take_screenshot(&mut self) -> Box<[u8]>;
-
     fn size(&self) -> [f32; 2];
 }

@@ -111,11 +111,6 @@ impl TestEnvWindow {
 
 #[cfg(feature = "platform_opengl")]
 impl crate::window::Window<opengl::OpenGlRenderPlatform> for TestEnvWindow {
-    fn take_screenshot(&mut self) -> Box<[u8]> {
-        let gl_win = (*self.gl_win).as_mut();
-        gl_win.take_screenshot()
-    }
-
     fn size(&self) -> [f32; 2] {
         [self.width.into(), self.height.into()]
     }
