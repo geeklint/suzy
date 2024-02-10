@@ -13,7 +13,6 @@ use crate::{
     platform::Platform,
     pointer::{PointerEvent, PointerEventData},
     widget::{self, Widget},
-    window::Window,
 };
 
 mod tester;
@@ -82,12 +81,11 @@ pub fn coarse_time() -> time::Instant {
 }
 
 impl<P: Platform> App<P> {
-    pub fn from_window(window: &P::Window) -> Self {
+    pub fn new(width: f32, height: f32) -> Self {
         use std::collections::HashMap;
 
         use crate::watch::WatchContext;
 
-        let [width, height] = window.size();
         let state = Rc::new(AppState::new_now(width, height));
 
         let watch_ctx: WatchContext<'static> = WatchContext::new();

@@ -12,7 +12,7 @@ use suzy::{
 #[test]
 fn smoke() {
     let mut window = unsafe { TestEnvWindow::new(480, 360) };
-    let mut app = App::<TestPlatform>::from_window(&window);
+    let mut app = App::<TestPlatform>::new(480.0, 360.0);
     let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {
         let color = Color::from_rgba8(chunk[0], chunk[1], chunk[2], chunk[3]);

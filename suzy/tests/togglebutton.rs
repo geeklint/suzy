@@ -99,7 +99,7 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
 #[test]
 fn togglebutton_group() {
     let mut window = unsafe { TestEnvWindow::new(480, 360) };
-    let mut app = App::<TestPlatform>::from_window(&window);
+    let mut app = App::<TestPlatform>::new(480.0, 360.0);
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);
     let mut root = Widget::<GroupRoot>::default();

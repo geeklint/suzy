@@ -6,7 +6,7 @@ use std::{cell::Cell, rc::Rc, time::Duration};
 use suzy::{
     animation::Animation,
     app::{App, AppTestingExt},
-    platforms::no_graphics::{NoGraphics, Window},
+    platforms::no_graphics::NoGraphics,
     widget::{self, Widget},
 };
 
@@ -32,9 +32,7 @@ impl widget::Content<NoGraphics> for Root {
 
 #[test]
 fn animation() {
-    let mut app = App::<NoGraphics>::from_window(&Window {
-        size: [480.0, 360.0],
-    });
+    let mut app = App::<NoGraphics>::new(480.0, 360.0);
     let value_output = Rc::new(Cell::new(142.0));
     let value_feedback = Rc::clone(&value_output);
     let mut root = Widget::<Root>::default();

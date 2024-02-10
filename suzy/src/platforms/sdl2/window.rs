@@ -115,7 +115,7 @@ impl Window {
         [hdpi, vdpi]
     }
 
-    pub(super) fn logical_size(&self) -> [f32; 2] {
+    pub fn logical_size(&self) -> [f32; 2] {
         const LIMIT: u32 = 1_u32 << 24_u8;
         let (width, height) = self.window.size();
         if width > LIMIT || height > LIMIT {
