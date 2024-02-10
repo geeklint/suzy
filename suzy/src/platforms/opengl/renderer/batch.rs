@@ -117,9 +117,8 @@ impl BatchPool {
                 vertices: VertexVec::default(),
                 indices: Vec::new(),
             });
-            let uv_rect = texture_cache
-                .lookup(&tex.id())
-                .map(|(_id, size)| tex.get_uv_rect(size))?;
+            let (_id, size) = texture_cache.lookup(&tex.id())?;
+            let uv_rect = tex.get_uv_rect(size);
             Some((index, uv_rect))
         });
         match found {
