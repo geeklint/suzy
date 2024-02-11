@@ -62,10 +62,10 @@ impl Window {
         }
     }
 
-    pub fn draw_app<P>(&mut self, app: &mut crate::app::App<P>)
-    where
-        P: crate::platform::Platform<Renderer = OpenGlRenderPlatform>,
-    {
+    pub fn draw_app(
+        &mut self,
+        app: &mut crate::app::App<OpenGlRenderPlatform>,
+    ) {
         use crate::watch::WatchedValueCore;
         let screen_width = app.state().window_width().get_unwatched();
         let screen_height = app.state().window_height().get_unwatched();
@@ -119,13 +119,10 @@ impl Window {
         buffer
     }
 
-    pub fn draw_and_take_screenshot<P>(
+    pub fn draw_and_take_screenshot(
         &mut self,
-        app: &mut crate::app::App<P>,
-    ) -> Box<[u8]>
-    where
-        P: crate::platform::Platform<Renderer = OpenGlRenderPlatform>,
-    {
+        app: &mut crate::app::App<OpenGlRenderPlatform>,
+    ) -> Box<[u8]> {
         app.update_watches();
         self.clear();
         self.draw_app(app);

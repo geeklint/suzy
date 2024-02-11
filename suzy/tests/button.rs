@@ -9,7 +9,7 @@ use suzy::{
     graphics::{Color, Conditional},
     platforms::{
         opengl::{OpenGlRenderPlatform, SlicedImage},
-        TestPlatform, TEST_ENV,
+        TEST_ENV,
     },
     pointer::{PointerAction, PointerEventData, PointerId},
     selectable::{Selectable, SelectionState},
@@ -54,7 +54,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 #[test]
 fn button() {
     let mut window = unsafe { TEST_ENV.initialize(480, 360) };
-    let mut app = App::<TestPlatform>::new(480.0, 360.0);
+    let mut app = App::<OpenGlRenderPlatform>::new(480.0, 360.0);
     app.add_root(Widget::<Root>::default());
     let capture = window.draw_and_take_screenshot(&mut app);
     for chunk in capture.chunks_exact(4) {

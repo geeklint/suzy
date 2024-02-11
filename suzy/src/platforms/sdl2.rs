@@ -34,7 +34,7 @@ impl SdlPlatform {
     pub fn run(
         self,
         window: &mut window::Window,
-        app: &mut crate::app::App<Self>,
+        app: &mut crate::app::App<super::opengl::OpenGlRenderPlatform>,
     ) -> Result<(), String> {
         let mut event_pump = self.sdl.event_pump()?;
         loop {
@@ -77,7 +77,9 @@ pub trait AppHandleSdlEvent {
     );
 }
 
-impl AppHandleSdlEvent for crate::app::App<SdlPlatform> {
+impl AppHandleSdlEvent
+    for crate::app::App<super::opengl::OpenGlRenderPlatform>
+{
     fn handle_event(
         &mut self,
         window: &mut window::Window,

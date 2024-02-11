@@ -5,7 +5,7 @@ use std::time;
 
 use drying_paint::WatchedValueCore;
 
-use crate::{platform::Platform, pointer::PointerEventData};
+use crate::{platform::RenderPlatform, pointer::PointerEventData};
 
 use super::App;
 
@@ -29,7 +29,7 @@ pub trait AppTestingExt {
     }
 }
 
-impl<P: Platform> AppTestingExt for App<P> {
+impl<P: RenderPlatform> AppTestingExt for App<P> {
     fn next_frame(&mut self, frame_time: time::Duration) {
         self.update_watches();
         let frame_time = self.state().time().get_unwatched() + frame_time;

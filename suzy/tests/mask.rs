@@ -9,7 +9,7 @@ use suzy::{
     graphics::Color,
     platforms::{
         opengl::{Mask, OpenGlRenderPlatform, SlicedImage},
-        TestPlatform, TEST_ENV,
+        TEST_ENV,
     },
     widget::{self, Widget},
 };
@@ -41,7 +41,7 @@ impl widget::Content<OpenGlRenderPlatform> for Root {
 #[test]
 fn mask_right_half() {
     let mut window = unsafe { TEST_ENV.initialize(480, 360) };
-    let mut app = App::<TestPlatform>::new(480.0, 360.0);
+    let mut app = App::<OpenGlRenderPlatform>::new(480.0, 360.0);
     app.add_root(Widget::<Root>::default());
     let capture = window.draw_and_take_screenshot(&mut app);
     let index = (capture.len() / 2) & ALIGN_MASK;

@@ -159,8 +159,7 @@ impl<T: ?Sized> Widget<T> {
         path: std::rc::Weak<std::cell::RefCell<Self>>,
         app: &mut crate::app::App<P>,
     ) where
-        T: Content<P::Renderer>,
-        P: crate::platform::Platform,
+        T: Content<P>,
     {
         let crate::app::App {
             watch_ctx, state, ..

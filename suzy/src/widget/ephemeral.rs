@@ -119,12 +119,11 @@ where
         f(&mut *wid_ref)
     }
 
-    pub(super) fn uninit_holder<P>(&self) -> Option<EphemeralHolder<T, P>> {
+    pub(super) fn uninit_holder(&self) -> Option<EphemeralHolder<T>> {
         (!self.ptr.initialized.get()).then(|| {
             self.ptr.initialized.set(true);
             EphemeralHolder {
                 ptr: Rc::downgrade(&self.ptr),
-                marker: std::marker::PhantomData,
             }
         })
     }
@@ -147,23 +146,21 @@ mod holder {
     use super::Inner;
 
     use crate::{app, watch, widget};
-    pub(in crate::widget) struct EphemeralHolder<T: ?Sized, P> {
+    pub(in crate::widget) struct EphemeralHolder<T: ?Sized> {
         pub(super) ptr: Weak<Inner<T>>,
-        pub(super) marker: std::marker::PhantomData<fn() -> P>,
     }
 
-    impl<T, P> Clone for EphemeralHolder<T, P>
+    impl<T> Clone for EphemeralHolder<T>
     where
         T: ?Sized,
     {
         fn clone(&self) -> Self {
             let ptr = Weak::clone(&self.ptr);
-            let marker = std::marker::PhantomData;
-            Self { ptr, marker }
+            Self { ptr }
         }
     }
 
-    impl<T, P, O> widget::receivers::Holder<O> for EphemeralHolder<T, P>
+    impl<T, O> widget::receivers::Holder<O> for EphemeralHolder<T>
     where
         O: ?Sized,
         T: ?Sized,
@@ -182,16 +179,17 @@ mod holder {
         }
     }
 
-    impl<T, P> EphemeralHolder<T, P>
+    impl<T> EphemeralHolder<T>
     where
-        T: ?Sized + widget::Content<P>,
-        P: 'static,
+        T: ?Sized,
     {
-        pub(crate) fn init(
+        pub(crate) fn init<P>(
             self,
             watch_ctx: &mut watch::WatchContext<'static, watch::DefaultOwner>,
             state: &Rc<app::AppState>,
-        ) {
+        ) where
+            T: widget::Content<P>,
+        {
             use crate::widget::receivers::WidgetInitImpl;
             T::desc(WidgetInitImpl {
                 watch_ctx,

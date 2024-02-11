@@ -10,7 +10,7 @@ use std::{cell::RefCell, rc::Rc, time};
 
 use crate::{
     dims::{Padding2d, Rect, SimpleRect},
-    platform::Platform,
+    platform::RenderPlatform,
     pointer::{PointerEvent, PointerEventData},
     widget::{self, Widget},
 };
@@ -29,7 +29,6 @@ pub type App<P> = app_struct::App<P>;
 
 mod app_struct {
     use crate::{
-        platform::Platform,
         pointer::PointerId,
         watch::WatchContext,
         widget::{AnonWidget, UniqueHandleId},
@@ -43,10 +42,10 @@ mod app_struct {
     /// See the [module-level documentation](crate::app) for more details.
     pub struct App<P>
     where
-        P: ?Sized + Platform,
+        P: ?Sized,
     {
         pub(crate) watch_ctx: WatchContext<'static>,
-        pub(super) roots: Vec<RootHolder<P::Renderer>>,
+        pub(super) roots: Vec<RootHolder<P>>,
         pub(super) pointer_grab_map: HashMap<PointerId, UniqueHandleId>,
         pub(crate) state: Rc<super::AppState>,
         pub(super) needs_draw: bool,
@@ -80,7 +79,7 @@ pub fn coarse_time() -> time::Instant {
         .expect("there is no valid app state to get coarse_time from")
 }
 
-impl<P: Platform> App<P> {
+impl<P> App<P> {
     pub fn new(width: f32, height: f32) -> Self {
         use std::collections::HashMap;
 
@@ -111,7 +110,8 @@ impl<P: Platform> App<P> {
     /// the app.
     pub fn add_root<T>(&mut self, mut widget: Widget<T>)
     where
-        T: widget::Content<P::Renderer>,
+        P: RenderPlatform,
+        T: widget::Content<P>,
     {
         let width = self.state.window_width.get_unwatched();
         let height = self.state.window_height.get_unwatched();
@@ -139,10 +139,10 @@ impl<P: Platform> App<P> {
         self.needs_draw = true;
     }
 
-    pub fn draw(
-        &mut self,
-        ctx: &mut crate::graphics::DrawContext<'_, P::Renderer>,
-    ) {
+    pub fn draw(&mut self, ctx: &mut crate::graphics::DrawContext<'_, P>)
+    where
+        P: RenderPlatform,
+    {
         for root in self.roots.iter_mut() {
             root.borrow_mut().draw(ctx);
         }

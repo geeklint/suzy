@@ -169,7 +169,7 @@ where
         )
         .expect("Failed to open window");
         let [width, height] = window.logical_size();
-        let mut app = App::<DefaultPlatform>::new(width, height);
+        let mut app = App::new(width, height);
         app.add_root(widget::Widget::<T>::default());
         let code: i32 = match platform.run(&mut window, &mut app) {
             Ok(()) => 0,

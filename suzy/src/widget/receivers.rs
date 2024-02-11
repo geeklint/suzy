@@ -149,7 +149,6 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
             dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
         >,
         Child: super::Content<Plat>,
-        Plat: 'static,
         Leaf: ?Sized + super::Content<Plat>,
         Path: 'static + Holder<DefaultOwner, Content = Leaf>,
     {
@@ -164,7 +163,7 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
                 let mut holder = None;
                 current_path.get_mut(owner, |content, _rect| {
                     holder = iter_fn(content, arg)
-                        .filter_map(|e| e.uninit_holder::<Plat>())
+                        .filter_map(|e| e.uninit_holder())
                         .next();
                 });
                 if let Some(widget) = holder {
@@ -177,7 +176,6 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
 
 impl<'a, Leaf, Plat, Path> Desc<Leaf, Plat> for WidgetInitImpl<'a, Path>
 where
-    Plat: 'static,
     Leaf: ?Sized + super::Content<Plat>,
     Path: 'static + Holder<DefaultOwner, Content = Leaf>,
 {
