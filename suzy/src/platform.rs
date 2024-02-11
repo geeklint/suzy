@@ -26,10 +26,7 @@ pub trait Platform: 'static {
 pub trait RenderPlatform: 'static {
     type DrawPassInfo;
     /// The shared context passed along to draw calls.
-    type DrawContextBuilder: for<'a> crate::graphics::BuildDrawContext<
-        'a,
-        Self::DrawPassInfo,
-    >;
+    type DrawContextBuilder: for<'a> crate::graphics::BuildDrawContext<'a>;
 
     /// The platform's graphic primitive for 9-sliced images.
     type SlicedImage: graphics::SlicedImage

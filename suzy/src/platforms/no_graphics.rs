@@ -29,12 +29,6 @@ impl RenderPlatform for NoGraphics {
     type Text = Graphic;
 }
 
-impl crate::graphics::PlatformDrawContext<()> for NoGraphics {
-    fn finish(self) -> Option<()> {
-        None
-    }
-}
-
 impl graphics::TextStyle for TextStyle {
     fn with_size_and_color(_size: f32, _color: Color) -> Self {
         unimplemented!("Can't construct TextStyle for NoGraphics")

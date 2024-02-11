@@ -16,7 +16,7 @@ mod color;
 mod context;
 
 pub use color::{Color, ParseColorError};
-pub use context::{BuildDrawContext, DrawContext, PlatformDrawContext};
+pub use context::{BuildDrawContext, DrawContext};
 
 use crate::platform::RenderPlatform;
 

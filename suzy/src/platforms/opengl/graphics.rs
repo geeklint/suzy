@@ -25,12 +25,6 @@ pub struct DrawContext<'a> {
     pass: DrawPass<'a>,
 }
 
-impl<'a> crate::graphics::PlatformDrawContext<()> for DrawContext<'a> {
-    fn finish(self) -> Option<()> {
-        unimplemented!()
-    }
-}
-
 impl<'a> DrawContext<'a> {
     pub(crate) fn gather_textures(
         context: &'a mut super::context::OpenGlContext,
