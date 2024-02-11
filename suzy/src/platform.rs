@@ -9,9 +9,6 @@
 //! SDL2.  A windowless OSMesa interface is also included, intended for
 //! automated testing.
 
-mod event;
-pub use event::SimpleEventLoopState;
-
 use crate::dims::Rect;
 
 pub mod graphics;
