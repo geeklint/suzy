@@ -36,7 +36,7 @@ pub trait TestEnvironment {
         &self,
         width: u16,
         height: u16,
-    ) -> Box<dyn AsMut<opengl::Window>>;
+    ) -> Box<dyn std::ops::DerefMut<Target = opengl::Window>>;
 }
 
 #[cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
@@ -78,29 +78,6 @@ macro_rules! with_default_render_platform {
         pub $Def $Item < $P >
             $($body)*
     };
-}
-
-#[cfg(feature = "platform_opengl")]
-pub struct TestEnvWindow {
-    _gl_win: Box<dyn AsMut<opengl::Window>>,
-}
-
-#[cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
-impl TestEnvWindow {
-    /// # Safety
-    /// see [`TestEnvironment::initialize`]
-    pub unsafe fn new(width: u16, height: u16) -> Self {
-        let _gl_win = TEST_ENV.initialize(width, height);
-        Self { _gl_win }
-    }
-
-    pub fn draw_and_take_screenshot(
-        &mut self,
-        app: &mut crate::app::App<TestPlatform>,
-    ) -> Box<[u8]> {
-        let gl_win = (*self._gl_win).as_mut();
-        gl_win.draw_and_take_screenshot(app)
-    }
 }
 
 #[cfg(feature = "platform_opengl")]

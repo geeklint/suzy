@@ -8,6 +8,8 @@
 //! no window to recieve events from.  Mostly it should be used for
 //! automation, e.g. tests.
 
+use std::ops::{Deref, DerefMut};
+
 use crate::{graphics::Color, platforms::opengl};
 
 mod bindings;
@@ -55,7 +57,7 @@ impl super::TestEnvironment for TestEnvironment {
         &self,
         width: u16,
         height: u16,
-    ) -> Box<dyn AsMut<opengl::Window>> {
+    ) -> Box<dyn DerefMut<Target = super::opengl::Window>> {
         const GL_RGBA: std::ffi::c_uint = 0x1908;
         const GL_UNSIGNED_BYTE: std::ffi::c_uint = 0x1401;
         let buffer = vec![0_u8; 4 * usize::from(width) * usize::from(height)];
@@ -96,8 +98,16 @@ impl super::TestEnvironment for TestEnvironment {
             }
         }
 
-        impl AsMut<opengl::Window> for OsMesaTestEnvironment {
-            fn as_mut(&mut self) -> &mut opengl::Window {
+        impl Deref for OsMesaTestEnvironment {
+            type Target = opengl::Window;
+
+            fn deref(&self) -> &Self::Target {
+                &self.gl_win
+            }
+        }
+
+        impl DerefMut for OsMesaTestEnvironment {
+            fn deref_mut(&mut self) -> &mut Self::Target {
                 &mut self.gl_win
             }
         }

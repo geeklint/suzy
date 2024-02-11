@@ -9,7 +9,7 @@ use suzy::{
     graphics::{Color, Conditional},
     platforms::{
         opengl::{OpenGlRenderPlatform, SlicedImage},
-        TestEnvWindow, TestPlatform,
+        TestPlatform, TEST_ENV,
     },
     selectable::{Selectable, SelectionState},
     widget::{self, Widget, WidgetRect},
@@ -98,7 +98,7 @@ impl widget::Content<OpenGlRenderPlatform> for GroupRoot {
 
 #[test]
 fn togglebutton_group() {
-    let mut window = unsafe { TestEnvWindow::new(480, 360) };
+    let mut window = unsafe { TEST_ENV.initialize(480, 360) };
     let mut app = App::<TestPlatform>::new(480.0, 360.0);
     let group_value_output = std::rc::Rc::default();
     let group_value_feedback = std::rc::Rc::clone(&group_value_output);

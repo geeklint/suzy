@@ -3,6 +3,8 @@
 
 #![allow(missing_docs)]
 
+use std::ops::{Deref, DerefMut};
+
 use crate::{
     graphics::Color,
     platforms::opengl::OpenGlRenderPlatform,
@@ -222,7 +224,7 @@ impl super::TestEnvironment for TestEnvironment {
         &self,
         width: u16,
         height: u16,
-    ) -> Box<dyn AsMut<super::opengl::Window>> {
+    ) -> Box<dyn DerefMut<Target = super::opengl::Window>> {
         let sdl = sdl2::init().expect("Failed to initialize SDL2");
         let window = Window::new_window(
             &sdl,
@@ -236,6 +238,18 @@ impl super::TestEnvironment for TestEnvironment {
         .expect("failed to open window");
         struct Wrapper {
             window: Window,
+        }
+        impl Deref for Wrapper {
+            type Target = super::opengl::Window;
+
+            fn deref(&self) -> &Self::Target {
+                &self.window.gl_win
+            }
+        }
+        impl DerefMut for Wrapper {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.window.gl_win
+            }
         }
         impl AsMut<super::opengl::Window> for Wrapper {
             fn as_mut(&mut self) -> &mut super::opengl::Window {
