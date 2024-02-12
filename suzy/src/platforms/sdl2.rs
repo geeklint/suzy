@@ -20,10 +20,6 @@ pub struct SdlPlatform {
     pub sdl: sdl2::Sdl,
 }
 
-impl crate::platform::Platform for SdlPlatform {
-    type Renderer = OpenGlRenderPlatform;
-}
-
 impl SdlPlatform {
     pub fn new() -> Self {
         SdlPlatform {
@@ -34,7 +30,7 @@ impl SdlPlatform {
     pub fn run(
         self,
         window: &mut window::Window,
-        app: &mut crate::app::App<super::opengl::OpenGlRenderPlatform>,
+        app: &mut crate::app::App<OpenGlRenderPlatform>,
     ) -> Result<(), String> {
         let mut event_pump = self.sdl.event_pump()?;
         loop {
@@ -56,6 +52,7 @@ impl SdlPlatform {
                 }
             }
             app.update_watches();
+            window.gl_win.clear();
             window.gl_win.draw_app(app);
             window.flip();
         }
@@ -77,9 +74,7 @@ pub trait AppHandleSdlEvent {
     );
 }
 
-impl AppHandleSdlEvent
-    for crate::app::App<super::opengl::OpenGlRenderPlatform>
-{
+impl AppHandleSdlEvent for crate::app::App<OpenGlRenderPlatform> {
     fn handle_event(
         &mut self,
         window: &mut window::Window,

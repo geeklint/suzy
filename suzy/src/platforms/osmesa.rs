@@ -14,41 +14,6 @@ use crate::{graphics::Color, platforms::opengl};
 
 mod bindings;
 
-/// OS Mesa Platform.  See [the module level documentation](self)
-/// for more.
-#[derive(Debug)]
-pub struct OsMesaPlatform {
-    ctx: bindings::OsMesaContext,
-}
-
-impl Drop for OsMesaPlatform {
-    fn drop(&mut self) {
-        unsafe {
-            bindings::OSMesaDestroyContext(self.ctx);
-        }
-    }
-}
-
-impl OsMesaPlatform {
-    pub fn new() -> Self {
-        let format = 0x1908; // GL_RGBA
-        let ctx = unsafe {
-            bindings::OSMesaCreateContext(format, std::ptr::null_mut())
-        };
-        Self { ctx }
-    }
-}
-
-impl crate::platform::Platform for OsMesaPlatform {
-    type Renderer = opengl::OpenGlRenderPlatform;
-}
-
-impl Default for OsMesaPlatform {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[derive(Clone, Copy, Debug, Default)]
 pub(super) struct TestEnvironment;
 

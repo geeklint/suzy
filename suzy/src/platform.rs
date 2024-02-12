@@ -13,12 +13,6 @@ use crate::dims::Rect;
 
 pub mod graphics;
 
-/// A platform handles window creation and manages an event loop.
-pub trait Platform: 'static {
-    /// The RenderPlatform this platform supports.
-    type Renderer: RenderPlatform;
-}
-
 /// A RenderPlatform provides tools to create Graphics.
 pub trait RenderPlatform: 'static {
     /// The shared context passed along to draw calls.

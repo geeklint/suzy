@@ -154,10 +154,9 @@ where
         use crate::{
             app::App,
             platforms::sdl2::{Window, WindowSettings},
-            platforms::DefaultPlatform,
         };
 
-        let platform = DefaultPlatform {
+        let platform = crate::platforms::sdl2::SdlPlatform {
             sdl: sdl2::init().expect("Failed to initialize SDL2"),
         };
         let mut window = Window::new_window(

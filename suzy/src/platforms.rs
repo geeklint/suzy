@@ -14,9 +14,6 @@ pub mod sdl2;
 #[cfg(feature = "platform_osmesa")]
 pub mod osmesa;
 
-#[cfg(feature = "platform_sdl")]
-pub type DefaultPlatform = self::sdl2::SdlPlatform;
-
 #[cfg(feature = "platform_opengl")]
 pub type DefaultRenderPlatform = self::opengl::OpenGlRenderPlatform;
 
@@ -78,13 +75,4 @@ macro_rules! with_default_render_platform {
         pub $Def $Item < $P >
             $($body)*
     };
-}
-
-#[cfg(feature = "platform_opengl")]
-#[derive(Clone, Copy, Debug, Default)]
-pub struct TestPlatform;
-
-#[cfg(feature = "platform_opengl")]
-impl crate::platform::Platform for TestPlatform {
-    type Renderer = opengl::OpenGlRenderPlatform;
 }

@@ -4,7 +4,7 @@
 use crate::{
     dims::Rect,
     graphics::Color,
-    platform::{graphics, Platform, RenderPlatform},
+    platform::{graphics, RenderPlatform},
 };
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -12,10 +12,6 @@ pub struct NoGraphics;
 
 pub enum TextStyle {}
 pub enum Graphic {}
-
-impl Platform for NoGraphics {
-    type Renderer = Self;
-}
 
 impl RenderPlatform for NoGraphics {
     type DrawContextBuilder = fn(&mut ()) -> Self;
