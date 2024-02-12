@@ -21,7 +21,6 @@ pub trait Platform: 'static {
 
 /// A RenderPlatform provides tools to create Graphics.
 pub trait RenderPlatform: 'static {
-    type DrawPassInfo;
     /// The shared context passed along to draw calls.
     type DrawContextBuilder: for<'a> crate::graphics::BuildDrawContext<'a>;
 

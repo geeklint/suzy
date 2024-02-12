@@ -18,8 +18,6 @@ impl Platform for NoGraphics {
 }
 
 impl RenderPlatform for NoGraphics {
-    type DrawPassInfo = ();
-
     type DrawContextBuilder = fn(&mut ()) -> Self;
 
     type SlicedImage = Graphic;
