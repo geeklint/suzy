@@ -5,19 +5,19 @@
 
 pub mod no_graphics;
 
-#[cfg(feature = "platform_opengl")]
+#[cfg(feature = "platform-opengl")]
 pub mod opengl;
 
-#[cfg(feature = "platform_sdl")]
+#[cfg(feature = "platform-sdl")]
 pub mod sdl2;
 
-#[cfg(feature = "platform_osmesa")]
+#[cfg(feature = "platform-osmesa")]
 pub mod osmesa;
 
-#[cfg(feature = "platform_opengl")]
+#[cfg(feature = "platform-opengl")]
 pub type DefaultRenderPlatform = self::opengl::OpenGlRenderPlatform;
 
-#[cfg(feature = "platform_opengl")]
+#[cfg(feature = "platform-opengl")]
 pub trait TestEnvironment {
     /// # Safety
     ///
@@ -36,20 +36,20 @@ pub trait TestEnvironment {
     ) -> Box<dyn std::ops::DerefMut<Target = opengl::Window>>;
 }
 
-#[cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
+#[cfg(any(feature = "platform-osmesa", feature = "platform-sdl"))]
 #[allow(unreachable_code)]
 pub const TEST_ENV: &dyn TestEnvironment = 'test_env: {
-    #[cfg(feature = "platform_osmesa")]
+    #[cfg(feature = "platform-osmesa")]
     {
         break 'test_env &osmesa::TestEnvironment;
     }
-    #[cfg(feature = "platform_sdl")]
+    #[cfg(feature = "platform-sdl")]
     {
         break 'test_env &sdl2::TestEnvironment;
     }
 };
 
-#[cfg(feature = "platform_opengl")]
+#[cfg(feature = "platform-opengl")]
 macro_rules! with_default_render_platform {
     ($(#[$Attr:meta])* pub $Def:ident $Item:ident < $T:ident, $P:ident > $($body:tt)* ) => {
         $(#[$Attr])*
@@ -63,7 +63,7 @@ macro_rules! with_default_render_platform {
     };
 }
 
-#[cfg(not(feature = "platform_opengl"))]
+#[cfg(not(feature = "platform-opengl"))]
 macro_rules! with_default_render_platform {
     ($(#[$Attr:meta])* pub $Def:ident $Item:ident < $T:ident, $P:ident > $($body:tt)* ) => {
         $(#[$Attr])*

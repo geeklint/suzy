@@ -22,7 +22,7 @@ with_default_render_platform! {
     /// For example, if a custom widget contains two buttons as children:
     ///
     #[cfg_attr(
-        feature = "platform_opengl",
+        feature = "platform-opengl",
         doc = "```rust
 # use suzy::widget;
 # use suzy::selectable::SelectableIgnored;
@@ -46,7 +46,7 @@ impl widget::Content for MyWidgetData {
     /// Or, if the custom widget only has a single graphic:
     ///
     #[cfg_attr(
-        feature = "platform_opengl",
+        feature = "platform-opengl",
         doc = "```rust
 # use suzy::widget::{self, *};
 # type MyGraphic = ();

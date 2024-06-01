@@ -28,7 +28,7 @@
 //! button will be updated to match.
 //!
 #![cfg_attr(
-    feature = "platform_opengl",
+    feature = "platform-opengl",
     doc = "```rust
 # use suzy::{widget, dims::Rect, selectable::SelectableIgnored};
 # type ButtonContent = SelectableIgnored<()>;

@@ -21,10 +21,10 @@ mod font;
 use calc::{CalcParams, FontCharCalc};
 pub use font::Font;
 
-#[cfg(feature = "default_font")]
+#[cfg(feature = "default-font")]
 mod default_font;
 
-#[cfg(not(feature = "default_font"))]
+#[cfg(not(feature = "default-font"))]
 mod default_font {
     #[track_caller]
     pub fn default_font() -> std::rc::Rc<super::font::Font> {

@@ -21,7 +21,7 @@
 //! The most basic app template will look something like this:
 //!
 #![cfg_attr(
-    feature = "platform_opengl",
+    feature = "platform-opengl",
     doc = "```rust,no_run
 # use suzy::widget;
 #[derive(Default)]
@@ -38,7 +38,7 @@ impl widget::Content for Data {
     Data::run_as_app();
 "
 )]
-#![cfg_attr(feature = "platform_opengl", doc = "```")]
+#![cfg_attr(feature = "platform-opengl", doc = "```")]
 //!
 //! ## Watch System
 //!
@@ -50,7 +50,7 @@ impl widget::Content for Data {
 //! parent:
 //!
 #![cfg_attr(
-    feature = "platform_opengl",
+    feature = "platform-opengl",
     doc = "```rust
 # use suzy::widget::{self, Widget};
 # use suzy::dims::Rect;

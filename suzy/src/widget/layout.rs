@@ -9,7 +9,7 @@
 //! different layout types.
 //!
 #![cfg_attr(
-    feature = "platform_opengl",
+    feature = "platform-opengl",
     doc = "```rust
 use suzy::dims::Rect;
 use suzy::widget;

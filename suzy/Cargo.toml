@@ -1,7 +1,6 @@
 [package]
 name = "suzy"
 version = "0.3.0-dev0"
-authors = ["Violet <violet@geeklint.com>"]
 edition = "2018"
 description = "GUI framework based on observer pattern"
 homepage = "https://github.com/geeklint/suzy"
@@ -9,15 +8,16 @@ repository = "https://github.com/geeklint/suzy"
 readme = "README.md"
 keywords = ["gui", "kivy", "widgets"]
 license = "Apache-2.0 OR MIT OR Zlib"
+categories = ["gui"]
 
 [features]
 default = []
-quickstart = ["platform_sdl", "inline_tweak", "default_font"]
+quickstart = ["platform-sdl", "inline_tweak", "default-font"]
 
-platform_opengl = []
-platform_osmesa = ["platform_opengl"]
-default_font = ["suzy-default-font"]
-platform_sdl = ["sdl2", "platform_opengl"]
+platform-opengl = []
+platform-osmesa = ["platform-opengl"]
+default-font = ["suzy-default-font"]
+platform-sdl = ["sdl2", "platform-opengl"]
 
 [dependencies]
 drying_paint = "0.5.5"
@@ -25,7 +25,7 @@ inline_tweak = { version = "1.0.8", optional = true }
 suzy-default-font = { path = "../suzy-default-font", optional = true }
 
 [dependencies.sdl2]
-version = "0.33"
+version = "0.36.0"
 optional = true
 default-features = false
 

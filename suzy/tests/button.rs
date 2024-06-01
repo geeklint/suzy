@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
-#![cfg(any(feature = "platform_osmesa", feature = "platform_sdl"))]
+#![cfg(any(feature = "platform-osmesa", feature = "platform-sdl"))]
 
 use suzy::{
     app::App,

@@ -157,7 +157,7 @@ impl<T: Default> Default for ButtonBehavior<T> {
 /// A simple button.
 ///
 /// Use `Button::on_click` like a WatchedEvent to handle button clicks
-#[cfg(feature = "platform_opengl")]
+#[cfg(feature = "platform-opengl")]
 pub type Button<
     T = DefaultButtonContent<crate::platforms::DefaultRenderPlatform>,
 > = Widget<ButtonBehavior<T>>;
@@ -165,7 +165,7 @@ pub type Button<
 /// A simple button.
 ///
 /// Use `Button::on_click` like a WatchedEvent to handle button clicks
-#[cfg(not(feature = "platform_opengl"))]
+#[cfg(not(feature = "platform-opengl"))]
 pub type Button<T> = Widget<ButtonBehavior<T>>;
 
 pub struct DefaultButtonContent<P>

@@ -104,7 +104,7 @@ impl<T> Default for State<T> {
 /// frames.
 ///
 #[cfg_attr(
-    feature = "platform_opengl",
+    feature = "platform-opengl",
     doc = r#"```rust,no_run
 # use suzy::dims::Rect;
 # use suzy::widget::{self, *};

@@ -47,7 +47,7 @@ impl SdlPlatform {
                     }
                     event => app.handle_event(window, event, || {
                         let state = event_pump.mouse_state();
-                        (state.x() as f32, state.y() as f32)
+                        [state.x() as f32, state.y() as f32]
                     }),
                 }
             }
@@ -70,7 +70,7 @@ pub trait AppHandleSdlEvent {
         &mut self,
         window: &mut window::Window,
         event: sdl2::event::Event,
-        mouse_pos: impl FnOnce() -> (f32, f32),
+        mouse_pos: impl FnOnce() -> [f32; 2],
     );
 }
 
@@ -79,7 +79,7 @@ impl AppHandleSdlEvent for crate::app::App<OpenGlRenderPlatform> {
         &mut self,
         window: &mut window::Window,
         event: sdl2::event::Event,
-        mouse_pos: impl FnOnce() -> (f32, f32),
+        mouse_pos: impl FnOnce() -> [f32; 2],
     ) {
         use sdl2::event::{Event, WindowEvent};
         match event {
@@ -171,7 +171,7 @@ impl AppHandleSdlEvent for crate::app::App<OpenGlRenderPlatform> {
             }
             Event::MouseWheel { x, y, .. } => {
                 let height = self.state().window_height().get_unwatched();
-                let (mouse_x, mouse_y) = mouse_pos();
+                let [mouse_x, mouse_y] = mouse_pos();
                 let xrel = x as f32 * 125.0;
                 let yrel = -(y as f32 * 125.0);
                 let x = mouse_x;

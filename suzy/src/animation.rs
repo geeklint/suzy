@@ -14,7 +14,7 @@
 //! Animate a color to green with a speed of 1.
 //!
 #![cfg_attr(
-    feature = "platform_opengl",
+    feature = "platform-opengl",
     doc = r#"```rust
 # use suzy::{animation::Animation, widget, graphics::Color};
 struct MyWidgetData {

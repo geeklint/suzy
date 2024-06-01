@@ -11,12 +11,12 @@ use crate::{
 };
 
 /// A widget which displays some text
-#[cfg(feature = "platform_opengl")]
+#[cfg(feature = "platform-opengl")]
 pub type Label<P = crate::platforms::DefaultRenderPlatform> =
     Widget<LabelContent<P>>;
 
 /// A widget which displays some text
-#[cfg(not(feature = "platform_opengl"))]
+#[cfg(not(feature = "platform-opengl"))]
 pub type Label<P> = Widget<LabelContent<P>>;
 
 /// The content for a widget which displays some text

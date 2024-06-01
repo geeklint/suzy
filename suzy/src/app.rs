@@ -21,10 +21,10 @@ mod values;
 pub use tester::AppTestingExt;
 pub(crate) use values::AppState;
 
-#[cfg(feature = "platform_opengl")]
+#[cfg(feature = "platform-opengl")]
 pub type App<P = crate::platforms::DefaultRenderPlatform> = app_struct::App<P>;
 
-#[cfg(not(feature = "platform_opengl"))]
+#[cfg(not(feature = "platform-opengl"))]
 pub type App<P> = app_struct::App<P>;
 
 mod app_struct {

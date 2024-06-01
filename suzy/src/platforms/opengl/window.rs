@@ -14,9 +14,6 @@ use super::{
     {Mat4, OpenGlContext, OpenGlRenderPlatform},
 };
 
-/// opengl::Window provides a subset of the methods to implement the Window
-/// trait. It can be embedded in another window implementation which
-/// provides an opengl context.
 pub struct Window {
     ctx: OpenGlContext,
 }
@@ -44,8 +41,6 @@ impl Window {
         Color::from_rgba(array[0], array[1], array[2], array[3])
     }
 
-    /// Set the viewport. Wrapping windows will probably want to do this
-    /// when they detect a resize.
     pub fn viewport(&mut self, x: i16, y: i16, width: u16, height: u16) {
         unsafe {
             self.ctx.bindings.Viewport(
