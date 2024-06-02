@@ -87,7 +87,7 @@ impl Lerp for f64 {
     type Output = f64;
 
     fn lerp(from: &f64, to: &f64, t: f32) -> f64 {
-        let t = t as f64;
+        let t = f64::from(t);
         let diff = to - from;
         if t <= 0.5_f64 {
             from + diff * t
@@ -151,6 +151,7 @@ pub struct Animation<T> {
 
 impl<T> Animation<T> {
     /// Create a new animation.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -209,7 +210,7 @@ impl<T> Animation<T> {
 
     /// Proceed as though the remaining time in the animation has passed,
     /// causing the next update to apply the final value and notify
-    /// on_complete.
+    /// [`Self::on_complete`].
     ///
     /// Does nothing if the animation is not currently running.
     pub fn finish_now(&mut self) {
@@ -261,9 +262,8 @@ impl<T: Lerp<Output = T>> Animation<T> {
     /// closure which calls this method will be re-run every frame with
     /// an interpolated value while the animation is in-progress.
     pub fn apply(&mut self, target: &mut T) {
-        let (ref_time, end_value) = match &*self.current {
-            Some(value) => value,
-            None => return,
+        let Some((ref_time, end_value)) = &*self.current else {
+            return;
         };
         let start_value = match self.start_value {
             Some(ref start) => start,

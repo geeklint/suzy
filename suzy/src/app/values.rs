@@ -9,7 +9,7 @@ type WatchedCellCore<T> =
     crate::watch::WatchedCellCore<'static, T, DefaultOwner>;
 
 thread_local! {
-    static CURRENT: Cell<Option<Rc<AppState>>> = Cell::new(None);
+    static CURRENT: Cell<Option<Rc<AppState>>> = const { Cell::new(None) };
 }
 
 pub struct AppState {

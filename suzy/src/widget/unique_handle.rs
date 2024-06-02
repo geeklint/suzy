@@ -19,10 +19,12 @@ pub struct UniqueHandle {
 }
 
 impl UniqueHandle {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn id(&self) -> UniqueHandleId {
         UniqueHandleId {
             ptr: Rc::downgrade(&self.ptr),

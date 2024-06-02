@@ -70,7 +70,8 @@ impl Default for SlicedImage {
 }
 
 impl SlicedImage {
-    /// Create a new SlicedImage.
+    /// Create a new [`SlicedImage`].
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

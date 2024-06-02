@@ -143,7 +143,7 @@ impl<P> App<P> {
     where
         P: RenderPlatform,
     {
-        for root in self.roots.iter_mut() {
+        for root in &mut self.roots {
             root.borrow_mut().draw(ctx);
         }
     }
@@ -151,7 +151,7 @@ impl<P> App<P> {
     pub fn resize(&mut self, width: f32, height: f32) {
         self.state.window_width.set_external(width);
         self.state.window_height.set_external(height);
-        for root in self.roots.iter_mut() {
+        for root in &mut self.roots {
             let mut wid = root.borrow_mut();
             wid.set_horizontal_stretch(0.0, width);
             wid.set_vertical_stretch(0.0, height);

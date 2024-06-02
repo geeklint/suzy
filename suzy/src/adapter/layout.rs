@@ -11,7 +11,7 @@ use crate::{
 
 use super::Adaptable;
 
-/// An implementation of this trait is passed to AdapterLayout implementations.
+/// An implementation of this trait is passed to [`AdapterLayout`] implementations.
 ///
 /// It provides the utilities an adapter layout uses to control the view.
 pub trait AdapterLayoutInterface<Key, Data> {
@@ -40,7 +40,7 @@ pub trait AdapterLayoutInterface<Key, Data> {
         rest_position: [f32; 2],
     );
 
-    /// Get the number of times get_element has been called during this
+    /// Get the number of times [`Self::get_element`] has been called during this
     /// layout operation.
     fn num_active_elements(&self) -> usize;
 

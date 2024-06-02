@@ -105,6 +105,7 @@ impl widget::Content for MyWidgetData {
         }
 
         /// If this widget is used with RunAsApp, defines the window title.
+        #[must_use]
         fn app_title() -> String {
             let name = std::any::type_name::<Self>()
                 .rsplit("::")

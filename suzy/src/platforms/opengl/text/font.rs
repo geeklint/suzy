@@ -73,10 +73,12 @@ impl Font {
         height: u16,
         data: &[u8],
     ) -> TextureSize {
-        use crate::platforms::opengl::opengl_bindings::{
-            types::GLint, ALPHA, CLAMP_TO_EDGE, LINEAR, TEXTURE_MAG_FILTER,
-            TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T,
-            UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+        use crate::platforms::opengl::{
+            context::short_consts::{ALPHA, CLAMP_TO_EDGE, LINEAR},
+            opengl_bindings::{
+                TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S,
+                TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+            },
         };
 
         unsafe {
@@ -84,18 +86,18 @@ impl Font {
             gl.TexImage2D(
                 target,
                 0,
-                ALPHA as GLint,
+                ALPHA.into(),
                 width.into(),
                 height.into(),
                 0,
-                ALPHA,
+                ALPHA.into(),
                 UNSIGNED_BYTE,
                 data.as_ptr().cast(),
             );
-            gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR as GLint);
-            gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR as GLint);
-            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as GLint);
-            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as GLint);
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR.into());
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR.into());
+            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE.into());
+            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE.into());
         }
         TextureSize {
             image_width: width.into(),

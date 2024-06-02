@@ -34,6 +34,7 @@ impl<R: Rect> From<&R> for BoundingBox {
 }
 
 impl BoundingBox {
+    #[must_use]
     pub fn area(&self) -> f32 {
         let area = (self.right - self.left) * (self.top - self.bottom);
         if area.is_nan() {
@@ -43,12 +44,14 @@ impl BoundingBox {
         }
     }
 
+    #[must_use]
     pub fn overlaps(&self, other: &Self) -> bool {
         let x_overlaps = self.left < other.right && other.left < self.right;
         let y_overlaps = self.bottom < other.top && other.bottom < self.top;
         x_overlaps && y_overlaps
     }
 
+    #[must_use]
     pub fn merge(&self, other: &Self) -> Self {
         Self {
             left: self.left.min(other.left),
@@ -65,6 +68,7 @@ pub struct CoveredArea {
 }
 
 impl CoveredArea {
+    #[must_use]
     pub fn overlaps(&self, bb: &BoundingBox) -> bool {
         let [a, b] = &self.boxes;
         a.overlaps(bb) || b.overlaps(bb)

@@ -51,6 +51,7 @@ where
     /// If this graphic is strongly ordered, such that `after_children` should
     /// be called in reverse order as `before_children`, relative to other
     /// graphics.
+    #[must_use]
     fn ordered() -> bool {
         true
     }

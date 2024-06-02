@@ -13,7 +13,7 @@ use crate::dims::Rect;
 
 pub mod graphics;
 
-/// A RenderPlatform provides tools to create Graphics.
+/// A [`RenderPlatform`] provides tools to create Graphics.
 pub trait RenderPlatform: 'static {
     /// The shared context passed along to draw calls.
     type DrawContextBuilder: for<'a> crate::graphics::BuildDrawContext<'a>;

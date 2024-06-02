@@ -120,26 +120,32 @@ impl Convert<'_> {
         }
     }
 
+    #[must_use]
     pub fn to_inches(self) -> impl AxisRelativeValue {
         self.calc_dpi(|source, dpi| source / dpi)
     }
 
+    #[must_use]
     pub fn inches(self) -> impl AxisRelativeValue {
         self.calc_dpi(|source, dpi| source * dpi)
     }
 
+    #[must_use]
     pub fn to_mm(self) -> impl AxisRelativeValue {
         self.calc_dpi(|source, dpi| source / dpi * MM_PER_INCH)
     }
 
+    #[must_use]
     pub fn mm(self) -> impl AxisRelativeValue {
         self.calc_dpi(|source, dpi| source / MM_PER_INCH * dpi)
     }
 
+    #[must_use]
     pub fn to_cm(self) -> impl AxisRelativeValue {
         self.calc_dpi(|source, dpi| source / dpi * MM_PER_INCH / 10.0)
     }
 
+    #[must_use]
     pub fn cm(self) -> impl AxisRelativeValue {
         self.calc_dpi(|source, dpi| source * 10.0 / MM_PER_INCH * dpi)
     }
@@ -166,5 +172,16 @@ where
 
     fn vertical(self) -> f32 {
         (self.f)(self.source, self.dpi[1])
+    }
+}
+
+pub(crate) trait QuantizeU8 {
+    #[must_use]
+    fn quantize_u8(self) -> u8;
+}
+
+impl QuantizeU8 for f32 {
+    fn quantize_u8(self) -> u8 {
+        (self * 255.0).clamp(0.0, 255.0).round_ties_even() as u8
     }
 }

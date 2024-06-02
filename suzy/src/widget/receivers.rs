@@ -162,9 +162,8 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
                 maybe_more.watched(arg);
                 let mut holder = None;
                 current_path.get_mut(owner, |content, _rect| {
-                    holder = iter_fn(content, arg)
-                        .filter_map(|e| e.uninit_holder())
-                        .next();
+                    holder =
+                        iter_fn(content, arg).find_map(|e| e.uninit_holder());
                 });
                 if let Some(widget) = holder {
                     maybe_more.trigger_external();

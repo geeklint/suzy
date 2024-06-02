@@ -3,7 +3,10 @@
 
 use std::fmt::{self, LowerHex, UpperHex};
 
-use crate::animation::{Lerp, LerpDistance};
+use crate::{
+    animation::{Lerp, LerpDistance},
+    units::QuantizeU8,
+};
 
 /// A type which represents a color with 32 bit floating point components.
 ///
@@ -58,7 +61,7 @@ impl Color {
             srgb_compress(self.r),
             srgb_compress(self.g),
             srgb_compress(self.b),
-            (self.a * 255.0).clamp(0.0, 255.0).round() as u8,
+            self.a.quantize_u8(),
         ]
     }
 }
@@ -158,7 +161,7 @@ fn srgb_compress(value: f32) -> u8 {
     } else {
         value * 12.92
     };
-    (curved * 255.0).clamp(0.0, 255.0).round() as u8
+    curved.quantize_u8()
 }
 
 const fn cc(r: f32, g: f32, b: f32) -> Color {

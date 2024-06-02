@@ -29,16 +29,19 @@ pub struct Padding {
 
 impl Padding {
     /// Create a new padding struct with the provided amounts
+    #[must_use]
     pub fn new(before: f32, after: f32) -> Padding {
         Padding { before, after }
     }
 
     /// Create a new padding struct with zero amount
+    #[must_use]
     pub fn zero() -> Padding {
         Padding::new(0.0, 0.0)
     }
 
     /// Create a padding struct with the same amount before and after
+    #[must_use]
     pub fn uniform(value: f32) -> Padding {
         Padding::new(value, value)
     }
@@ -53,6 +56,7 @@ pub struct Padding2d {
 
 impl Padding2d {
     /// Create a new 2D padding with the specified values.
+    #[must_use]
     pub fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self {
         Self {
             x: Padding::new(left, right),
@@ -61,63 +65,72 @@ impl Padding2d {
     }
 
     /// Create a new 2D padding with zero amount
+    #[must_use]
     pub fn zero() -> Self {
         Self::uniform(0.0)
     }
 
     /// Create a new 2D padding with the same amount on all edges
+    #[must_use]
     pub fn uniform(value: f32) -> Self {
         Self::new(value, value, value, value)
     }
 
     /// Create a new 2D padding with the same amount on left and right, and
     /// zero on top and bottom
+    #[must_use]
     pub fn pillarbox(value: f32) -> Self {
         Self::new(0.0, value, 0.0, value)
     }
 
     /// Create a new 2D padding with the same amount on top and bottom, and
     /// zero on left and right
+    #[must_use]
     pub fn letterbox(value: f32) -> Self {
         Self::new(value, 0.0, value, 0.0)
     }
 
     /// Create a new 2D padding with the same amount on top as on bottom, and
     /// the same amount on left as on right
+    #[must_use]
     pub fn windowbox(y: f32, x: f32) -> Self {
         Self::new(y, x, y, x)
     }
 
+    #[must_use]
     pub fn top(&self) -> f32 {
         self.y.after
     }
 
     pub fn set_top(&mut self, amount: f32) {
-        self.y.after = amount
+        self.y.after = amount;
     }
 
+    #[must_use]
     pub fn right(&self) -> f32 {
         self.x.after
     }
 
     pub fn set_right(&mut self, amount: f32) {
-        self.x.after = amount
+        self.x.after = amount;
     }
 
+    #[must_use]
     pub fn bottom(&self) -> f32 {
         self.y.before
     }
 
     pub fn set_bottom(&mut self, amount: f32) {
-        self.y.before = amount
+        self.y.before = amount;
     }
 
+    #[must_use]
     pub fn left(&self) -> f32 {
         self.x.before
     }
 
     pub fn set_left(&mut self, amount: f32) {
-        self.x.before = amount
+        self.x.before = amount;
     }
 }
 
@@ -195,6 +208,7 @@ impl Default for Dim {
 
 impl Dim {
     /// Create a Dim with a set length that starts at zero
+    #[must_use]
     pub fn with_length(length: f32) -> Self {
         Dim {
             pivot: 0.5,
@@ -204,6 +218,7 @@ impl Dim {
     }
 
     /// Get the beginning of the span
+    #[must_use]
     pub fn start(&self) -> f32 {
         let distance_before_pivot = self.pivot * self.length;
         self.position - distance_before_pivot
@@ -217,6 +232,7 @@ impl Dim {
     }
 
     /// Get the end of the span
+    #[must_use]
     pub fn end(&self) -> f32 {
         let percent_after_pivot = 1.0 - self.pivot;
         let distance_after_pivot = percent_after_pivot * self.length;
@@ -231,6 +247,7 @@ impl Dim {
     }
 
     /// Get the center of the span
+    #[must_use]
     pub fn center(&self) -> f32 {
         let half_length = 0.5 * self.length;
         let distance_before_pivot = self.pivot * self.length;
@@ -267,16 +284,19 @@ impl Dim {
     }
 
     /// Check if the given value is within the span
+    #[must_use]
     pub fn contains(&self, value: f32) -> bool {
         (self.start() <= value) && (self.end() >= value)
     }
 
     /// Check if another span is completely contained within this one
+    #[must_use]
     pub fn surrounds(&self, other: Dim) -> bool {
         (self.start() <= other.start()) && (self.end() >= other.end())
     }
 
     /// Check if this span overlaps another one
+    #[must_use]
     pub fn overlaps(&self, other: Dim) -> bool {
         other.start() < self.end() || other.end() > self.start()
     }
@@ -437,7 +457,7 @@ pub trait Rect {
         } else if self_aspect > aspect {
             // we're relatively wider
             let new = self.width() / aspect;
-            self.set_height(new)
+            self.set_height(new);
         }
     }
 
@@ -565,13 +585,15 @@ pub struct SimpleRect {
 }
 
 impl SimpleRect {
-    /// Create a new SimpleRect with the specified dimensions.
+    /// Create a new [`SimpleRect`] with the specified dimensions.
+    #[must_use]
     pub fn new(x: Dim, y: Dim) -> Self {
         Self { x, y }
     }
 
-    /// Create a new SimpleRect with the specified sizes, positioned at the
+    /// Create a new [`SimpleRect`] with the specified sizes, positioned at the
     /// bottom left.
+    #[must_use]
     pub fn with_size(width: f32, height: f32) -> Self {
         let xdim = Dim::with_length(width);
         let ydim = Dim::with_length(height);

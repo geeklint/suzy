@@ -90,7 +90,7 @@ mod internal {
 
 pub use internal::PointerEvent as PointerEventData;
 
-/// This struct will get passed to the pointer_event method of widget content.
+/// This struct will get passed to [`crate::widget::Content::pointer_event`] method.
 pub struct PointerEvent<'a> {
     data: PointerEventData,
     grab_map: &'a mut HashMap<PointerId, UniqueHandleId>,
@@ -113,26 +113,31 @@ impl<'a> PointerEvent<'a> {
 
 impl PointerEvent<'_> {
     /// Get the pointer involved in this event
+    #[must_use]
     pub fn id(&self) -> PointerId {
         self.data.id
     }
 
     /// Get the activity which triggered this event
+    #[must_use]
     pub fn action(&self) -> &PointerAction {
         &self.data.action
     }
 
     /// Get the horizontal position of the pointer during this event
+    #[must_use]
     pub fn x(&self) -> f32 {
         self.data.x
     }
 
     /// Get the vertical position of the pointer during this event
+    #[must_use]
     pub fn y(&self) -> f32 {
         self.data.y
     }
 
     /// Get the position of the pointer during this event
+    #[must_use]
     pub fn pos(&self) -> [f32; 2] {
         [self.data.x, self.data.y]
     }
@@ -145,7 +150,7 @@ impl PointerEvent<'_> {
     where
         I: Into<UniqueHandleId>,
     {
-        use std::collections::hash_map::Entry::*;
+        use std::collections::hash_map::Entry::{Occupied, Vacant};
 
         let wid = holder.into();
         match self.grab_map.entry(self.id()) {
@@ -160,8 +165,8 @@ impl PointerEvent<'_> {
     /// Focibly "grab" the pointer, indicating that the identified handle
     /// should be the primary handler of this pointer.
     ///
-    /// The handle previously grabbing the pointer will be notified with a
-    /// "GrabStolen" pointer event.
+    /// The handle previously grabbing the pointer will be notified with
+    /// [`crate::widget::UniqueHandle::handle_pointer_grab_stolen`].
     pub fn force_grab<I>(&mut self, holder: I)
     where
         I: Into<UniqueHandleId>,
@@ -192,7 +197,7 @@ impl PointerEvent<'_> {
     where
         I: Into<UniqueHandleId>,
     {
-        use std::collections::hash_map::Entry::*;
+        use std::collections::hash_map::Entry::{Occupied, Vacant};
 
         let wid = holder.into();
         match self.grab_map.entry(self.id()) {

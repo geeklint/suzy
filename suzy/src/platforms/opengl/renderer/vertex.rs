@@ -3,10 +3,14 @@
 
 use std::{
     convert::{TryFrom, TryInto},
+    ffi::c_void,
     mem::size_of,
 };
 
-use crate::platforms::opengl::opengl_bindings::types::GLenum;
+use crate::{
+    platforms::opengl::opengl_bindings::types::{GLenum, GLsizei, GLsizeiptr},
+    units::QuantizeU8,
+};
 
 #[derive(Clone, Copy, Debug)]
 #[repr(transparent)]
@@ -49,19 +53,45 @@ impl VertexConfig {
         Self([128, 255, 0, 0])
     }
 
+    // The next two functions, along with the higher-precision `smoothing` in the
+    // vertex attributes are used as parameters for a function in the shader that
+    // allows adjusting the alpha value, mainly useful for rounded corners and
+    // the signed distance fields we use for text.
+    //
+    // The `base` value is an offset that describes the intersection with the
+    // x-axis, such that input alpha values less than `base` are clamped to
+    // zero. The range is between -1.0 (exclusive) and 1.0 (inclusive). Negative
+    // values are useful, however as the farthest from the normal range, -1.0
+    // seemed the least useful and we want to be able to precisely represent
+    // 0.0, so the quantization is done in terms of 256 instead of 255.
+    //
+    // The `peak` value is the x-value after which the line inverts and the
+    // alpha starts to decrease again, which allows effects like hollow
+    // outlines. This has a range of 0.0 to 1.0 (both inclusive) so standard
+    // quantization is used.
+    //
+    // The smoothing value is the slope of the line, typically for the SDF text
+    // this is going to be relatively large in order to represent a defined edge
+    // (infinite would mean full aliasing), but can be smaller for soft shadows
+    // or glows. If smoothing is negative, the alpha is inverted.
+    //
+    // The identity function has a base of 0.0, a peak of 1.0, and a slope of
+    // 1.0. This is used for rendering normal images with an alpha channel where
+    // we want the output unchanged.
+
     #[must_use]
     pub fn alpha_base(self, base: f32) -> Self {
+        const QUANT_ADJ: f32 = 256.0 / 255.0;
         let Self([_, y, z, w]) = self;
-        let magic = 256.0 / 2.0;
-        let offset = (-magic * base + magic).clamp(0.0, 255.0).round();
-        let x = offset as u8;
+        let offset = (-base * 0.5) + 0.5;
+        let x = (offset * QUANT_ADJ).quantize_u8();
         Self([x, y, z, w])
     }
 
     #[must_use]
     pub fn alpha_peak(self, peak: f32) -> Self {
         let Self([x, _, z, w]) = self;
-        let y = (peak * 255.0).clamp(0.0, 255.0).round() as u8;
+        let y = peak.quantize_u8();
         Self([x, y, z, w])
     }
 
@@ -88,6 +118,7 @@ impl Default for VertexVec {
 }
 
 impl VertexVec {
+    #[must_use]
     pub fn len(&self) -> usize {
         match self {
             VertexVec::U16(vec) => vec.len(),
@@ -95,6 +126,7 @@ impl VertexVec {
         }
     }
 
+    #[must_use]
     pub fn len_u16(&self) -> u16 {
         self.len().try_into().expect(
             "the number of vertices in a batch should be less than 2^16",
@@ -113,6 +145,7 @@ impl VertexVec {
         }
     }
 
+    #[must_use]
     pub fn data_ptr(&self) -> *const std::ffi::c_void {
         match self {
             VertexVec::U16(vec) => vec.as_ptr().cast(),
@@ -120,16 +153,16 @@ impl VertexVec {
         }
     }
 
-    pub fn data_size(
-        &self,
-    ) -> crate::platforms::opengl::opengl_bindings::types::GLsizeiptr {
-        TryFrom::try_from(match self {
+    #[must_use]
+    pub fn data_size(&self) -> GLsizeiptr {
+        GLsizeiptr::try_from(match self {
             VertexVec::U16(vec) => vec.len() * size_of::<Vertex<u16>>(),
             VertexVec::F32(vec) => vec.len() * size_of::<Vertex<f32>>(),
         })
         .expect("vertex buffer should fit in GLsizei")
     }
 
+    #[must_use]
     pub fn can_add(&self, num_vertices: u16) -> bool {
         self.len()
             .checked_add(num_vertices.into())
@@ -231,12 +264,12 @@ pub enum UvRect {
 }
 
 pub(super) struct OffsetInfo {
-    pub xy: usize,
-    pub uv: usize,
-    pub color: usize,
-    pub config: usize,
-    pub smoothing: usize,
-    pub stride: usize,
+    pub xy: *const c_void,
+    pub uv: *const c_void,
+    pub color: *const c_void,
+    pub config: *const c_void,
+    pub smoothing: *const c_void,
+    pub stride: GLsizei,
     pub uv_type: GLenum,
 }
 
@@ -249,19 +282,19 @@ impl OffsetInfo {
     }
 
     pub fn for_uv_type<Uv: UvType>() -> Self {
-        let base_vertex = Vertex::<Uv>::default();
-        let abs_xy = base_vertex.xy.as_ptr() as usize;
-        let abs_uv = base_vertex.uv.as_ptr() as usize;
-        let abs_color = base_vertex.color.as_ptr() as usize;
-        let abs_config = base_vertex.config.0.as_ptr() as usize;
-        let abs_smoothing = (&base_vertex.smoothing as *const f32) as usize;
-        let abs_base = (&base_vertex as *const Vertex<Uv>) as usize;
-        let xy = abs_xy - abs_base;
-        let uv = abs_uv - abs_base;
-        let color = abs_color - abs_base;
-        let config = abs_config - abs_base;
-        let smoothing = abs_smoothing - abs_base;
-        let stride = size_of::<Vertex<Uv>>();
+        macro_rules! offset_of {
+            ($Container:ty, $field:ident) => {{
+                offset_as_ptr(std::mem::offset_of!($Container, $field))
+            }};
+        }
+        let xy = offset_of!(Vertex<Uv>, xy);
+        let uv = offset_of!(Vertex<Uv>, uv);
+        let color = offset_of!(Vertex<Uv>, color);
+        let config = offset_of!(Vertex<Uv>, config);
+        let smoothing = offset_of!(Vertex<Uv>, smoothing);
+        let stride = size_of::<Vertex<Uv>>().try_into().expect(
+            "vertex struct should have a size small enough to fit in GLsizei",
+        );
         let uv_type = Uv::gl_type();
         Self {
             xy,
@@ -273,4 +306,10 @@ impl OffsetInfo {
             uv_type,
         }
     }
+}
+
+fn offset_as_ptr(offset: usize) -> *const c_void {
+    let signed_offset = isize::try_from(offset)
+        .expect("struct field offsets should fit within an isize");
+    std::ptr::null::<c_void>().wrapping_offset(signed_offset)
 }

@@ -19,12 +19,12 @@ pub trait AppTestingExt {
     fn mouse_click(&mut self, pos: [f32; 2]);
 
     /// Update and draw the current frame, then start a new one, acting as
-    /// though `frame_time` has passed (e.g. for the purposes of App::time).
+    /// though `frame_time` has passed (e.g. for the purposes of [`App::time`]).
     fn next_frame(&mut self, frame_time: time::Duration);
 
     /// Start the next frame with a default frame time.
     fn next_frame_60fps(&mut self) {
-        let frame_time = time::Duration::from_nanos(16666667);
+        let frame_time = time::Duration::from_nanos(16_666_667);
         self.next_frame(frame_time);
     }
 }

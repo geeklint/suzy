@@ -91,8 +91,8 @@ where
         self.layout.data_mut()
     }
 
-    /// This provides a Watched iterator of every Widget the AdapterView
-    /// has instantiated.  This allows the parent widget of the AdapterView
+    /// This provides a Watched iterator of every Widget the [`AdapterView`]
+    /// has instantiated.  This allows the parent widget of the [`AdapterView`]
     /// to listen to events from the content Widgets.
     pub fn watch_each_child(
         &self,

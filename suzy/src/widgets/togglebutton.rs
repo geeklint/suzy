@@ -15,7 +15,7 @@ use crate::{
 ///
 /// Toggle buttons may also relate to a value, in which case the group
 /// reference can be used to retrieve the value of the currently-selected
-/// ToggleButton.
+/// [`ToggleButton`].
 pub struct ToggleButtonGroup<V = ()> {
     ptr: Rc<WatchedCell<Option<V>>>,
 }
@@ -56,6 +56,7 @@ impl<V: Copy> ToggleButtonGroup<V> {
     /// to this group.
     ///
     /// This will bind a current watch function to the value of the group.
+    #[must_use]
     pub fn value(&self) -> Option<V> {
         self.ptr.get()
     }

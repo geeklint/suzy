@@ -3,13 +3,15 @@
 
 use std::rc::Rc;
 
-use super::context::bindings::types::*;
-use super::context::bindings::{
-    CLAMP_TO_EDGE, COLOR_ATTACHMENT0, FRAMEBUFFER, FRAMEBUFFER_BINDING,
-    FRAMEBUFFER_COMPLETE, NEAREST, RGBA, TEXTURE_2D, TEXTURE_MAG_FILTER,
-    TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNSIGNED_BYTE,
+use super::context::{
+    bindings::{
+        types::*, COLOR_ATTACHMENT0, FRAMEBUFFER, FRAMEBUFFER_BINDING,
+        FRAMEBUFFER_COMPLETE, TEXTURE_2D, TEXTURE_MAG_FILTER,
+        TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNSIGNED_BYTE,
+    },
+    short_consts::{CLAMP_TO_EDGE, NEAREST, RGBA},
+    OpenGlBindings,
 };
-use super::context::OpenGlBindings;
 
 pub struct Mask {
     pub texture: GLuint,
@@ -67,18 +69,18 @@ impl Mask {
             gl.TexImage2D(
                 TEXTURE_2D,
                 0,
-                RGBA as _,
+                RGBA.into(),
                 width.into(),
                 height.into(),
                 0,
-                RGBA,
+                RGBA.into(),
                 UNSIGNED_BYTE,
                 std::ptr::null(),
             );
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
-            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
+            gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST.into());
+            gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST.into());
+            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, CLAMP_TO_EDGE.into());
+            gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE.into());
 
             let mut old_fbo: GLint = 0;
             gl.GetIntegerv(FRAMEBUFFER_BINDING, &mut old_fbo);
@@ -96,7 +98,7 @@ impl Mask {
             );
             gl.BindFramebuffer(FRAMEBUFFER, old_fbo as GLuint);
         }
-        self.width = width as f32;
-        self.height = height as f32;
+        self.width = width.into();
+        self.height = height.into();
     }
 }

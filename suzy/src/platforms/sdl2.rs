@@ -21,6 +21,7 @@ pub struct SdlPlatform {
 }
 
 impl SdlPlatform {
+    #[must_use]
     pub fn new() -> Self {
         SdlPlatform {
             sdl: sdl2::init().expect("Failed to initialize SDL2"),
@@ -201,7 +202,7 @@ pub trait ToSuzyMouseButton {
 
 impl ToSuzyMouseButton for sdl2::mouse::MouseButton {
     fn to_suzy_mouse_button(self) -> AltMouseButtonResult {
-        use AltMouseButtonResult::*;
+        use AltMouseButtonResult::{Alt, Primary, Unknown};
         match self {
             sdl2::mouse::MouseButton::Unknown => Unknown,
             sdl2::mouse::MouseButton::Left => Primary,

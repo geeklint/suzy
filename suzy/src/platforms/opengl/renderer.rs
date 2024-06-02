@@ -5,7 +5,7 @@ mod batch;
 mod coverage;
 mod vertex;
 
-use std::{convert::TryFrom, ffi::c_void};
+use std::convert::TryFrom;
 
 use super::{
     opengl_bindings::{
@@ -141,8 +141,10 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
             );
             buffer_index = buffer_index.wrapping_add(2);
             let vertex_data_size = batch.vertices.data_size();
-            let index_data_size =
-                batch.indices.len() * std::mem::size_of::<u16>();
+            let index_data_size = GLsizeiptr::try_from(
+                batch.indices.len() * std::mem::size_of::<u16>(),
+            )
+            .expect("size of index buffer should fit in GLsizeiptr");
             ctx.bindings.BufferData(
                 ARRAY_BUFFER,
                 vertex_data_size,
@@ -151,7 +153,7 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
             );
             ctx.bindings.BufferData(
                 ELEMENT_ARRAY_BUFFER,
-                index_data_size as GLsizeiptr,
+                index_data_size,
                 batch.indices.as_ptr().cast(),
                 STREAM_DRAW,
             );
@@ -162,44 +164,44 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
                 2,
                 FLOAT,
                 FALSE,
-                offset_info.stride as _,
-                offset_info.xy as *const c_void,
+                offset_info.stride,
+                offset_info.xy,
             );
             ctx.bindings.VertexAttribPointer(
                 1,
                 2,
                 offset_info.uv_type,
                 FALSE,
-                offset_info.stride as _,
-                offset_info.uv as *const c_void,
+                offset_info.stride,
+                offset_info.uv,
             );
             ctx.bindings.VertexAttribPointer(
                 2,
                 4,
                 UNSIGNED_BYTE,
                 TRUE,
-                offset_info.stride as _,
-                offset_info.color as *const c_void,
+                offset_info.stride,
+                offset_info.color,
             );
             ctx.bindings.VertexAttribPointer(
                 3,
                 4,
                 UNSIGNED_BYTE,
                 TRUE,
-                offset_info.stride as _,
-                offset_info.config as *const c_void,
+                offset_info.stride,
+                offset_info.config,
             );
             ctx.bindings.VertexAttribPointer(
                 4,
                 1,
                 FLOAT,
                 TRUE,
-                offset_info.stride as _,
-                offset_info.smoothing as *const c_void,
+                offset_info.stride,
+                offset_info.smoothing,
             );
             ctx.bindings.DrawElements(
                 TRIANGLES,
-                batch.indices.len() as GLsizei,
+                GLsizei::try_from(batch.indices.len()).unwrap_or(GLsizei::MAX),
                 UNSIGNED_SHORT,
                 std::ptr::null(),
             );

@@ -13,6 +13,7 @@ pub struct Mat4 {
 
 impl Mat4 {
     /// The identity matrix.
+    #[must_use]
     pub const fn identity() -> Self {
         Self {
             data: [
@@ -23,6 +24,7 @@ impl Mat4 {
     }
 
     /// Create a translation matrix with the given offsets.
+    #[must_use]
     pub const fn translate(x: f32, y: f32) -> Self {
         Self {
             data: [
@@ -33,6 +35,7 @@ impl Mat4 {
     }
 
     /// Create a scaling matrix with the given multipliers.
+    #[must_use]
     pub const fn scale(x: f32, y: f32) -> Self {
         Self {
             data: [
@@ -44,6 +47,7 @@ impl Mat4 {
 
     /// Create a rotation matrix that rotates a 2D element around the given
     /// angle (in radians).
+    #[must_use]
     pub fn rotate(radians: f32) -> Self {
         Self {
             data: [
@@ -174,14 +178,14 @@ impl Mul<Mat4> for &Mat4 {
 impl MulAssign for Mat4 {
     fn mul_assign(&mut self, rhs: Mat4) {
         #![allow(clippy::op_ref)]
-        *self = &*self * rhs
+        *self = &*self * rhs;
     }
 }
 
 impl MulAssign<&Mat4> for Mat4 {
     fn mul_assign(&mut self, rhs: &Mat4) {
         #![allow(clippy::op_ref)]
-        *self = &*self * rhs
+        *self = &*self * rhs;
     }
 }
 
@@ -310,7 +314,7 @@ mod test {
 
     #[test]
     fn check_mat_mul() {
-        assert_eq!(MAT_ANS, MAT_A * MAT_B)
+        assert_eq!(MAT_ANS, MAT_A * MAT_B);
     }
 
     #[test]

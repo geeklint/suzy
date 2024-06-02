@@ -83,6 +83,7 @@ impl Window {
         })
     }
 
+    #[must_use]
     pub fn take_screenshot(&self) -> Box<[u8]> {
         self.gl_win.take_screenshot()
     }
@@ -111,12 +112,14 @@ impl Window {
         [hdpi, vdpi]
     }
 
+    #[must_use]
     pub fn logical_size(&self) -> [f32; 2] {
         const LIMIT: u32 = 1_u32 << 24_u8;
         let (width, height) = self.window.size();
-        if width > LIMIT || height > LIMIT {
-            panic!("logical screen size is too big for an f32");
-        }
+        assert!(
+            (width <= LIMIT && height <= LIMIT),
+            "logical screen size is too big for an f32"
+        );
         [width as f32, height as f32]
     }
 

@@ -79,6 +79,7 @@ where
 
 impl<P: 'static> dyn AnonWidget<P> {
     /// Returns the widget if its content is of type `T`.
+    #[must_use]
     pub fn downcast_widget<T>(self: Box<Self>) -> Option<Widget<T>>
     where
         T: Content<P>,

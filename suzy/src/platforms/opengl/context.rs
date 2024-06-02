@@ -22,6 +22,20 @@ pub mod bindings {
     include!("include/opengl_bindings.rs");
 }
 
+pub mod short_consts {
+    const fn enum_to_u16(val: super::bindings::types::GLenum) -> u16 {
+        assert!((val & 0xFFFF) == val, "GLenum was outside the range of u16");
+        val as u16
+    }
+
+    pub const ALPHA: u16 = enum_to_u16(super::bindings::ALPHA);
+    pub const CLAMP_TO_EDGE: u16 = enum_to_u16(super::bindings::CLAMP_TO_EDGE);
+    pub const LINEAR: u16 = enum_to_u16(super::bindings::LINEAR);
+    pub const NEAREST: u16 = enum_to_u16(super::bindings::NEAREST);
+    pub const RGB: u16 = enum_to_u16(super::bindings::RGB);
+    pub const RGBA: u16 = enum_to_u16(super::bindings::RGBA);
+}
+
 pub type OpenGlBindings = bindings::Gles2;
 
 pub struct OpenGlContext {
@@ -73,9 +87,10 @@ impl OpenGlContext {
         message: *const bindings::types::GLchar,
         _user_param: *mut std::ffi::c_void,
     ) {
-        let data = unsafe {
-            std::slice::from_raw_parts(message.cast(), length as usize)
-        };
+        use std::convert::TryInto;
+        let length = length.try_into().unwrap_or(usize::MAX);
+        let data =
+            unsafe { std::slice::from_raw_parts(message.cast(), length) };
         println!("{}", String::from_utf8_lossy(data));
     }
 }

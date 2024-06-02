@@ -12,6 +12,10 @@
     clippy::default_trait_access,
     clippy::unwrap_used,
     clippy::ptr_as_ptr,
+    clippy::as_underscore,
+    clippy::borrow_as_ptr,
+    clippy::cast_lossless,
+    clippy::dbg_macro,
 )]
 
 //! ## Create an application with Suzy

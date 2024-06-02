@@ -4,11 +4,14 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 
 use super::{
-    context::{bindings::TEXTURE_2D, OpenGlBindings},
+    context::{
+        bindings::TEXTURE_2D,
+        short_consts::{CLAMP_TO_EDGE, NEAREST, RGBA},
+        OpenGlBindings,
+    },
     opengl_bindings::{
-        types::{GLint, GLuint},
-        CLAMP_TO_EDGE, NEAREST, RGBA, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER,
-        TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+        types::GLuint, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S,
+        TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
     },
     renderer::{UvRect, UvRectValues},
 };
@@ -33,6 +36,7 @@ impl Texture {
         }
     }
 
+    #[must_use]
     pub fn solid_color() -> Self {
         Self {
             populator: None,
@@ -41,6 +45,7 @@ impl Texture {
         }
     }
 
+    #[must_use]
     pub fn id(&self) -> TextureId {
         TextureId {
             populator: self.populator.clone(),
@@ -49,8 +54,9 @@ impl Texture {
 
     /// Crop this texture.
     ///
-    /// This, along with Texture::clone, enables patterns like sprite-sheets
+    /// This, along with [`Texture::clone`], enables patterns like sprite-sheets
     /// where multiple images are packed into a single texture reference.
+    #[must_use]
     pub fn crop(self, left: f32, right: f32, bottom: f32, top: f32) -> Self {
         let (origin_x, origin_y) = match self.crop {
             Some(rect) => match rect {
@@ -231,7 +237,7 @@ impl TextureCache {
                         *state = TextureState::Ready { id, size };
                     }
                     Err(msg) => {
-                        eprintln!("failed to load texture: {}", msg);
+                        eprintln!("failed to load texture: {msg}");
                         new_tex_id = Some(id);
                         *state = TextureState::Failed;
                     }
@@ -254,25 +260,33 @@ impl TextureCache {
                 gl.TexImage2D(
                     TEXTURE_2D,
                     0,
-                    RGBA as GLint,
+                    RGBA.into(),
                     2,
                     2,
                     0,
-                    RGBA,
+                    RGBA.into(),
                     UNSIGNED_BYTE,
                     pixels.as_ptr().cast(),
                 );
-                gl.TexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, NEAREST as _);
-                gl.TexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST as _);
+                gl.TexParameteri(
+                    TEXTURE_2D,
+                    TEXTURE_MIN_FILTER,
+                    NEAREST.into(),
+                );
+                gl.TexParameteri(
+                    TEXTURE_2D,
+                    TEXTURE_MAG_FILTER,
+                    NEAREST.into(),
+                );
                 gl.TexParameteri(
                     TEXTURE_2D,
                     TEXTURE_WRAP_S,
-                    CLAMP_TO_EDGE as GLint,
+                    CLAMP_TO_EDGE.into(),
                 );
                 gl.TexParameteri(
                     TEXTURE_2D,
                     TEXTURE_WRAP_T,
-                    CLAMP_TO_EDGE as GLint,
+                    CLAMP_TO_EDGE.into(),
                 );
             }
             TextureState::Ready {

@@ -7,13 +7,14 @@ use std::{
 };
 
 use crate::platforms::opengl;
-use opengl::context::bindings::types::*;
-use opengl::context::bindings::{
-    CLAMP_TO_EDGE, LINEAR, NEAREST, RGB, RGBA, TEXTURE_MAG_FILTER,
-    TEXTURE_MIN_FILTER, TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNPACK_ALIGNMENT,
-    UNSIGNED_BYTE,
+use opengl::context::{
+    bindings::{
+        types::GLenum, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S,
+        TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+    },
+    short_consts::{CLAMP_TO_EDGE, LINEAR, NEAREST, RGB, RGBA},
+    OpenGlBindings,
 };
-use opengl::context::OpenGlBindings;
 
 use super::TextureSize;
 
@@ -78,17 +79,17 @@ impl PopulateTextureUtil {
     /// Set the default texture parameters for magnification and wrapping.
     pub fn default_params(gl: &OpenGlBindings, target: GLenum) {
         unsafe {
-            gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR as _);
-            gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR as _);
-            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
-            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, LINEAR.into());
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, LINEAR.into());
+            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE.into());
+            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE.into());
         }
     }
 
     fn populate_format(
         gl: &OpenGlBindings,
         target: GLenum,
-        format: GLint,
+        format: u16,
         [width, height]: [u16; 2],
         alignment: u16,
         sdf: bool,
@@ -102,19 +103,19 @@ impl PopulateTextureUtil {
                 gl.TexImage2D(
                     target,
                     0,
-                    format,
+                    format.into(),
                     width.into(),
                     height.into(),
                     0,
-                    format as GLenum,
+                    format.into(),
                     UNSIGNED_BYTE,
                     pixels.as_ptr().cast(),
                 );
             }
             Self::default_params(gl, target);
             TextureSize {
-                image_width: width as f32,
-                image_height: height as f32,
+                image_width: width.into(),
+                image_height: height.into(),
                 texture_width: width,
                 texture_height: height,
                 color_pow: 2.2,
@@ -123,17 +124,15 @@ impl PopulateTextureUtil {
         } else {
             let texture_width = width.next_power_of_two();
             let texture_height = height.next_power_of_two();
-            let width: GLsizei = width.into();
-            let height: GLsizei = height.into();
             unsafe {
                 gl.TexImage2D(
                     target,
                     0,
-                    format,
+                    format.into(),
                     texture_width.into(),
                     texture_height.into(),
                     0,
-                    format as GLenum,
+                    format.into(),
                     UNSIGNED_BYTE,
                     std::ptr::null(),
                 );
@@ -142,17 +141,17 @@ impl PopulateTextureUtil {
                     0,
                     0,
                     0,
-                    width,
-                    height,
-                    format as GLenum,
+                    width.into(),
+                    height.into(),
+                    format.into(),
                     UNSIGNED_BYTE,
                     pixels.as_ptr().cast(),
                 );
             }
             Self::default_params(gl, target);
             TextureSize {
-                image_width: width as f32,
-                image_height: height as f32,
+                image_width: width.into(),
+                image_height: height.into(),
                 texture_width,
                 texture_height,
                 color_pow: 2.2,
@@ -162,6 +161,7 @@ impl PopulateTextureUtil {
     }
 
     #[doc(hidden)]
+    #[must_use]
     pub fn data_len(
         width: u16,
         height: u16,
@@ -172,7 +172,7 @@ impl PopulateTextureUtil {
         let pixel_row_len = width * channels;
         let padding = (alignment - (pixel_row_len % alignment)) % alignment;
         let full_row_len = pixel_row_len + padding;
-        (full_row_len as usize) * (height as usize)
+        usize::from(full_row_len) * usize::from(height)
     }
 
     pub fn populate_color_rgb(
@@ -185,9 +185,7 @@ impl PopulateTextureUtil {
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 3));
         let size = [width, height];
-        Self::populate_format(
-            gl, target, RGB as _, size, alignment, false, pixels,
-        )
+        Self::populate_format(gl, target, RGB, size, alignment, false, pixels)
     }
 
     pub fn populate_color_rgba(
@@ -200,9 +198,7 @@ impl PopulateTextureUtil {
     ) -> TextureSize {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 4));
         let size = [width, height];
-        Self::populate_format(
-            gl, target, RGBA as _, size, alignment, false, pixels,
-        )
+        Self::populate_format(gl, target, RGBA, size, alignment, false, pixels)
     }
 }
 
@@ -231,10 +227,10 @@ impl PopulateTexture for DefaultTexturePopulator {
             gl, target, 2, 2, 1, &pixels,
         );
         unsafe {
-            gl.TexParameteri(target, TEXTURE_MIN_FILTER, NEAREST as _);
-            gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST as _);
-            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE as _);
-            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE as _);
+            gl.TexParameteri(target, TEXTURE_MIN_FILTER, NEAREST.into());
+            gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST.into());
+            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE.into());
+            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE.into());
         }
         Ok(size)
     }

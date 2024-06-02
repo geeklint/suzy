@@ -140,7 +140,7 @@ impl FontCharCalc {
                         "but str::chars returned no items"
                     ));
                     consumed +=
-                        iter.next().map(|(i, _)| i).unwrap_or(remaining.len());
+                        iter.next().map_or(remaining.len(), |(i, _)| i);
                     if is_line_break(ch) {
                         line_break = true;
                         break;

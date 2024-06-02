@@ -60,7 +60,7 @@ where
     P: ?Sized + RenderPlatform,
 {
     fn set_text(&mut self, text: &str) {
-        *self.text = text.to_owned();
+        text.clone_into(&mut self.text);
     }
 }
 

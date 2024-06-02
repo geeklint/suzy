@@ -2,11 +2,14 @@
 /* Copyright © 2021 Violet Leonard */
 
 use std::{
+    convert::TryFrom,
     ffi::{CStr, CString},
     rc::{Rc, Weak},
 };
 
-use super::context::bindings::types::*;
+use super::context::bindings::types::{
+    GLchar, GLenum, GLfloat, GLint, GLsizei, GLuint,
+};
 use super::context::bindings::{
     ACTIVE_ATTRIBUTES, COMPILE_STATUS, FALSE, FRAGMENT_SHADER,
     INFO_LOG_LENGTH, LINK_STATUS, MAX_VERTEX_ATTRIBS, VERTEX_SHADER,
@@ -18,19 +21,22 @@ macro_rules! info_log {
         let log_len = unsafe {
             let mut log_len: GLint = 0;
             $gl.$fn_get_iv($id, INFO_LOG_LENGTH, &mut log_len);
-            log_len as usize
+            log_len
         };
-        let mut array = vec![0; log_len];
+        let log_len = u16::try_from(log_len).unwrap_or(u16::MAX);
+        let mut array = vec![0; log_len.into()];
         let mut actual_len: GLsizei = 0;
         unsafe {
             $gl.$fn_log(
                 $id,
-                array.len() as GLsizei,
+                log_len.into(),
                 &mut actual_len,
                 array.as_mut_ptr().cast(),
             );
         }
-        array.truncate((actual_len + 1) as usize);
+        if let Ok(actual_len) = usize::try_from(actual_len) {
+            array.truncate(actual_len + 1);
+        }
         CStr::from_bytes_with_nul(&array).unwrap().to_owned()
     }};
 }
@@ -53,7 +59,14 @@ fn compile_shader<'a>(
     type_: GLenum,
     text: &[u8],
 ) -> Result<ShaderObj<'a>, CString> {
-    let lengths = [text.len() as GLint];
+    const SHADER_LEN_ERR_MSG: &CStr =
+        match CStr::from_bytes_with_nul(b"shader text was too long\0") {
+            Ok(cs) => cs,
+            Err(_) => panic!(),
+        };
+    let text_len = GLint::try_from(text.len())
+        .map_err(|_| SHADER_LEN_ERR_MSG.to_owned())?;
+    let lengths = [text_len];
     let lines: [*const GLchar; 1] = [text.as_ptr().cast()];
     let (obj, success) = unsafe {
         let obj = ShaderObj {
@@ -62,20 +75,22 @@ fn compile_shader<'a>(
         };
         gl.ShaderSource(
             obj.id,
-            lines.len() as GLsizei,
+            match &lines {
+                [_one] => 1,
+            },
             lines.as_ptr(),
             lengths.as_ptr(),
         );
         gl.CompileShader(obj.id);
         let mut success: GLint = 0;
-        gl.GetShaderiv(obj.id, COMPILE_STATUS, &mut success as *mut GLint);
+        gl.GetShaderiv(obj.id, COMPILE_STATUS, &mut success);
         (obj, success)
     };
-    if success != FALSE as GLint {
-        Ok(obj)
-    } else {
+    if success == GLint::from(FALSE) {
         let log = info_log!(obj.id, gl, GetShaderiv, GetShaderInfoLog);
         Err(log)
+    } else {
+        Ok(obj)
     }
 }
 
@@ -123,8 +138,8 @@ fn compile_program(
         gl.AttachShader(program.id, frag.id);
         gl.LinkProgram(program.id);
         let mut success: GLint = 0;
-        gl.GetProgramiv(program.id, LINK_STATUS, &mut success as *mut GLint);
-        let success = success != (FALSE as GLint);
+        gl.GetProgramiv(program.id, LINK_STATUS, &mut success);
+        let success = success != GLint::from(FALSE);
         (success, program)
     };
     let result = if success {
@@ -167,13 +182,12 @@ impl ShaderProgram {
         let (attrs, total_attrs) = unsafe {
             let mut attrs: GLint = 0;
             let mut total_attrs: GLint = 8;
-            gl.GetProgramiv(
-                obj.id,
-                ACTIVE_ATTRIBUTES,
-                &mut attrs as *mut GLint,
-            );
-            gl.GetIntegerv(MAX_VERTEX_ATTRIBS, &mut total_attrs as *mut GLint);
-            (attrs as GLuint, total_attrs as GLuint)
+            gl.GetProgramiv(obj.id, ACTIVE_ATTRIBUTES, &mut attrs);
+            gl.GetIntegerv(MAX_VERTEX_ATTRIBS, &mut total_attrs);
+            let attrs = GLuint::try_from(attrs).expect("number of attributes returned from GetProgramiv should be non-negative");
+            let total_attrs = GLuint::try_from(total_attrs)
+                .expect("value of MAX_VERTEX_ATTRIBS should be non-negative");
+            (attrs, total_attrs)
         };
         let shader = ShaderProgram {
             program_id: obj.id,
@@ -207,12 +221,12 @@ impl ShaderProgram {
         let id =
             unsafe { gl.GetUniformLocation(self.program_id, cname.as_ptr()) };
         let not_found: GLint = -1;
-        debug_assert_ne!(id, not_found, "Failed to get uniform {}", name);
+        debug_assert_ne!(id, not_found, "Failed to get uniform {name}");
         UniformLoc { id }
     }
 
-    pub fn set_opaque(gl: &OpenGlBindings, loc: UniformLoc, value: GLuint) {
-        unsafe { gl.Uniform1i(loc.id, value as GLint) };
+    pub fn set_opaque(gl: &OpenGlBindings, loc: UniformLoc, value: GLint) {
+        unsafe { gl.Uniform1i(loc.id, value) };
     }
 
     pub fn set_float(gl: &OpenGlBindings, loc: UniformLoc, f: f32) {

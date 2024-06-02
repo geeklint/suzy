@@ -110,7 +110,7 @@ where
     }
 }
 
-/// The base type returned from WidgetInit::create_layout_group, used to
+/// The base type returned from [`super::Desc::create_layout_group`], used to
 /// create a variety of types of layouts.
 #[derive(Debug)]
 pub struct LayoutTypes<'a, Desc> {
@@ -150,46 +150,54 @@ impl<'a, Desc> LayoutTypes<'a, Desc> {
 
     /// Create a layout which arranges elements vertically, putting each
     /// element above the previous one.
+    #[must_use]
     pub fn stack_up(self) -> Stack<'a, Up, Desc, f32, f32> {
         self.stack()
     }
 
     /// Create a layout which arranges elements vertically, putting each
     /// element below the previous one.
+    #[must_use]
     pub fn stack_down(self) -> Stack<'a, Down, Desc, f32, f32> {
         self.stack()
     }
 
     /// Create a layout which arranges elements horizontally, putting each
     /// element to the left of the previous one.
+    #[must_use]
     pub fn stack_left(self) -> Stack<'a, Left, Desc, f32, f32> {
         self.stack()
     }
 
     /// Create a layout which arranges elements horizontally, putting each
     /// element to the right of the previous one.
+    #[must_use]
     pub fn stack_right(self) -> Stack<'a, Right, Desc, f32, f32> {
         self.stack()
     }
 
+    #[must_use]
     pub fn distribute_up(
         self,
     ) -> Distribute<'a, Up, Desc, [f32; 2], f32, f32> {
         self.distribute()
     }
 
+    #[must_use]
     pub fn distribute_down(
         self,
     ) -> Distribute<'a, Down, Desc, [f32; 2], f32, f32> {
         self.distribute()
     }
 
+    #[must_use]
     pub fn distribute_left(
         self,
     ) -> Distribute<'a, Right, Desc, [f32; 2], f32, f32> {
         self.distribute()
     }
 
+    #[must_use]
     pub fn distribute_right(
         self,
     ) -> Distribute<'a, Right, Desc, [f32; 2], f32, f32> {

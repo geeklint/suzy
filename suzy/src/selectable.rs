@@ -46,31 +46,37 @@ pub struct SelectionState(SelectionStateAll);
 
 impl SelectionState {
     /// Normal selection state
+    #[must_use]
     pub const fn normal() -> Self {
         Self(SelectionStateAll::Normal)
     }
 
     /// Hover selection state
+    #[must_use]
     pub const fn hover() -> Self {
         Self(SelectionStateAll::Hover)
     }
 
     /// Focus selection state
+    #[must_use]
     pub const fn focus() -> Self {
         Self(SelectionStateAll::Focus)
     }
 
     /// Pressed selection state
+    #[must_use]
     pub const fn pressed() -> Self {
         Self(SelectionStateAll::Pressed)
     }
 
     /// Active selection state
+    #[must_use]
     pub const fn active() -> Self {
         Self(SelectionStateAll::Active)
     }
 
     /// Get version 0 selection states.
+    #[must_use]
     pub fn v0(self) -> SelectionStateV0 {
         match self.0 {
             SelectionStateAll::Normal => SelectionStateV0::Normal,
@@ -82,6 +88,7 @@ impl SelectionState {
     }
 
     /// Get version 1 selection states.
+    #[must_use]
     pub fn v1(self) -> SelectionStateV1 {
         match self.0 {
             SelectionStateAll::Normal => SelectionStateV1::Normal,
@@ -93,6 +100,7 @@ impl SelectionState {
     }
 
     /// Get version 2 selection states.
+    #[must_use]
     pub fn v2(self) -> SelectionStateV2 {
         match self.0 {
             SelectionStateAll::Normal => SelectionStateV2::Normal,
@@ -105,6 +113,7 @@ impl SelectionState {
 
     /// Reduce the selection state to a resonable fallback assumed to be more
     /// widely implemented.
+    #[must_use]
     pub fn reduce(self) -> Self {
         Self(match self.0 {
             SelectionStateAll::Normal => SelectionStateAll::Normal,
@@ -222,7 +231,7 @@ pub struct SelectableData<T> {
 }
 
 impl<T> SelectableData<T> {
-    /// Create a builder to populate the SelectableData.
+    /// Create a builder to populate the [`SelectableData`].
     ///
     /// The value provided is the only one requred: the value for the normal
     /// state.
@@ -299,24 +308,28 @@ pub struct SelectableDataBuilder<T> {
 
 impl<T> SelectableDataBuilder<T> {
     /// Provide a value for the hover state.
+    #[must_use]
     pub fn hover(mut self, item: T) -> Self {
         self.content.hover = Some(item);
         self
     }
 
     /// Provide a value for the focus state.
+    #[must_use]
     pub fn focus(mut self, item: T) -> Self {
         self.content.focus = Some(item);
         self
     }
 
     /// Provide a value for the pressed state.
+    #[must_use]
     pub fn pressed(mut self, item: T) -> Self {
         self.content.pressed = Some(item);
         self
     }
 
     /// Provide a value for the active state.
+    #[must_use]
     pub fn active(mut self, item: T) -> Self {
         self.content.active = Some(item);
         self

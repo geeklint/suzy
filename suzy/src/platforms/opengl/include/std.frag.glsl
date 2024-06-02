@@ -26,7 +26,7 @@ void main() {
     tex_color = max(tex_color, TEX_SDF);
     tex_color.rgb = pow(tex_color.rgb, vec3(TEX_COLOR_POW));
     sdf_value = SDF_PEAK - abs(sdf_value - SDF_PEAK);
-    sdf_value = sdf_value + SDF_OFFSET + SDF_OFFSET - 1.0;
+    sdf_value = sdf_value + (SDF_OFFSET + SDF_OFFSET) - 1.0;
     sdf_value = sdf_value * pass_smoothing;
     lowp float alpha = clamp(sdf_value, 0.0, 1.0);
     alpha *= pass_color.a;

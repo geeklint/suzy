@@ -3,10 +3,12 @@
 
 #![allow(missing_docs)]
 
+use std::convert::TryFrom;
+
 use crate::graphics::Color;
 
 use super::{
-    context::bindings::types::*,
+    context::bindings::types::GLint,
     context::bindings::{
         BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE_MINUS_SRC_ALPHA,
         PACK_ALIGNMENT, RGBA, SRC_ALPHA, UNSIGNED_BYTE, VIEWPORT,
@@ -20,6 +22,7 @@ pub struct Window {
 
 impl Window {
     /// Create an opengl window
+    #[must_use]
     pub fn new(ctx: OpenGlContext) -> Self {
         Window { ctx }
     }
@@ -31,6 +34,7 @@ impl Window {
         }
     }
 
+    #[must_use]
     pub fn get_clear_color(&self) -> Color {
         let mut array = [0f32; 4];
         unsafe {
@@ -87,6 +91,7 @@ impl Window {
         }
     }
 
+    #[must_use]
     pub fn take_screenshot(&self) -> Box<[u8]> {
         let mut answer: [GLint; 4] = [0; 4];
         unsafe {
@@ -95,17 +100,17 @@ impl Window {
         }
         let x = answer[0];
         let y = answer[1];
-        let width = answer[2] as GLsizei;
-        let height = answer[3] as GLsizei;
+        let width = u16::try_from(answer[2]).expect("can't take screenshot of window with a width larger than 65535 or less than 0");
+        let height = u16::try_from(answer[3]).expect("can't take screenshot of window with a height larger than 65535 or less than 0");
         let pixel_size = 4;
-        let buflen = pixel_size * (width as usize) * (height as usize);
+        let buflen = pixel_size * usize::from(width) * usize::from(height);
         let mut buffer = vec![0u8; buflen].into_boxed_slice();
         unsafe {
             self.ctx.bindings.ReadPixels(
                 x,
                 y,
-                width,
-                height,
+                width.into(),
+                height.into(),
                 RGBA,
                 UNSIGNED_BYTE,
                 buffer.as_mut_ptr().cast(),
