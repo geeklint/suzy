@@ -37,16 +37,16 @@ jobs:
       run: cargo fmt --all -- --check
 
     - name: Check macro formatting
-      run: ./check_macro_fmt.bash
+      run: ./check-macro-fmt.bash
 
     - name: Clippy each feature set
       run: |
         cargo clippy --all-targets
         cargo clippy --all-targets --features "inline_tweak"
-        cargo clippy --all-targets --features "platform_opengl"
-        cargo clippy --all-targets --features "platform_sdl"
-        cargo clippy --all-targets --features "platform_osmesa"
-        cargo clippy --all-targets --features "platform_opengl default_font"
+        cargo clippy --all-targets --features "platform-opengl"
+        cargo clippy --all-targets --features "platform-sdl"
+        cargo clippy --all-targets --features "platform-osmesa"
+        cargo clippy --all-targets --features "platform-opengl default-font"
         cargo clippy --all-targets --features "quickstart"
 
     - name: Build
@@ -59,10 +59,10 @@ jobs:
       run: |
         cargo test --doc
         cargo test --doc --features "inline_tweak"
-        cargo test --doc --features "platform_opengl"
-        cargo test --doc --features "platform_sdl"
-        cargo test --doc --features "platform_osmesa"
-        cargo test --doc --features "platform_opengl default_font"
+        cargo test --doc --features "platform-opengl"
+        cargo test --doc --features "platform-sdl"
+        cargo test --doc --features "platform-osmesa"
+        cargo test --doc --features "platform-opengl default-font"
         cargo test --doc --features "quickstart"
 
     - name: Validate documentation
