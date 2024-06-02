@@ -49,6 +49,11 @@ jobs:
         cargo clippy --all-targets --features "platform-opengl default-font"
         cargo clippy --all-targets --features "quickstart"
 
+    - name: Validate documentation
+      run: cargo doc --no-deps --all-features
+      env:
+        RUSTDOCFLAGS: -Dwarnings
+
     - name: Build
       run: cargo build --verbose --all-targets --all-features
 
@@ -64,8 +69,3 @@ jobs:
         cargo test --doc --features "platform-osmesa"
         cargo test --doc --features "platform-opengl default-font"
         cargo test --doc --features "quickstart"
-
-    - name: Validate documentation
-      run: cargo doc --no-deps --all-features
-      env:
-        RUSTDOCFLAGS: -Dwarnings

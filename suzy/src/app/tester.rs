@@ -19,7 +19,7 @@ pub trait AppTestingExt {
     fn mouse_click(&mut self, pos: [f32; 2]);
 
     /// Update and draw the current frame, then start a new one, acting as
-    /// though `frame_time` has passed (e.g. for the purposes of [`App::time`]).
+    /// though `frame_time` has passed (e.g. for the purposes of [`crate::app::time()`]).
     fn next_frame(&mut self, frame_time: time::Duration);
 
     /// Start the next frame with a default frame time.
