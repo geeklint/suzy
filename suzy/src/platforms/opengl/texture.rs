@@ -18,7 +18,7 @@ use super::{
 
 mod populate;
 
-pub use populate::*;
+pub use populate::{PopulateTexture, PopulateTextureUtil};
 
 #[derive(Clone, Debug)]
 pub struct Texture {

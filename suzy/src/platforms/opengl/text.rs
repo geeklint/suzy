@@ -168,14 +168,14 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
         let aa_smoothing = style.font_size * (2.0 * font.data.padding_ratio);
         let draws = &style.draws;
         let texture = font.data.texture.clone();
-        let vertex_set_index = match self
+        let vertex_set_index = self
             .vertices
             .iter_mut()
             .enumerate()
-            .find(|(_, vs)| vs.texture.id() == texture.id())
-        {
-            Some((idx, _)) => idx,
-            None => {
+            .find_map(|(idx, vs)| {
+                (vs.texture.id() == texture.id()).then_some(idx)
+            })
+            .unwrap_or_else(|| {
                 let idx = self.vertices.len();
                 let vs = VertexSet {
                     texture,
@@ -186,8 +186,7 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                 };
                 self.vertices.push(vs);
                 idx
-            }
-        };
+            });
         let mut remaining = text;
         while !remaining.is_empty() {
             let vertex_set = &mut self.vertices[vertex_set_index];
@@ -195,7 +194,7 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
             let indices = vertex_set.indices.unsorted();
             let params = CalcParams {
                 font: &font.data,
-                handle_glyph: &mut |glyph: calc::GlyphMetrics| {
+                handle_glyph: |glyph: calc::GlyphMetrics| {
                     for draw in draws {
                         let color = draw.color.rgba8();
                         let smoothing = if draw.smoothing.is_nan() {

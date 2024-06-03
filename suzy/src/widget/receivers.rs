@@ -83,7 +83,7 @@ impl<T: ?Sized, O: ?Sized> Holder<O> for Weak<RefCell<Widget<T>>> {
         if let Some(strong) = self.upgrade() {
             let mut widget = strong.borrow_mut();
             let internal = &mut widget.internal;
-            f(&mut internal.content, &mut internal.rect)
+            f(&mut internal.content, &mut internal.rect);
         }
     }
 }
@@ -167,7 +167,7 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
                 });
                 if let Some(widget) = holder {
                     maybe_more.trigger_external();
-                    widget.init(raw_arg.context(), &state)
+                    widget.init(raw_arg.context(), &state);
                 }
             });
     }

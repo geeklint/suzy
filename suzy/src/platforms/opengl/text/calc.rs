@@ -23,16 +23,7 @@ pub(super) struct Cursor {
 
 pub(super) struct CalcParams<'a, F> {
     pub font: &'a font::FontData,
-    pub handle_glyph: &'a mut F,
-}
-
-impl<F> CalcParams<'_, F> {
-    pub fn rbr(&mut self) -> CalcParams<'_, F> {
-        CalcParams {
-            handle_glyph: self.handle_glyph,
-            font: self.font,
-        }
-    }
+    pub handle_glyph: F,
 }
 
 impl FontCharCalc {
@@ -129,7 +120,7 @@ impl FontCharCalc {
             let word_end = remaining.find(is_breaking_space);
             match word_end {
                 None => {
-                    let (_, cons) = self.push_word(params.rbr(), remaining);
+                    let (_, cons) = self.push_word(&mut params, remaining);
                     consumed += cons;
                     break;
                 }
@@ -147,7 +138,7 @@ impl FontCharCalc {
                     }
                     Self::push_whitespace(
                         &mut self.cursor,
-                        params.rbr(),
+                        &params,
                         last_ch,
                         ch,
                     );
@@ -155,7 +146,7 @@ impl FontCharCalc {
                 }
                 Some(index) => {
                     let word = &remaining[..index];
-                    let (lch, cons) = self.push_word(params.rbr(), word);
+                    let (lch, cons) = self.push_word(&mut params, word);
                     last_ch = lch;
                     consumed += cons;
                     if cons < word.len() {
@@ -168,10 +159,9 @@ impl FontCharCalc {
         (consumed, line_break || consumed < remaining.len())
     }
 
-    #[must_use]
     pub fn push_word(
         &mut self,
-        mut params: CalcParams<'_, impl FnMut(GlyphMetrics)>,
+        params: &mut CalcParams<'_, impl FnMut(GlyphMetrics)>,
         word: &str,
     ) -> (Option<char>, usize) {
         if self.cursor.x == 0.0 {
@@ -194,7 +184,7 @@ impl FontCharCalc {
                 glyphs.push(Self::position_char(&mut cursor, *glyph));
                 cursor.x += advance;
             } else if ch.is_whitespace() {
-                Self::push_whitespace(&mut cursor, params.rbr(), last_ch, ch);
+                Self::push_whitespace(&mut cursor, params, last_ch, ch);
             }
             last_ch = Some(ch);
         }
@@ -207,7 +197,7 @@ impl FontCharCalc {
 
     pub fn push_whitespace(
         cursor: &mut Cursor,
-        params: CalcParams<'_, impl FnMut(GlyphMetrics)>,
+        params: &CalcParams<'_, impl FnMut(GlyphMetrics)>,
         last_ch: Option<char>,
         white_char: char,
     ) {
@@ -231,10 +221,9 @@ impl FontCharCalc {
         cursor.x += cursor.font_size * (kerning + advance);
     }
 
-    #[must_use]
     fn push_word_splitwrap(
         &mut self,
-        mut params: CalcParams<'_, impl FnMut(GlyphMetrics)>,
+        params: &mut CalcParams<'_, impl FnMut(GlyphMetrics)>,
         word: &str,
     ) -> (Option<char>, usize) {
         let mut last_ch = None;
@@ -255,12 +244,7 @@ impl FontCharCalc {
                 ));
                 self.cursor.x += advance;
             } else if ch.is_whitespace() {
-                Self::push_whitespace(
-                    &mut self.cursor,
-                    params.rbr(),
-                    last_ch,
-                    ch,
-                );
+                Self::push_whitespace(&mut self.cursor, params, last_ch, ch);
             }
             last_ch = Some(ch);
         }
@@ -293,10 +277,12 @@ impl FontCharCalc {
     }
 }
 
+#[must_use]
 fn is_line_break(ch: char) -> bool {
     matches!(ch, '\n')
 }
 
+#[must_use]
 fn is_breaking_space(ch: char) -> bool {
     match ch {
         '\u{00a0}' | '\u{2007}' | '\u{202f}' => false,

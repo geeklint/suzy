@@ -23,31 +23,6 @@ impl super::TestEnvironment for TestEnvironment {
         width: u16,
         height: u16,
     ) -> Box<dyn DerefMut<Target = super::opengl::Window>> {
-        const GL_RGBA: std::ffi::c_uint = 0x1908;
-        const GL_UNSIGNED_BYTE: std::ffi::c_uint = 0x1401;
-        let buffer = vec![0_u8; 4 * usize::from(width) * usize::from(height)];
-        let buffer_ptr = Box::into_raw(buffer.into_boxed_slice());
-        let ctx;
-        unsafe {
-            ctx = bindings::OSMesaCreateContext(GL_RGBA, std::ptr::null_mut());
-            bindings::OSMesaMakeCurrent(
-                ctx,
-                buffer_ptr.cast(),
-                GL_UNSIGNED_BYTE,
-                width.into(),
-                height.into(),
-            );
-        }
-        let plat_gl_context = opengl::OpenGlContext::new(|s| {
-            let name = std::ffi::CString::new(s).expect(
-                "Requested OpenGL function name contained a null byte",
-            );
-            unsafe { bindings::OSMesaGetProcAddress(name.as_ptr()) }
-        });
-        let mut gl_win = opengl::Window::new(plat_gl_context);
-        gl_win.clear_color(Color::BLACK);
-        gl_win.viewport(0, 0, width, height);
-
         struct OsMesaTestEnvironment {
             buffer_ptr: *mut [u8],
             ctx: bindings::OsMesaContext,
@@ -76,6 +51,31 @@ impl super::TestEnvironment for TestEnvironment {
                 &mut self.gl_win
             }
         }
+
+        const GL_RGBA: std::ffi::c_uint = 0x1908;
+        const GL_UNSIGNED_BYTE: std::ffi::c_uint = 0x1401;
+        let buffer = vec![0_u8; 4 * usize::from(width) * usize::from(height)];
+        let buffer_ptr = Box::into_raw(buffer.into_boxed_slice());
+        let ctx;
+        unsafe {
+            ctx = bindings::OSMesaCreateContext(GL_RGBA, std::ptr::null_mut());
+            bindings::OSMesaMakeCurrent(
+                ctx,
+                buffer_ptr.cast(),
+                GL_UNSIGNED_BYTE,
+                width.into(),
+                height.into(),
+            );
+        }
+        let plat_gl_context = opengl::OpenGlContext::new(|s| {
+            let name = std::ffi::CString::new(s).expect(
+                "Requested OpenGL function name contained a null byte",
+            );
+            unsafe { bindings::OSMesaGetProcAddress(name.as_ptr()) }
+        });
+        let mut gl_win = opengl::Window::new(plat_gl_context);
+        gl_win.clear_color(Color::BLACK);
+        gl_win.viewport(0, 0, width, height);
 
         Box::new(OsMesaTestEnvironment {
             buffer_ptr,

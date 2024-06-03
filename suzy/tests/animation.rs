@@ -5,7 +5,7 @@ use std::{cell::Cell, rc::Rc, time::Duration};
 
 use suzy::{
     animation::Animation,
-    app::{App, AppTestingExt},
+    app::{App, TestingExt},
     platforms::no_graphics::NoGraphics,
     widget::{self, Widget},
 };

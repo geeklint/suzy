@@ -14,30 +14,30 @@ pub struct Mask<T> {
     pub graphic: T,
 }
 
-pub struct MaskPush<'a, T> {
+pub struct Push<'a, T> {
     mask: &'a mut Mask<T>,
 }
 
-pub struct MaskPop;
+pub struct Pop;
 
 impl<T> WidgetGraphic<OpenGlRenderPlatform> for Mask<T>
 where
     T: Graphic<OpenGlRenderPlatform>,
 {
-    type BeforeGetter = fn(&mut ()) -> MaskPush<'_, T>;
+    type BeforeGetter = fn(&mut ()) -> Push<'_, T>;
 
-    type AfterGetter = fn(&mut ()) -> MaskPop;
+    type AfterGetter = fn(&mut ()) -> Pop;
 
-    fn before_children(&mut self) -> MaskPush<'_, T> {
-        MaskPush { mask: self }
+    fn before_children(&mut self) -> Push<'_, T> {
+        Push { mask: self }
     }
 
-    fn after_children(&mut self) -> MaskPop {
-        MaskPop
+    fn after_children(&mut self) -> Pop {
+        Pop
     }
 }
 
-impl<T> Graphic<OpenGlRenderPlatform> for MaskPush<'_, T>
+impl<T> Graphic<OpenGlRenderPlatform> for Push<'_, T>
 where
     T: Graphic<OpenGlRenderPlatform>,
 {
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl Graphic<OpenGlRenderPlatform> for MaskPop {
+impl Graphic<OpenGlRenderPlatform> for Pop {
     fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         ctx.pop_mask();
     }

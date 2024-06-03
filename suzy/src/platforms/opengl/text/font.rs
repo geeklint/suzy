@@ -19,7 +19,7 @@ pub struct FontData {
     pub texture: Texture,
     pub padding_ratio: f32,
     pub glyphs: Box<[Glyph]>,
-    pub kerning: Box<[Kerning]>,
+    pub kerning: Box<[KerningPair]>,
     pub line_spacing: f32,
     pub ascent: f32,
     pub capline: f32,
@@ -41,7 +41,7 @@ pub struct Glyph {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Kerning {
+pub struct KerningPair {
     pub left: char,
     pub right: char,
     pub kerning: f32,

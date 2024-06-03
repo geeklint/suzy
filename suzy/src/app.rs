@@ -18,7 +18,7 @@ use crate::{
 mod tester;
 mod values;
 
-pub use tester::AppTestingExt;
+pub use tester::TestingExt;
 pub(crate) use values::AppState;
 
 #[cfg(feature = "platform-opengl")]
@@ -56,12 +56,16 @@ mod app_struct {
 ///
 /// This will bind watch closures it is called in, and can be used to
 /// intentionally cause a watch closure to re-run every frame.
+///
+/// # Panics
+/// Panics if called from outside the context of a suzy app.
 pub fn time() -> time::Instant {
     AppState::try_with_current(|state| state.frame_start.get_auto())
         .expect("there is no valid app state to get time from")
 }
 
 /// A version of `time` which will not bind watch closures.
+#[must_use]
 pub fn time_unwatched() -> time::Instant {
     AppState::try_with_current(|state| state.frame_start.get_unwatched())
         .unwrap_or_else(time::Instant::now)
@@ -74,6 +78,9 @@ pub fn time_unwatched() -> time::Instant {
 ///
 /// Current precision is 1 second, however this should not be relied
 /// upon and may change in the future.
+///
+/// # Panics
+/// Panics if called from outside the context of a suzy app.
 pub fn coarse_time() -> time::Instant {
     AppState::try_with_current(|state| state.coarse_time.get_auto())
         .expect("there is no valid app state to get coarse_time from")

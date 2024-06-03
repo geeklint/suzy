@@ -146,20 +146,35 @@ impl UpperHex for Color {
     }
 }
 
+const SRGB_A: f32 = 0.055;
+const SRGB_1A: f32 = 1.0 + SRGB_A;
+const SRGB_GAMMA: f32 = 2.4;
+const SRGB_PHI: f32 = 12.92;
+/// The compressed transition point would be `SRGB_A / (SRGB_GAMMA - 1.0)` but
+/// because PHI is rounded above, it's adjusted to this.
+const SRGB_TRANS_COMPRESSED: f32 = 0.04045;
+const SRGB_TRANS_UNCOMPRESSED: f32 = SRGB_TRANS_COMPRESSED / SRGB_PHI;
+const SRGB_TRANS_COMPRESSED_U8: u8 = {
+    match SRGB_TRANS_COMPRESSED * 255.0 {
+        10.0..=10.9 => 10,
+        _ => panic!(),
+    }
+};
+
 fn srgb_decompress(value: u8) -> f32 {
     let vf = f32::from(value) / 255.0;
-    if value > 10 {
-        ((vf + 0.055) / 1.055).powf(2.4)
+    if value > SRGB_TRANS_COMPRESSED_U8 {
+        ((vf + SRGB_A) / SRGB_1A).powf(SRGB_GAMMA)
     } else {
-        vf / 12.92
+        vf / SRGB_PHI
     }
 }
 
 fn srgb_compress(value: f32) -> u8 {
-    let curved = if value > 0.0031308 {
-        value.powf(1.0 / 2.4) * 1.055 - 0.055
+    let curved = if value > SRGB_TRANS_UNCOMPRESSED {
+        value.powf(1.0 / SRGB_GAMMA) * SRGB_1A - SRGB_A
     } else {
-        value * 12.92
+        value * SRGB_PHI
     };
     curved.quantize_u8()
 }
@@ -487,5 +502,17 @@ impl Color {
             "yellowgreen" => Self::YELLOW_GREEN,
             _ => return None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn srgb_decompress_compress_lossless() {
+        for x in 0..=u8::MAX {
+            assert_eq!(x, srgb_compress(srgb_decompress(x)));
+        }
     }
 }

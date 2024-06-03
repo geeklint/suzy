@@ -9,7 +9,7 @@ use crate::{platform::RenderPlatform, pointer::PointerEventData};
 
 use super::App;
 
-pub trait AppTestingExt {
+pub trait TestingExt {
     /// Short-hand to simulate a mouse click
     ///
     /// This is equivalent to:
@@ -29,7 +29,7 @@ pub trait AppTestingExt {
     }
 }
 
-impl<P: RenderPlatform> AppTestingExt for App<P> {
+impl<P: RenderPlatform> TestingExt for App<P> {
     fn next_frame(&mut self, frame_time: time::Duration) {
         self.update_watches();
         let frame_time = self.state().time().get_unwatched() + frame_time;

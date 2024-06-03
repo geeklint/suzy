@@ -4,7 +4,7 @@
 #![cfg(any(feature = "platform-osmesa", feature = "platform-sdl"))]
 
 use suzy::{
-    app::{App, AppTestingExt},
+    app::{App, TestingExt},
     dims::{Padding2d, Rect},
     graphics::{Color, Conditional},
     platforms::{

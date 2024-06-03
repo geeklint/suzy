@@ -39,6 +39,7 @@ pub struct FontAtlas<I> {
 }
 
 impl FontAtlas<std::iter::Empty<FontSpec>> {
+    #[must_use]
     pub fn with_texture_size(width: TextureDim, height: TextureDim) -> Self {
         let initial_padding = 0.1;
         Self {
@@ -55,6 +56,7 @@ impl FontAtlas<std::iter::Empty<FontSpec>> {
 }
 
 impl<I> FontAtlas<I> {
+    #[must_use]
     pub fn with_padding_ratio(self, padding: f32) -> Self {
         Self {
             builder: self.builder.with_padding_ratio(padding),
@@ -185,14 +187,14 @@ impl<I> FontAtlas<I> {
                     .and_then(|id| font_face.glyph_hor_advance(id))
                     .ok_or(Error::MissingGlyph(codepoint))?;
                 let advance = f32::from(advance) / height;
-                let tex_left =
-                    (tex_left * f32::from(asset.width)).round() as u16;
-                let tex_right =
-                    (tex_right * f32::from(asset.width)).round() as u16;
-                let tex_bottom =
-                    (tex_bottom * f32::from(asset.height)).round() as u16;
-                let tex_top =
-                    (tex_top * f32::from(asset.height)).round() as u16;
+                let tex_left = (tex_left * f32::from(asset.width))
+                    .round_ties_even() as u16;
+                let tex_right = (tex_right * f32::from(asset.width))
+                    .round_ties_even() as u16;
+                let tex_bottom = (tex_bottom * f32::from(asset.height))
+                    .round_ties_even() as u16;
+                let tex_top = (tex_top * f32::from(asset.height))
+                    .round_ties_even() as u16;
                 write!(
                     mod_file,
                     "

@@ -92,6 +92,7 @@ pub mod eases {
 
     impl BuiltInEasingFunction {
         /// Get a trait object representing this easing function.
+        #[must_use]
         pub fn get(&self) -> Box<dyn Easing> {
             self.inner.to_boxed_easing()
         }

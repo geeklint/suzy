@@ -21,12 +21,7 @@ impl Default for WindowSettings<'static> {
             title: "Suzy Window",
             width: 809,
             height: 500,
-            background_color: Color::from_rgba(
-                0.026113365,
-                0.026113365,
-                0.026113365,
-                1.0,
-            ),
+            background_color: Color::from_rgba8(0x2d, 0x2d, 0x2d, 0xff),
         }
     }
 }
