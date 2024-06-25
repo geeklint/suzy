@@ -83,7 +83,9 @@ impl VertexConfig {
     pub fn alpha_base(self, base: f32) -> Self {
         const QUANT_ADJ: f32 = 256.0 / 255.0;
         let Self([_, y, z, w]) = self;
+        // (1.0)..(-1.0) => (0.0)..(1.0)
         let offset = (-base * 0.5) + 0.5;
+        // (0.0)..(1.0) => (0)..(256)
         let x = (offset * QUANT_ADJ).quantize_u8();
         Self([x, y, z, w])
     }

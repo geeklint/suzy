@@ -165,7 +165,8 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
             .cloned()
             .unwrap_or_else(default_font::default_font);
         let font = font_clone.as_ref();
-        let aa_smoothing = style.font_size * (2.0 * font.data.padding_ratio);
+        let screenspace_padding = style.font_size * font.data.padding_ratio;
+        let aa_smoothing = 2.0 * screenspace_padding;
         let draws = &style.draws;
         let texture = font.data.texture.clone();
         let vertex_set_index = self
@@ -197,12 +198,15 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                 handle_glyph: |glyph: calc::GlyphMetrics| {
                     for draw in draws {
                         let color = draw.color.rgba8();
-                        let smoothing = if draw.smoothing.is_nan() {
-                            aa_smoothing
+                        let (smoothing, base_offset);
+                        if draw.smoothing.is_nan() {
+                            smoothing = aa_smoothing;
+                            base_offset = 0.4 / aa_smoothing;
                         } else {
-                            draw.smoothing
+                            smoothing = draw.smoothing;
+                            base_offset = 0.5 / draw.smoothing;
                         };
-                        let base = draw.midpoint - 0.5 / smoothing;
+                        let base = draw.midpoint - base_offset;
                         let config = VertexConfig::new()
                             .alpha_base(base)
                             .alpha_peak(draw.peak);
