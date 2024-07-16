@@ -118,7 +118,6 @@ impl PopulateTextureUtil {
                 image_height: height.into(),
                 texture_width: width,
                 texture_height: height,
-                color_pow: 2.2,
                 is_sdf: sdf,
             }
         } else {
@@ -154,7 +153,6 @@ impl PopulateTextureUtil {
                 image_height: height.into(),
                 texture_width,
                 texture_height,
-                color_pow: 2.2,
                 is_sdf: sdf,
             }
         }

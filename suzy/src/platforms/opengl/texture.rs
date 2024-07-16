@@ -153,9 +153,6 @@ pub struct TextureSize {
     /// The actual height of this texture on the GPU.
     pub texture_height: u16,
 
-    /// Used in the shader to adjust the gamma of a texture.
-    pub color_pow: f32,
-
     /// If this image represents a signed distance field.
     pub is_sdf: bool,
 }
@@ -296,7 +293,6 @@ impl TextureCache {
                     image_height: 2.0,
                     texture_width: 2,
                     texture_height: 2,
-                    color_pow: 1.0,
                     is_sdf: false,
                 },
             }

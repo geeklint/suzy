@@ -10,8 +10,8 @@ use crate::graphics::Color;
 use super::{
     context::bindings::types::GLint,
     context::bindings::{
-        BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE, ONE_MINUS_SRC_ALPHA,
-        PACK_ALIGNMENT, RGBA, UNSIGNED_BYTE, VIEWPORT,
+        BLEND, COLOR_BUFFER_BIT, COLOR_CLEAR_VALUE, ONE_MINUS_SRC_ALPHA,
+        PACK_ALIGNMENT, RGBA, SRC_ALPHA, UNSIGNED_BYTE, VIEWPORT,
     },
     {Mat4, OpenGlContext, OpenGlRenderPlatform},
 };
@@ -70,7 +70,7 @@ impl Window {
         let screen_height = app.state().window_height().get_unwatched();
         unsafe {
             self.ctx.bindings.Enable(BLEND);
-            self.ctx.bindings.BlendFunc(ONE, ONE_MINUS_SRC_ALPHA);
+            self.ctx.bindings.BlendFunc(SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
         }
         let matrix = Mat4::translate(-1.0, -1.0)
             * Mat4::scale(2.0 / screen_width, 2.0 / screen_height);

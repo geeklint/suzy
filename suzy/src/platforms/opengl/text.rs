@@ -198,15 +198,12 @@ impl crate::platform::graphics::Text<TextStyle> for Text {
                 handle_glyph: |glyph: calc::GlyphMetrics| {
                     for draw in draws {
                         let color = draw.color.rgba8();
-                        let (smoothing, base_offset);
-                        if draw.smoothing.is_nan() {
-                            smoothing = aa_smoothing;
-                            base_offset = 0.4 / aa_smoothing;
+                        let smoothing = if draw.smoothing.is_nan() {
+                            aa_smoothing
                         } else {
-                            smoothing = draw.smoothing;
-                            base_offset = 0.5 / draw.smoothing;
+                            draw.smoothing
                         };
-                        let base = draw.midpoint - base_offset;
+                        let base = draw.midpoint - (0.5 / smoothing);
                         let config = VertexConfig::new()
                             .alpha_base(base)
                             .alpha_peak(draw.peak);
