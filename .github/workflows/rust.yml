@@ -22,13 +22,7 @@ jobs:
         sudo apt-get -y update
         sudo apt-get -y install libosmesa-dev libsdl2-dev
     - uses: actions/checkout@v2
-    - uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - uses: Swatinem/rust-cache@v2
 
     - name: Update Rust
       run: rustup update stable
