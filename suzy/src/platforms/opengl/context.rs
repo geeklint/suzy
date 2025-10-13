@@ -41,6 +41,8 @@ pub type OpenGlBindings = bindings::Gles2;
 pub struct OpenGlContext {
     // must be first so it drops first, avoding UAF
     pub(super) bindings: Rc<OpenGlBindings>,
+    #[expect(unused)]
+    pub(super) extensions: Extensions,
     pub(super) shaders: Shaders,
     pub(super) texture_cache: TextureCache,
     pub(super) mask: Mask,
@@ -62,10 +64,32 @@ impl OpenGlContext {
                 );
             }
         }
+        let mut extensions = Extensions::default();
+        let ext_cstr = unsafe {
+            let p = ptr.GetString(bindings::EXTENSIONS);
+            assert!(!p.is_null());
+            std::ffi::CStr::from_ptr(p.cast())
+        };
+        for ext in ext_cstr
+            .to_str()
+            .expect("OpenGL extension string should be valid unicode")
+            .split_whitespace()
+        {
+            match ext {
+                "GL_OES_standard_derivatives" => {
+                    extensions.standard_derivatives = true;
+                }
+                "GL_EXT_blend_func_extended" => {
+                    extensions.blend_func_extended = true;
+                }
+                _ => {}
+            }
+        }
         let shaders = Shaders::new(&ptr).expect("Failed to compile shaders");
         let mask = Mask::new(&ptr);
         Self {
             bindings: ptr,
+            extensions,
             shaders,
             texture_cache: TextureCache::default(),
             mask,
@@ -93,4 +117,10 @@ impl OpenGlContext {
             unsafe { std::slice::from_raw_parts(message.cast(), length) };
         println!("{}", String::from_utf8_lossy(data));
     }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Extensions {
+    blend_func_extended: bool,
+    standard_derivatives: bool,
 }
