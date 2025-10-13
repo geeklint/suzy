@@ -185,7 +185,7 @@ impl PointerEvent<'_> {
     {
         self.grab_map
             .get(&self.id())
-            .map_or(false, |v| v == &holder.into())
+            .is_some_and(|v| v == &holder.into())
     }
 
     /// Try to stop grabbing this pointer, indicating that the identified

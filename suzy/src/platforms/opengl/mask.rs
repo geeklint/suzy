@@ -26,8 +26,8 @@ impl Mask {
         let mut texture = 0;
         let mut fbo = 0;
         unsafe {
-            gl.GenTextures(1, &mut texture);
-            gl.GenFramebuffers(1, &mut fbo);
+            gl.GenTextures(1, &raw mut texture);
+            gl.GenFramebuffers(1, &raw mut fbo);
         }
         Self {
             texture,
@@ -84,7 +84,7 @@ impl Mask {
             gl.TexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, CLAMP_TO_EDGE.into());
 
             let mut old_fbo: GLint = 0;
-            gl.GetIntegerv(FRAMEBUFFER_BINDING, &mut old_fbo);
+            gl.GetIntegerv(FRAMEBUFFER_BINDING, &raw mut old_fbo);
             gl.BindFramebuffer(FRAMEBUFFER, self.fbo);
             gl.FramebufferTexture2D(
                 FRAMEBUFFER,

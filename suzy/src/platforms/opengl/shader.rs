@@ -83,7 +83,7 @@ fn compile_shader<'a>(
         );
         gl.CompileShader(obj.id);
         let mut success: GLint = 0;
-        gl.GetShaderiv(obj.id, COMPILE_STATUS, &mut success);
+        gl.GetShaderiv(obj.id, COMPILE_STATUS, &raw mut success);
         (obj, success)
     };
     if success == GLint::from(FALSE) {
@@ -96,9 +96,9 @@ fn compile_shader<'a>(
 
 #[derive(Debug)]
 pub enum ProgramCompileError {
-    Vertex(CString),
-    Fragment(CString),
-    Link(CString),
+    Vertex(#[allow(unused)] CString),
+    Fragment(#[allow(unused)] CString),
+    Link(#[allow(unused)] CString),
 }
 
 struct ProgramObject {
@@ -138,7 +138,7 @@ fn compile_program(
         gl.AttachShader(program.id, frag.id);
         gl.LinkProgram(program.id);
         let mut success: GLint = 0;
-        gl.GetProgramiv(program.id, LINK_STATUS, &mut success);
+        gl.GetProgramiv(program.id, LINK_STATUS, &raw mut success);
         let success = success != GLint::from(FALSE);
         (success, program)
     };
@@ -182,8 +182,8 @@ impl ShaderProgram {
         let (attrs, total_attrs) = unsafe {
             let mut attrs: GLint = 0;
             let mut total_attrs: GLint = 8;
-            gl.GetProgramiv(obj.id, ACTIVE_ATTRIBUTES, &mut attrs);
-            gl.GetIntegerv(MAX_VERTEX_ATTRIBS, &mut total_attrs);
+            gl.GetProgramiv(obj.id, ACTIVE_ATTRIBUTES, &raw mut attrs);
+            gl.GetIntegerv(MAX_VERTEX_ATTRIBS, &raw mut total_attrs);
             let attrs = GLuint::try_from(attrs).expect("number of attributes returned from GetProgramiv should be non-negative");
             let total_attrs = GLuint::try_from(total_attrs)
                 .expect("value of MAX_VERTEX_ATTRIBS should be non-negative");

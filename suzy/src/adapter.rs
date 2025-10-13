@@ -169,7 +169,7 @@ impl<T> AdapterLayout for DownwardVecLayout<T> {
         let dist = if item >= self.data.len() {
             return None;
         } else if item > self.reference_index {
-            (item - self.reference_index) as f32 * -1.0
+            -((item - self.reference_index) as f32)
         } else {
             (self.reference_index - item) as f32
         };

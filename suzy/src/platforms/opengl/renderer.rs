@@ -86,8 +86,10 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
             match (main_fbo, batch.masking) {
                 (None, BatchMasking::NewMask | BatchMasking::AddToMask) => {
                     let mut current_fbo: GLint = 0;
-                    ctx.bindings
-                        .GetIntegerv(FRAMEBUFFER_BINDING, &mut current_fbo);
+                    ctx.bindings.GetIntegerv(
+                        FRAMEBUFFER_BINDING,
+                        &raw mut current_fbo,
+                    );
                     ctx.bindings.BindFramebuffer(FRAMEBUFFER, ctx.mask.fbo);
                     main_fbo = Some(current_fbo as GLuint);
                 }

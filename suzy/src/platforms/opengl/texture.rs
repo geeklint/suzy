@@ -222,7 +222,7 @@ impl TextureCache {
                 let id = new_tex_id.take().unwrap_or_else(|| {
                     let mut id_slot = 0;
                     unsafe {
-                        gl.GenTextures(1, &mut id_slot);
+                        gl.GenTextures(1, &raw mut id_slot);
                     }
                     id_slot
                 });
@@ -242,12 +242,11 @@ impl TextureCache {
             }
         }
         self.solid_color.get_or_insert_with(|| {
-            #[rustfmt::skip]
             let pixels: [u8; 16] = [0xff; 16];
             let id = new_tex_id.take().unwrap_or_else(|| {
                 let mut id_slot = 0;
                 unsafe {
-                    gl.GenTextures(1, &mut id_slot);
+                    gl.GenTextures(1, &raw mut id_slot);
                 }
                 id_slot
             });
@@ -299,7 +298,7 @@ impl TextureCache {
         });
         if let Some(id) = new_tex_id {
             unsafe {
-                gl.DeleteTextures(1, &id);
+                gl.DeleteTextures(1, &raw const id);
             }
         }
     }

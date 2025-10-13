@@ -12,7 +12,7 @@ use opengl::context::{
         types::GLenum, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S,
         TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
     },
-    short_consts::{CLAMP_TO_EDGE, LINEAR, NEAREST, RGB, RGBA},
+    short_consts::{CLAMP_TO_EDGE, LINEAR, RGB, RGBA},
     OpenGlBindings,
 };
 
@@ -197,39 +197,5 @@ impl PopulateTextureUtil {
         assert_eq!(pixels.len(), Self::data_len(width, height, alignment, 4));
         let size = [width, height];
         Self::populate_format(gl, target, RGBA, size, alignment, false, pixels)
-    }
-}
-
-#[derive(Clone, Copy, Default, PartialEq)]
-pub(super) struct DefaultTexturePopulator;
-
-impl PopulateTexture for DefaultTexturePopulator {
-    fn texture_key(&self) -> &[u8] {
-        &[]
-    }
-
-    fn get_known_size(&self) -> Option<[f32; 2]> {
-        Some([2.0, 2.0])
-    }
-
-    fn populate(
-        &self,
-        gl: &OpenGlBindings,
-        target: GLenum,
-    ) -> Result<TextureSize, String> {
-        let pixels: [u8; 12] = [0xff; 12];
-        unsafe {
-            gl.PixelStorei(UNPACK_ALIGNMENT, 1);
-        }
-        let size = PopulateTextureUtil::populate_color_rgb(
-            gl, target, 2, 2, 1, &pixels,
-        );
-        unsafe {
-            gl.TexParameteri(target, TEXTURE_MIN_FILTER, NEAREST.into());
-            gl.TexParameteri(target, TEXTURE_MAG_FILTER, NEAREST.into());
-            gl.TexParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE.into());
-            gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE.into());
-        }
-        Ok(size)
     }
 }
