@@ -179,175 +179,176 @@ fn srgb_compress(value: f32) -> u8 {
     curved.quantize_u8()
 }
 
-const fn cc(r: f32, g: f32, b: f32) -> Color {
-    Color::from_rgba(r, g, b, 1.0)
-}
-
-macro_rules! doc_colors {
-    ( $( $color:item )* ) => {
+macro_rules! cc {
+    ($($name:ident = $code:literal,)*) => {
         $(
             /// A named color constant
-            $color
+            pub const $name: Color = {
+                let rgb: u32 = $code;
+                let r = (rgb >> 16_u8) as u8;
+                let g = ((rgb >> 8_u8) & 0xFF) as u8;
+                let b = (rgb & 0xFF) as u8;
+                let r = (r as f32) / 255.0;
+                let g = (g as f32) / 255.0;
+                let b = (b as f32) / 255.0;
+                Color {
+                    r, g, b, a: 1.0,
+                }
+            };
         )*
     };
 }
 
 impl Color {
-    doc_colors! {
-    pub const ALICE_BLUE: Color = cc(0.8713671, 0.9386857, 1.0);
-    pub const ANTIQUE_WHITE: Color = cc(0.9559733, 0.8307699, 0.6795425);
-    pub const AQUA: Color = cc(0.0, 1.0, 1.0);
-    pub const AQUAMARINE: Color = cc(0.21223076, 1.0, 0.65837485);
-    pub const AZURE: Color = cc(0.8713671, 1.0, 1.0);
-    pub const BEIGE: Color = cc(0.91309863, 0.91309863, 0.7156935);
-    pub const BISQUE: Color = cc(1.0, 0.7758222, 0.55201143);
-    pub const BLACK: Color = cc(0.0, 0.0, 0.0);
-    pub const BLANCHED_ALMOND: Color = cc(1.0, 0.8307699, 0.61049557);
-    pub const BLUE: Color = cc(0.0, 0.0, 1.0);
-    pub const BLUE_VIOLET: Color = cc(0.2541521, 0.024157632, 0.7605245);
-    pub const BROWN: Color = cc(0.37626213, 0.023153367, 0.023153367);
-    pub const BURLY_WOOD: Color = cc(0.73046076, 0.47932017, 0.24228112);
-    pub const CADET_BLUE: Color = cc(0.114435375, 0.34191442, 0.3515326);
-    pub const CHARTREUSE: Color = cc(0.21223076, 1.0, 0.0);
-    pub const CHOCOLATE: Color = cc(0.6444797, 0.14126329, 0.0129830325);
-    pub const CORAL: Color = cc(1.0, 0.21223076, 0.08021982);
-    pub const CORNFLOWER_BLUE: Color = cc(0.12743768, 0.30054379, 0.8468732);
-    pub const CORNSILK: Color = cc(1.0, 0.9386857, 0.7156935);
-    pub const CRIMSON: Color = cc(0.7156935, 0.00699541, 0.045186203);
-    pub const CYAN: Color = cc(0.0, 1.0, 1.0);
-    pub const DARK_BLUE: Color = cc(0.0, 0.0, 0.25818285);
-    pub const DARK_CYAN: Color = cc(0.0, 0.25818285, 0.25818285);
-    pub const DARK_GOLDEN_ROD: Color =
-        cc(0.47932017, 0.23839757, 0.0033465358);
-    pub const DARK_GRAY: Color = cc(0.39675522, 0.39675522, 0.39675522);
-    pub const DARK_GREY: Color = cc(0.39675522, 0.39675522, 0.39675522);
-    pub const DARK_GREEN: Color = cc(0.0, 0.12743768, 0.0);
-    pub const DARK_KHAKI: Color = cc(0.50888133, 0.47353148, 0.14702727);
-    pub const DARK_MAGENTA: Color = cc(0.25818285, 0.0, 0.25818285);
-    pub const DARK_OLIVE_GREEN: Color = cc(0.09084171, 0.14702727, 0.02842604);
-    pub const DARK_ORANGE: Color = cc(1.0, 0.26225066, 0.0);
-    pub const DARK_ORCHID: Color = cc(0.31854677, 0.031896032, 0.60382736);
-    pub const DARK_RED: Color = cc(0.25818285, 0.0, 0.0);
-    pub const DARK_SALMON: Color = cc(0.8148466, 0.3049873, 0.19461784);
-    pub const DARK_SEA_GREEN: Color = cc(0.2746773, 0.5028865, 0.2746773);
-    pub const DARK_SLATE_BLUE: Color =
-        cc(0.064803265, 0.046665087, 0.25818285);
-    pub const DARK_SLATE_GRAY: Color = cc(0.02842604, 0.07818742, 0.07818742);
-    pub const DARK_SLATE_GREY: Color = cc(0.02842604, 0.07818742, 0.07818742);
-    pub const DARK_TURQUOISE: Color = cc(0.0, 0.6172066, 0.63759685);
-    pub const DARK_VIOLET: Color = cc(0.29613826, 0.0, 0.65140563);
-    pub const DEEP_PINK: Color = cc(1.0, 0.00699541, 0.29177064);
-    pub const DEEP_SKY_BLUE: Color = cc(0.0, 0.52099556, 1.0);
-    pub const DIM_GRAY: Color = cc(0.14126329, 0.14126329, 0.14126329);
-    pub const DIM_GREY: Color = cc(0.14126329, 0.14126329, 0.14126329);
-    pub const DODGER_BLUE: Color = cc(0.0129830325, 0.27889428, 1.0);
-    pub const FIRE_BRICK: Color = cc(0.4452012, 0.015996294, 0.015996294);
-    pub const FLORAL_WHITE: Color = cc(1.0, 0.9559733, 0.8713671);
-    pub const FOREST_GREEN: Color = cc(0.015996294, 0.25818285, 0.015996294);
-    pub const FUCHSIA: Color = cc(1.0, 0.0, 1.0);
-    pub const GAINSBORO: Color = cc(0.7156935, 0.7156935, 0.7156935);
-    pub const GHOST_WHITE: Color = cc(0.9386857, 0.9386857, 1.0);
-    pub const GOLD: Color = cc(1.0, 0.6795425, 0.0);
-    pub const GOLDEN_ROD: Color = cc(0.7011019, 0.37626213, 0.014443844);
-    pub const GRAY: Color = cc(0.2158605, 0.2158605, 0.2158605);
-    pub const GREY: Color = cc(0.2158605, 0.2158605, 0.2158605);
-    pub const GREEN: Color = cc(0.0, 0.2158605, 0.0);
-    pub const GREEN_YELLOW: Color = cc(0.41788507, 1.0, 0.02842604);
-    pub const HONEY_DEW: Color = cc(0.8713671, 1.0, 0.8713671);
-    pub const HOT_PINK: Color = cc(1.0, 0.14126329, 0.45641103);
-    pub const INDIAN_RED: Color = cc(0.61049557, 0.107023105, 0.107023105);
-    pub const INDIGO: Color = cc(0.070360094, 0.0, 0.22322796);
-    pub const IVORY: Color = cc(1.0, 1.0, 0.8713671);
-    pub const KHAKI: Color = cc(0.8713671, 0.7912979, 0.26225066);
-    pub const LAVENDER: Color = cc(0.7912979, 0.7912979, 0.9559733);
-    pub const LAVENDER_BLUSH: Color = cc(1.0, 0.8713671, 0.91309863);
-    pub const LAWN_GREEN: Color = cc(0.20155625, 0.9734453, 0.0);
-    pub const LEMON_CHIFFON: Color = cc(1.0, 0.9559733, 0.61049557);
-    pub const LIGHT_BLUE: Color = cc(0.41788507, 0.6866853, 0.7912979);
-    pub const LIGHT_CORAL: Color = cc(0.8713671, 0.2158605, 0.2158605);
-    pub const LIGHT_CYAN: Color = cc(0.7454042, 1.0, 1.0);
-    pub const LIGHT_GOLDEN_ROD_YELLOW: Color =
-        cc(0.9559733, 0.9559733, 0.6444797);
-    pub const LIGHT_GRAY: Color = cc(0.65140563, 0.65140563, 0.65140563);
-    pub const LIGHT_GREY: Color = cc(0.65140563, 0.65140563, 0.65140563);
-    pub const LIGHT_GREEN: Color = cc(0.27889428, 0.8549926, 0.27889428);
-    pub const LIGHT_PINK: Color = cc(1.0, 0.4677838, 0.5332764);
-    pub const LIGHT_SALMON: Color = cc(1.0, 0.3515326, 0.19461784);
-    pub const LIGHT_SEA_GREEN: Color = cc(0.014443844, 0.4452012, 0.40197778);
-    pub const LIGHT_SKY_BLUE: Color = cc(0.24228112, 0.6172066, 0.9559733);
-    pub const LIGHT_SLATE_GRAY: Color = cc(0.18447499, 0.24620132, 0.31854677);
-    pub const LIGHT_SLATE_GREY: Color = cc(0.18447499, 0.24620132, 0.31854677);
-    pub const LIGHT_STEEL_BLUE: Color = cc(0.43415365, 0.55201143, 0.73046076);
-    pub const LIGHT_YELLOW: Color = cc(1.0, 1.0, 0.7454042);
-    pub const LIME: Color = cc(0.0, 1.0, 0.0);
-    pub const LIME_GREEN: Color = cc(0.031896032, 0.61049557, 0.031896032);
-    pub const LINEN: Color = cc(0.9559733, 0.8713671, 0.7912979);
-    pub const MAGENTA: Color = cc(1.0, 0.0, 1.0);
-    pub const MAROON: Color = cc(0.2158605, 0.0, 0.0);
-    pub const MEDIUM_AQUA_MARINE: Color =
-        cc(0.13286832, 0.61049557, 0.40197778);
-    pub const MEDIUM_BLUE: Color = cc(0.0, 0.0, 0.61049557);
-    pub const MEDIUM_ORCHID: Color = cc(0.49102086, 0.09084171, 0.65140563);
-    pub const MEDIUM_PURPLE: Color = cc(0.29177064, 0.16202937, 0.70837575);
-    pub const MEDIUM_SEA_GREEN: Color = cc(0.045186203, 0.4507858, 0.1651322);
-    pub const MEDIUM_SLATE_BLUE: Color = cc(0.19806932, 0.13843161, 0.8549926);
-    pub const MEDIUM_SPRING_GREEN: Color = cc(0.0, 0.9559733, 0.3231432);
-    pub const MEDIUM_TURQUOISE: Color =
-        cc(0.064803265, 0.63759685, 0.60382736);
-    pub const MEDIUM_VIOLET_RED: Color =
-        cc(0.57112485, 0.007499032, 0.23455058);
-    pub const MIDNIGHT_BLUE: Color = cc(0.009721218, 0.009721218, 0.16202937);
-    pub const MINT_CREAM: Color = cc(0.91309863, 1.0, 0.9559733);
-    pub const MISTY_ROSE: Color = cc(1.0, 0.7758222, 0.7529422);
-    pub const MOCCASIN: Color = cc(1.0, 0.7758222, 0.462077);
-    pub const NAVAJO_WHITE: Color = cc(1.0, 0.73046076, 0.41788507);
-    pub const NAVY: Color = cc(0.0, 0.0, 0.2158605);
-    pub const OLD_LACE: Color = cc(0.9822506, 0.91309863, 0.7912979);
-    pub const OLIVE: Color = cc(0.2158605, 0.2158605, 0.0);
-    pub const OLIVE_DRAB: Color = cc(0.14702727, 0.2704978, 0.016807375);
-    pub const ORANGE: Color = cc(1.0, 0.37626213, 0.0);
-    pub const ORANGE_RED: Color = cc(1.0, 0.059511237, 0.0);
-    pub const ORCHID: Color = cc(0.7011019, 0.16202937, 0.67244315);
-    pub const PALE_GOLDEN_ROD: Color = cc(0.8549926, 0.80695224, 0.40197778);
-    pub const PALE_GREEN: Color = cc(0.31398872, 0.9646863, 0.31398872);
-    pub const PALE_TURQUOISE: Color = cc(0.4286905, 0.8549926, 0.8549926);
-    pub const PALE_VIOLET_RED: Color = cc(0.70837575, 0.16202937, 0.29177064);
-    pub const PAPAYA_WHIP: Color = cc(1.0, 0.8631572, 0.6653873);
-    pub const PEACH_PUFF: Color = cc(1.0, 0.7011019, 0.48514995);
-    pub const PERU: Color = cc(0.61049557, 0.23455058, 0.049706567);
-    pub const PINK: Color = cc(1.0, 0.5271151, 0.59720176);
-    pub const PLUM: Color = cc(0.7230551, 0.3515326, 0.7230551);
-    pub const POWDER_BLUE: Color = cc(0.43415365, 0.7454042, 0.7912979);
-    pub const PURPLE: Color = cc(0.2158605, 0.0, 0.2158605);
-    pub const REBECCA_PURPLE: Color = cc(0.13286832, 0.033104766, 0.31854677);
-    pub const RED: Color = cc(1.0, 0.0, 0.0);
-    pub const ROSY_BROWN: Color = cc(0.5028865, 0.2746773, 0.2746773);
-    pub const ROYAL_BLUE: Color = cc(0.052860647, 0.14126329, 0.7529422);
-    pub const SADDLE_BROWN: Color = cc(0.25818285, 0.059511237, 0.0065120906);
-    pub const SALMON: Color = cc(0.9559733, 0.2158605, 0.1682694);
-    pub const SANDY_BROWN: Color = cc(0.9046612, 0.3712377, 0.116970666);
-    pub const SEA_GREEN: Color = cc(0.027320892, 0.25818285, 0.09530747);
-    pub const SEA_SHELL: Color = cc(1.0, 0.91309863, 0.8549926);
-    pub const SIENNA: Color = cc(0.3515326, 0.08437621, 0.026241222);
-    pub const SILVER: Color = cc(0.5271151, 0.5271151, 0.5271151);
-    pub const SKY_BLUE: Color = cc(0.24228112, 0.6172066, 0.8307699);
-    pub const SLATE_BLUE: Color = cc(0.14412847, 0.10224173, 0.61049557);
-    pub const SLATE_GRAY: Color = cc(0.16202937, 0.2158605, 0.27889428);
-    pub const SLATE_GREY: Color = cc(0.16202937, 0.2158605, 0.27889428);
-    pub const SNOW: Color = cc(1.0, 0.9559733, 0.9559733);
-    pub const SPRING_GREEN: Color = cc(0.0, 1.0, 0.21223076);
-    pub const STEEL_BLUE: Color = cc(0.061246052, 0.22322796, 0.45641103);
-    pub const TAN: Color = cc(0.6444797, 0.45641103, 0.26225066);
-    pub const TEAL: Color = cc(0.0, 0.2158605, 0.2158605);
-    pub const THISTLE: Color = cc(0.6866853, 0.52099556, 0.6866853);
-    pub const TOMATO: Color = cc(1.0, 0.12477182, 0.063010015);
-    pub const TURQUOISE: Color = cc(0.051269457, 0.7454042, 0.63075715);
-    pub const VIOLET: Color = cc(0.8549926, 0.22322796, 0.8549926);
-    pub const WHEAT: Color = cc(0.91309863, 0.73046076, 0.4507858);
-    pub const WHITE: Color = cc(1.0, 1.0, 1.0);
-    pub const WHITE_SMOKE: Color = cc(0.91309863, 0.91309863, 0.91309863);
-    pub const YELLOW: Color = cc(1.0, 1.0, 0.0);
-    pub const YELLOW_GREEN: Color = cc(0.3231432, 0.61049557, 0.031896032);
+    cc! {
+        ALICE_BLUE = 0xF0F8FF,
+        ANTIQUE_WHITE = 0xFAEBD7,
+        AQUA = 0x00FFFF,
+        AQUAMARINE = 0x7FFFD4,
+        AZURE = 0xF0FFFF,
+        BEIGE = 0xF5F5DC,
+        BISQUE = 0xFFE4C4,
+        BLACK = 0x000000,
+        BLANCHED_ALMOND = 0xFFEBCD,
+        BLUE = 0x0000FF,
+        BLUE_VIOLET = 0x8A2BE2,
+        BROWN = 0xA52A2A,
+        BURLY_WOOD = 0xDEB887,
+        CADET_BLUE = 0x5F9EA0,
+        CHARTREUSE = 0x7FFF00,
+        CHOCOLATE = 0xD2691E,
+        CORAL = 0xFF7F50,
+        CORNFLOWER_BLUE = 0x6495ED,
+        CORNSILK = 0xFFF8DC,
+        CRIMSON = 0xDC143C,
+        CYAN = 0x00FFFF,
+        DARK_BLUE = 0x00008B,
+        DARK_CYAN = 0x008B8B,
+        DARK_GOLDEN_ROD = 0xB8860B,
+        DARK_GRAY = 0xA9A9A9,
+        DARK_GREY = 0xA9A9A9,
+        DARK_GREEN = 0x006400,
+        DARK_KHAKI = 0xBDB76B,
+        DARK_MAGENTA = 0x8B008B,
+        DARK_OLIVE_GREEN = 0x556B2F,
+        DARK_ORANGE = 0xFF8C00,
+        DARK_ORCHID = 0x9932CC,
+        DARK_RED = 0x8B0000,
+        DARK_SALMON = 0xE9967A,
+        DARK_SEA_GREEN = 0x8FBC8F,
+        DARK_SLATE_BLUE = 0x483D8B,
+        DARK_SLATE_GRAY = 0x2F4F4F,
+        DARK_SLATE_GREY = 0x2F4F4F,
+        DARK_TURQUOISE = 0x00CED1,
+        DARK_VIOLET = 0x9400D3,
+        DEEP_PINK = 0xFF1493,
+        DEEP_SKY_BLUE = 0x00BFFF,
+        DIM_GRAY = 0x696969,
+        DIM_GREY = 0x696969,
+        DODGER_BLUE = 0x1E90FF,
+        FIRE_BRICK = 0xB22222,
+        FLORAL_WHITE = 0xFFFAF0,
+        FOREST_GREEN = 0x228B22,
+        FUCHSIA = 0xFF00FF,
+        GAINSBORO = 0xDCDCDC,
+        GHOST_WHITE = 0xF8F8FF,
+        GOLD = 0xFFD700,
+        GOLDEN_ROD = 0xDAA520,
+        GRAY = 0x808080,
+        GREY = 0x808080,
+        GREEN = 0x008000,
+        GREEN_YELLOW = 0xADFF2F,
+        HONEY_DEW = 0xF0FFF0,
+        HOT_PINK = 0xFF69B4,
+        INDIAN_RED = 0xCD5C5C,
+        INDIGO = 0x4B0082,
+        IVORY = 0xFFFFF0,
+        KHAKI = 0xF0E68C,
+        LAVENDER = 0xE6E6FA,
+        LAVENDER_BLUSH = 0xFFF0F5,
+        LAWN_GREEN = 0x7CFC00,
+        LEMON_CHIFFON = 0xFFFACD,
+        LIGHT_BLUE = 0xADD8E6,
+        LIGHT_CORAL = 0xF08080,
+        LIGHT_CYAN = 0xE0FFFF,
+        LIGHT_GOLDEN_ROD_YELLOW = 0xFAFAD2,
+        LIGHT_GRAY = 0xD3D3D3,
+        LIGHT_GREY = 0xD3D3D3,
+        LIGHT_GREEN = 0x90EE90,
+        LIGHT_PINK = 0xFFB6C1,
+        LIGHT_SALMON = 0xFFA07A,
+        LIGHT_SEA_GREEN = 0x20B2AA,
+        LIGHT_SKY_BLUE = 0x87CEFA,
+        LIGHT_SLATE_GRAY = 0x778899,
+        LIGHT_SLATE_GREY = 0x778899,
+        LIGHT_STEEL_BLUE = 0xB0C4DE,
+        LIGHT_YELLOW = 0xFFFFE0,
+        LIME = 0x00FF00,
+        LIME_GREEN = 0x32CD32,
+        LINEN = 0xFAF0E6,
+        MAGENTA = 0xFF00FF,
+        MAROON = 0x800000,
+        MEDIUM_AQUA_MARINE = 0x66CDAA,
+        MEDIUM_BLUE = 0x0000CD,
+        MEDIUM_ORCHID = 0xBA55D3,
+        MEDIUM_PURPLE = 0x9370DB,
+        MEDIUM_SEA_GREEN = 0x3CB371,
+        MEDIUM_SLATE_BLUE = 0x7B68EE,
+        MEDIUM_SPRING_GREEN = 0x00FA9A,
+        MEDIUM_TURQUOISE = 0x48D1CC,
+        MEDIUM_VIOLET_RED = 0xC71585,
+        MIDNIGHT_BLUE = 0x191970,
+        MINT_CREAM = 0xF5FFFA,
+        MISTY_ROSE = 0xFFE4E1,
+        MOCCASIN = 0xFFE4B5,
+        NAVAJO_WHITE = 0xFFDEAD,
+        NAVY = 0x000080,
+        OLD_LACE = 0xFDF5E6,
+        OLIVE = 0x808000,
+        OLIVE_DRAB = 0x6B8E23,
+        ORANGE = 0xFFA500,
+        ORANGE_RED = 0xFF4500,
+        ORCHID = 0xDA70D6,
+        PALE_GOLDEN_ROD = 0xEEE8AA,
+        PALE_GREEN = 0x98FB98,
+        PALE_TURQUOISE = 0xAFEEEE,
+        PALE_VIOLET_RED = 0xDB7093,
+        PAPAYA_WHIP = 0xFFEFD5,
+        PEACH_PUFF = 0xFFDAB9,
+        PERU = 0xCD853F,
+        PINK = 0xFFC0CB,
+        PLUM = 0xDDA0DD,
+        POWDER_BLUE = 0xB0E0E6,
+        PURPLE = 0x800080,
+        REBECCA_PURPLE = 0x663399,
+        RED = 0xFF0000,
+        ROSY_BROWN = 0xBC8F8F,
+        ROYAL_BLUE = 0x4169E1,
+        SADDLE_BROWN = 0x8B4513,
+        SALMON = 0xFA8072,
+        SANDY_BROWN = 0xF4A460,
+        SEA_GREEN = 0x2E8B57,
+        SEA_SHELL = 0xFFF5EE,
+        SIENNA = 0xA0522D,
+        SILVER = 0xC0C0C0,
+        SKY_BLUE = 0x87CEEB,
+        SLATE_BLUE = 0x6A5ACD,
+        SLATE_GRAY = 0x708090,
+        SLATE_GREY = 0x708090,
+        SNOW = 0xFFFAFA,
+        SPRING_GREEN = 0x00FF7F,
+        STEEL_BLUE = 0x4682B4,
+        TAN = 0xD2B48C,
+        TEAL = 0x008080,
+        THISTLE = 0xD8BFD8,
+        TOMATO = 0xFF6347,
+        TURQUOISE = 0x40E0D0,
+        VIOLET = 0xEE82EE,
+        WHEAT = 0xF5DEB3,
+        WHITE = 0xFFFFFF,
+        WHITE_SMOKE = 0xF5F5F5,
+        YELLOW = 0xFFFF00,
+        YELLOW_GREEN = 0x9ACD32,
     }
 
     pub(crate) fn name_to_color(name: &str) -> Option<Color> {
