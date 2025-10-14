@@ -7,7 +7,7 @@ mod button;
 mod label;
 mod togglebutton;
 
-pub use button::{Button, ButtonBehavior};
+pub use button::{Button, ButtonBehavior, DefaultButtonContent};
 
 pub use label::{Label, LabelContent};
 
