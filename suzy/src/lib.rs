@@ -71,7 +71,7 @@ impl widget::Content for Data {
 //! When the parent changes size, the closure will be re-run and update the
 //! size of the child.
 //!
-//! See the [`watch`](crate::watch) module documentation for more
+//! See the [`watch`] module documentation for more
 //! information about the watch system.
 
 pub mod adapter;
