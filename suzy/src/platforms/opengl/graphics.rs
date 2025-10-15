@@ -1,11 +1,14 @@
 /* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
 /* Copyright © 2021 Violet Leonard */
 
+mod circle;
 mod image;
 mod mask;
 mod transform;
 
-pub use {image::SlicedImage, mask::Mask, transform::Transform};
+pub use {
+    circle::Circle, image::SlicedImage, mask::Mask, transform::Transform,
+};
 
 use super::{
     renderer::{BatchMasking, BatchPool},

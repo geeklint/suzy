@@ -16,33 +16,6 @@ use opengl::{
     OpenGlRenderPlatform, Texture,
 };
 
-// 12 13 14 15
-//  8  9 10 11
-//  4  5  6  7
-//  0  1  2  3
-
-#[rustfmt::skip]
-static SLICED_INDICES: [u8; 18 * 3] = [
-    0, 1, 4,
-    1, 5, 4,
-    1, 2, 5,
-    2, 6, 5,
-    2, 3, 6,
-    3, 7, 6,
-    4, 5, 8,
-    5, 9, 8,
-    5, 6, 9,
-    6, 10, 9,
-    6, 7, 10,
-    7, 11, 10,
-    8, 9, 12,
-    9, 13, 12,
-    9, 10, 13,
-    10, 14, 13,
-    10, 11, 14,
-    11, 15, 14,
-];
-
 /// A common graphic used for user interfaces, a sliced image is defined by
 /// fixed-sized corners and an inner area which stretches to fill the
 /// graphic area.
@@ -254,3 +227,30 @@ impl SlicedImage {
         );
     }
 }
+
+// 12 13 14 15
+//  8  9 10 11
+//  4  5  6  7
+//  0  1  2  3
+
+#[rustfmt::skip]
+static SLICED_INDICES: [u8; 18 * 3] = [
+    0, 1, 4,
+    1, 5, 4,
+    1, 2, 5,
+    2, 6, 5,
+    2, 3, 6,
+    3, 7, 6,
+    4, 5, 8,
+    5, 9, 8,
+    5, 6, 9,
+    6, 10, 9,
+    6, 7, 10,
+    7, 11, 10,
+    8, 9, 12,
+    9, 13, 12,
+    9, 10, 13,
+    10, 14, 13,
+    10, 11, 14,
+    11, 15, 14,
+];
