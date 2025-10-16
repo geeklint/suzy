@@ -19,6 +19,7 @@ pub struct Circle {
     pub color: Color,
     pub center: [f32; 2],
     pub outer_radius: f32,
+    pub inner_radius: f32,
 }
 
 impl Default for Circle {
@@ -28,6 +29,7 @@ impl Default for Circle {
             color: Color::WHITE,
             center: [50.0, 50.0],
             outer_radius: 50.0,
+            inner_radius: 0.0,
         }
     }
 }
@@ -42,10 +44,10 @@ impl Circle {
 impl Graphic<OpenGlRenderPlatform> for Circle {
     fn draw(&mut self, ctx: &mut DrawContext<'_, OpenGlRenderPlatform>) {
         let bbox = BoundingBox {
-            left: self.center[0] - self.outer_radius,
-            right: self.center[0] + self.outer_radius,
-            bottom: self.center[1] - self.outer_radius,
-            top: self.center[1] + self.outer_radius,
+            left: self.center[0] - self.outer_radius - 0.5,
+            right: self.center[0] + self.outer_radius + 0.5,
+            bottom: self.center[1] - self.outer_radius - 0.5,
+            top: self.center[1] + self.outer_radius + 0.5,
         };
         if let Some(BatchRef { batch, mut uv_rect }) =
             ctx.find_batch(&self.texture, 9, &[bbox])
@@ -130,12 +132,26 @@ impl Circle {
             (bbox.top, uv_rect.top, false),
         ];
         let color = self.color.rgba8();
+        // add half a pixel so the middle of the antialiased edge is at the
+        // outer radius
+        let outer_radius_aa = self.outer_radius + 0.5;
+        let peak = if self.inner_radius == 0.0 {
+            1.0
+        } else {
+            // the peak needs to be half-way between the outer edge and the
+            // inner edge, mesured backwards because the computed alpha
+            // decreases with more distance.
+            let outer_radius_norm =
+                1.0 - (self.outer_radius / outer_radius_aa);
+            let inner_radius_norm =
+                1.0 - (self.inner_radius / outer_radius_aa);
+            inner_radius_norm.midpoint(outer_radius_norm)
+        };
+        let config = VertexConfig::new().alpha_base(0.0).alpha_peak(peak);
+        let smoothing = outer_radius_aa;
         for (y, v, y_inside) in vertical_values {
             for &(x, u, x_inside) in &horiz_values {
-                let smoothing = self.outer_radius;
-                let config = VertexConfig::new()
-                    .alpha_base(0.0)
-                    .vector(x_inside, y_inside);
+                let config = config.vector(x_inside, y_inside);
                 batch.vertices.push(Vertex {
                     xy: [x, y],
                     uv: [u, v],
