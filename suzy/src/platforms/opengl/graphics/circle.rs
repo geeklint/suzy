@@ -78,29 +78,35 @@ impl Graphic<OpenGlRenderPlatform> for Circle {
                         return;
                     }
                     UvRect::U16(uv_rect_u16) => {
-                        if (uv_rect_u16.right - uv_rect_u16.left) & 1 == 0
-                            || (uv_rect_u16.top - uv_rect_u16.bottom) & 1 == 0
-                        {
-                            // dims are even, so they can't be midpoint-ed
-                            uv_rect = UvRect::F32(UvRectValues {
-                                left: uv_rect_u16.left.to_f32(),
-                                right: uv_rect_u16.right.to_f32(),
-                                bottom: uv_rect_u16.bottom.to_f32(),
-                                top: uv_rect_u16.top.to_f32(),
-                            });
-                            continue;
+                        match [
+                            precise_midpoint(
+                                uv_rect_u16.left,
+                                uv_rect_u16.right,
+                            ),
+                            precise_midpoint(
+                                uv_rect_u16.bottom,
+                                uv_rect_u16.top,
+                            ),
+                        ] {
+                            [Some(cu), Some(cv)] => {
+                                self.push_vertices(
+                                    batch,
+                                    bbox,
+                                    uv_rect_u16,
+                                    [cu, cv],
+                                );
+                                return;
+                            }
+                            _ => {
+                                uv_rect = UvRect::F32(UvRectValues {
+                                    left: uv_rect_u16.left.to_f32(),
+                                    right: uv_rect_u16.right.to_f32(),
+                                    bottom: uv_rect_u16.bottom.to_f32(),
+                                    top: uv_rect_u16.top.to_f32(),
+                                });
+                                continue;
+                            }
                         }
-                        let uv_center = [
-                            uv_rect_u16.left.midpoint(uv_rect_u16.right),
-                            uv_rect_u16.bottom.midpoint(uv_rect_u16.top),
-                        ];
-                        self.push_vertices(
-                            batch,
-                            bbox,
-                            uv_rect_u16,
-                            uv_center,
-                        );
-                        return;
                     }
                 }
             }
@@ -182,3 +188,11 @@ static INDICES: [u8; 8 * 3] = [
     4, 5, 7,
     5, 8, 7,
 ];
+
+fn precise_midpoint(a: u16, b: u16) -> Option<u16> {
+    if a.abs_diff(b).is_multiple_of(2) {
+        Some(a.midpoint(b))
+    } else {
+        None
+    }
+}
