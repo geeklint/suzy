@@ -2,18 +2,19 @@ use std::convert::TryInto;
 
 use crate::{
     graphics::{Color, DrawContext, Graphic},
-    platforms::opengl::{self, renderer::Vertex},
+    platforms::opengl,
 };
 
 use opengl::{
     renderer::{
-        Batch, BatchRef, BoundingBox, UvRect, UvRectValues, UvType,
+        Batch, BatchRef, BoundingBox, UvRect, UvRectValues, UvType, Vertex,
         VertexConfig,
     },
     OpenGlRenderPlatform, Texture,
 };
 
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub struct Circle {
     pub texture: Texture,
     pub color: Color,
@@ -49,63 +50,53 @@ impl Graphic<OpenGlRenderPlatform> for Circle {
             bottom: self.center[1] - self.outer_radius - 0.5,
             top: self.center[1] + self.outer_radius + 0.5,
         };
-        if let Some(BatchRef { batch, mut uv_rect }) =
+        let Some(BatchRef { batch, mut uv_rect }) =
             ctx.find_batch(&self.texture, 9, &[bbox])
-        {
-            loop {
-                match uv_rect {
-                    UvRect::SolidColor(u, v) => {
-                        let rect = UvRectValues {
-                            left: u,
-                            right: u,
-                            bottom: v,
-                            top: v,
-                        };
-                        self.push_vertices(batch, bbox, rect, [u, v]);
-                        return;
-                    }
-                    UvRect::F32(uv_rect_f32) => {
-                        let uv_center = [
-                            uv_rect_f32.left.midpoint(uv_rect_f32.right),
-                            uv_rect_f32.bottom.midpoint(uv_rect_f32.top),
-                        ];
-                        self.push_vertices(
-                            batch,
-                            bbox,
-                            uv_rect_f32,
-                            uv_center,
-                        );
-                        return;
-                    }
-                    UvRect::U16(uv_rect_u16) => {
-                        match [
-                            precise_midpoint(
-                                uv_rect_u16.left,
-                                uv_rect_u16.right,
-                            ),
-                            precise_midpoint(
-                                uv_rect_u16.bottom,
-                                uv_rect_u16.top,
-                            ),
-                        ] {
-                            [Some(cu), Some(cv)] => {
-                                self.push_vertices(
-                                    batch,
-                                    bbox,
-                                    uv_rect_u16,
-                                    [cu, cv],
-                                );
-                                return;
-                            }
-                            _ => {
-                                uv_rect = UvRect::F32(UvRectValues {
-                                    left: uv_rect_u16.left.to_f32(),
-                                    right: uv_rect_u16.right.to_f32(),
-                                    bottom: uv_rect_u16.bottom.to_f32(),
-                                    top: uv_rect_u16.top.to_f32(),
-                                });
-                                continue;
-                            }
+        else {
+            return;
+        };
+        loop {
+            match uv_rect {
+                UvRect::SolidColor(u, v) => {
+                    let rect = UvRectValues {
+                        left: u,
+                        right: u,
+                        bottom: v,
+                        top: v,
+                    };
+                    self.push_vertices(batch, bbox, rect, [u, v]);
+                    return;
+                }
+                UvRect::F32(uv_rect_f32) => {
+                    let uv_center = [
+                        uv_rect_f32.left.midpoint(uv_rect_f32.right),
+                        uv_rect_f32.bottom.midpoint(uv_rect_f32.top),
+                    ];
+                    self.push_vertices(batch, bbox, uv_rect_f32, uv_center);
+                    return;
+                }
+                UvRect::U16(uv_rect_u16) => {
+                    match [
+                        precise_midpoint(uv_rect_u16.left, uv_rect_u16.right),
+                        precise_midpoint(uv_rect_u16.bottom, uv_rect_u16.top),
+                    ] {
+                        [Some(cu), Some(cv)] => {
+                            self.push_vertices(
+                                batch,
+                                bbox,
+                                uv_rect_u16,
+                                [cu, cv],
+                            );
+                            return;
+                        }
+                        _ => {
+                            uv_rect = UvRect::F32(UvRectValues {
+                                left: uv_rect_u16.left.to_f32(),
+                                right: uv_rect_u16.right.to_f32(),
+                                bottom: uv_rect_u16.bottom.to_f32(),
+                                top: uv_rect_u16.top.to_f32(),
+                            });
+                            continue;
                         }
                     }
                 }
@@ -124,9 +115,7 @@ impl Circle {
     ) where
         Uv: UvType,
     {
-        let index_offset: u16 = batch.vertices.len().try_into().expect(
-            "the number of vertices in a batch should be less than 2^16",
-        );
+        let index_offset: u16 = batch.vertices.len_u16();
         let horiz_values = [
             (bbox.left, uv_rect.left, false),
             (self.center[0], uv_center[0], true),
