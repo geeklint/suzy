@@ -3,11 +3,13 @@
 
 mod circle;
 mod image;
+mod line;
 mod mask;
 mod transform;
 
 pub use {
-    circle::Circle, image::SlicedImage, mask::Mask, transform::Transform,
+    circle::Circle, image::SlicedImage, line::Line, mask::Mask,
+    transform::Transform,
 };
 
 use super::{

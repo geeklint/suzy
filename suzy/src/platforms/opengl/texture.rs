@@ -37,7 +37,7 @@ impl Texture {
     }
 
     #[must_use]
-    pub fn solid_color() -> Self {
+    pub const fn solid_color() -> Self {
         Self {
             populator: None,
             crop: Some(UvRect::SolidColor(0, 0)),
