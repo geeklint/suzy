@@ -1,4 +1,5 @@
-use std::convert::TryInto;
+/* SPDX-License-Identifier: (Apache-2.0 OR MIT OR Zlib) */
+/* Copyright © 2025 Violet Leonard */
 
 use crate::{
     graphics::{Color, DrawContext, Graphic},

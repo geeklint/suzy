@@ -115,12 +115,12 @@ pub mod prelude {
 macro_rules! tweak {
     // this macro adapted from crate `inline_tweak`, version 1.0.8
     ($default:expr) => {{
-        $crate::app::App::<$crate::platform::DefaultPlatform>::coarse_time();
+        $crate::app::coarse_time();
         $crate::watch::inline_tweak(None, file!(), line!(), column!())
             .unwrap_or_else(|| $default)
     }};
     ($value:literal; $default:expr) => {{
-        $crate::app::App::<$crate::platform::DefaultPlatform>::coarse_time();
+        $crate::app::coarse_time();
         $crate::watch::inline_tweak(Some($value), file!(), line!(), column!())
             .unwrap_or_else(|| $default)
     }};

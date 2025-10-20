@@ -52,3 +52,7 @@ required-features = ["quickstart"]
 [[example]]
 name = "text"
 required-features = ["quickstart"]
+
+[[example]]
+name = "line"
+required-features = ["quickstart"]
