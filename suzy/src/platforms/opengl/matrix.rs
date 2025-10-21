@@ -189,14 +189,14 @@ impl MulAssign<&Mat4> for Mat4 {
     }
 }
 
-type Vec4 = (f32, f32, f32, f32);
+type Vec4 = [f32; 4];
 
 macro_rules! mul_vec {
     ( $left:expr, $right:expr; $row:expr ) => {{
-        $left[($row, 0u8)] * $right.0
-            + $left[($row, 1u8)] * $right.1
-            + $left[($row, 2u8)] * $right.2
-            + $left[($row, 3u8)] * $right.3
+        $left[($row, 0u8)] * $right[0]
+            + $left[($row, 1u8)] * $right[1]
+            + $left[($row, 2u8)] * $right[2]
+            + $left[($row, 3u8)] * $right[3]
     }};
 }
 
@@ -204,12 +204,12 @@ impl Mul<&Vec4> for &Mat4 {
     type Output = Vec4;
 
     fn mul(self, rhs: &Vec4) -> Vec4 {
-        (
+        [
             mul_vec!(self, rhs; 0u8),
             mul_vec!(self, rhs; 1u8),
             mul_vec!(self, rhs; 2u8),
             mul_vec!(self, rhs; 3u8),
-        )
+        ]
     }
 }
 
@@ -217,12 +217,12 @@ impl Mul<&Vec4> for Mat4 {
     type Output = Vec4;
 
     fn mul(self, rhs: &Vec4) -> Vec4 {
-        (
+        [
             mul_vec!(self, rhs; 0u8),
             mul_vec!(self, rhs; 1u8),
             mul_vec!(self, rhs; 2u8),
             mul_vec!(self, rhs; 3u8),
-        )
+        ]
     }
 }
 
@@ -230,12 +230,12 @@ impl Mul<Vec4> for &Mat4 {
     type Output = Vec4;
 
     fn mul(self, rhs: Vec4) -> Vec4 {
-        (
+        [
             mul_vec!(self, rhs; 0u8),
             mul_vec!(self, rhs; 1u8),
             mul_vec!(self, rhs; 2u8),
             mul_vec!(self, rhs; 3u8),
-        )
+        ]
     }
 }
 
@@ -243,12 +243,12 @@ impl Mul<Vec4> for Mat4 {
     type Output = Vec4;
 
     fn mul(self, rhs: Vec4) -> Vec4 {
-        (
+        [
             mul_vec!(self, rhs; 0u8),
             mul_vec!(self, rhs; 1u8),
             mul_vec!(self, rhs; 2u8),
             mul_vec!(self, rhs; 3u8),
-        )
+        ]
     }
 }
 
@@ -259,12 +259,12 @@ mod test {
 
     use super::*;
 
-    const SOME_VEC: Vec4 = (
+    const SOME_VEC: Vec4 = [
         0.4590671600603613,
         0.07089256298264268,
         0.12435283851511914,
         0.42263442840089094,
-    );
+    ];
 
     const SOME_MAT: Mat4 = Mat4 {
         data: [
@@ -320,12 +320,12 @@ mod test {
     #[test]
     fn check_rotate() {
         let result = Mat4::rotate(std::f32::consts::PI) * SOME_VEC;
-        assert!(result.0 + SOME_VEC.0 <= f32::EPSILON);
-        assert!(result.1 + SOME_VEC.1 <= f32::EPSILON);
+        assert!(result[0] + SOME_VEC[0] <= f32::EPSILON);
+        assert!(result[1] + SOME_VEC[1] <= f32::EPSILON);
         #[allow(clippy::float_cmp)]
         {
-            assert_eq!(result.2, SOME_VEC.2);
-            assert_eq!(result.3, SOME_VEC.3);
+            assert_eq!(result[2], SOME_VEC[2]);
+            assert_eq!(result[3], SOME_VEC[3]);
         }
     }
 }
