@@ -57,27 +57,27 @@ pub type GLsync = *const __GLsync;
 pub enum _cl_context {}
 pub enum _cl_event {}
 
-pub type GLDEBUGPROC = extern "system" fn(source: GLenum,
-                                          gltype: GLenum,
-                                          id: GLuint,
-                                          severity: GLenum,
-                                          length: GLsizei,
-                                          message: *const GLchar,
-                                          userParam: *mut super::__gl_imports::raw::c_void);
-pub type GLDEBUGPROCARB = extern "system" fn(source: GLenum,
-                                             gltype: GLenum,
-                                             id: GLuint,
-                                             severity: GLenum,
-                                             length: GLsizei,
-                                             message: *const GLchar,
-                                             userParam: *mut super::__gl_imports::raw::c_void);
-pub type GLDEBUGPROCKHR = extern "system" fn(source: GLenum,
-                                             gltype: GLenum,
-                                             id: GLuint,
-                                             severity: GLenum,
-                                             length: GLsizei,
-                                             message: *const GLchar,
-                                             userParam: *mut super::__gl_imports::raw::c_void);
+pub type GLDEBUGPROC = Option<extern "system" fn(source: GLenum,
+                                                 gltype: GLenum,
+                                                 id: GLuint,
+                                                 severity: GLenum,
+                                                 length: GLsizei,
+                                                 message: *const GLchar,
+                                                 userParam: *mut super::__gl_imports::raw::c_void)>;
+pub type GLDEBUGPROCARB = Option<extern "system" fn(source: GLenum,
+                                                    gltype: GLenum,
+                                                    id: GLuint,
+                                                    severity: GLenum,
+                                                    length: GLsizei,
+                                                    message: *const GLchar,
+                                                    userParam: *mut super::__gl_imports::raw::c_void)>;
+pub type GLDEBUGPROCKHR = Option<extern "system" fn(source: GLenum,
+                                                    gltype: GLenum,
+                                                    id: GLuint,
+                                                    severity: GLenum,
+                                                    length: GLsizei,
+                                                    message: *const GLchar,
+                                                    userParam: *mut super::__gl_imports::raw::c_void)>;
 
 // GLES 1 types
 // "pub type GLclampx = i32;",
@@ -109,12 +109,12 @@ pub type GLDEBUGPROCKHR = extern "system" fn(source: GLenum,
 // GLES 2 types (none currently)
 
 // Vendor extension types
-pub type GLDEBUGPROCAMD = extern "system" fn(id: GLuint,
-                                             category: GLenum,
-                                             severity: GLenum,
-                                             length: GLsizei,
-                                             message: *const GLchar,
-                                             userParam: *mut super::__gl_imports::raw::c_void);
+pub type GLDEBUGPROCAMD = Option<extern "system" fn(id: GLuint,
+                                                    category: GLenum,
+                                                    severity: GLenum,
+                                                    length: GLsizei,
+                                                    message: *const GLchar,
+                                                    userParam: *mut super::__gl_imports::raw::c_void)>;
 pub type GLhalfNV = super::__gl_imports::raw::c_ushort;
 pub type GLvdpauSurfaceNV = GLintptr;
 
@@ -803,6 +803,7 @@ pub VertexAttrib4fv: FnPtr,
 /// Fallbacks: VertexAttribPointerARB
 pub VertexAttribPointer: FnPtr,
 pub Viewport: FnPtr,
+_priv: ()
 }
 impl Gles2 {
             /// Load each OpenGL symbol using a custom load function. This allows for the
@@ -812,11 +813,11 @@ impl Gles2 {
             /// let gl = Gl::load_with(|s| glfw.get_proc_address(s));
             /// ~~~
             #[allow(dead_code, unused_variables)]
-            pub fn load_with<F>(mut loadfn: F) -> Gles2 where F: FnMut(&str) -> *const __gl_imports::raw::c_void {
+            pub fn load_with<F>(mut loadfn: F) -> Gles2 where F: FnMut(&'static str) -> *const __gl_imports::raw::c_void {
                 #[inline(never)]
-                fn do_metaloadfn(loadfn: &mut FnMut(&str) -> *const __gl_imports::raw::c_void,
-                                 symbol: &str,
-                                 symbols: &[&str])
+                fn do_metaloadfn(loadfn: &mut dyn FnMut(&'static str) -> *const __gl_imports::raw::c_void,
+                                 symbol: &'static str,
+                                 symbols: &[&'static str])
                                  -> *const __gl_imports::raw::c_void {
                     let mut ptr = loadfn(symbol);
                     if ptr.is_null() {
@@ -827,7 +828,7 @@ impl Gles2 {
                     }
                     ptr
                 }
-                let mut metaloadfn = |symbol: &str, symbols: &[&str]| {
+                let mut metaloadfn = |symbol: &'static str, symbols: &[&'static str]| {
                     do_metaloadfn(&mut loadfn, symbol, symbols)
                 };
                 Gles2 {
@@ -995,6 +996,7 @@ VertexAttrib4f: FnPtr::new(metaloadfn("glVertexAttrib4f", &["glVertexAttrib4fARB
 VertexAttrib4fv: FnPtr::new(metaloadfn("glVertexAttrib4fv", &["glVertexAttrib4fvARB", "glVertexAttrib4fvNV"])),
 VertexAttribPointer: FnPtr::new(metaloadfn("glVertexAttribPointer", &["glVertexAttribPointerARB"])),
 Viewport: FnPtr::new(metaloadfn("glViewport", &[])),
+_priv: ()
 }
         }
 #[allow(non_snake_case, unused_variables, dead_code)]
