@@ -85,27 +85,8 @@ impl Texture {
         &self,
         size: &TextureSize,
     ) -> super::renderer::UvRect {
-        use super::renderer::UvType;
         match self.crop {
-            None => {
-                match [
-                    u16::try_from_f32(size.image_width),
-                    u16::try_from_f32(size.image_height),
-                ] {
-                    [Some(width), Some(height)] => UvRect::U16(UvRectValues {
-                        left: 0,
-                        right: width,
-                        bottom: 0,
-                        top: height,
-                    }),
-                    _ => UvRect::F32(UvRectValues {
-                        left: 0.0,
-                        right: size.image_width,
-                        bottom: 0.0,
-                        top: size.image_height,
-                    }),
-                }
-            }
+            None => size.default_rect,
             Some(uvrect) => uvrect,
         }
     }
@@ -139,19 +120,21 @@ enum TextureState {
     Ready { id: GLuint, size: TextureSize },
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 pub struct TextureSize {
-    /// The width of the meaninful image in this texture.
-    pub image_width: f32,
+    /// In the absence of Texture::crop, the UvRect to use. This usually
+    /// corrosponds to (0, 0)..(w, h) where w and h are the size of the original
+    /// image (not rounded up even if the texture size was rounded up to a power
+    /// of 2).
+    pub default_rect: UvRect,
 
-    /// The height of the meaninful image in this texture.
-    pub image_height: f32,
-
-    /// The actual width of this texture on the GPU.
-    pub texture_width: u16,
-
-    /// The actual height of this texture on the GPU.
-    pub texture_height: u16,
+    /// UVs passed from vertices are divided by this value. Usually this is the
+    /// size of the texture data on the GPU, but other uses may be desirable -
+    /// 2x the size of the texture data on the GPU allows addressing the center
+    /// of texels with integers rather than just the texel boundaries. If the
+    /// kind of UV mapping normally found in games is desired, [1, 1] can be
+    /// used.
+    pub uv_scale: [u16; 2],
 
     /// If this image represents a signed distance field.
     pub is_sdf: bool,
@@ -288,10 +271,8 @@ impl TextureCache {
             TextureState::Ready {
                 id,
                 size: TextureSize {
-                    image_width: 2.0,
-                    image_height: 2.0,
-                    texture_width: 2,
-                    texture_height: 2,
+                    default_rect: UvRect::SolidColor(0, 0),
+                    uv_scale: [2, 2],
                     is_sdf: false,
                 },
             }

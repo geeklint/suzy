@@ -7,7 +7,7 @@
 #define SDF_PEAK (pass_config.y)
 
 uniform sampler2D TEX_ID;
-uniform mediump vec2 TEX_SIZE;
+uniform mediump vec2 UV_SCALE;
 uniform lowp float TEX_SDF;
 uniform sampler2D MASK_ID;
 uniform mediump vec2 MASK_SIZE;
@@ -19,7 +19,7 @@ varying lowp vec2 pass_distance;
 varying mediump float pass_smoothing;
 
 void main() {
-    lowp vec4 tex_color = texture2D(TEX_ID, pass_uv / TEX_SIZE);
+    lowp vec4 tex_color = texture2D(TEX_ID, pass_uv / UV_SCALE);
     mediump float sdf_value = max(tex_color.a, 1.0 - TEX_SDF);
     sdf_value *= 1.0 - min(length(pass_distance), 1.0);
     tex_color = max(tex_color, TEX_SDF);

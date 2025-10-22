@@ -13,8 +13,9 @@ use opengl::{
             types::{GLenum, GLint},
             UNPACK_ALIGNMENT, UNSIGNED_BYTE,
         },
-        short_consts::{LUMINANCE, LUMINANCE_ALPHA, RGB, RGBA},
+        short_consts::{ALPHA, LUMINANCE, LUMINANCE_ALPHA, RGB, RGBA},
     },
+    renderer::{UvRect, UvRectValues},
     OpenGlBindings, PopulateTexture, PopulateTextureUtil, Texture,
     TextureSize,
 };
@@ -78,8 +79,9 @@ where
         let info =
             reader.next_frame(&mut pixels).map_err(|e| e.to_string())?;
         assert_eq!(info.bit_depth, BitDepth::Eight, "png crate didn't return eight-bit data despite normalize_to_color8");
+        let grayscale_fmt = if self.sdf { ALPHA } else { LUMINANCE };
         let (samples, format) = match info.color_type {
-            ColorType::Grayscale => (1, LUMINANCE),
+            ColorType::Grayscale => (1, grayscale_fmt),
             ColorType::GrayscaleAlpha => (2, LUMINANCE_ALPHA),
             ColorType::Rgb => (3, RGB),
             ColorType::Rgba => (4, RGBA),
@@ -135,14 +137,6 @@ where
                     pixels.as_ptr().cast(),
                 );
             }
-            PopulateTextureUtil::default_params(gl, target);
-            Ok(TextureSize {
-                image_width: short_width.into(),
-                image_height: short_height.into(),
-                texture_width,
-                texture_height,
-                is_sdf: self.sdf,
-            })
         } else {
             unsafe {
                 gl.TexImage2D(
@@ -161,26 +155,25 @@ where
                     0,
                     0,
                     0,
-                    info.width
-                        .try_into()
-                        .expect("width fit in a u16 but not an i32"),
-                    info.height
-                        .try_into()
-                        .expect("height fit in a u16 but not an i32"),
+                    short_width.into(),
+                    short_height.into(),
                     format.into(),
                     UNSIGNED_BYTE,
                     pixels.as_ptr().cast(),
                 );
             }
-            PopulateTextureUtil::default_params(gl, target);
-            Ok(TextureSize {
-                image_width: short_width.into(),
-                image_height: short_height.into(),
-                texture_width,
-                texture_height,
-                is_sdf: self.sdf,
-            })
         }
+        PopulateTextureUtil::default_params(gl, target);
+        Ok(TextureSize {
+            default_rect: UvRect::U16(UvRectValues {
+                left: 0,
+                right: short_width,
+                bottom: 0,
+                top: short_height,
+            }),
+            uv_scale: [texture_width, texture_height],
+            is_sdf: self.sdf,
+        })
     }
 
     fn texture_key(&self) -> &[u8] {

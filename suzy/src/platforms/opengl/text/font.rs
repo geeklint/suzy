@@ -4,7 +4,8 @@
 use std::{cell::OnceCell, rc::Rc};
 
 use crate::platforms::opengl::{
-    opengl_bindings::types::GLenum, OpenGlBindings, Texture, TextureSize,
+    opengl_bindings::types::GLenum, renderer::UvRect, OpenGlBindings, Texture,
+    TextureSize,
 };
 
 #[derive(Debug)]
@@ -100,10 +101,8 @@ impl Font {
             gl.TexParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE.into());
         }
         TextureSize {
-            image_width: width.into(),
-            image_height: height.into(),
-            texture_width: width,
-            texture_height: height,
+            default_rect: UvRect::SolidColor(0, 0),
+            uv_scale: [width, height],
             is_sdf: true,
         }
     }

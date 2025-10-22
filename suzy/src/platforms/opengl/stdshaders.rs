@@ -15,7 +15,7 @@ const STD_FRAGMENT_SOURCE: &[u8] = include_bytes!("include/std.frag.glsl");
 pub(super) struct Uniforms {
     pub(super) transform: UniformLoc,
     pub(super) tex_id: UniformLoc,
-    pub(super) tex_size: UniformLoc,
+    pub(super) uv_scale: UniformLoc,
     pub(super) tex_sdf: UniformLoc,
     pub(super) mask_id: UniformLoc,
     pub(super) mask_size: UniformLoc,
@@ -35,7 +35,7 @@ impl Shaders {
             uniforms: Uniforms {
                 transform: shader.uniform(gl, "TRANSFORM"),
                 tex_id: shader.uniform(gl, "TEX_ID"),
-                tex_size: shader.uniform(gl, "TEX_SIZE"),
+                uv_scale: shader.uniform(gl, "UV_SCALE"),
                 tex_sdf: shader.uniform(gl, "TEX_SDF"),
                 mask_id: shader.uniform(gl, "MASK_ID"),
                 mask_size: shader.uniform(gl, "MASK_SIZE"),

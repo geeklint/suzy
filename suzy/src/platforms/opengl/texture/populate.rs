@@ -7,13 +7,16 @@ use std::{
 };
 
 use crate::platforms::opengl;
-use opengl::context::{
-    bindings::{
-        types::GLenum, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER, TEXTURE_WRAP_S,
-        TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+use opengl::{
+    context::{
+        bindings::{
+            types::GLenum, TEXTURE_MAG_FILTER, TEXTURE_MIN_FILTER,
+            TEXTURE_WRAP_S, TEXTURE_WRAP_T, UNPACK_ALIGNMENT, UNSIGNED_BYTE,
+        },
+        short_consts::{CLAMP_TO_EDGE, LINEAR, RGB, RGBA},
+        OpenGlBindings,
     },
-    short_consts::{CLAMP_TO_EDGE, LINEAR, RGB, RGBA},
-    OpenGlBindings,
+    renderer::{UvRect, UvRectValues},
 };
 
 use super::TextureSize;
@@ -114,10 +117,13 @@ impl PopulateTextureUtil {
             }
             Self::default_params(gl, target);
             TextureSize {
-                image_width: width.into(),
-                image_height: height.into(),
-                texture_width: width,
-                texture_height: height,
+                default_rect: UvRect::U16(UvRectValues {
+                    left: 0,
+                    right: width,
+                    bottom: 0,
+                    top: height,
+                }),
+                uv_scale: [width, height],
                 is_sdf: sdf,
             }
         } else {
@@ -149,10 +155,13 @@ impl PopulateTextureUtil {
             }
             Self::default_params(gl, target);
             TextureSize {
-                image_width: width.into(),
-                image_height: height.into(),
-                texture_width,
-                texture_height,
+                default_rect: UvRect::U16(UvRectValues {
+                    left: 0,
+                    right: width,
+                    bottom: 0,
+                    top: height,
+                }),
+                uv_scale: [texture_width, texture_height],
                 is_sdf: sdf,
             }
         }

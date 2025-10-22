@@ -119,9 +119,9 @@ pub(super) fn render(ctx: &mut super::OpenGlContext, mut batches: BatchPool) {
             );
             ShaderProgram::set_vec2(
                 &ctx.bindings,
-                ctx.shaders.uniforms.tex_size,
-                tex_size.texture_width.into(),
-                tex_size.texture_height.into(),
+                ctx.shaders.uniforms.uv_scale,
+                tex_size.uv_scale[0].into(),
+                tex_size.uv_scale[1].into(),
             );
             ShaderProgram::set_float(
                 &ctx.bindings,
