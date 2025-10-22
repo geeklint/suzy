@@ -86,6 +86,9 @@ impl OpenGlContext {
                 "GL_EXT_blend_func_extended" => {
                     extensions.blend_func_extended = true;
                 }
+                "GL_OES_compressed_ETC1_RGB8_texture" => {
+                    extensions.compressed_etc1_rgb8_texture = true;
+                }
                 _ => {}
             }
         }
@@ -127,4 +130,5 @@ impl OpenGlContext {
 pub struct Extensions {
     blend_func_extended: bool,
     standard_derivatives: bool,
+    compressed_etc1_rgb8_texture: bool,
 }
