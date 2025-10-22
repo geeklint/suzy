@@ -243,7 +243,6 @@ pub type GLvdpauSurfaceNV = GLintptr;
 #[allow(dead_code, non_upper_case_globals)] pub const ELEMENT_ARRAY_BUFFER: types::GLenum = 0x8893;
 #[allow(dead_code, non_upper_case_globals)] pub const ELEMENT_ARRAY_BUFFER_BINDING: types::GLenum = 0x8895;
 #[allow(dead_code, non_upper_case_globals)] pub const EQUAL: types::GLenum = 0x0202;
-#[allow(dead_code, non_upper_case_globals)] pub const ETC1_RGB8_OES: types::GLenum = 0x8D64;
 #[allow(dead_code, non_upper_case_globals)] pub const EXTENSIONS: types::GLenum = 0x1F03;
 #[allow(dead_code, non_upper_case_globals)] pub const FALSE: types::GLboolean = 0;
 #[allow(dead_code, non_upper_case_globals)] pub const FASTEST: types::GLenum = 0x1101;
