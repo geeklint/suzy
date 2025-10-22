@@ -22,7 +22,7 @@ mod text;
 mod window;
 
 pub use context::bindings as opengl_bindings;
-pub use context::{OpenGlBindings, OpenGlContext, DEBUG};
+pub use context::{short_consts, OpenGlBindings, OpenGlContext, DEBUG};
 pub use graphics::*;
 pub use matrix::Mat4;
 #[cfg(feature = "png")]
