@@ -29,6 +29,10 @@ version = "0.38.0"
 optional = true
 default-features = false
 
+[dependencies.png]
+version = "0.18.0"
+optional = true
+
 [[example]]
 name = "adapter"
 required-features = ["quickstart"]

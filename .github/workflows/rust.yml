@@ -42,6 +42,8 @@ jobs:
         cargo clippy --all-targets --features "platform-osmesa"
         cargo clippy --all-targets --features "platform-opengl default-font"
         cargo clippy --all-targets --features "quickstart"
+        cargo clippy --all-targets --features "png"
+        cargo clippy --all-targets --features "quickstart png"
 
     - name: Validate documentation
       run: cargo doc --no-deps --all-features
@@ -63,3 +65,5 @@ jobs:
         cargo test --doc --features "platform-osmesa"
         cargo test --doc --features "platform-opengl default-font"
         cargo test --doc --features "quickstart"
+        cargo test --doc --features "png"
+        cargo test --doc --features "quickstart png"

@@ -32,6 +32,9 @@ pub mod short_consts {
     pub const ALPHA: u16 = enum_to_u16(super::bindings::ALPHA);
     pub const CLAMP_TO_EDGE: u16 = enum_to_u16(super::bindings::CLAMP_TO_EDGE);
     pub const LINEAR: u16 = enum_to_u16(super::bindings::LINEAR);
+    pub const LUMINANCE: u16 = enum_to_u16(super::bindings::LUMINANCE);
+    pub const LUMINANCE_ALPHA: u16 =
+        enum_to_u16(super::bindings::LUMINANCE_ALPHA);
     pub const NEAREST: u16 = enum_to_u16(super::bindings::NEAREST);
     pub const RGB: u16 = enum_to_u16(super::bindings::RGB);
     pub const RGBA: u16 = enum_to_u16(super::bindings::RGBA);

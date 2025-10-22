@@ -13,6 +13,8 @@ mod context;
 mod graphics;
 mod mask;
 mod matrix;
+#[cfg(feature = "png")]
+mod png;
 pub mod renderer;
 mod shader;
 mod stdshaders;
@@ -23,6 +25,8 @@ pub use context::bindings as opengl_bindings;
 pub use context::{OpenGlBindings, OpenGlContext, DEBUG};
 pub use graphics::*;
 pub use matrix::Mat4;
+#[cfg(feature = "png")]
+pub use png::LoadPng;
 pub use text::{Font, Text};
 pub use texture::{
     PopulateTexture, PopulateTextureUtil, Texture, TextureId, TextureSize,
