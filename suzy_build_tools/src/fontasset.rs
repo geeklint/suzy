@@ -22,6 +22,8 @@ pub enum TextureDim {
     V2048 = 2048,
     V4096 = 4096,
     V8192 = 8192,
+    // texture sizes can't go big enough that the maximum UV coordinate,
+    // multiplied by 2, overflows a u16, since we multiply UVs by 2 below.
 }
 
 #[derive(Debug)]
@@ -187,14 +189,13 @@ impl<I> FontAtlas<I> {
                     .and_then(|id| font_face.glyph_hor_advance(id))
                     .ok_or(Error::MissingGlyph(codepoint))?;
                 let advance = f32::from(advance) / height;
-                let tex_left = (tex_left * f32::from(asset.width))
-                    .round_ties_even() as u16;
-                let tex_right = (tex_right * f32::from(asset.width))
-                    .round_ties_even() as u16;
-                let tex_bottom = (tex_bottom * f32::from(asset.height))
-                    .round_ties_even() as u16;
-                let tex_top = (tex_top * f32::from(asset.height))
-                    .round_ties_even() as u16;
+                let u_scale = f32::from(asset.width * 2);
+                let v_scale = f32::from(asset.height * 2);
+                let tex_left = (tex_left * u_scale).round_ties_even() as u16;
+                let tex_right = (tex_right * u_scale).round_ties_even() as u16;
+                let tex_bottom =
+                    (tex_bottom * v_scale).round_ties_even() as u16;
+                let tex_top = (tex_top * v_scale).round_ties_even() as u16;
                 write!(
                     mod_file,
                     "

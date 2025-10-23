@@ -11,4 +11,4 @@ keywords = ["suzy"]
 license = "Apache-2.0 OR MIT OR Zlib"
 
 [dependencies]
-blurry = "0.2.0"
+blurry = "0.2.1"

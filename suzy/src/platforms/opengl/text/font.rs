@@ -102,7 +102,7 @@ impl Font {
         }
         TextureSize {
             default_rect: UvRect::SolidColor(0, 0),
-            uv_scale: [width, height],
+            uv_scale: [2 * width, 2 * height],
             is_sdf: true,
         }
     }

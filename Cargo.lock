@@ -22,9 +22,9 @@ checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
 name = "blurry"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e62e49b3bac0f87a5eebff3401578dd48ab49c2dbc3655afb577106ad94613b3"
+checksum = "c48bfbf135baca2dd3dd05942284aa0c41392d064aa2cf62e0984f83281e3c4a"
 dependencies = [
  "crunch",
  "ttf-parser",
