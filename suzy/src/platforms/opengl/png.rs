@@ -114,6 +114,7 @@ where
             // TODO: we could realign the pixels instead of failing
             return Err("png had incompatible alignment".to_string());
         };
+        pixels.truncate(info.buffer_size());
         // swap the png rows since we use a bottom-left origin but png is a
         // top-left origin
         let mut rows = pixels.chunks_exact_mut(info.line_size);

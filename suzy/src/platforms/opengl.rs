@@ -10,6 +10,7 @@
 mod texture;
 
 mod context;
+mod dds;
 mod graphics;
 mod mask;
 mod matrix;
@@ -23,6 +24,7 @@ mod window;
 
 pub use context::bindings as opengl_bindings;
 pub use context::{short_consts, OpenGlBindings, OpenGlContext, DEBUG};
+pub use dds::LoadDds;
 pub use graphics::*;
 pub use matrix::Mat4;
 #[cfg(feature = "png")]
