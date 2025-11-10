@@ -18,19 +18,14 @@
 //! enums.  This pattern allows additional states to be added in the future
 //! with reasonable fallbacks for backwards-compatibility.
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 enum SelectionStateAll {
+    #[default]
     Normal,
     Hover,
     Focus,
     Pressed,
     Active,
-}
-
-impl Default for SelectionStateAll {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 /// A selection state is an opaque type which indicates the current state

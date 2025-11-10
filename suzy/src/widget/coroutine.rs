@@ -87,16 +87,12 @@ impl std::task::Wake for WatchedWaker {
     }
 }
 
+#[derive(Default)]
 enum State<T> {
+    #[default]
     Inactive,
     Starting(T),
     Running(Pin<Box<dyn Future<Output = ()>>>),
-}
-
-impl<T> Default for State<T> {
-    fn default() -> Self {
-        Self::Inactive
-    }
 }
 
 /// A Coroutine stores the state of a Rust Future which is run within
