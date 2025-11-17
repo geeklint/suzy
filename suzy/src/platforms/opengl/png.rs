@@ -20,9 +20,9 @@ use opengl::{
     TextureSize,
 };
 
-pub trait LoadPng {
+pub trait LoadPng: Sized {
     fn load_png(self) -> Texture;
-    fn load_png_as_sdf(self) -> Texture;
+    fn png_options(self) -> PngOptions<Self>;
 }
 
 impl<T> LoadPng for T
@@ -30,23 +30,78 @@ where
     T: 'static + AsRef<Path>,
 {
     fn load_png(self) -> Texture {
-        Texture::new(Rc::new(Populator {
-            path: self,
-            sdf: false,
-        }))
+        self.png_options().load()
     }
 
-    fn load_png_as_sdf(self) -> Texture {
-        Texture::new(Rc::new(Populator {
+    fn png_options(self) -> PngOptions<Self> {
+        PngOptions {
             path: self,
-            sdf: true,
-        }))
+            sdf: false,
+            gray_as_alpha: false,
+            uv_mul: 1,
+            origin_bottom: false,
+        }
     }
 }
 
-struct Populator<T> {
-    path: T,
+#[derive(Clone, Copy)]
+pub struct PngOptions<P> {
+    path: P,
     sdf: bool,
+    gray_as_alpha: bool,
+    uv_mul: u16,
+    origin_bottom: bool,
+}
+
+impl<P> PngOptions<P> {
+    pub fn load(self) -> Texture
+    where
+        P: 'static + AsRef<Path>,
+    {
+        Texture::new(Rc::new(Populator { options: self }))
+    }
+
+    pub fn sdf(self, sdf: bool) -> Self {
+        Self { sdf, ..self }
+    }
+
+    pub fn gray_as_alpha(self, gray_as_alpha: bool) -> Self {
+        Self {
+            gray_as_alpha,
+            ..self
+        }
+    }
+
+    /// Zero is allowed - it means the final uv scale is [1, 1]
+    pub fn uv_multiplier(self, uv_mul: u16) -> Self {
+        Self { uv_mul, ..self }
+    }
+
+    pub fn origin_bottom(self, origin_bottom: bool) -> Self {
+        Self {
+            origin_bottom,
+            ..self
+        }
+    }
+}
+
+impl<P> std::fmt::Debug for PngOptions<P>
+where
+    P: AsRef<Path>,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PngOptions")
+            .field("path", &self.path.as_ref())
+            .field("sdf", &self.sdf)
+            .field("gray_as_alpha", &self.gray_as_alpha)
+            .field("uv_mul", &self.uv_mul)
+            .field("origin_bottom", &self.origin_bottom)
+            .finish()
+    }
+}
+
+struct Populator<P> {
+    options: PngOptions<P>,
 }
 
 impl<T> std::fmt::Debug for Populator<T>
@@ -55,7 +110,7 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LoadPngPopulator")
-            .field("path", &self.path.as_ref())
+            .field("options", &self.options)
             .finish()
     }
 }
@@ -70,7 +125,7 @@ where
         target: GLenum,
     ) -> Result<TextureSize, String> {
         let mut decoder = Decoder::new(BufReader::new(
-            File::open(&self.path).map_err(|e| e.to_string())?,
+            File::open(&self.options.path).map_err(|e| e.to_string())?,
         ));
         decoder.set_transformations(Transformations::normalize_to_color8());
         let mut reader = decoder.read_info().map_err(|e| e.to_string())?;
@@ -79,7 +134,11 @@ where
         let info =
             reader.next_frame(&mut pixels).map_err(|e| e.to_string())?;
         assert_eq!(info.bit_depth, BitDepth::Eight, "png crate didn't return eight-bit data despite normalize_to_color8");
-        let grayscale_fmt = if self.sdf { ALPHA } else { LUMINANCE };
+        let grayscale_fmt = if self.options.sdf || self.options.gray_as_alpha {
+            ALPHA
+        } else {
+            LUMINANCE
+        };
         let (samples, format) = match info.color_type {
             ColorType::Grayscale => (1, grayscale_fmt),
             ColorType::GrayscaleAlpha => (2, LUMINANCE_ALPHA),
@@ -115,11 +174,13 @@ where
             return Err("png had incompatible alignment".to_string());
         };
         pixels.truncate(info.buffer_size());
-        // swap the png rows since we use a bottom-left origin but png is a
-        // top-left origin
-        let mut rows = pixels.chunks_exact_mut(info.line_size);
-        while let [Some(a), Some(b)] = [rows.next(), rows.next_back()] {
-            a.swap_with_slice(b);
+        if !self.options.origin_bottom {
+            // swap the png rows since we use a bottom-left origin but png is a
+            // top-left origin
+            let mut rows = pixels.chunks_exact_mut(info.line_size);
+            while let [Some(a), Some(b)] = [rows.next(), rows.next_back()] {
+                a.swap_with_slice(b);
+            }
         }
         unsafe {
             gl.PixelStorei(UNPACK_ALIGNMENT, alignment);
@@ -165,20 +226,36 @@ where
             }
         }
         PopulateTextureUtil::default_params(gl, target);
-        Ok(TextureSize {
-            default_rect: UvRect::U16(UvRectValues {
-                left: 0,
-                right: short_width,
-                bottom: 0,
-                top: short_height,
-            }),
-            uv_scale: [texture_width, texture_height],
-            is_sdf: self.sdf,
-        })
+        if self.options.uv_mul == 0 {
+            Ok(TextureSize {
+                default_rect: UvRect::F32(UvRectValues {
+                    left: 0.0,
+                    right: f32::from(short_width) / f32::from(texture_width),
+                    bottom: 0.0,
+                    top: f32::from(short_height) / f32::from(texture_width),
+                }),
+                uv_scale: [1, 1],
+                is_sdf: self.options.sdf,
+            })
+        } else {
+            Ok(TextureSize {
+                default_rect: UvRect::U16(UvRectValues {
+                    left: 0,
+                    right: short_width * self.options.uv_mul,
+                    bottom: 0,
+                    top: short_height * self.options.uv_mul,
+                }),
+                uv_scale: [
+                    texture_width * self.options.uv_mul,
+                    texture_height * self.options.uv_mul,
+                ],
+                is_sdf: self.options.sdf,
+            })
+        }
     }
 
     fn texture_key(&self) -> &[u8] {
-        self.path.as_ref().as_os_str().as_encoded_bytes()
+        self.options.path.as_ref().as_os_str().as_encoded_bytes()
     }
 
     fn debug(&self) -> &dyn std::fmt::Debug {

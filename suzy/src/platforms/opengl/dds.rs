@@ -22,8 +22,9 @@ use opengl::{
     TextureSize,
 };
 
-pub trait LoadDds {
+pub trait LoadDds: Sized {
     fn load_dds(self) -> Texture;
+    fn dds_options(self) -> DdsOptions<Self>;
 }
 
 impl<T> LoadDds for T
@@ -31,12 +32,71 @@ where
     T: 'static + AsRef<Path>,
 {
     fn load_dds(self) -> Texture {
-        Texture::new(Rc::new(Populator { path: self }))
+        self.dds_options().load()
+    }
+
+    fn dds_options(self) -> DdsOptions<Self> {
+        DdsOptions {
+            path: self,
+            dxt1_opaque: false,
+            uv_mul: 1,
+            origin_bottom: false,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct DdsOptions<P> {
+    path: P,
+    dxt1_opaque: bool,
+    uv_mul: u16,
+    origin_bottom: bool,
+}
+
+impl<P> DdsOptions<P> {
+    pub fn load(self) -> Texture
+    where
+        P: 'static + AsRef<Path>,
+    {
+        Texture::new(Rc::new(Populator { options: self }))
+    }
+
+    pub fn dxt1_always_opaque(self, dxt1_opaque: bool) -> Self {
+        Self {
+            dxt1_opaque,
+            ..self
+        }
+    }
+
+    /// Zero is allowed - it means the final uv scale is [1, 1]
+    pub fn uv_multiplier(self, uv_mul: u16) -> Self {
+        Self { uv_mul, ..self }
+    }
+
+    pub fn origin_bottom(self, origin_bottom: bool) -> Self {
+        Self {
+            origin_bottom,
+            ..self
+        }
+    }
+}
+
+impl<P> std::fmt::Debug for DdsOptions<P>
+where
+    P: AsRef<Path>,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DdsOptions")
+            .field("path", &self.path.as_ref())
+            .field("dxt1_opaque", &self.dxt1_opaque)
+            .field("uv_mul", &self.uv_mul)
+            .field("origin_bottom", &self.origin_bottom)
+            .finish()
     }
 }
 
 struct Populator<T> {
-    path: T,
+    options: DdsOptions<T>,
 }
 
 impl<T> std::fmt::Debug for Populator<T>
@@ -45,7 +105,7 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LoadDdsPopulator")
-            .field("path", &self.path.as_ref())
+            .field("options", &self.options)
             .finish()
     }
 }
@@ -68,7 +128,8 @@ where
         gl: &OpenGlBindings,
         target: GLenum,
     ) -> Result<TextureSize, String> {
-        let mut file = File::open(&self.path).map_err(|e| e.to_string())?;
+        let mut file =
+            File::open(&self.options.path).map_err(|e| e.to_string())?;
         let mut header = vec![0_u8; 128];
         file.read_exact(&mut header).map_err(|e| e.to_string())?;
         let info = parse_dds_header(&header)?;
@@ -132,6 +193,11 @@ where
                 );
             }
         };
+        let fmt = if self.options.dxt1_opaque && fmt == Fmt::Bc1 {
+            Fmt::Bc1Opaque
+        } else {
+            fmt
+        };
         check_data_len(
             fmt,
             short_width,
@@ -156,10 +222,12 @@ where
             0,
         );
         file.read_exact(&mut data).map_err(|e| e.to_string())?;
-        match fmt {
-            Fmt::Bc1Opaque | Fmt::Bc1 => flip_bc1(&mut data, short_width),
-            Fmt::Bc2 => flip_bc2(&mut data, short_width),
-            Fmt::Bc3 => flip_bc3(&mut data, short_width),
+        if !self.options.origin_bottom {
+            match fmt {
+                Fmt::Bc1Opaque | Fmt::Bc1 => flip_bc1(&mut data, short_width),
+                Fmt::Bc2 => flip_bc2(&mut data, short_width),
+                Fmt::Bc3 => flip_bc3(&mut data, short_width),
+            }
         }
         if texture_width == short_width && texture_height == short_height {
             unsafe {
@@ -201,20 +269,36 @@ where
             }
         }
         PopulateTextureUtil::default_params(gl, target);
-        Ok(TextureSize {
-            default_rect: UvRect::U16(UvRectValues {
-                left: 0,
-                right: short_width,
-                bottom: 0,
-                top: short_height,
-            }),
-            uv_scale: [texture_width, texture_height],
-            is_sdf: false,
-        })
+        if self.options.uv_mul == 0 {
+            Ok(TextureSize {
+                default_rect: UvRect::F32(UvRectValues {
+                    left: 0.0,
+                    right: f32::from(short_width) / f32::from(texture_width),
+                    bottom: 0.0,
+                    top: f32::from(short_height) / f32::from(texture_height),
+                }),
+                uv_scale: [1, 1],
+                is_sdf: false,
+            })
+        } else {
+            Ok(TextureSize {
+                default_rect: UvRect::U16(UvRectValues {
+                    left: 0,
+                    right: short_width * self.options.uv_mul,
+                    bottom: 0,
+                    top: short_height * self.options.uv_mul,
+                }),
+                uv_scale: [
+                    texture_width * self.options.uv_mul,
+                    texture_height * self.options.uv_mul,
+                ],
+                is_sdf: false,
+            })
+        }
     }
 
     fn texture_key(&self) -> &[u8] {
-        self.path.as_ref().as_os_str().as_encoded_bytes()
+        self.options.path.as_ref().as_os_str().as_encoded_bytes()
     }
 
     fn debug(&self) -> &dyn std::fmt::Debug {
