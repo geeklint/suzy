@@ -77,9 +77,7 @@ with_default_render_platform! {
             F: 'static,
             F: for<'a> Fn(
                 &'a mut T,
-            ) -> Box<
-                dyn 'a + Iterator<Item = &'a mut Ephemeral<Child>>,
-            >,
+            ) -> ChildIter<'a, Child>,
             Child: super::Content<P>;
 
         /// Register a variable number of children
@@ -89,9 +87,7 @@ with_default_render_platform! {
             F: for<'a> Fn(
                 &'a mut T,
                 Option<WatchArg<'_, 'static, DefaultOwner>>,
-            ) -> Box<
-                dyn 'a + Iterator<Item = &'a mut Ephemeral<Child>>,
-            >,
+            ) -> ChildIter<'a, Child>,
             Child: super::Content<P>;
 
         #[doc(hidden)]
@@ -99,5 +95,20 @@ with_default_render_platform! {
         where
             Child: super::Content<P>,
             F: 'static + Clone + Fn(&mut T) -> &mut Child;
+    }
+}
+
+pub struct ChildIter<'a, Child> {
+    pub(super) inner: Box<dyn 'a + Iterator<Item = &'a mut Ephemeral<Child>>>,
+}
+
+impl<'a, Input, Child> From<Input> for ChildIter<'a, Child>
+where
+    Input: 'a + IntoIterator<Item = &'a mut Ephemeral<Child>>,
+{
+    fn from(value: Input) -> Self {
+        Self {
+            inner: Box::new(value.into_iter()),
+        }
     }
 }

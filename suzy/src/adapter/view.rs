@@ -137,7 +137,7 @@ where
                 current_pointers.remove(pointer_id);
             });
         });
-        desc.iter_children(|this| Box::new(this.inner.active_children()));
+        desc.iter_children(|this| this.inner.active_children().into());
     }
 
     fn pointer_event_before(

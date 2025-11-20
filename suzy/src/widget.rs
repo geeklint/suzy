@@ -34,7 +34,7 @@ pub use content::Content;
 #[cfg(feature = "quickstart")]
 pub use content::RunAsApp;
 pub use coroutine::Coroutine;
-pub use desc::Desc;
+pub use desc::{ChildIter, Desc};
 pub use ephemeral::Ephemeral;
 pub use graphic::WidgetGraphic;
 pub use rect::WidgetRect;

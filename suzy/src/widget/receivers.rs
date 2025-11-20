@@ -14,7 +14,7 @@ use crate::{
     watch::{self, DefaultOwner, WatchArg, WatchName, WatchedMeta},
 };
 
-use super::{Desc, Ephemeral, Widget, WidgetGraphic, WidgetRect};
+use super::{ChildIter, Desc, Widget, WidgetGraphic, WidgetRect};
 
 macro_rules! impl_empty {
     ($T:ident; $P:ident; watch) => {
@@ -44,18 +44,14 @@ macro_rules! impl_empty {
         where
             F: for<'iter_children> Fn(
                 &'iter_children mut $T,
-            ) -> Box<
-                dyn 'iter_children + Iterator<Item = &'iter_children mut Ephemeral<Child>>,
-            >,
+            ) -> ChildIter<'iter_children, Child>,
             Child: super::Content<$P> {}
         fn iter_children_explicit<F, Child>(&mut self, _iter_fn: F)
         where
             F: for<'iter_children> Fn(
                 &'iter_children mut $T,
                 Option<WatchArg<'_, 'static, DefaultOwner>>,
-            ) -> Box<
-                dyn 'iter_children + Iterator<Item = &'iter_children mut Ephemeral<Child>>,
-            >,
+            ) -> ChildIter<'iter_children, Child>,
             Child: super::Content<$P> {}
     };
     ($T:ident; $P:ident; $($method:ident)*) => {
@@ -145,9 +141,7 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
         F: for<'i> Fn(
             &'i mut Leaf,
             WatchArg<'_, 'static, DefaultOwner>,
-        ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
-        >,
+        ) -> ChildIter<'i, Child>,
         Child: super::Content<Plat>,
         Leaf: ?Sized + super::Content<Plat>,
         Path: 'static + Holder<DefaultOwner, Content = Leaf>,
@@ -162,8 +156,9 @@ impl<'a, Path> WidgetInitImpl<'a, Path> {
                 maybe_more.watched(arg);
                 let mut holder = None;
                 current_path.get_mut(owner, |content, _rect| {
-                    holder =
-                        iter_fn(content, arg).find_map(|e| e.uninit_holder());
+                    holder = iter_fn(content, arg)
+                        .inner
+                        .find_map(|e| e.uninit_holder());
                 });
                 if let Some(widget) = holder {
                     maybe_more.trigger_external();
@@ -240,11 +235,7 @@ where
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
         F: 'static,
-        F: for<'b> Fn(
-            &'b mut Leaf,
-        ) -> Box<
-            dyn 'b + Iterator<Item = &'b mut Ephemeral<Child>>,
-        >,
+        F: for<'b> Fn(&'b mut Leaf) -> ChildIter<'b, Child>,
         Child: super::Content<Plat>,
     {
         self.iter_children_raw(move |leaf, arg| {
@@ -260,9 +251,7 @@ where
         F: for<'b> Fn(
             &'b mut Leaf,
             Option<WatchArg<'_, 'static, DefaultOwner>>,
-        ) -> Box<
-            dyn 'b + Iterator<Item = &'b mut Ephemeral<Child>>,
-        >,
+        ) -> ChildIter<'b, Child>,
         Child: super::Content<Plat>,
     {
         self.iter_children_raw(move |leaf, arg| iter_fn(leaf, Some(arg)));
@@ -311,15 +300,11 @@ where
 
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
-        F: for<'i> Fn(
-            &'i mut T,
-        ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
-        >,
+        F: for<'i> Fn(&'i mut T) -> ChildIter<'i, Child>,
         Child: super::Content<P>,
     {
         let Self { content, ctx } = self;
-        for child in iter_fn(content) {
+        for child in iter_fn(content).inner {
             child.access_mut(|widget| {
                 Widget::draw(widget, ctx);
             });
@@ -332,13 +317,11 @@ where
         F: for<'i> Fn(
             &'i mut T,
             Option<WatchArg<'_, 'static, DefaultOwner>>,
-        ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
-        >,
+        ) -> ChildIter<'i, Child>,
         Child: super::Content<P>,
     {
         let Self { content, ctx } = self;
-        for child in iter_fn(content, None) {
+        for child in iter_fn(content, None).inner {
             child.access_mut(|widget| {
                 Widget::draw(widget, ctx);
             });
@@ -383,11 +366,7 @@ where
     fn iter_children<F, Child>(&mut self, iter_fn: F)
     where
         F: 'static,
-        F: for<'i> Fn(
-            &'i mut T,
-        ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
-        >,
+        F: for<'i> Fn(&'i mut T) -> ChildIter<'i, Child>,
         Child: super::Content<P>,
     {
         self.iter_children_explicit(move |leaf, _arg| iter_fn(leaf));
@@ -398,9 +377,7 @@ where
         F: for<'i> Fn(
             &'i mut T,
             Option<WatchArg<'_, 'static, DefaultOwner>>,
-        ) -> Box<
-            dyn 'i + Iterator<Item = &'i mut Ephemeral<Child>>,
-        >,
+        ) -> ChildIter<'i, Child>,
         Child: super::Content<P>,
     {
         let Self {
@@ -408,7 +385,7 @@ where
             event,
             handled,
         } = self;
-        for child in iter_fn(content, None) {
+        for child in iter_fn(content, None).inner {
             if !**handled {
                 **handled = child
                     .access_mut(|widget| Widget::pointer_event(widget, event));
