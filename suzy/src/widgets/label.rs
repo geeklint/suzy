@@ -2,6 +2,7 @@
 /* Copyright © 2021 Violet Leonard */
 
 use crate::{
+    adapter::Adaptable,
     dims::Rect,
     graphics::Color,
     platform::{graphics::Text, RenderPlatform},
@@ -31,6 +32,17 @@ where
     graphic: P::Text,
 }
 
+const DEFAULT_LAYOUT: text::Layout = text::Layout {
+    alignment: text::Alignment::Left,
+    line: text::Line::Ascent,
+    flow: text::Flow::Down,
+    origin_x: 0.0,
+    origin_y: 1.0,
+    wrap_width: 1.0,
+    vertical_limit: text::VerticalLimit::None,
+    overflow_mode: text::OverflowMode::Truncate,
+};
+
 impl<P> Default for LabelContent<P>
 where
     P: ?Sized + RenderPlatform,
@@ -40,26 +52,36 @@ where
             text: Watched::default(),
             font_size: Watched::new(16.0),
             color: Watched::new(Color::BLACK),
-            layout: Watched::new(text::Layout {
-                alignment: text::Alignment::Left,
-                line: text::Line::Ascent,
-                flow: text::Flow::Down,
-                origin_x: 0.0,
-                origin_y: 1.0,
-                wrap_width: 1.0,
-                vertical_limit: text::VerticalLimit::None,
-                overflow_mode: text::OverflowMode::Truncate,
-            }),
+            layout: Watched::new(DEFAULT_LAYOUT),
             graphic: P::Text::default(),
         }
     }
 }
 
-impl<P> super::TextContent for LabelContent<P>
+impl<P> Adaptable<str> for LabelContent<P>
 where
     P: ?Sized + RenderPlatform,
 {
-    fn set_text(&mut self, text: &str) {
+    fn adapt(&mut self, data: &str) {
+        self.set_text(data);
+    }
+
+    fn from(data: &str) -> Self {
+        Self {
+            text: Watched::new(data.to_string()),
+            font_size: Watched::new(16.0),
+            color: Watched::new(Color::BLACK),
+            layout: Watched::new(DEFAULT_LAYOUT),
+            graphic: P::Text::default(),
+        }
+    }
+}
+
+impl<P> LabelContent<P>
+where
+    P: ?Sized + RenderPlatform,
+{
+    pub fn set_text(&mut self, text: &str) {
         text.clone_into(&mut self.text);
     }
 }

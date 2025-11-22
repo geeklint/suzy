@@ -4,7 +4,7 @@
 use suzy::{
     dims::Rect,
     widget::{self, RunAsApp},
-    widgets::{Button, TextContent},
+    widgets::Button,
 };
 
 #[derive(Default)]

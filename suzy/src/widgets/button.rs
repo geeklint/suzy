@@ -192,11 +192,11 @@ where
     }
 }
 
-impl<P> super::TextContent for DefaultButtonContent<P>
+impl<P> DefaultButtonContent<P>
 where
     P: ?Sized + RenderPlatform,
 {
-    fn set_text(&mut self, text: &str) {
+    pub fn set_text(&mut self, text: &str) {
         *self.text = text.to_string();
     }
 }
