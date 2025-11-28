@@ -60,9 +60,9 @@ checksum = "0dc013e70da3bfe5b552de26a1f34ecf67d61ea811251d2bf75c1324a1ecb425"
 
 [[package]]
 name = "drying_paint"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4ebd841c4d97aae76d665c7d565b9e03b7a46dfb01a1109c085e45dc01165f4"
+checksum = "7d181eb6f91266093053fca996c0b2a581396fe0de0161b61d91c0549e1a1be9"
 
 [[package]]
 name = "fdeflate"
