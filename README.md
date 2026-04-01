@@ -10,7 +10,7 @@ Inspired heavily by the [kivy](https://kivy.org/#home) framework for Python.
 ## Project Goals:
 * Explicit layout by default - the first-class layout support is to **write
   declaritive code** which describes the relationship between GUI elements.
-* Productivity - The automatic observer patern enables rapid prototyping.
+* Productivity - The automatic observer pattern enables rapid prototyping.
 * Multitouch by default - mouse and touchscreen input is unified, unless
   explicitly distinguished by the application.
 
