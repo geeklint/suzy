@@ -72,14 +72,14 @@ where
     }
 }
 
-impl<T> Deref for Widget<T> {
+impl<T: ?Sized> Deref for Widget<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &self.internal.content
     }
 }
 
-impl<T> DerefMut for Widget<T> {
+impl<T: ?Sized> DerefMut for Widget<T> {
     fn deref_mut(&mut self) -> &mut T {
         &mut self.internal.content
     }
