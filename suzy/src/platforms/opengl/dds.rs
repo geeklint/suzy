@@ -398,8 +398,7 @@ fn check_data_len(
 ) -> Result<(), &'static str> {
     #[cfg(debug_assertions)]
     {
-        let num_blocks =
-            (width.next_multiple_of(4) / 4) * (height.next_multiple_of(4) / 4);
+        let num_blocks = width.div_ceil(4) * height.div_ceil(4);
         let block_size = match fmt {
             Fmt::Bc1Opaque | Fmt::Bc1 => 8,
             Fmt::Bc2 | Fmt::Bc3 => 16,

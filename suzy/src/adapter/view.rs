@@ -153,22 +153,18 @@ where
                 }
                 false
             }
-            PointerAction::Move(x, y) => {
+            PointerAction::Move(x, y)
                 if self.current_pointers.status(event.id())
-                    == Some(PointerStatus::Pending)
+                    == Some(PointerStatus::Pending) =>
+            {
+                self.current_pointers.add_grabbed(event.id());
+                if self.current_pointers.primary_pointer() == Some(event.id())
                 {
-                    self.current_pointers.add_grabbed(event.id());
-                    if self.current_pointers.primary_pointer()
-                        == Some(event.id())
-                    {
-                        self.inner.move_content(*x, *y);
-                        self.position_flag.trigger_auto();
-                    }
-                    event.force_grab(self.handle.id());
-                    true
-                } else {
-                    false
+                    self.inner.move_content(*x, *y);
+                    self.position_flag.trigger_auto();
                 }
+                event.force_grab(self.handle.id());
+                true
             }
             _ => false,
         }
@@ -189,26 +185,21 @@ where
                 }
                 grabbed
             }
-            PointerAction::Move(x, y) => {
-                if Some(event.id()) == self.current_pointers.primary_pointer()
-                {
-                    self.inner.move_content(*x, *y);
-                    self.position_flag.trigger_auto();
-                    true
-                } else {
-                    false
-                }
+            PointerAction::Move(x, y)
+                if Some(event.id())
+                    == self.current_pointers.primary_pointer() =>
+            {
+                self.inner.move_content(*x, *y);
+                self.position_flag.trigger_auto();
+                true
             }
-            PointerAction::Wheel(x, y) => {
+            PointerAction::Wheel(x, y)
                 if self.current_pointers.primary_pointer().is_none()
-                    && self.hittest(rect, event.pos())
-                {
-                    self.inner.move_content(*x, *y);
-                    self.position_flag.trigger_auto();
-                    true
-                } else {
-                    false
-                }
+                    && self.hittest(rect, event.pos()) =>
+            {
+                self.inner.move_content(*x, *y);
+                self.position_flag.trigger_auto();
+                true
             }
             PointerAction::Up => {
                 let ungrabbed = event.try_ungrab(self.handle.id());
