@@ -13,7 +13,7 @@
     doc = "```rust
 use suzy::dims::Rect;
 use suzy::widget;
-use suzy::widgets::{Button, TextContent};
+use suzy::widgets::Button;
 
 struct CustomWidget {
     one: Button,
