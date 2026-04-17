@@ -75,9 +75,7 @@ with_default_render_platform! {
         fn iter_children<F, Child>(&mut self, iter_fn: F)
         where
             F: 'static,
-            F: for<'a> Fn(
-                &'a mut T,
-            ) -> ChildIter<'a, Child>,
+            F: for<'a> Fn(&'a mut T) -> ChildIter<'a, Child>,
             Child: super::Content<P>;
 
         /// Register a variable number of children
